@@ -17,7 +17,7 @@ export function aggregateWorkflow(workflowId: string, steps: StepOutcome[], runL
   }
 
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     workflowId,
     status,
     runLevelCodes: [...runLevelCodes],

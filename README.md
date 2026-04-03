@@ -18,7 +18,7 @@ npm run first-run
 
 The first run uses bundled `examples/events.ndjson` and `examples/tools.json`. It creates `examples/demo.db` from `examples/seed.sql` (this file is gitignored), verifies workflow `wf_complete` against the database (expect **complete** / **verified**), then verifies `wf_missing` (expect **inconsistent** / **missing** / **ROW_ABSENT**). You see both a passing and a failing verification without authoring your own events or registry.
 
-Each JSON object printed for a workflow matches [`schemas/workflow-result.schema.json`](schemas/workflow-result.schema.json).
+Each JSON object printed for a workflow matches [`schemas/workflow-result.schema.json`](schemas/workflow-result.schema.json) (`schemaVersion` **2**; each step includes **`repeatObservationCount`** and **`evaluatedObservationOrdinal`** — see [Retry and repeated seq](docs/execution-truth-layer.md#retry-and-repeated-seq)).
 
 **In-process hook (single boundary):** see [Low-friction integration (in-process)](docs/execution-truth-layer.md#low-friction-integration-in-process) in the SSOT — one `await withWorkflowVerification` at the workflow root (**SQLite only**). For Postgres, use batch `await verifyWorkflow` or the CLI.
 

@@ -5,7 +5,7 @@
   "additionalProperties": false,
   "required": ["schemaVersion", "workflowId", "status", "steps", "runLevelCodes"],
   "properties": {
-    "schemaVersion": { "const": 1 },
+    "schemaVersion": { "const": 2 },
     "workflowId": { "type": "string" },
     "status": {
       "type": "string",
@@ -27,7 +27,9 @@
           "verificationRequest",
           "status",
           "reasons",
-          "evidenceSummary"
+          "evidenceSummary",
+          "repeatObservationCount",
+          "evaluatedObservationOrdinal"
         ],
         "properties": {
           "seq": { "type": "integer", "minimum": 0 },
@@ -57,7 +59,9 @@
           "evidenceSummary": {
             "type": "object",
             "additionalProperties": true
-          }
+          },
+          "repeatObservationCount": { "type": "integer", "minimum": 1 },
+          "evaluatedObservationOrdinal": { "type": "integer", "minimum": 1 }
         }
       }
     }

@@ -38,7 +38,7 @@ describe("JSON Schemas (SSOT)", () => {
   it("validates workflow result shape from golden pipeline output", () => {
     const v = loadSchemaValidator("workflow-result");
     const result = {
-      schemaVersion: 1,
+      schemaVersion: 2,
       workflowId: "wf_complete",
       status: "complete",
       runLevelCodes: [],
@@ -57,6 +57,8 @@ describe("JSON Schemas (SSOT)", () => {
           status: "verified",
           reasons: [],
           evidenceSummary: { rowCount: 1 },
+          repeatObservationCount: 1,
+          evaluatedObservationOrdinal: 1,
         },
       ],
     };

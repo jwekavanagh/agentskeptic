@@ -48,12 +48,16 @@ export type StepOutcome = {
   status: StepStatus;
   reasons: Reason[];
   evidenceSummary: Record<string, unknown>;
+  /** Observations in this logical step (same seq), capture order. */
+  repeatObservationCount: number;
+  /** 1-based; equals repeatObservationCount (last in capture order is evaluated). */
+  evaluatedObservationOrdinal: number;
 };
 
 export type WorkflowStatus = "complete" | "incomplete" | "inconsistent";
 
 export type WorkflowResult = {
-  schemaVersion: 1;
+  schemaVersion: 2;
   workflowId: string;
   status: WorkflowStatus;
   runLevelCodes: string[];

@@ -6,3 +6,5 @@
 {"schemaVersion":1,"workflowId":"wf_unknown_tool","seq":0,"type":"tool_observed","toolId":"nope.tool","params":{}}
 {"schemaVersion":1,"workflowId":"wf_dup_seq","seq":0,"type":"tool_observed","toolId":"crm.upsert_contact","params":{"recordId":"c_ok","fields":{"name":"Alice","status":"active"}}}
 {"schemaVersion":1,"workflowId":"wf_dup_seq","seq":0,"type":"tool_observed","toolId":"crm.upsert_contact","params":{"recordId":"c_ok","fields":{"name":"Alice","status":"active"}}}
+{"schemaVersion":1,"workflowId":"wf_divergent_retry","seq":0,"type":"tool_observed","toolId":"crm.upsert_contact","params":{"recordId":"c_ok","fields":{"name":"Alice","status":"active"}}}
+{"schemaVersion":1,"workflowId":"wf_divergent_retry","seq":0,"type":"tool_observed","toolId":"crm.upsert_contact","params":{"recordId":"c_ok","fields":{"name":"Bob","status":"active"}}}

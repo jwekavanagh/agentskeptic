@@ -120,7 +120,7 @@ describe("verifyWorkflow integration", () => {
     assert.equal(r.steps[0]?.reasons[0]?.code, "UNKNOWN_TOOL");
   });
 
-  it("wf_dup_seq → incomplete run-level", async () => {
+  it("wf_dup_seq → one logical step, complete, repeat metadata", async () => {
     const r = await verifyWorkflow({
       workflowId: "wf_dup_seq",
       eventsPath,
@@ -129,8 +129,44 @@ describe("verifyWorkflow integration", () => {
       logStep: noopLog,
       truthReport: () => {},
     });
+    assert.equal(r.schemaVersion, 2);
+    assert.equal(r.status, "complete");
+    assert.equal(r.steps.length, 1);
+    assert.equal(r.steps[0]?.status, "verified");
+    assert.equal(r.steps[0]?.repeatObservationCount, 2);
+    assert.equal(r.steps[0]?.evaluatedObservationOrdinal, 2);
+    assert.ok(!r.runLevelCodes.includes("DUPLICATE_SEQ"));
+  });
+
+  it("wf_divergent_retry → RETRY_OBSERVATIONS_DIVERGE", async () => {
+    const r = await verifyWorkflow({
+      workflowId: "wf_divergent_retry",
+      eventsPath,
+      registryPath,
+      database: sqliteDb(),
+      logStep: noopLog,
+      truthReport: () => {},
+    });
     assert.equal(r.status, "incomplete");
-    assert.ok(r.runLevelCodes.includes("DUPLICATE_SEQ"));
+    assert.equal(r.steps.length, 1);
+    assert.equal(r.steps[0]?.status, "incomplete_verification");
+    assert.equal(r.steps[0]?.reasons[0]?.code, "RETRY_OBSERVATIONS_DIVERGE");
+    assert.equal(r.steps[0]?.repeatObservationCount, 2);
+    assert.equal(r.steps[0]?.evaluatedObservationOrdinal, 2);
+  });
+
+  it("determinism: identical JSON on repeat verifyWorkflow", async () => {
+    const opts = {
+      workflowId: "wf_dup_seq",
+      eventsPath,
+      registryPath,
+      database: sqliteDb(),
+      logStep: noopLog,
+      truthReport: () => {},
+    };
+    const a = await verifyWorkflow(opts);
+    const b = await verifyWorkflow(opts);
+    assert.equal(JSON.stringify(a), JSON.stringify(b));
   });
 
   it("ignores params.ok — fake success still needs row", async () => {

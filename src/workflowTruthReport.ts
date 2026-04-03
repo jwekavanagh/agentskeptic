@@ -17,7 +17,6 @@ const TRUST_LINE_BY_STATUS: Record<WorkflowStatus, string> = {
 const RUN_LEVEL_EXPLANATIONS: Record<string, string> = {
   MALFORMED_EVENT_LINE:
     "Event line was missing, invalid JSON, or failed schema validation for a tool observation.",
-  DUPLICATE_SEQ: "Duplicate seq values appeared for this workflow; ordering may be unreliable.",
 };
 
 const UNKNOWN_RUN_LEVEL = "Unknown run-level code (forward compatibility).";
@@ -56,6 +55,9 @@ export function formatWorkflowTruthReport(result: WorkflowResult): string {
     const toolId = sanitizeOneLineId(s.toolId);
     const label = STEP_STATUS_TRUTH_LABELS[s.status];
     lines.push(`  - seq=${s.seq} tool=${toolId} status=${label}`);
+    lines.push(
+      `    observations: evaluated=${s.evaluatedObservationOrdinal} of ${s.repeatObservationCount} in_capture_order`,
+    );
     for (const r of s.reasons) {
       const msg = r.message.trim();
       const human = msg.length > 0 ? msg : "(no message)";

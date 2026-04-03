@@ -8,6 +8,8 @@ function step(partial: Partial<StepOutcome> & Pick<StepOutcome, "seq" | "toolId"
     verificationRequest: null,
     reasons: [],
     evidenceSummary: {},
+    repeatObservationCount: 1,
+    evaluatedObservationOrdinal: 1,
     ...partial,
   };
 }
@@ -20,13 +22,14 @@ describe("WorkflowAggregator precedence", () => {
       [],
     );
     expect(r.status).toBe("complete");
+    expect(r.schemaVersion).toBe(2);
   });
 
   it("incomplete when runLevelCodes non-empty even if steps verified", () => {
     const r = aggregateWorkflow(
       "w",
       [step({ seq: 0, toolId: "t", status: "verified" })],
-      ["DUPLICATE_SEQ"],
+      ["TEST_BLOCKING_CODE"],
     );
     expect(r.status).toBe("incomplete");
   });

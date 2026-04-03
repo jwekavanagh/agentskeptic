@@ -60,8 +60,8 @@ describe("withWorkflowVerification", () => {
     assert.equal(Object.hasOwn(api, "finish"), false);
   });
 
-  it("parity wf_complete wf_missing wf_dup_seq vs verifyWorkflow", async () => {
-    for (const wf of ["wf_complete", "wf_missing", "wf_dup_seq"]) {
+  it("parity wf_complete wf_missing wf_dup_seq wf_divergent_retry vs verifyWorkflow", async () => {
+    for (const wf of ["wf_complete", "wf_missing", "wf_dup_seq", "wf_divergent_retry"]) {
       const events = eventsForWorkflow(eventsPath, wf);
       const batchResult = await verifyWorkflow({
         workflowId: wf,
@@ -131,16 +131,24 @@ describe("withWorkflowVerification", () => {
   it("duplicate seq matches batch wf_dup_seq", async () => {
     const events = eventsForWorkflow(eventsPath, "wf_dup_seq");
     assert.equal(events.length, 2);
+    const batchResult = await verifyWorkflow({
+      workflowId: "wf_dup_seq",
+      eventsPath,
+      registryPath,
+      database: { kind: "sqlite", path: dbPath },
+      logStep: noopLog,
+      truthReport: () => {},
+    });
     const result = await withWorkflowVerification(
       { workflowId: "wf_dup_seq", registryPath, dbPath, logStep: noopLog, truthReport: () => {} },
       async (observeStep) => {
-        observeStep(events[0]);
-        observeStep(events[1]);
+        assert.equal(observeStep(events[0]), undefined);
+        assert.equal(observeStep(events[1]), undefined);
       },
     );
-    assert.equal(result.status, "incomplete");
-    assert.ok(result.runLevelCodes.includes("DUPLICATE_SEQ"));
-    assert.equal(result.steps.length, 2);
+    assert.deepStrictEqual(result, batchResult);
+    assert.equal(result.status, "complete");
+    assert.equal(result.steps.length, 1);
   });
 
   it("run throws: same error reference and DB reopen SELECT 1 succeeds", async () => {

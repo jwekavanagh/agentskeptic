@@ -2,6 +2,7 @@ import { DatabaseSync } from "node:sqlite";
 import { readFileSync } from "fs";
 import { aggregateWorkflow } from "./aggregate.js";
 import { loadEventsForWorkflow } from "./loadEvents.js";
+import { planLogicalSteps, type LogicalStepPlan } from "./planLogicalSteps.js";
 import { reconcileSqlRow, reconcileSqlRowAsync } from "./reconciler.js";
 import { loadSchemaValidator } from "./schemaLoad.js";
 import {
@@ -39,14 +40,46 @@ export function loadToolsRegistry(registryPath: string): Map<string, ToolRegistr
   return buildRegistryMap(parsed as ToolRegistryEntry[]);
 }
 
+function buildDivergentStepOutcome(
+  plan: LogicalStepPlan,
+  registry: Map<string, ToolRegistryEntry>,
+): StepOutcome {
+  const last = plan.last;
+  const n = plan.repeatObservationCount;
+  const entry = registry.get(last.toolId);
+  const intendedEffect = entry
+    ? renderIntendedEffect(entry.effectDescriptionTemplate, last.params)
+    : `Unknown tool: ${last.toolId}`;
+  return {
+    seq: plan.seq,
+    toolId: last.toolId,
+    intendedEffect,
+    verificationRequest: null,
+    status: "incomplete_verification",
+    reasons: [
+      {
+        code: "RETRY_OBSERVATIONS_DIVERGE",
+        message:
+          "Multiple observations for this seq do not all match the last observation (toolId and canonical params).",
+      },
+    ],
+    evidenceSummary: {},
+    repeatObservationCount: n,
+    evaluatedObservationOrdinal: n,
+  };
+}
+
 export function verifyToolObservedStep(options: {
   workflowId: string;
   ev: ToolObservedEvent;
   registry: Map<string, ToolRegistryEntry>;
   db: DatabaseSync;
   logStep: (line: object) => void;
+  repeatObservationCount?: number;
 }): StepOutcome {
   const { workflowId, ev, registry, db, logStep } = options;
+  const repeatObservationCount = options.repeatObservationCount ?? 1;
+  const evaluatedObservationOrdinal = repeatObservationCount;
   const entry = registry.get(ev.toolId);
   if (!entry) {
     const outcome: StepOutcome = {
@@ -57,6 +90,8 @@ export function verifyToolObservedStep(options: {
       status: "incomplete_verification",
       reasons: [{ code: "UNKNOWN_TOOL", message: `Unknown toolId: ${ev.toolId}` }],
       evidenceSummary: {},
+      repeatObservationCount,
+      evaluatedObservationOrdinal,
     };
     logStep({
       workflowId,
@@ -67,6 +102,8 @@ export function verifyToolObservedStep(options: {
       status: outcome.status,
       reasons: outcome.reasons,
       evidenceSummary: outcome.evidenceSummary,
+      repeatObservationCount,
+      evaluatedObservationOrdinal,
     });
     return outcome;
   }
@@ -82,6 +119,8 @@ export function verifyToolObservedStep(options: {
       status: "incomplete_verification",
       reasons: [{ code: resolved.code, message: resolved.message }],
       evidenceSummary: {},
+      repeatObservationCount,
+      evaluatedObservationOrdinal,
     };
     logStep({
       workflowId,
@@ -92,6 +131,8 @@ export function verifyToolObservedStep(options: {
       status: outcome.status,
       reasons: outcome.reasons,
       evidenceSummary: outcome.evidenceSummary,
+      repeatObservationCount,
+      evaluatedObservationOrdinal,
     });
     return outcome;
   }
@@ -105,6 +146,8 @@ export function verifyToolObservedStep(options: {
     status: rec.status,
     reasons: rec.reasons,
     evidenceSummary: rec.evidenceSummary,
+    repeatObservationCount,
+    evaluatedObservationOrdinal,
   };
   logStep({
     workflowId,
@@ -115,6 +158,8 @@ export function verifyToolObservedStep(options: {
     status: outcome.status,
     reasons: outcome.reasons,
     evidenceSummary: outcome.evidenceSummary,
+    repeatObservationCount,
+    evaluatedObservationOrdinal,
   });
   return outcome;
 }
@@ -125,8 +170,11 @@ async function verifyToolObservedStepAsync(options: {
   registry: Map<string, ToolRegistryEntry>;
   backend: SqlReadBackend;
   logStep: (line: object) => void;
+  repeatObservationCount?: number;
 }): Promise<StepOutcome> {
   const { workflowId, ev, registry, backend, logStep } = options;
+  const repeatObservationCount = options.repeatObservationCount ?? 1;
+  const evaluatedObservationOrdinal = repeatObservationCount;
   const entry = registry.get(ev.toolId);
   if (!entry) {
     const outcome: StepOutcome = {
@@ -137,6 +185,8 @@ async function verifyToolObservedStepAsync(options: {
       status: "incomplete_verification",
       reasons: [{ code: "UNKNOWN_TOOL", message: `Unknown toolId: ${ev.toolId}` }],
       evidenceSummary: {},
+      repeatObservationCount,
+      evaluatedObservationOrdinal,
     };
     logStep({
       workflowId,
@@ -147,6 +197,8 @@ async function verifyToolObservedStepAsync(options: {
       status: outcome.status,
       reasons: outcome.reasons,
       evidenceSummary: outcome.evidenceSummary,
+      repeatObservationCount,
+      evaluatedObservationOrdinal,
     });
     return outcome;
   }
@@ -162,6 +214,8 @@ async function verifyToolObservedStepAsync(options: {
       status: "incomplete_verification",
       reasons: [{ code: resolved.code, message: resolved.message }],
       evidenceSummary: {},
+      repeatObservationCount,
+      evaluatedObservationOrdinal,
     };
     logStep({
       workflowId,
@@ -172,6 +226,8 @@ async function verifyToolObservedStepAsync(options: {
       status: outcome.status,
       reasons: outcome.reasons,
       evidenceSummary: outcome.evidenceSummary,
+      repeatObservationCount,
+      evaluatedObservationOrdinal,
     });
     return outcome;
   }
@@ -185,6 +241,8 @@ async function verifyToolObservedStepAsync(options: {
     status: rec.status,
     reasons: rec.reasons,
     evidenceSummary: rec.evidenceSummary,
+    repeatObservationCount,
+    evaluatedObservationOrdinal,
   };
   logStep({
     workflowId,
@@ -195,8 +253,94 @@ async function verifyToolObservedStepAsync(options: {
     status: outcome.status,
     reasons: outcome.reasons,
     evidenceSummary: outcome.evidenceSummary,
+    repeatObservationCount,
+    evaluatedObservationOrdinal,
   });
   return outcome;
+}
+
+function runLogicalStepsVerificationSync(options: {
+  workflowId: string;
+  events: ToolObservedEvent[];
+  registry: Map<string, ToolRegistryEntry>;
+  db: DatabaseSync;
+  logStep: (line: object) => void;
+}): StepOutcome[] {
+  const plans = planLogicalSteps(options.events);
+  const out: StepOutcome[] = [];
+  for (const plan of plans) {
+    const n = plan.repeatObservationCount;
+    if (plan.divergent) {
+      const outcome = buildDivergentStepOutcome(plan, options.registry);
+      options.logStep({
+        workflowId: options.workflowId,
+        seq: outcome.seq,
+        toolId: outcome.toolId,
+        intendedEffect: outcome.intendedEffect,
+        verificationRequest: null,
+        status: outcome.status,
+        reasons: outcome.reasons,
+        evidenceSummary: outcome.evidenceSummary,
+        repeatObservationCount: n,
+        evaluatedObservationOrdinal: n,
+      });
+      out.push(outcome);
+      continue;
+    }
+    out.push(
+      verifyToolObservedStep({
+        workflowId: options.workflowId,
+        ev: plan.last,
+        registry: options.registry,
+        db: options.db,
+        logStep: options.logStep,
+        repeatObservationCount: n,
+      }),
+    );
+  }
+  return out;
+}
+
+async function runLogicalStepsVerificationAsync(options: {
+  workflowId: string;
+  events: ToolObservedEvent[];
+  registry: Map<string, ToolRegistryEntry>;
+  backend: SqlReadBackend;
+  logStep: (line: object) => void;
+}): Promise<StepOutcome[]> {
+  const plans = planLogicalSteps(options.events);
+  const out: StepOutcome[] = [];
+  for (const plan of plans) {
+    const n = plan.repeatObservationCount;
+    if (plan.divergent) {
+      const outcome = buildDivergentStepOutcome(plan, options.registry);
+      options.logStep({
+        workflowId: options.workflowId,
+        seq: outcome.seq,
+        toolId: outcome.toolId,
+        intendedEffect: outcome.intendedEffect,
+        verificationRequest: null,
+        status: outcome.status,
+        reasons: outcome.reasons,
+        evidenceSummary: outcome.evidenceSummary,
+        repeatObservationCount: n,
+        evaluatedObservationOrdinal: n,
+      });
+      out.push(outcome);
+      continue;
+    }
+    out.push(
+      await verifyToolObservedStepAsync({
+        workflowId: options.workflowId,
+        ev: plan.last,
+        registry: options.registry,
+        backend: options.backend,
+        logStep: options.logStep,
+        repeatObservationCount: n,
+      }),
+    );
+  }
+  return out;
 }
 
 export async function verifyWorkflow(options: {
@@ -214,14 +358,18 @@ export async function verifyWorkflow(options: {
   const { events, runLevelCodes } = loadEventsForWorkflow(eventsPath, workflowId);
   const registry = loadToolsRegistry(registryPath);
 
-  const steps: StepOutcome[] = [];
+  let steps: StepOutcome[];
 
   if (database.kind === "sqlite") {
     const db = new DatabaseSync(database.path, { readOnly: true });
     try {
-      for (const ev of events) {
-        steps.push(verifyToolObservedStep({ workflowId, ev, registry, db, logStep: log }));
-      }
+      steps = runLogicalStepsVerificationSync({
+        workflowId,
+        events,
+        registry,
+        db,
+        logStep: log,
+      });
     } finally {
       db.close();
     }
@@ -229,9 +377,13 @@ export async function verifyWorkflow(options: {
     const client = await connectPostgresVerificationClient(database.connectionString);
     const backend = createPostgresSqlReadBackend(client);
     try {
-      for (const ev of events) {
-        steps.push(await verifyToolObservedStepAsync({ workflowId, ev, registry, backend, logStep: log }));
-      }
+      steps = await runLogicalStepsVerificationAsync({
+        workflowId,
+        events,
+        registry,
+        backend,
+        logStep: log,
+      });
     } finally {
       try {
         await client.end();
@@ -253,7 +405,7 @@ class WorkflowVerificationSession {
   private readonly registry: Map<string, ToolRegistryEntry>;
   private readonly db: DatabaseSync;
   private readonly logStep: (line: object) => void;
-  private readonly steps: StepOutcome[] = [];
+  private readonly bufferedEvents: ToolObservedEvent[] = [];
   private readonly runLevelCodes: string[] = [];
   private observeForbidden = false;
   private dbOpen = true;
@@ -270,7 +422,7 @@ class WorkflowVerificationSession {
     this.logStep = logStep;
   }
 
-  observeStep(value: unknown): StepOutcome | undefined {
+  observeStep(value: unknown): undefined {
     if (this.observeForbidden) {
       throw new Error(POST_CLOSE_MSG);
     }
@@ -286,15 +438,8 @@ class WorkflowVerificationSession {
     if (ev.workflowId !== this.workflowId) {
       return undefined;
     }
-    const outcome = verifyToolObservedStep({
-      workflowId: this.workflowId,
-      ev,
-      registry: this.registry,
-      db: this.db,
-      logStep: this.logStep,
-    });
-    this.steps.push(outcome);
-    return outcome;
+    this.bufferedEvents.push(ev);
+    return undefined;
   }
 
   closeDbIfOpen(): void {
@@ -306,17 +451,17 @@ class WorkflowVerificationSession {
   }
 
   buildWorkflowResult(): WorkflowResult {
-    const sorted = [...this.steps].sort((a, b) => a.seq - b.seq);
-    const codes = [...this.runLevelCodes];
-    for (let i = 1; i < sorted.length; i++) {
-      if (sorted[i]!.seq === sorted[i - 1]!.seq) {
-        if (!codes.includes("DUPLICATE_SEQ")) {
-          codes.push("DUPLICATE_SEQ");
-        }
-        break;
-      }
+    if (!this.dbOpen) {
+      throw new Error("Workflow verification buildWorkflowResult invoked after database closed");
     }
-    return aggregateWorkflow(this.workflowId, sorted, codes);
+    const steps = runLogicalStepsVerificationSync({
+      workflowId: this.workflowId,
+      events: this.bufferedEvents,
+      registry: this.registry,
+      db: this.db,
+      logStep: this.logStep,
+    });
+    return aggregateWorkflow(this.workflowId, steps, [...this.runLevelCodes]);
   }
 }
 
@@ -328,17 +473,19 @@ export async function withWorkflowVerification(
     logStep?: (line: object) => void;
     truthReport?: (report: string) => void;
   },
-  run: (observeStep: (value: unknown) => StepOutcome | undefined) => void | Promise<void>,
+  run: (observeStep: (value: unknown) => void) => void | Promise<void>,
 ): Promise<WorkflowResult> {
   const log = options.logStep ?? (() => {});
   const truthReport = options.truthReport ?? defaultTruthReportToStderr;
   let session: WorkflowVerificationSession | undefined;
   let runFailure: unknown;
+  let result: WorkflowResult | undefined;
   try {
     const registry = loadToolsRegistry(options.registryPath);
     const db = new DatabaseSync(options.dbPath, { readOnly: true });
     session = new WorkflowVerificationSession(options.workflowId, registry, db, log);
     await Promise.resolve(run((v) => session!.observeStep(v)));
+    result = session.buildWorkflowResult();
   } catch (e) {
     runFailure = e;
   } finally {
@@ -347,7 +494,6 @@ export async function withWorkflowVerification(
   if (runFailure !== undefined) {
     throw runFailure;
   }
-  const result = session!.buildWorkflowResult();
-  truthReport(formatWorkflowTruthReport(result));
-  return result;
+  truthReport(formatWorkflowTruthReport(result!));
+  return result!;
 }

@@ -32,12 +32,5 @@ export function loadEventsForWorkflow(
 
   candidates.sort((a, b) => a.seq - b.seq);
 
-  for (let i = 1; i < candidates.length; i++) {
-    if (candidates[i]!.seq === candidates[i - 1]!.seq) {
-      runLevelCodes.push("DUPLICATE_SEQ");
-      break;
-    }
-  }
-
   return { events: candidates, runLevelCodes };
 }

@@ -16,7 +16,8 @@ This document is the authoritative specification for the MVP. The product verifi
 | Module | Role |
 |--------|------|
 | `schemaLoad.ts` | AJV 2020-12 validators for event line, registry, workflow result |
-| `loadEvents.ts` | Read NDJSON, validate, filter `workflowId`, sort by `seq`, detect `DUPLICATE_SEQ` |
+| `loadEvents.ts` | Read NDJSON, validate, filter `workflowId`, stable sort by `seq` |
+| `planLogicalSteps.ts` | Stable sort, group by `seq`, canonical params equality, divergence vs last observation |
 | `resolveExpectation.ts` | Registry + params → `VerificationRequest`; `intendedEffect` template rendering (audit only) |
 | `valueVerification.ts` | Canonical display strings + `verificationScalarsEqual` (single scalar comparison table) |
 | `sqlConnector.ts` | SQLite parameterized read; lowercase column keys |
@@ -24,18 +25,16 @@ This document is the authoritative specification for the MVP. The product verifi
 | `reconciler.ts` | `reconcileFromRows` (pure rule table), `reconcileSqlRow` (SQLite sync), `reconcileSqlRowAsync` (Postgres) |
 | `aggregate.ts` | Workflow status precedence |
 | `workflowTruthReport.ts` | `formatWorkflowTruthReport`, `STEP_STATUS_TRUTH_LABELS`; fixed human report grammar |
-| `pipeline.ts` | Orchestration: async `verifyWorkflow` (SQLite or Postgres `database` option), sync `verifyToolObservedStep`, `withWorkflowVerification` (SQLite `dbPath` only); default `truthReport` / `logStep` |
+| `pipeline.ts` | Orchestration: `runLogicalStepsVerification` (internal), async `verifyWorkflow`, sync `verifyToolObservedStep`, `withWorkflowVerification` (SQLite `dbPath` only); default `truthReport` / `logStep` |
 | `cli.ts` | CLI entry |
 
 ### Engineer note: shared step core
 
-`reconcileFromRows` in `reconciler.ts` is the single rule table. `verifyToolObservedStep` (SQLite, sync) backs `withWorkflowVerification` and the SQLite branch of `verifyWorkflow`. The Postgres branch uses an internal async step path that calls `reconcileSqlRowAsync` after the same fetch semantics. **Why:** One classification table; SQLite stays synchronous at the integrator boundary; Postgres stays on the batch path only.
-
-### Integrator
+`reconcileFromRows` in `reconciler.ts` is the single rule table. `planLogicalSteps` collapses multiple observations per `seq`; `verifyToolObservedStep` (SQLite, sync) reconciles the **last** observation per logical step when observations are non-divergent. `verifyWorkflow` and `withWorkflowVerification` both call the same internal `runLogicalStepsVerification` once per run (SQLite sync / Postgres async). **Why:** One classification table; one logical step per `seq`; SQLite stays synchronous at the integrator boundary; Postgres stays on the batch path only.
 
 ### Low-friction integration (in-process)
 
-Primary integration for running workflows in code: **`await withWorkflowVerification(options, run)`** from `pipeline.ts` (re-exported in the package entry). The `run` callback receives **`observeStep`**; call it after each tool with one [event line](#event-line-schema) object. There is **no** public `finish` — the library closes the read-only SQLite handle in a `finally` block after `run` completes or throws.
+Primary integration for running workflows in code: **`await withWorkflowVerification(options, run)`** from `pipeline.ts` (re-exported in the package entry). The `run` callback receives **`observeStep`**; call it after each tool with one [event line](#event-line-schema) object. There is **no** public `finish` — after `run` completes successfully, the library builds the **`WorkflowResult`** (including SQL verification) **before** closing the read-only SQLite handle in **`finally`**.
 
 **`withWorkflowVerification` is SQLite-only** (option `dbPath` → read-only file). For Postgres ground truth, replay NDJSON and call **`await verifyWorkflow`** with `database: { kind: "postgres", connectionString }` or use the CLI (`--postgres-url`). **Why:** Keeps `observeStep` synchronous and a single stable hook; async `pg` is isolated to batch verification.
 
@@ -44,7 +43,8 @@ One root boundary; library owns DB close in finally; avoids silent leaks when in
 Normative contracts:
 
 - **`observeStep` input:** Only a JavaScript **non-null object** is schema-validated against the event schema; **strings and primitives are not parsed as NDJSON**—non-objects yield **`MALFORMED_EVENT_LINE`** (same run-level meaning as a bad NDJSON line in batch mode).
-- **`withWorkflowVerification` return:** **`Promise<WorkflowResult>`** fulfilled on success; **rejected** on invalid registry/DB setup (before `run`) or if **`run`** throws or rejects — after the DB is closed in **`finally`**.
+- **`observeStep` return:** Always **`undefined`**. The authoritative step list and statuses are **only** on the fulfilled **`WorkflowResult`** from **`withWorkflowVerification`**.
+- **`withWorkflowVerification` return:** **`Promise<WorkflowResult>`** fulfilled on success; **rejected** on invalid registry/DB setup (before `run`) or if **`run`** throws or rejects — the DB is closed in **`finally`** after the result is built (or after throw).
 - **Post-close `observeStep`:** If a caller keeps the injected function and uses it after the run, it throws **`Error`** with message **`Workflow verification observeStep invoked after workflow run completed`**.
 - **Parity:** Feeding the same event objects in file order as an NDJSON workflow must match **`await verifyWorkflow`** on that file for the same `workflowId`, `registryPath`, and SQLite `database: { kind: "sqlite", path }` (same file path as `dbPath` for the hook).
 
@@ -84,7 +84,7 @@ node dist/cli.js --workflow-id <id> --events <path> --registry <path> --postgres
 
 **I/O order (CLI):** For each run, **`verifyWorkflow`** emits the human report via default **`truthReport`** to **stderr** first, then the CLI writes **stdout**. So: **stderr (human) → stdout (JSON)**.
 
-**stdout:** Single JSON object matching `schemas/workflow-result.schema.json`.
+**stdout:** Single JSON object matching `schemas/workflow-result.schema.json` (`schemaVersion` **`2`**; each step includes **`repeatObservationCount`** and **`evaluatedObservationOrdinal`**).
 
 **stderr:** One **human truth report** per verification (same text as `formatWorkflowTruthReport`); see [Human truth report](#human-truth-report).
 
@@ -99,7 +99,7 @@ This section is **normative**: literals and line shape match `formatWorkflowTrut
 - **Default `truthReport` to stderr:** Gives a clear truth signal without extra configuration; silent tests pass `truthReport: () => {}`.
 - **Default `logStep` no-op:** Removes the old default of one JSON object per step on stderr, which duplicated `WorkflowResult` and conflicted with the human report.
 - **Fixed `trust:` lines and step labels (`STEP_STATUS_TRUTH_LABELS`):** Stable strings for alerts, screenshots, and training; each `trust:` line maps to one `WorkflowStatus` from `aggregate.ts`.
-- **Run-level lines for known codes + fallback:** Today only `MALFORMED_EVENT_LINE` and `DUPLICATE_SEQ` are emitted; unknown codes still render with a generic explanation.
+- **Run-level lines for known codes + fallback:** Today only `MALFORMED_EVENT_LINE` is defined with a fixed explanation; unknown codes still render with a generic explanation.
 - **No trailing newline inside the returned string:** The default `truthReport` implementation appends `\n` when writing to stderr.
 
 **Grammar (UTF-8; lines separated by `\n` only; returned string has no trailing `\n`)**
@@ -116,7 +116,6 @@ This section is **normative**: literals and line shape match `formatWorkflowTrut
    - If `runLevelCodes` is empty: line exactly `run_level: (none)`.
    - Otherwise: line `run_level:` then one line per code in array order, each `  - ` + code + `: ` + explanation, where:
      - `MALFORMED_EVENT_LINE` → `Event line was missing, invalid JSON, or failed schema validation for a tool observation.`
-     - `DUPLICATE_SEQ` → `Duplicate seq values appeared for this workflow; ordering may be unreliable.`
      - any other code → `Unknown run-level code (forward compatibility).`
 
 3. **Steps**
@@ -130,6 +129,7 @@ This section is **normative**: literals and line shape match `formatWorkflowTrut
 | `inconsistent` | `FAILED_VALUE_MISMATCH` |
 | `incomplete_verification` | `INCOMPLETE_CANNOT_VERIFY` |
 
+   - Immediately after that header line: exactly one line `    observations: evaluated=` + decimal `evaluatedObservationOrdinal` + ` of ` + decimal `repeatObservationCount` + ` in_capture_order` (four spaces before `observations:`; no trailing spaces; no period).
    - For each reason: `    reason: [` + code + `] ` + trimmed message, or `(no message)` if the message is empty after trim; if `field` is set and non-empty, append ` field=` + field value.
    - If `intendedEffect` is non-empty after trim: `    intended: ` + single-line text (each `\r`/`\n` replaced by ASCII space, runs of spaces collapsed, trimmed).
 
@@ -157,6 +157,19 @@ Required fields per line:
 - `toolId`, `params` (object)
 
 **Not allowed on the event (MVP):** `expectation` / `verification` objects — the resolver must derive verification from the registry.
+
+### Retry and repeated seq
+
+Multiple event lines with the same `workflowId` and **`seq`** are treated as **retries** of one logical step. **Capture order** is: after stable sort by `seq`, ties keep **file line order** (batch) or **`observeStep` call order** (session). The **last** observation in that order is the one reconciled against SQL when all observations in the group **match** the last on `toolId` and **canonical params** (see below). If any observation differs from the last, the step is **`incomplete_verification`** / **`RETRY_OBSERVATIONS_DIVERGE`** and **no** SQL reconcile runs for that step.
+
+**`canonicalJsonForParams(value)`** (used only for divergence; implemented in `planLogicalSteps.ts`):
+
+- `null`, `boolean`, `number`, or `string`: `JSON.stringify(value)` per ECMAScript.
+- Array: `[` + elements each passed through `canonicalJsonForParams`, joined by `,` + `]` (no spaces).
+- Plain object (`typeof === "object"`, not array, not null): own enumerable string keys sorted by UTF-16 code unit order with comparator `(a, b) => (a < b ? -1 : a > b ? 1 : 0)`; `{` + for each key: `JSON.stringify(key)` + `:` + `canonicalJsonForParams(value[key])`, joined by `,` + `}` (no spaces).
+- Any other value: sentinel `"__non_json_params:" + typeof value + "__"` (never equal to normal JSON-derived strings).
+
+Two observations **match** iff `toolId` is `===` and `canonicalJsonForParams(params_a) === canonicalJsonForParams(params_b)`.
 
 ## Tool registry
 
@@ -256,7 +269,7 @@ Step statuses: `verified` | `missing` | `inconsistent` | `incomplete_verificatio
 
 | Workflow status | Condition |
 |-----------------|-----------|
-| `incomplete` | Any run-level code (`MALFORMED_EVENT_LINE`, `DUPLICATE_SEQ`, …), **or** zero steps, **or** any step `incomplete_verification`. |
+| `incomplete` | Any run-level code (`MALFORMED_EVENT_LINE`, …), **or** zero steps, **or** any step `incomplete_verification`. |
 | `inconsistent` | Not incomplete as above, and any step in `{ missing, inconsistent }`. |
 | `complete` | Not incomplete, every step `verified`. |
 
@@ -268,7 +281,7 @@ Step statuses: `verified` | `missing` | `inconsistent` | `incomplete_verificatio
 |-------|----------------------|-----------------------------------|
 | No `complete` without SQL verification | Yes — integration tests | — |
 | Postgres session read-only + SELECT-only role | Yes — `postgres-session-readonly` / `postgres-privilege` tests | — |
-| Four step statuses + duplicates / unknown tool / dup seq / malformed line | Yes — `npm test` | — |
+| Four step statuses + retries / divergent seq / unknown tool / malformed line | Yes — `npm test` | — |
 | Framework-agnostic capture | Yes — NDJSON contract + examples | Integration list / adapters |
 | Manual verification steps ↓, time-to-confirm ↓, trust / re-runs | No | Metrics & study (define counters in ops) |
 
