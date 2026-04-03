@@ -16,6 +16,8 @@ This document is the authoritative specification for the MVP. The product verifi
 | Module | Role |
 |--------|------|
 | `schemaLoad.ts` | AJV 2020-12 validators for event line, registry, workflow result |
+| `failureCatalog.ts` | Stable run-level literals, `formatOperationalMessage`, CLI error envelope helpers, `CLI_OPERATIONAL_CODES` |
+| `truthLayerError.ts` | `TruthLayerError` for coded I/O and registry failures |
 | `loadEvents.ts` | Read NDJSON, validate, filter `workflowId`, stable sort by `seq` |
 | `planLogicalSteps.ts` | Stable sort, group by `seq`, canonical params equality, divergence vs last observation |
 | `resolveExpectation.ts` | Registry + params → `VerificationRequest`; `intendedEffect` template rendering (audit only) |
@@ -53,7 +55,7 @@ Normative contracts:
 ### Postgres verification (batch and CLI)
 
 - **Library:** `await verifyWorkflow({ workflowId, eventsPath, registryPath, database: { kind: "postgres", connectionString }, … })`. One **`pg.Client`** per invocation: `connect()` → **`applyPostgresVerificationSessionGuards`** (runs **`SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY`**) → **`SELECT 1`** on that client → per-step parameterized verification `SELECT`s → `client.end()` in `finally` (cleanup errors must not mask the primary failure).
-- **CLI:** Exactly one of `--db <sqlitePath>` or **`--postgres-url <url>`**. Connection or guard failure **throws** before steps; the CLI prints the error to **stderr** and exits **2** with **no** JSON on stdout.
+- **CLI:** Exactly one of `--db <sqlitePath>` or **`--postgres-url <url>`**. Connection, guard, or I/O failure before a verdict: the CLI prints **one line** of JSON to **stderr** (see [CLI operational errors](#cli-operational-errors)) and exits **3** with **no** workflow JSON on stdout.
 - **Safety evidence in CI:** Tests assert (1) after session guards, **`INSERT` into `readonly_probe`** fails with **read-only transaction** (`25006`), and (2) role **`verifier_ro`** has **SELECT only** on verification tables (`INSERT` denied `42501`). Operators should still use a **least-privilege DB user** and TLS (`sslmode` in the URL) in real environments.
 
 ### Batch and CLI (replay)
@@ -76,17 +78,31 @@ node dist/cli.js --workflow-id <id> --events <path> --registry <path> --postgres
 
 **Exit codes**
 
-| Code | `workflow.status` |
-|------|-------------------|
-| 0 | `complete` |
-| 1 | `inconsistent` |
-| 2 | `incomplete` |
+| Code | Meaning |
+|------|---------|
+| 0 | `workflow.status` is `complete` |
+| 1 | `workflow.status` is `inconsistent` |
+| 2 | `workflow.status` is `incomplete` |
+| 3 | Operational failure (registry read/parse, events read, DB open/connect, invalid args, internal CLI error); see [CLI operational errors](#cli-operational-errors) |
 
-**I/O order (CLI):** For each run, **`verifyWorkflow`** emits the human report via default **`truthReport`** to **stderr** first, then the CLI writes **stdout**. So: **stderr (human) → stdout (JSON)**.
+**`--help` / `-h`:** Prints usage to **stdout** and exits **0** (not a verification run).
 
-**stdout:** Single JSON object matching `schemas/workflow-result.schema.json` (`schemaVersion` **`2`**; each step includes **`repeatObservationCount`** and **`evaluatedObservationOrdinal`**).
+**I/O order (CLI — verdict paths 0/1/2):** **`verifyWorkflow`** emits the human report via default **`truthReport`** to **stderr** first, then the CLI writes **stdout**. So: **stderr (human) → stdout (JSON)**.
 
-**stderr:** One **human truth report** per verification (same text as `formatWorkflowTruthReport`); see [Human truth report](#human-truth-report).
+**stdout:** Single JSON object matching `schemas/workflow-result.schema.json` (`schemaVersion` **`2`**; includes required **`runLevelReasons`** alongside **`runLevelCodes`**; each step includes **`repeatObservationCount`** and **`evaluatedObservationOrdinal`**).
+
+**stderr (verdict paths):** One **human truth report** per verification (same text as `formatWorkflowTruthReport`); see [Human truth report](#human-truth-report).
+
+### CLI operational errors
+
+When the CLI exits **3**, **stderr** is exactly **one** UTF-8 line: a JSON object with:
+
+- `schemaVersion`: **1**
+- `kind`: **`execution_truth_layer_error`**
+- `code`: one of **`CLI_USAGE`**, **`REGISTRY_READ_FAILED`**, **`REGISTRY_JSON_SYNTAX`**, **`REGISTRY_SCHEMA_INVALID`**, **`REGISTRY_DUPLICATE_TOOL_ID`**, **`EVENTS_READ_FAILED`**, **`SQLITE_DATABASE_OPEN_FAILED`**, **`POSTGRES_CLIENT_SETUP_FAILED`**, **`WORKFLOW_RESULT_SCHEMA_INVALID`**, **`INTERNAL_ERROR`**
+- `message`: human-readable text after whitespace normalization and truncation (max **2048** JavaScript string length; see `formatOperationalMessage` in `failureCatalog.ts`)
+
+**stdout** must be empty on exit **3**. Automation should key on **`code`**, not exact **`message`**, for driver-dependent errors.
 
 ### Human truth report
 
@@ -99,7 +115,7 @@ This section is **normative**: literals and line shape match `formatWorkflowTrut
 - **Default `truthReport` to stderr:** Gives a clear truth signal without extra configuration; silent tests pass `truthReport: () => {}`.
 - **Default `logStep` no-op:** Removes the old default of one JSON object per step on stderr, which duplicated `WorkflowResult` and conflicted with the human report.
 - **Fixed `trust:` lines and step labels (`STEP_STATUS_TRUTH_LABELS`):** Stable strings for alerts, screenshots, and training; each `trust:` line maps to one `WorkflowStatus` from `aggregate.ts`.
-- **Run-level lines for known codes + fallback:** Today only `MALFORMED_EVENT_LINE` is defined with a fixed explanation; unknown codes still render with a generic explanation.
+- **Run-level lines:** Each line uses **`runLevelReasons`** from `WorkflowResult`: `code` + `message` from each `Reason` (same literals as `failureCatalog.ts` for catalog-defined codes).
 - **No trailing newline inside the returned string:** The default `truthReport` implementation appends `\n` when writing to stderr.
 
 **Grammar (UTF-8; lines separated by `\n` only; returned string has no trailing `\n`)**
@@ -113,10 +129,10 @@ This section is **normative**: literals and line shape match `formatWorkflowTrut
      - `NOT_TRUSTED: At least one step failed verification against the database (determinate failure).` when status is `inconsistent`.
 
 2. **Run-level**
-   - If `runLevelCodes` is empty: line exactly `run_level: (none)`.
-   - Otherwise: line `run_level:` then one line per code in array order, each `  - ` + code + `: ` + explanation, where:
-     - `MALFORMED_EVENT_LINE` → `Event line was missing, invalid JSON, or failed schema validation for a tool observation.`
-     - any other code → `Unknown run-level code (forward compatibility).`
+   - If `runLevelReasons` is empty: line exactly `run_level: (none)`.
+   - Otherwise: line `run_level:` then one line per entry in **`runLevelReasons`** order, each `  - ` + `reason.code` + `: ` + `reason.message` (trimmed for display consistency with step reasons).
+   - `runLevelCodes[i]` always equals `runLevelReasons[i].code` (derived from `runLevelReasons` at aggregation). When there are no matching events for the workflow id, the library appends **`NO_STEPS_FOR_WORKFLOW`** with message `No tool_observed events for this workflow id after filtering.`
+   - Catalog literal for **`MALFORMED_EVENT_LINE`**: `Event line was missing, invalid JSON, or failed schema validation for a tool observation.`
 
 3. **Steps**
    - Line exactly `steps:`.
@@ -139,7 +155,7 @@ This section is **normative**: literals and line shape match `formatWorkflowTrut
 
 - **Reading logs:** Treat **stderr** as the human verdict for a verification run; **stdout** (CLI) is the machine-readable `WorkflowResult`. Correlate them by process / timestamp in your log stack.
 - **`trust:` line:** Treat as **trusted** only when it is the `TRUSTED:` sentence **and** `workflow_status: complete`. Any `NOT_TRUSTED:` means the workflow must not be treated as fully verified—investigate `steps:` and `run_level:`.
-- **Exit codes:** Same mapping as [above](#batch-and-cli-replay) (0 = `complete`, 1 = `inconsistent`, 2 = `incomplete`).
+- **Exit codes:** 0 = `complete`, 1 = `inconsistent`, 2 = `incomplete`, 3 = operational failure ([CLI operational errors](#cli-operational-errors)); **`--help`** exits **0**.
 - DB user should be **read-only** in production (Postgres: **SELECT-only** role; the product also sets **session read-only** via `applyPostgresVerificationSessionGuards`).
 - **`npm test`** requires Postgres 16+ and env **`POSTGRES_ADMIN_URL`** (superuser, runs [`scripts/pg-ci-init.mjs`](../scripts/pg-ci-init.mjs)) and **`POSTGRES_VERIFICATION_URL`** (role `verifier_ro` / SELECT-only on seeded tables). CI sets both; locally use the README Docker one-liner and export the same URLs.
 - SQLite file must exist when `readOnly: true` is used (Node `DatabaseSync`).
@@ -200,7 +216,20 @@ Resolved internal shape:
 | Code | Meaning |
 |------|---------|
 | `UNKNOWN_TOOL` | `toolId` not in registry |
-| `RESOLVE_POINTER` | Missing pointer, wrong type, `undefined` value, or non-scalar (object/array) in `requiredFields` |
+| `CONST_STRING_EMPTY` | `const` string spec empty or not a string |
+| `STRING_SPEC_POINTER_MISSING` | Pointer missing or null |
+| `STRING_SPEC_TYPE` | Value at pointer is not a string |
+| `STRING_SPEC_EMPTY` | Empty string at pointer |
+| `KEY_VALUE_POINTER_MISSING` | Key value pointer missing or null |
+| `KEY_VALUE_NOT_SCALAR` | Key value is object/array |
+| `KEY_VALUE_SPEC_INVALID` | Key value spec shape invalid |
+| `UNSUPPORTED_VERIFICATION_KIND` | Verification kind is not `sql_row` |
+| `TABLE_SPEC_INVALID` | Table spec shape invalid |
+| `TABLE_POINTER_INVALID` | Table pointer did not resolve to a non-empty string |
+| `REQUIRED_FIELDS_POINTER_MISSING` | `requiredFields` pointer missing or null |
+| `REQUIRED_FIELDS_NOT_OBJECT` | `requiredFields` not a plain object |
+| `REQUIRED_FIELDS_VALUE_UNDEFINED` | Field value is `undefined` |
+| `REQUIRED_FIELDS_VALUE_NOT_SCALAR` | Field value is object/array or unsupported type |
 | `INVALID_IDENTIFIER` | Table / column / `requiredFields` key not matching `^[a-zA-Z_][a-zA-Z0-9_]*$` |
 
 ## SQL connector contract
@@ -224,7 +253,7 @@ Precondition: iterate `requiredFields` keys in **lexicographic** order.
 
 Let `n = rows.length` after `LIMIT 2`.
 
-1. Connector throws → `incomplete_verification` / `CONNECTOR_ERROR`.
+1. Connector throws → `incomplete_verification` / `CONNECTOR_ERROR` (`message` passed through `formatOperationalMessage`; do not rely on exact string equality across drivers).
 2. `n === 0` → `missing` / `ROW_ABSENT`.
 3. `n >= 2` → `inconsistent` / `DUPLICATE_ROWS` (no field inspection).
 4. `n === 1`, row `row`, for each key `k` in sorted order, `col = k.toLowerCase()`:

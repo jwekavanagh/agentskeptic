@@ -1,0 +1,52 @@
+import type { Reason } from "./types.js";
+
+/** CLI operational error envelope (stderr, exit 3). */
+export const CLI_ERROR_SCHEMA_VERSION = 1 as const;
+export const CLI_ERROR_KIND = "execution_truth_layer_error" as const;
+
+export const OPERATIONAL_MESSAGE_MAX_CHARS = 2048;
+
+/** Every operational exit-3 code (SSOT for integrators). */
+export const CLI_OPERATIONAL_CODES = {
+  CLI_USAGE: "CLI_USAGE",
+  REGISTRY_READ_FAILED: "REGISTRY_READ_FAILED",
+  REGISTRY_JSON_SYNTAX: "REGISTRY_JSON_SYNTAX",
+  REGISTRY_SCHEMA_INVALID: "REGISTRY_SCHEMA_INVALID",
+  REGISTRY_DUPLICATE_TOOL_ID: "REGISTRY_DUPLICATE_TOOL_ID",
+  EVENTS_READ_FAILED: "EVENTS_READ_FAILED",
+  SQLITE_DATABASE_OPEN_FAILED: "SQLITE_DATABASE_OPEN_FAILED",
+  POSTGRES_CLIENT_SETUP_FAILED: "POSTGRES_CLIENT_SETUP_FAILED",
+  WORKFLOW_RESULT_SCHEMA_INVALID: "WORKFLOW_RESULT_SCHEMA_INVALID",
+  INTERNAL_ERROR: "INTERNAL_ERROR",
+} as const;
+
+export type OperationalCode = (typeof CLI_OPERATIONAL_CODES)[keyof typeof CLI_OPERATIONAL_CODES];
+
+export const RUN_LEVEL_MESSAGES = {
+  MALFORMED_EVENT_LINE:
+    "Event line was missing, invalid JSON, or failed schema validation for a tool observation.",
+  NO_STEPS_FOR_WORKFLOW: "No tool_observed events for this workflow id after filtering.",
+} as const;
+
+export function runLevelIssue(code: keyof typeof RUN_LEVEL_MESSAGES): Reason {
+  return { code, message: RUN_LEVEL_MESSAGES[code] };
+}
+
+export function formatOperationalMessage(raw: string): string {
+  let s = raw.replace(/\t|\r|\n/g, " ");
+  s = s.replace(/ +/g, " ").trim();
+  const max = OPERATIONAL_MESSAGE_MAX_CHARS;
+  if (s.length > max) {
+    return `${s.slice(0, max - 3)}...`;
+  }
+  return s;
+}
+
+export function cliErrorEnvelope(code: string, message: string): string {
+  return JSON.stringify({
+    schemaVersion: CLI_ERROR_SCHEMA_VERSION,
+    kind: CLI_ERROR_KIND,
+    code,
+    message: formatOperationalMessage(message),
+  });
+}

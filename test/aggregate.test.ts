@@ -23,15 +23,18 @@ describe("WorkflowAggregator precedence", () => {
     );
     expect(r.status).toBe("complete");
     expect(r.schemaVersion).toBe(2);
+    expect(r.runLevelReasons).toEqual([]);
+    expect(r.runLevelCodes).toEqual([]);
   });
 
-  it("incomplete when runLevelCodes non-empty even if steps verified", () => {
+  it("incomplete when run-level reasons non-empty even if steps verified", () => {
     const r = aggregateWorkflow(
       "w",
       [step({ seq: 0, toolId: "t", status: "verified" })],
-      ["TEST_BLOCKING_CODE"],
+      [{ code: "TEST_BLOCKING_CODE", message: "blocking" }],
     );
     expect(r.status).toBe("incomplete");
+    expect(r.runLevelCodes).toEqual(["TEST_BLOCKING_CODE"]);
   });
 
   it("incomplete when any incomplete_verification", () => {
@@ -53,11 +56,14 @@ describe("WorkflowAggregator precedence", () => {
       [],
     );
     expect(r.status).toBe("inconsistent");
+    expect(r.runLevelReasons).toEqual([]);
   });
 
-  it("incomplete when zero steps", () => {
+  it("incomplete when zero steps adds NO_STEPS_FOR_WORKFLOW", () => {
     const r = aggregateWorkflow("w", [], []);
     expect(r.status).toBe("incomplete");
+    expect(r.runLevelCodes).toEqual(["NO_STEPS_FOR_WORKFLOW"]);
+    expect(r.runLevelReasons.map((x) => x.code)).toEqual(["NO_STEPS_FOR_WORKFLOW"]);
   });
 
   it("params.ok cannot produce complete without verified — missing stays inconsistent", () => {

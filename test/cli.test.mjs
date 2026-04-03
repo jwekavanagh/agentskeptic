@@ -60,6 +60,30 @@ describe("CLI verify-workflow", () => {
     assert.equal(stderr, formatWorkflowTruthReport(parsed));
   });
 
+  it("--help exits 0 and prints usage to stdout", () => {
+    const r = spawnSync(process.execPath, ["--no-warnings", cliJs, "--help"], {
+      encoding: "utf8",
+      cwd: root,
+    });
+    assert.equal(r.status, 0);
+    assert.ok(r.stdout.includes("Usage:"));
+    assert.equal(r.stderr.trim(), "");
+  });
+
+  it("missing args → exit 3 and stderr JSON CLI_USAGE", () => {
+    const r = spawnSync(process.execPath, ["--no-warnings", cliJs, "--workflow-id", "w"], {
+      encoding: "utf8",
+      cwd: root,
+    });
+    assert.equal(r.status, 3);
+    assert.equal(r.stdout.trim(), "");
+    const err = JSON.parse(r.stderr.trim());
+    assert.equal(err.kind, "execution_truth_layer_error");
+    assert.equal(err.code, "CLI_USAGE");
+    assert.ok(err.message.length > 0);
+    assert.ok(err.message.length <= 2048);
+  });
+
   it("wf_missing exit 1 and inconsistent trust line", () => {
     const r = spawnSync(process.execPath, [
       "--no-warnings",

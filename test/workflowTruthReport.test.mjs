@@ -34,17 +34,23 @@ steps:
     reason: [UNKNOWN_TOOL] Unknown toolId: nope.tool
     intended: Unknown tool: nope.tool`;
 
+const MALFORMED_MSG =
+  "Event line was missing, invalid JSON, or failed schema validation for a tool observation.";
+const NO_STEPS_MSG = "No tool_observed events for this workflow id after filtering.";
+
 const GOLDEN_MALFORMED = `workflow_id: wf_complete
 workflow_status: incomplete
 trust: NOT_TRUSTED: Verification is incomplete; the workflow cannot be fully confirmed.
 run_level:
-  - MALFORMED_EVENT_LINE: Event line was missing, invalid JSON, or failed schema validation for a tool observation.
+  - MALFORMED_EVENT_LINE: ${MALFORMED_MSG}
+  - NO_STEPS_FOR_WORKFLOW: ${NO_STEPS_MSG}
 steps:`;
 
 const GOLDEN_EMPTY_STEPS = `workflow_id: no_such_workflow
 workflow_status: incomplete
 trust: NOT_TRUSTED: Verification is incomplete; the workflow cannot be fully confirmed.
-run_level: (none)
+run_level:
+  - NO_STEPS_FOR_WORKFLOW: ${NO_STEPS_MSG}
 steps:`;
 
 const GOLDEN_UNKNOWN_RUN_LEVEL = `workflow_id: w
@@ -63,6 +69,7 @@ describe("formatWorkflowTruthReport", () => {
       workflowId: "wf_complete",
       status: "complete",
       runLevelCodes: [],
+      runLevelReasons: [],
       steps: [
         {
           seq: 0,
@@ -84,6 +91,7 @@ describe("formatWorkflowTruthReport", () => {
       workflowId: "wf_missing",
       status: "inconsistent",
       runLevelCodes: [],
+      runLevelReasons: [],
       steps: [
         {
           seq: 0,
@@ -105,6 +113,7 @@ describe("formatWorkflowTruthReport", () => {
       workflowId: "wf_unknown_tool",
       status: "incomplete",
       runLevelCodes: [],
+      runLevelReasons: [],
       steps: [
         {
           seq: 0,
@@ -127,7 +136,11 @@ describe("formatWorkflowTruthReport", () => {
       schemaVersion: 2,
       workflowId: "wf_complete",
       status: "incomplete",
-      runLevelCodes: ["MALFORMED_EVENT_LINE"],
+      runLevelCodes: ["MALFORMED_EVENT_LINE", "NO_STEPS_FOR_WORKFLOW"],
+      runLevelReasons: [
+        { code: "MALFORMED_EVENT_LINE", message: MALFORMED_MSG },
+        { code: "NO_STEPS_FOR_WORKFLOW", message: NO_STEPS_MSG },
+      ],
       steps: [],
     };
     assert.equal(formatWorkflowTruthReport(malformed), GOLDEN_MALFORMED);
@@ -136,7 +149,8 @@ describe("formatWorkflowTruthReport", () => {
       schemaVersion: 2,
       workflowId: "no_such_workflow",
       status: "incomplete",
-      runLevelCodes: [],
+      runLevelCodes: ["NO_STEPS_FOR_WORKFLOW"],
+      runLevelReasons: [{ code: "NO_STEPS_FOR_WORKFLOW", message: NO_STEPS_MSG }],
       steps: [],
     };
     assert.equal(formatWorkflowTruthReport(empty), GOLDEN_EMPTY_STEPS);
@@ -148,6 +162,9 @@ describe("formatWorkflowTruthReport", () => {
       workflowId: "w",
       status: "complete",
       runLevelCodes: ["UNKNOWN_CODE_X"],
+      runLevelReasons: [
+        { code: "UNKNOWN_CODE_X", message: "Unknown run-level code (forward compatibility)." },
+      ],
       steps: [
         {
           seq: 0,
@@ -171,6 +188,7 @@ describe("formatWorkflowTruthReport", () => {
       workflowId: "multi",
       status: "inconsistent",
       runLevelCodes: [],
+      runLevelReasons: [],
       steps: [
         {
           seq: 0,
@@ -236,6 +254,7 @@ describe("formatWorkflowTruthReport", () => {
       workflowId: "s",
       status: "incomplete",
       runLevelCodes: [],
+      runLevelReasons: [],
       steps,
     };
     const out = formatWorkflowTruthReport(r);
@@ -244,12 +263,35 @@ describe("formatWorkflowTruthReport", () => {
     }
   });
 
+  it("run-level reason message is trimmed; whitespace-only becomes (no message)", () => {
+    const trimmed = {
+      schemaVersion: 2,
+      workflowId: "w",
+      status: "complete",
+      runLevelCodes: ["X"],
+      runLevelReasons: [{ code: "X", message: "  hello  " }],
+      steps: [],
+    };
+    assert.ok(formatWorkflowTruthReport(trimmed).includes("  - X: hello"));
+
+    const blank = {
+      schemaVersion: 2,
+      workflowId: "w",
+      status: "complete",
+      runLevelCodes: ["Y"],
+      runLevelReasons: [{ code: "Y", message: "   \t  " }],
+      steps: [],
+    };
+    assert.ok(formatWorkflowTruthReport(blank).includes("  - Y: (no message)"));
+  });
+
   it("empty reason message renders (no message)", () => {
     const r = {
       schemaVersion: 2,
       workflowId: "w",
       status: "incomplete",
       runLevelCodes: [],
+      runLevelReasons: [],
       steps: [
         {
           seq: 0,
@@ -274,6 +316,7 @@ describe("formatWorkflowTruthReport", () => {
       workflowId: "w",
       status: "incomplete",
       runLevelCodes: [],
+      runLevelReasons: [],
       steps: [
         {
           seq: 0,
@@ -297,6 +340,7 @@ describe("formatWorkflowTruthReport", () => {
       workflowId: "w",
       status: "complete",
       runLevelCodes: [],
+      runLevelReasons: [],
       steps: [
         {
           seq: 0,
@@ -320,6 +364,7 @@ describe("formatWorkflowTruthReport", () => {
       workflowId: "w",
       status: "complete",
       runLevelCodes: [],
+      runLevelReasons: [],
       steps: [
         {
           seq: 0,

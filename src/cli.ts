@@ -1,6 +1,12 @@
 #!/usr/bin/env node
-import { loadSchemaValidator } from "./schemaLoad.js";
+import {
+  CLI_OPERATIONAL_CODES,
+  cliErrorEnvelope,
+  formatOperationalMessage,
+} from "./failureCatalog.js";
 import { verifyWorkflow } from "./pipeline.js";
+import { loadSchemaValidator } from "./schemaLoad.js";
+import { TruthLayerError } from "./truthLayerError.js";
 
 function argValue(args: string[], name: string): string | undefined {
   const i = args.indexOf(name);
@@ -18,14 +24,21 @@ Provide exactly one of --db or --postgres-url.
 Exit codes:
   0  workflow status complete
   1  workflow status inconsistent
-  2  workflow status incomplete`;
+  2  workflow status incomplete
+  3  operational failure (see stderr JSON)
+
+  --help, -h  print this message and exit 0`;
+}
+
+function writeCliError(code: string, message: string): void {
+  console.error(cliErrorEnvelope(code, message));
 }
 
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
   if (args.includes("--help") || args.includes("-h")) {
     console.log(usage());
-    process.exit(2);
+    process.exit(0);
   }
 
   const workflowId = argValue(args, "--workflow-id");
@@ -35,14 +48,17 @@ async function main(): Promise<void> {
   const postgresUrl = argValue(args, "--postgres-url");
 
   if (!workflowId || !eventsPath || !registryPath) {
-    console.error(usage());
-    process.exit(2);
+    writeCliError(CLI_OPERATIONAL_CODES.CLI_USAGE, "Missing --workflow-id, --events, or --registry.");
+    process.exit(3);
   }
 
   const dbCount = (dbPath ? 1 : 0) + (postgresUrl ? 1 : 0);
   if (dbCount !== 1) {
-    console.error(usage());
-    process.exit(2);
+    writeCliError(
+      CLI_OPERATIONAL_CODES.CLI_USAGE,
+      "Provide exactly one of --db or --postgres-url.",
+    );
+    process.exit(3);
   }
 
   let result;
@@ -56,14 +72,22 @@ async function main(): Promise<void> {
         : { kind: "sqlite", path: dbPath! },
     });
   } catch (e) {
-    console.error(e instanceof Error ? e.message : String(e));
-    process.exit(2);
+    if (e instanceof TruthLayerError) {
+      writeCliError(e.code, e.message);
+      process.exit(3);
+    }
+    const msg = e instanceof Error ? e.message : String(e);
+    writeCliError(CLI_OPERATIONAL_CODES.INTERNAL_ERROR, formatOperationalMessage(msg));
+    process.exit(3);
   }
 
   const validateResult = loadSchemaValidator("workflow-result");
   if (!validateResult(result)) {
-    console.error("Internal error: result failed schema validation");
-    process.exit(2);
+    writeCliError(
+      CLI_OPERATIONAL_CODES.WORKFLOW_RESULT_SCHEMA_INVALID,
+      JSON.stringify(validateResult.errors ?? []),
+    );
+    process.exit(3);
   }
 
   console.log(JSON.stringify(result));
@@ -74,6 +98,7 @@ async function main(): Promise<void> {
 }
 
 void main().catch((e) => {
-  console.error(e instanceof Error ? e.message : String(e));
-  process.exit(2);
+  const msg = e instanceof Error ? e.message : String(e);
+  console.error(cliErrorEnvelope(CLI_OPERATIONAL_CODES.INTERNAL_ERROR, formatOperationalMessage(msg)));
+  process.exit(3);
 });

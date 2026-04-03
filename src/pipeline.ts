@@ -16,12 +16,15 @@ import {
   type SqlReadBackend,
 } from "./sqlReadBackend.js";
 import type {
+  Reason,
   StepOutcome,
   ToolObservedEvent,
   ToolRegistryEntry,
   VerificationDatabase,
   WorkflowResult,
 } from "./types.js";
+import { CLI_OPERATIONAL_CODES, runLevelIssue } from "./failureCatalog.js";
+import { TruthLayerError } from "./truthLayerError.js";
 import { formatWorkflowTruthReport } from "./workflowTruthReport.js";
 
 const validateRegistry = loadSchemaValidator("tools-registry");
@@ -32,10 +35,25 @@ function defaultTruthReportToStderr(report: string): void {
 const validateEvent = loadSchemaValidator("event");
 
 export function loadToolsRegistry(registryPath: string): Map<string, ToolRegistryEntry> {
-  const raw = readFileSync(registryPath, "utf8");
-  const parsed = JSON.parse(raw) as unknown;
+  let raw: string;
+  try {
+    raw = readFileSync(registryPath, "utf8");
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    throw new TruthLayerError(CLI_OPERATIONAL_CODES.REGISTRY_READ_FAILED, msg, { cause: e });
+  }
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw) as unknown;
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    throw new TruthLayerError(CLI_OPERATIONAL_CODES.REGISTRY_JSON_SYNTAX, msg, { cause: e });
+  }
   if (!validateRegistry(parsed)) {
-    throw new Error(`Invalid tools registry: ${JSON.stringify(validateRegistry.errors ?? [])}`);
+    throw new TruthLayerError(
+      CLI_OPERATIONAL_CODES.REGISTRY_SCHEMA_INVALID,
+      JSON.stringify(validateRegistry.errors ?? []),
+    );
   }
   return buildRegistryMap(parsed as ToolRegistryEntry[]);
 }
@@ -355,13 +373,19 @@ export async function verifyWorkflow(options: {
   const log = options.logStep ?? (() => {});
   const truthReport = options.truthReport ?? defaultTruthReportToStderr;
 
-  const { events, runLevelCodes } = loadEventsForWorkflow(eventsPath, workflowId);
+  const { events, runLevelReasons } = loadEventsForWorkflow(eventsPath, workflowId);
   const registry = loadToolsRegistry(registryPath);
 
   let steps: StepOutcome[];
 
   if (database.kind === "sqlite") {
-    const db = new DatabaseSync(database.path, { readOnly: true });
+    let db: DatabaseSync;
+    try {
+      db = new DatabaseSync(database.path, { readOnly: true });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      throw new TruthLayerError(CLI_OPERATIONAL_CODES.SQLITE_DATABASE_OPEN_FAILED, msg, { cause: e });
+    }
     try {
       steps = runLogicalStepsVerificationSync({
         workflowId,
@@ -374,7 +398,13 @@ export async function verifyWorkflow(options: {
       db.close();
     }
   } else {
-    const client = await connectPostgresVerificationClient(database.connectionString);
+    let client: Awaited<ReturnType<typeof connectPostgresVerificationClient>>;
+    try {
+      client = await connectPostgresVerificationClient(database.connectionString);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      throw new TruthLayerError(CLI_OPERATIONAL_CODES.POSTGRES_CLIENT_SETUP_FAILED, msg, { cause: e });
+    }
     const backend = createPostgresSqlReadBackend(client);
     try {
       steps = await runLogicalStepsVerificationAsync({
@@ -393,7 +423,7 @@ export async function verifyWorkflow(options: {
     }
   }
 
-  const result = aggregateWorkflow(workflowId, steps, runLevelCodes);
+  const result = aggregateWorkflow(workflowId, steps, runLevelReasons);
   truthReport(formatWorkflowTruthReport(result));
   return result;
 }
@@ -406,7 +436,7 @@ class WorkflowVerificationSession {
   private readonly db: DatabaseSync;
   private readonly logStep: (line: object) => void;
   private readonly bufferedEvents: ToolObservedEvent[] = [];
-  private readonly runLevelCodes: string[] = [];
+  private readonly runLevelReasons: Reason[] = [];
   private observeForbidden = false;
   private dbOpen = true;
 
@@ -427,11 +457,11 @@ class WorkflowVerificationSession {
       throw new Error(POST_CLOSE_MSG);
     }
     if (typeof value !== "object" || value === null) {
-      this.runLevelCodes.push("MALFORMED_EVENT_LINE");
+      this.runLevelReasons.push(runLevelIssue("MALFORMED_EVENT_LINE"));
       return undefined;
     }
     if (!validateEvent(value)) {
-      this.runLevelCodes.push("MALFORMED_EVENT_LINE");
+      this.runLevelReasons.push(runLevelIssue("MALFORMED_EVENT_LINE"));
       return undefined;
     }
     const ev = value as ToolObservedEvent;
@@ -461,7 +491,7 @@ class WorkflowVerificationSession {
       db: this.db,
       logStep: this.logStep,
     });
-    return aggregateWorkflow(this.workflowId, steps, [...this.runLevelCodes]);
+    return aggregateWorkflow(this.workflowId, steps, [...this.runLevelReasons]);
   }
 }
 
@@ -482,7 +512,13 @@ export async function withWorkflowVerification(
   let result: WorkflowResult | undefined;
   try {
     const registry = loadToolsRegistry(options.registryPath);
-    const db = new DatabaseSync(options.dbPath, { readOnly: true });
+    let db: DatabaseSync;
+    try {
+      db = new DatabaseSync(options.dbPath, { readOnly: true });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      throw new TruthLayerError(CLI_OPERATIONAL_CODES.SQLITE_DATABASE_OPEN_FAILED, msg, { cause: e });
+    }
     session = new WorkflowVerificationSession(options.workflowId, registry, db, log);
     await Promise.resolve(run((v) => session!.observeStep(v)));
     result = session.buildWorkflowResult();

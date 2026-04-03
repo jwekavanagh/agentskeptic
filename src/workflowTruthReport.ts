@@ -14,13 +14,6 @@ const TRUST_LINE_BY_STATUS: Record<WorkflowStatus, string> = {
     "NOT_TRUSTED: At least one step failed verification against the database (determinate failure).",
 };
 
-const RUN_LEVEL_EXPLANATIONS: Record<string, string> = {
-  MALFORMED_EVENT_LINE:
-    "Event line was missing, invalid JSON, or failed schema validation for a tool observation.",
-};
-
-const UNKNOWN_RUN_LEVEL = "Unknown run-level code (forward compatibility).";
-
 function sanitizeOneLineId(value: string): string {
   return value.replace(/\r\n|\r|\n/g, "_");
 }
@@ -30,10 +23,6 @@ function singleLineIntended(effect: string): string {
   return withSpaces.replace(/ +/g, " ").trim();
 }
 
-function runLevelExplanation(code: string): string {
-  return RUN_LEVEL_EXPLANATIONS[code] ?? UNKNOWN_RUN_LEVEL;
-}
-
 export function formatWorkflowTruthReport(result: WorkflowResult): string {
   const lines: string[] = [];
 
@@ -41,12 +30,14 @@ export function formatWorkflowTruthReport(result: WorkflowResult): string {
   lines.push(`workflow_status: ${result.status}`);
   lines.push(`trust: ${TRUST_LINE_BY_STATUS[result.status]}`);
 
-  if (result.runLevelCodes.length === 0) {
+  if (result.runLevelReasons.length === 0) {
     lines.push("run_level: (none)");
   } else {
     lines.push("run_level:");
-    for (const code of result.runLevelCodes) {
-      lines.push(`  - ${code}: ${runLevelExplanation(code)}`);
+    for (const r of result.runLevelReasons) {
+      const msg = r.message.trim();
+      const human = msg.length > 0 ? msg : "(no message)";
+      lines.push(`  - ${r.code}: ${human}`);
     }
   }
 

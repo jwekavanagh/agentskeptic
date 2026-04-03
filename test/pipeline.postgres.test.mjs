@@ -102,7 +102,7 @@ describe("verifyWorkflow Postgres integration", () => {
     assert.equal(parsed.status, "complete");
   });
 
-  it("CLI invalid postgres port → exit 2 and stderr", () => {
+  it("CLI invalid postgres port → exit 3 and stderr JSON", () => {
     const badUrl = "postgresql://verifier_ro:verifier@127.0.0.1:65534/postgres";
     const r = spawnSync(
       process.execPath,
@@ -120,12 +120,15 @@ describe("verifyWorkflow Postgres integration", () => {
       ],
       { encoding: "utf8", cwd: root },
     );
-    assert.equal(r.status, 2);
-    assert.ok(r.stderr.trim().length > 0);
+    assert.equal(r.status, 3);
     assert.equal(r.stdout.trim(), "");
+    const err = JSON.parse(r.stderr.trim());
+    assert.equal(err.kind, "execution_truth_layer_error");
+    assert.equal(err.code, "POSTGRES_CLIENT_SETUP_FAILED");
+    assert.ok(typeof err.message === "string");
   });
 
-  it("CLI both --db and --postgres-url → exit 2", () => {
+  it("CLI both --db and --postgres-url → exit 3 CLI_USAGE", () => {
     const r = spawnSync(
       process.execPath,
       [
@@ -144,6 +147,8 @@ describe("verifyWorkflow Postgres integration", () => {
       ],
       { encoding: "utf8", cwd: root },
     );
-    assert.equal(r.status, 2);
+    assert.equal(r.status, 3);
+    const err = JSON.parse(r.stderr.trim());
+    assert.equal(err.code, "CLI_USAGE");
   });
 });

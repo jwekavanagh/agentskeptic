@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 2,
+  "workflowId": "no_such_workflow",
+  "status": "incomplete",
+  "runLevelCodes": ["NO_STEPS_FOR_WORKFLOW"],
+  "runLevelReasons": [
+    {
+      "code": "NO_STEPS_FOR_WORKFLOW",
+      "message": "No tool_observed events for this workflow id after filtering."
+    }
+  ],
+  "steps": []
+}

@@ -210,7 +210,8 @@ describe("verifyWorkflow integration", () => {
       truthReport: () => {},
     });
     assert.equal(r.status, "incomplete");
-    assert.ok(r.runLevelCodes.includes("MALFORMED_EVENT_LINE"));
+    assert.deepStrictEqual(r.runLevelCodes, ["MALFORMED_EVENT_LINE", "NO_STEPS_FOR_WORKFLOW"]);
+    assert.equal(r.runLevelReasons.length, 2);
   });
 
   it("empty workflow id filter → incomplete", async () => {
@@ -224,6 +225,8 @@ describe("verifyWorkflow integration", () => {
     });
     assert.equal(r.status, "incomplete");
     assert.equal(r.steps.length, 0);
+    assert.deepStrictEqual(r.runLevelCodes, ["NO_STEPS_FOR_WORKFLOW"]);
+    assert.equal(r.runLevelReasons[0]?.code, "NO_STEPS_FOR_WORKFLOW");
   });
 
   it("truthReport receives formatWorkflowTruthReport(result) once (verifyWorkflow)", async () => {

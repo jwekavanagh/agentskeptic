@@ -42,6 +42,7 @@ describe("JSON Schemas (SSOT)", () => {
       workflowId: "wf_complete",
       status: "complete",
       runLevelCodes: [],
+      runLevelReasons: [],
       steps: [
         {
           seq: 0,

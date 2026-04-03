@@ -40,7 +40,7 @@ Postgres (exactly one of `--db` or `--postgres-url`):
 node dist/cli.js --workflow-id wf_complete --events examples/events.ndjson --registry examples/tools.json --postgres-url "postgresql://user:pass@host:5432/dbname"
 ```
 
-For the CLI, a **human-readable verification report** is written to **stderr** and the machine-readable **workflow result JSON** to **stdout**; full format, defaults, and stream order are specified only in the SSOT section **[Human truth report](docs/execution-truth-layer.md#human-truth-report)**.
+For the CLI, a **human-readable verification report** is written to **stderr** and the machine-readable **workflow result JSON** to **stdout** on verdict exits **0–2**; operational failures use exit **3** with a **single-line JSON error** on stderr (see [CLI operational errors](docs/execution-truth-layer.md#cli-operational-errors)). Full format and stream order are in the SSOT **[Human truth report](docs/execution-truth-layer.md#human-truth-report)**.
 
 ## Full test suite (`npm test`)
 

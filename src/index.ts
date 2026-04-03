@@ -1,5 +1,14 @@
 export { verifyWorkflow, loadToolsRegistry, withWorkflowVerification } from "./pipeline.js";
 export { loadEventsForWorkflow } from "./loadEvents.js";
+export { TruthLayerError } from "./truthLayerError.js";
+export {
+  CLI_OPERATIONAL_CODES,
+  OPERATIONAL_MESSAGE_MAX_CHARS,
+  formatOperationalMessage,
+  cliErrorEnvelope,
+  CLI_ERROR_KIND,
+  CLI_ERROR_SCHEMA_VERSION,
+} from "./failureCatalog.js";
 export {
   resolveVerificationRequest,
   renderIntendedEffect,
@@ -16,6 +25,7 @@ export {
   createPostgresSqlReadBackend,
 } from "./sqlReadBackend.js";
 export type {
+  Reason,
   ToolObservedEvent,
   ToolRegistryEntry,
   VerificationRequest,

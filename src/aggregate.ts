@@ -1,6 +1,17 @@
-import type { StepOutcome, WorkflowResult, WorkflowStatus } from "./types.js";
+import { runLevelIssue } from "./failureCatalog.js";
+import type { Reason, StepOutcome, WorkflowResult, WorkflowStatus } from "./types.js";
 
-export function aggregateWorkflow(workflowId: string, steps: StepOutcome[], runLevelCodes: string[]): WorkflowResult {
+export function aggregateWorkflow(
+  workflowId: string,
+  steps: StepOutcome[],
+  runLevelReasonsIncoming: Reason[],
+): WorkflowResult {
+  const runLevelReasons: Reason[] = [...runLevelReasonsIncoming];
+  if (steps.length === 0) {
+    runLevelReasons.push(runLevelIssue("NO_STEPS_FOR_WORKFLOW"));
+  }
+  const runLevelCodes = runLevelReasons.map((r) => r.code);
+
   let status: WorkflowStatus;
 
   const hasIncompleteStep = steps.some((s) => s.status === "incomplete_verification");
@@ -21,6 +32,7 @@ export function aggregateWorkflow(workflowId: string, steps: StepOutcome[], runL
     workflowId,
     status,
     runLevelCodes: [...runLevelCodes],
+    runLevelReasons: [...runLevelReasons],
     steps,
   };
 }

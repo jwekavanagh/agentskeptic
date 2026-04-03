@@ -1,3 +1,4 @@
+import { formatOperationalMessage } from "./failureCatalog.js";
 import { ConnectorError, fetchRowsForVerification } from "./sqlConnector.js";
 import type { SqlReadBackend } from "./sqlReadBackend.js";
 import type { DatabaseSync } from "node:sqlite";
@@ -81,7 +82,7 @@ export function reconcileSqlRow(db: DatabaseSync, req: VerificationRequest): Rec
     if (e instanceof ConnectorError) {
       return {
         status: "incomplete_verification",
-        reasons: [{ code: "CONNECTOR_ERROR", message: e.message }],
+        reasons: [{ code: "CONNECTOR_ERROR", message: formatOperationalMessage(e.message) }],
         evidenceSummary: { rowCount: null, error: true },
       };
     }
@@ -101,7 +102,7 @@ export async function reconcileSqlRowAsync(
     if (e instanceof ConnectorError) {
       return {
         status: "incomplete_verification",
-        reasons: [{ code: "CONNECTOR_ERROR", message: e.message }],
+        reasons: [{ code: "CONNECTOR_ERROR", message: formatOperationalMessage(e.message) }],
         evidenceSummary: { rowCount: null, error: true },
       };
     }

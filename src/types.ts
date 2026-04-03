@@ -61,12 +61,13 @@ export type WorkflowResult = {
   workflowId: string;
   status: WorkflowStatus;
   runLevelCodes: string[];
+  runLevelReasons: Reason[];
   steps: StepOutcome[];
 };
 
 export type LoadEventsResult = {
   events: ToolObservedEvent[];
-  runLevelCodes: string[];
+  runLevelReasons: Reason[];
 };
 
 /** Batch / CLI verification target (`verifyWorkflow`). In-process hook remains SQLite `dbPath` only. */

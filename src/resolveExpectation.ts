@@ -1,5 +1,7 @@
 import { getPointer } from "./jsonPointer.js";
 import type { ToolRegistryEntry, VerificationRequest, VerificationScalar } from "./types.js";
+import { CLI_OPERATIONAL_CODES } from "./failureCatalog.js";
+import { TruthLayerError } from "./truthLayerError.js";
 
 const IDENT = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
 
@@ -15,16 +17,19 @@ function resolveStringSpec(
   if ("const" in spec) {
     const v = spec.const;
     if (typeof v !== "string" || v.length === 0) {
-      return { ok: false, code: "RESOLVE_POINTER", message: `${label}: const must be non-empty string` };
+      return { ok: false, code: "CONST_STRING_EMPTY", message: `${label}: const must be non-empty string` };
     }
     return { ok: true, value: v };
   }
   const got = getPointer(params, spec.pointer);
   if (got === undefined || got === null) {
-    return { ok: false, code: "RESOLVE_POINTER", message: `${label}: missing at ${spec.pointer}` };
+    return { ok: false, code: "STRING_SPEC_POINTER_MISSING", message: `${label}: missing at ${spec.pointer}` };
   }
-  if (typeof got !== "string" || got.length === 0) {
-    return { ok: false, code: "RESOLVE_POINTER", message: `${label}: expected string at ${spec.pointer}` };
+  if (typeof got !== "string") {
+    return { ok: false, code: "STRING_SPEC_TYPE", message: `${label}: expected string at ${spec.pointer}` };
+  }
+  if (got.length === 0) {
+    return { ok: false, code: "STRING_SPEC_EMPTY", message: `${label}: empty string at ${spec.pointer}` };
   }
   return { ok: true, value: got };
 }
@@ -40,14 +45,14 @@ function resolveKeyValue(
     const ptr = (spec as { pointer: string }).pointer;
     const got = getPointer(params, ptr);
     if (got === undefined || got === null) {
-      return { ok: false, code: "RESOLVE_POINTER", message: `key.value missing at ${ptr}` };
+      return { ok: false, code: "KEY_VALUE_POINTER_MISSING", message: `key.value missing at ${ptr}` };
     }
     if (typeof got === "object") {
-      return { ok: false, code: "RESOLVE_POINTER", message: `key.value must be scalar at ${ptr}` };
+      return { ok: false, code: "KEY_VALUE_NOT_SCALAR", message: `key.value must be scalar at ${ptr}` };
     }
     return { ok: true, value: String(got) };
   }
-  return { ok: false, code: "RESOLVE_POINTER", message: "key.value: invalid spec" };
+  return { ok: false, code: "KEY_VALUE_SPEC_INVALID", message: "key.value: invalid spec" };
 }
 
 export function renderIntendedEffect(template: string, params: Record<string, unknown>): string {
@@ -64,7 +69,7 @@ export function resolveVerificationRequest(
 ): ResolveResult {
   const v = entry.verification;
   if (v.kind !== "sql_row") {
-    return { ok: false, code: "RESOLVE_POINTER", message: "unsupported verification kind" };
+    return { ok: false, code: "UNSUPPORTED_VERIFICATION_KIND", message: "unsupported verification kind" };
   }
 
   const tableRes =
@@ -77,13 +82,13 @@ export function resolveVerificationRequest(
             if (got === undefined || got === null || typeof got !== "string" || got.length === 0) {
               return {
                 ok: false as const,
-                code: "RESOLVE_POINTER",
+                code: "TABLE_POINTER_INVALID",
                 message: `table: expected non-empty string at ${tptr}`,
               };
             }
             return { ok: true as const, value: got };
           })()
-        : { ok: false as const, code: "RESOLVE_POINTER", message: "table: invalid spec" };
+        : { ok: false as const, code: "TABLE_SPEC_INVALID", message: "table: invalid spec" };
 
   if (!tableRes.ok) return tableRes;
 
@@ -103,14 +108,14 @@ export function resolveVerificationRequest(
   if (fieldsRaw === undefined || fieldsRaw === null) {
     return {
       ok: false,
-      code: "RESOLVE_POINTER",
+      code: "REQUIRED_FIELDS_POINTER_MISSING",
       message: `requiredFields missing at ${v.requiredFields.pointer}`,
     };
   }
   if (typeof fieldsRaw !== "object" || Array.isArray(fieldsRaw)) {
     return {
       ok: false,
-      code: "RESOLVE_POINTER",
+      code: "REQUIRED_FIELDS_NOT_OBJECT",
       message: `requiredFields must be object at ${v.requiredFields.pointer}`,
     };
   }
@@ -124,14 +129,14 @@ export function resolveVerificationRequest(
     if (val === undefined) {
       return {
         ok: false,
-        code: "RESOLVE_POINTER",
+        code: "REQUIRED_FIELDS_VALUE_UNDEFINED",
         message: `requiredFields.${k} must not be undefined`,
       };
     }
     if (typeof val === "object" && val !== null) {
       return {
         ok: false,
-        code: "RESOLVE_POINTER",
+        code: "REQUIRED_FIELDS_VALUE_NOT_SCALAR",
         message: `requiredFields.${k} must be string, number, boolean, or null`,
       };
     }
@@ -140,7 +145,7 @@ export function resolveVerificationRequest(
     } else {
       return {
         ok: false,
-        code: "RESOLVE_POINTER",
+        code: "REQUIRED_FIELDS_VALUE_NOT_SCALAR",
         message: `requiredFields.${k} must be string, number, boolean, or null`,
       };
     }
@@ -162,7 +167,10 @@ export function buildRegistryMap(entries: ToolRegistryEntry[]): Map<string, Tool
   const m = new Map<string, ToolRegistryEntry>();
   for (const e of entries) {
     if (m.has(e.toolId)) {
-      throw new Error(`Duplicate toolId in registry: ${e.toolId}`);
+      throw new TruthLayerError(
+        CLI_OPERATIONAL_CODES.REGISTRY_DUPLICATE_TOOL_ID,
+        `Duplicate toolId in registry: ${e.toolId}`,
+      );
     }
     m.set(e.toolId, e);
   }

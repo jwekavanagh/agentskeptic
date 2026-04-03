@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { resolveVerificationRequest } from "./resolveExpectation.js";
+import { buildRegistryMap, resolveVerificationRequest } from "./resolveExpectation.js";
 import type { ToolRegistryEntry } from "./types.js";
+import { CLI_OPERATIONAL_CODES } from "./failureCatalog.js";
+import { TruthLayerError } from "./truthLayerError.js";
 
 const baseEntry: ToolRegistryEntry = {
   toolId: "t",
@@ -39,6 +41,10 @@ describe("resolveVerificationRequest requiredFields scalars", () => {
       fields: { bad: { x: 1 } },
     });
     expect(r.ok).toBe(false);
+    if (!r.ok) {
+      expect(r.code).toBe("REQUIRED_FIELDS_VALUE_NOT_SCALAR");
+      expect(r.message).toBe("requiredFields.bad must be string, number, boolean, or null");
+    }
   });
 
   it("rejects undefined field value", () => {
@@ -46,5 +52,220 @@ describe("resolveVerificationRequest requiredFields scalars", () => {
       fields: { u: undefined },
     });
     expect(r.ok).toBe(false);
+    if (!r.ok) {
+      expect(r.code).toBe("REQUIRED_FIELDS_VALUE_UNDEFINED");
+      expect(r.message).toBe("requiredFields.u must not be undefined");
+    }
+  });
+});
+
+describe("resolver code catalog", () => {
+  it("CONST_STRING_EMPTY", () => {
+    const entry = {
+      ...baseEntry,
+      verification: {
+        ...baseEntry.verification,
+        key: { column: { const: "" } as { const: string }, value: { const: "1" } },
+      },
+    } as ToolRegistryEntry;
+    const r = resolveVerificationRequest(entry, { fields: {} });
+    expect(r.ok).toBe(false);
+    if (!r.ok) {
+      expect(r.code).toBe("CONST_STRING_EMPTY");
+      expect(r.message).toBe("key.column: const must be non-empty string");
+    }
+  });
+
+  it("STRING_SPEC_POINTER_MISSING", () => {
+    const r = resolveVerificationRequest(
+      {
+        ...baseEntry,
+        verification: {
+          ...baseEntry.verification,
+          key: { column: { pointer: "/missing" }, value: { const: "1" } },
+        },
+      },
+      {},
+    );
+    expect(r.ok).toBe(false);
+    if (!r.ok) {
+      expect(r.code).toBe("STRING_SPEC_POINTER_MISSING");
+      expect(r.message).toBe("key.column: missing at /missing");
+    }
+  });
+
+  it("STRING_SPEC_TYPE", () => {
+    const r = resolveVerificationRequest(
+      {
+        ...baseEntry,
+        verification: {
+          ...baseEntry.verification,
+          key: { column: { pointer: "/n" }, value: { const: "1" } },
+        },
+      },
+      { n: 3 },
+    );
+    expect(r.ok).toBe(false);
+    if (!r.ok) {
+      expect(r.code).toBe("STRING_SPEC_TYPE");
+      expect(r.message).toBe("key.column: expected string at /n");
+    }
+  });
+
+  it("STRING_SPEC_EMPTY", () => {
+    const r = resolveVerificationRequest(
+      {
+        ...baseEntry,
+        verification: {
+          ...baseEntry.verification,
+          key: { column: { pointer: "/s" }, value: { const: "1" } },
+        },
+      },
+      { s: "" },
+    );
+    expect(r.ok).toBe(false);
+    if (!r.ok) {
+      expect(r.code).toBe("STRING_SPEC_EMPTY");
+      expect(r.message).toBe("key.column: empty string at /s");
+    }
+  });
+
+  it("KEY_VALUE_POINTER_MISSING", () => {
+    const r = resolveVerificationRequest(
+      {
+        ...baseEntry,
+        verification: {
+          ...baseEntry.verification,
+          key: { column: { const: "id" }, value: { pointer: "/kv" } },
+        },
+      },
+      { fields: {} },
+    );
+    expect(r.ok).toBe(false);
+    if (!r.ok) {
+      expect(r.code).toBe("KEY_VALUE_POINTER_MISSING");
+      expect(r.message).toBe("key.value missing at /kv");
+    }
+  });
+
+  it("KEY_VALUE_NOT_SCALAR", () => {
+    const r = resolveVerificationRequest(
+      {
+        ...baseEntry,
+        verification: {
+          ...baseEntry.verification,
+          key: { column: { const: "id" }, value: { pointer: "/kv" } },
+        },
+      },
+      { fields: {}, kv: { a: 1 } },
+    );
+    expect(r.ok).toBe(false);
+    if (!r.ok) {
+      expect(r.code).toBe("KEY_VALUE_NOT_SCALAR");
+      expect(r.message).toBe("key.value must be scalar at /kv");
+    }
+  });
+
+  it("KEY_VALUE_SPEC_INVALID", () => {
+    const entry = {
+      ...baseEntry,
+      verification: {
+        ...baseEntry.verification,
+        key: { column: { const: "id" }, value: {} as ToolRegistryEntry["verification"]["key"]["value"] },
+      },
+    } as ToolRegistryEntry;
+    const r = resolveVerificationRequest(entry, {});
+    expect(r.ok).toBe(false);
+    if (!r.ok) {
+      expect(r.code).toBe("KEY_VALUE_SPEC_INVALID");
+      expect(r.message).toBe("key.value: invalid spec");
+    }
+  });
+
+  it("UNSUPPORTED_VERIFICATION_KIND", () => {
+    const entry = {
+      ...baseEntry,
+      verification: { ...baseEntry.verification, kind: "other" },
+    } as unknown as ToolRegistryEntry;
+    const r = resolveVerificationRequest(entry, {});
+    expect(r.ok).toBe(false);
+    if (!r.ok) {
+      expect(r.code).toBe("UNSUPPORTED_VERIFICATION_KIND");
+      expect(r.message).toBe("unsupported verification kind");
+    }
+  });
+
+  it("TABLE_SPEC_INVALID", () => {
+    const entry = {
+      ...baseEntry,
+      verification: {
+        ...baseEntry.verification,
+        table: {} as ToolRegistryEntry["verification"]["table"],
+      },
+    } as ToolRegistryEntry;
+    const r = resolveVerificationRequest(entry, { fields: {} });
+    expect(r.ok).toBe(false);
+    if (!r.ok) {
+      expect(r.code).toBe("TABLE_SPEC_INVALID");
+      expect(r.message).toBe("table: invalid spec");
+    }
+  });
+
+  it("TABLE_POINTER_INVALID", () => {
+    const r = resolveVerificationRequest(
+      {
+        ...baseEntry,
+        verification: {
+          ...baseEntry.verification,
+          table: { pointer: "/tbl" },
+        },
+      },
+      { tbl: "", fields: {} },
+    );
+    expect(r.ok).toBe(false);
+    if (!r.ok) {
+      expect(r.code).toBe("TABLE_POINTER_INVALID");
+      expect(r.message).toBe("table: expected non-empty string at /tbl");
+    }
+  });
+
+  it("REQUIRED_FIELDS_POINTER_MISSING", () => {
+    const r = resolveVerificationRequest(baseEntry, {});
+    expect(r.ok).toBe(false);
+    if (!r.ok) {
+      expect(r.code).toBe("REQUIRED_FIELDS_POINTER_MISSING");
+      expect(r.message).toBe("requiredFields missing at /fields");
+    }
+  });
+
+  it("REQUIRED_FIELDS_NOT_OBJECT", () => {
+    const r = resolveVerificationRequest(baseEntry, { fields: [] });
+    expect(r.ok).toBe(false);
+    if (!r.ok) {
+      expect(r.code).toBe("REQUIRED_FIELDS_NOT_OBJECT");
+      expect(r.message).toBe("requiredFields must be object at /fields");
+    }
+  });
+
+  it("REQUIRED_FIELDS_VALUE_NOT_SCALAR bigint", () => {
+    const fields: Record<string, unknown> = { x: BigInt(7) };
+    const r = resolveVerificationRequest(baseEntry, { fields });
+    expect(r.ok).toBe(false);
+    if (!r.ok) {
+      expect(r.code).toBe("REQUIRED_FIELDS_VALUE_NOT_SCALAR");
+    }
+  });
+});
+
+describe("buildRegistryMap", () => {
+  it("throws TruthLayerError REGISTRY_DUPLICATE_TOOL_ID", () => {
+    const entries = [baseEntry, { ...baseEntry, toolId: "t" }];
+    expect(() => buildRegistryMap(entries)).toThrow(TruthLayerError);
+    try {
+      buildRegistryMap(entries);
+    } catch (e) {
+      expect(e).toBeInstanceOf(TruthLayerError);
+      expect((e as TruthLayerError).code).toBe(CLI_OPERATIONAL_CODES.REGISTRY_DUPLICATE_TOOL_ID);
+    }
   });
 });
