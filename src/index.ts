@@ -39,9 +39,22 @@ export {
 export { reconcileSqlRow, reconcileSqlRowAsync } from "./reconciler.js";
 export { aggregateWorkflow } from "./aggregate.js";
 export {
+  ACTIONABLE_FAILURE_CATEGORIES,
+  ACTIONABLE_FAILURE_SEVERITIES,
+  buildActionableCategoryRecurrence,
+  buildCategoryHistogram,
+  deriveActionableCategory,
+  deriveActionableFailureOperational,
+  deriveActionableFailureWorkflow,
+  deriveSeverityWorkflow,
+  maxConsecutiveStreak,
+  productionStepReasonCodeToActionableCategory,
+} from "./actionableFailure.js";
+export {
   buildRunComparisonReport,
   formatRunComparisonReport,
   logicalStepKeyFromStep,
+  perRunActionableFromWorkflowResult,
   recurrenceSignature,
 } from "./runComparison.js";
 export {
@@ -68,6 +81,9 @@ export {
   createPostgresSqlReadBackend,
 } from "./sqlReadBackend.js";
 export type {
+  ActionableFailure,
+  ActionableFailureCategory,
+  ActionableFailureSeverity,
   ControlRunEvent,
   ExecutionTraceBackwardPath,
   ExecutionTraceNode,

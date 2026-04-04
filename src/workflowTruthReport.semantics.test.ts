@@ -51,7 +51,7 @@ describe("buildWorkflowTruthReport (formatter-independent semantics)", () => {
       steps: [verifiedStep(0, "t1")],
     };
     const truth = buildWorkflowTruthReport(engine);
-    expect(truth.schemaVersion).toBe(2);
+    expect(truth.schemaVersion).toBe(3);
     expect(truth.failureAnalysis).toBeNull();
     expect(truth.workflowId).toBe("w");
     expect(truth.workflowStatus).toBe("complete");
@@ -101,6 +101,8 @@ describe("buildWorkflowTruthReport (formatter-independent semantics)", () => {
     expect(truth.failureAnalysis).not.toBeNull();
     expect(truth.failureAnalysis!.primaryOrigin).toBe("downstream_system_state");
     expect(truth.failureAnalysis!.confidence).toBe("medium");
+    expect(truth.failureAnalysis!.unknownReasonCodes).toEqual([]);
+    expect(truth.failureAnalysis!.actionableFailure).toEqual({ category: "ambiguous", severity: "high" });
     expect(truth.failureAnalysis!.alternativeHypotheses).toHaveLength(2);
     expect(truth.steps[0]!.outcomeLabel).toBe(STEP_STATUS_TRUTH_LABELS.missing);
     expect(truth.steps[0]!.failureCategory).toBe("workflow_execution");
@@ -124,6 +126,11 @@ describe("buildWorkflowTruthReport (formatter-independent semantics)", () => {
     };
     const truth = buildWorkflowTruthReport(engine);
     expect(truth.failureAnalysis!.primaryOrigin).toBe("workflow_flow");
+    expect(truth.failureAnalysis!.unknownReasonCodes).toEqual([]);
+    expect(truth.failureAnalysis!.actionableFailure).toEqual({
+      category: "control_flow_problem",
+      severity: "medium",
+    });
     expect(truth.runLevelIssues).toHaveLength(1);
     expect(truth.runLevelIssues[0]!.code).toBe("NO_STEPS_FOR_WORKFLOW");
     expect(truth.runLevelIssues[0]!.category).toBe(
@@ -163,6 +170,11 @@ describe("buildWorkflowTruthReport (formatter-independent semantics)", () => {
     };
     const truth = buildWorkflowTruthReport(engine);
     expect(truth.failureAnalysis!.primaryOrigin).toBe("downstream_system_state");
+    expect(truth.failureAnalysis!.unknownReasonCodes).toEqual([]);
+    expect(truth.failureAnalysis!.actionableFailure).toEqual({
+      category: "downstream_execution_failure",
+      severity: "medium",
+    });
     expect(truth.failureAnalysis!.alternativeHypotheses).toBeUndefined();
     expect(truth.trustSummary).toBe(TRUST_LINE_UNCERTAIN_WITHIN_WINDOW);
     expect(truth.steps[0]!.outcomeLabel).toBe("UNCERTAIN_NOT_OBSERVED_WITHIN_WINDOW");

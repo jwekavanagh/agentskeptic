@@ -4,9 +4,18 @@
   "title": "RunComparisonReport",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "workflowId", "runs", "pairwise", "recurrence"],
+  "required": [
+    "schemaVersion",
+    "workflowId",
+    "runs",
+    "perRunActionableFailures",
+    "categoryHistogram",
+    "actionableCategoryRecurrence",
+    "pairwise",
+    "recurrence"
+  ],
   "properties": {
-    "schemaVersion": { "const": 1 },
+    "schemaVersion": { "const": 2 },
     "workflowId": { "type": "string" },
     "runs": {
       "type": "array",
@@ -17,6 +26,53 @@
         "properties": {
           "runIndex": { "type": "integer", "minimum": 0 },
           "displayLabel": { "type": "string" }
+        }
+      }
+    },
+    "perRunActionableFailures": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["runIndex", "category", "severity"],
+        "properties": {
+          "runIndex": { "type": "integer", "minimum": 0 },
+          "category": { "type": "string" },
+          "severity": { "type": "string", "enum": ["high", "medium", "low"] }
+        }
+      }
+    },
+    "categoryHistogram": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["category", "count"],
+        "properties": {
+          "category": { "type": "string" },
+          "count": { "type": "integer", "minimum": 0 }
+        }
+      }
+    },
+    "actionableCategoryRecurrence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "category",
+          "runIndicesAscending",
+          "runsHitCount",
+          "maxConsecutiveRunStreak"
+        ],
+        "properties": {
+          "category": { "type": "string" },
+          "runIndicesAscending": {
+            "type": "array",
+            "items": { "type": "integer", "minimum": 0 }
+          },
+          "runsHitCount": { "type": "integer", "minimum": 1 },
+          "maxConsecutiveRunStreak": { "type": "integer", "minimum": 1 }
         }
       }
     },
@@ -222,9 +278,7 @@
             "kind",
             "logicalStepKey",
             "seqPrior",
-            "seqCurrent",
             "toolIdPrior",
-            "toolIdCurrent",
             "priorWasFailing"
           ],
           "properties": {

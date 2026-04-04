@@ -1,5 +1,4 @@
 {
-  "schemaVersion": 7,
   "workflowId": "wf_multi_ok",
   "status": "complete",
   "runLevelCodes": [],
@@ -71,6 +70,7 @@
       "evaluatedObservationOrdinal": 1
     }
   ],
+  "schemaVersion": 8,
   "verificationRunContext": {
     "maxWireSchemaVersion": 1,
     "retrievalEvents": [],
@@ -82,7 +82,7 @@
     }
   },
   "workflowTruthReport": {
-    "schemaVersion": 2,
+    "schemaVersion": 3,
     "workflowId": "wf_multi_ok",
     "workflowStatus": "complete",
     "trustSummary": "TRUSTED: Every step matched the database under the configured verification rules.",

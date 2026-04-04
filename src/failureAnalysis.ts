@@ -7,7 +7,7 @@ import {
 import type { FailureOrigin } from "./failureOriginTypes.js";
 import { createEmptyVerificationRunContext } from "./verificationRunContext.js";
 import type {
-  FailureAnalysis,
+  FailureAnalysisBase,
   FailureAnalysisAlternative,
   FailureAnalysisEvidenceItem,
   StepOutcome,
@@ -15,6 +15,10 @@ import type {
   VerificationRunContext,
   WorkflowEngineResult,
 } from "./types.js";
+
+function sortUniqueCodes(codes: string[]): string[] {
+  return [...new Set(codes)].sort((a, b) => a.localeCompare(b));
+}
 
 const RATIONALE_ROW_ABSENT_DOWNSTREAM =
   "The database has no row at the verified key; the tool log may not have committed a write, or replication lag prevented observation.";
@@ -165,7 +169,7 @@ function buildSummary(
 /**
  * Normative failure analysis (P0–P5) per product spec. `engine` must include `verificationRunContext`.
  */
-export function buildFailureAnalysis(engine: WorkflowEngineResult): FailureAnalysis | null {
+export function buildFailureAnalysis(engine: WorkflowEngineResult): FailureAnalysisBase | null {
   if (engine.status === "complete") return null;
 
   const ctx = engine.verificationRunContext ?? createEmptyVerificationRunContext();
@@ -175,16 +179,26 @@ export function buildFailureAnalysis(engine: WorkflowEngineResult): FailureAnaly
   // P0
   if (engine.runLevelReasons.length > 0) {
     const codes = engine.runLevelReasons.map((r) => r.code);
-    const first = minLex(codes);
-    const origin: FailureOrigin = RUN_LEVEL_CODE_TO_ORIGIN[first] ?? "workflow_flow";
-    const confidence = new Set(codes).size === 1 ? "high" : "medium";
-    const evidence: FailureAnalysisEvidenceItem[] = [
-      { scope: "run_level", codes: [...new Set(codes)].sort((a, b) => a.localeCompare(b)) },
-    ];
+    const unique = sortUniqueCodes(codes);
+    const unknownReasonCodes = sortUniqueCodes(unique.filter((c) => !(c in RUN_LEVEL_CODE_TO_ORIGIN)));
+    const knownOnly = unique.filter((c) => c in RUN_LEVEL_CODE_TO_ORIGIN);
+    const first = knownOnly.length > 0 ? minLex(knownOnly) : minLex(unique);
+    const origin: FailureOrigin =
+      knownOnly.length > 0 ? RUN_LEVEL_CODE_TO_ORIGIN[first as keyof typeof RUN_LEVEL_CODE_TO_ORIGIN]! : "workflow_flow";
+    let confidence: FailureAnalysisBase["confidence"];
+    if (unknownReasonCodes.length > 0) {
+      confidence = "low";
+    } else if (new Set(codes).size === 1) {
+      confidence = "high";
+    } else {
+      confidence = "medium";
+    }
+    const evidence: FailureAnalysisEvidenceItem[] = [{ scope: "run_level", codes: unique }];
     return {
-      summary: buildSummary(origin, "p0", { codes: [...new Set(codes)] }),
+      summary: buildSummary(origin, "p0", { codes: unique }),
       primaryOrigin: origin,
       confidence,
+      unknownReasonCodes,
       evidence,
     };
   }
@@ -205,6 +219,7 @@ export function buildFailureAnalysis(engine: WorkflowEngineResult): FailureAnaly
         summary: buildSummary("retrieval", "p1", { retrievalLabel: e0.source }),
         primaryOrigin: "retrieval",
         confidence: "high",
+        unknownReasonCodes: [],
         evidence,
       };
     }
@@ -217,6 +232,7 @@ export function buildFailureAnalysis(engine: WorkflowEngineResult): FailureAnaly
         summary: buildSummary("decision_making", "p2", {}),
         primaryOrigin: "decision_making",
         confidence: "high",
+        unknownReasonCodes: [],
         evidence: [
           {
             scope: "run_context",
@@ -234,6 +250,7 @@ export function buildFailureAnalysis(engine: WorkflowEngineResult): FailureAnaly
         summary: buildSummary("decision_making", "p2", {}),
         primaryOrigin: "decision_making",
         confidence: "high",
+        unknownReasonCodes: [],
         evidence: [
           {
             scope: "run_context",
@@ -256,6 +273,7 @@ export function buildFailureAnalysis(engine: WorkflowEngineResult): FailureAnaly
         summary: buildSummary("decision_making", "p2b", {}),
         primaryOrigin: "decision_making",
         confidence: "medium",
+        unknownReasonCodes: [],
         evidence: [
           {
             scope: "run_context",
@@ -274,6 +292,7 @@ export function buildFailureAnalysis(engine: WorkflowEngineResult): FailureAnaly
         summary: buildSummary("tool_use", "p3", {}),
         primaryOrigin: "tool_use",
         confidence: "medium",
+        unknownReasonCodes: [],
         evidence: [
           {
             scope: "run_context",
@@ -289,18 +308,22 @@ export function buildFailureAnalysis(engine: WorkflowEngineResult): FailureAnaly
   // P4
   if (engine.eventSequenceIntegrity.kind === "irregular") {
     const reasons = engine.eventSequenceIntegrity.reasons;
-    const firstCode = minLex(reasons.map((r) => r.code));
-    const origin: FailureOrigin = EVENT_SEQUENCE_CODE_TO_ORIGIN[firstCode] ?? "workflow_flow";
+    const esCodes = sortUniqueCodes(reasons.map((r) => r.code));
+    const unknownReasonCodes = sortUniqueCodes(esCodes.filter((c) => !(c in EVENT_SEQUENCE_CODE_TO_ORIGIN)));
+    const knownEs = esCodes.filter((c) => c in EVENT_SEQUENCE_CODE_TO_ORIGIN);
+    const firstCode = knownEs.length > 0 ? minLex(knownEs) : minLex(esCodes);
+    const origin: FailureOrigin =
+      knownEs.length > 0
+        ? EVENT_SEQUENCE_CODE_TO_ORIGIN[firstCode as keyof typeof EVENT_SEQUENCE_CODE_TO_ORIGIN]!
+        : "workflow_flow";
+    const confidence: FailureAnalysisBase["confidence"] =
+      unknownReasonCodes.length > 0 ? "low" : "high";
     return {
       summary: buildSummary(origin, "p4", { eventCode: firstCode }),
       primaryOrigin: origin,
-      confidence: "high",
-      evidence: [
-        {
-          scope: "event_sequence",
-          codes: [...new Set(reasons.map((r) => r.code))].sort((a, b) => a.localeCompare(b)),
-        },
-      ],
+      confidence,
+      unknownReasonCodes,
+      evidence: [{ scope: "event_sequence", codes: esCodes }],
     };
   }
 
@@ -310,6 +333,7 @@ export function buildFailureAnalysis(engine: WorkflowEngineResult): FailureAnaly
       summary: "No verification steps were produced; origin: workflow_flow.",
       primaryOrigin: "workflow_flow",
       confidence: "high",
+      unknownReasonCodes: [],
       evidence: [{ scope: "step", codes: ["NO_STEPS_FOR_WORKFLOW"] }],
     };
   }
@@ -319,7 +343,9 @@ export function buildFailureAnalysis(engine: WorkflowEngineResult): FailureAnaly
   const mappedOrigin = REASON_CODE_TO_ORIGIN[primaryCode];
   const origin: FailureOrigin = mappedOrigin ?? "workflow_flow";
   const alts = alternativesForCode(primaryCode);
-  const confidence: FailureAnalysis["confidence"] =
+  const unknownReasonCodes =
+    primaryCode in REASON_CODE_TO_ORIGIN ? [] : sortUniqueCodes([primaryCode]);
+  const confidence: FailureAnalysisBase["confidence"] =
     primaryCode === STEP_NO_REASON_CODE || mappedOrigin === undefined
       ? "low"
       : alts !== undefined
@@ -349,6 +375,7 @@ export function buildFailureAnalysis(engine: WorkflowEngineResult): FailureAnaly
     summary: buildSummary(origin, "p5", { driverStep, primaryCode }),
     primaryOrigin: origin,
     confidence,
+    unknownReasonCodes,
     evidence,
     ...(alts !== undefined ? { alternativeHypotheses: alts } : {}),
   };

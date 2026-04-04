@@ -20,9 +20,9 @@ export function workflowEngineResultFromEmitted(emitted: WorkflowResult): Workfl
 }
 
 /**
- * Compare input may be v5 engine JSON or v6/v7 emitted JSON. Returns canonical v7 emitted result.
- * v6/v7 files with `workflowTruthReport.schemaVersion >= 2` must match recomputation from engine fields.
- * Legacy truth report `schemaVersion` 1 is upgraded without equality check.
+ * Compare input may be v5 engine JSON or v6+ emitted JSON. Returns canonical v8 emitted result.
+ * Files with `workflowTruthReport.schemaVersion >= 3` must match recomputation from engine fields.
+ * Legacy truth report `schemaVersion` 1–2 is upgraded without equality check.
  */
 export function normalizeToEmittedWorkflowResult(
   parsed: WorkflowEngineResult | WorkflowResult,
@@ -41,7 +41,7 @@ export function normalizeToEmittedWorkflowResult(
   const emitted = parsed as WorkflowResult;
   const engine = workflowEngineResultFromEmitted(emitted);
   const rebuilt = finalizeEmittedWorkflowResult(engine);
-  if (emitted.workflowTruthReport.schemaVersion >= 2) {
+  if (emitted.workflowTruthReport.schemaVersion >= 3) {
     if (!isDeepStrictEqual(rebuilt.workflowTruthReport, emitted.workflowTruthReport)) {
       throw new TruthLayerError(
         CLI_OPERATIONAL_CODES.COMPARE_WORKFLOW_TRUTH_MISMATCH,

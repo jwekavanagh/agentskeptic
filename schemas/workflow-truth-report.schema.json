@@ -14,7 +14,7 @@
     "failureAnalysis"
   ],
   "properties": {
-    "schemaVersion": { "const": 2 },
+    "schemaVersion": { "const": 3 },
     "workflowId": { "type": "string" },
     "workflowStatus": {
       "type": "string",
@@ -100,16 +100,53 @@
         "rationale": { "type": "string", "maxLength": 2048 }
       }
     },
+    "actionableFailureCategory": {
+      "type": "string",
+      "enum": [
+        "decision_error",
+        "bad_input",
+        "retrieval_failure",
+        "control_flow_problem",
+        "state_inconsistency",
+        "downstream_execution_failure",
+        "ambiguous",
+        "unclassified"
+      ]
+    },
+    "actionableFailureSeverity": {
+      "type": "string",
+      "enum": ["high", "medium", "low"]
+    },
+    "actionableFailure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["category", "severity"],
+      "properties": {
+        "category": { "$ref": "#/$defs/actionableFailureCategory" },
+        "severity": { "$ref": "#/$defs/actionableFailureSeverity" }
+      }
+    },
     "failureAnalysis": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["summary", "primaryOrigin", "confidence", "evidence"],
+      "required": [
+        "summary",
+        "primaryOrigin",
+        "confidence",
+        "unknownReasonCodes",
+        "evidence",
+        "actionableFailure"
+      ],
       "properties": {
         "summary": { "type": "string", "maxLength": 2048 },
         "primaryOrigin": { "$ref": "#/$defs/failureOrigin" },
         "confidence": {
           "type": "string",
           "enum": ["high", "medium", "low"]
+        },
+        "unknownReasonCodes": {
+          "type": "array",
+          "items": { "type": "string" }
         },
         "evidence": {
           "type": "array",
@@ -119,7 +156,8 @@
         "alternativeHypotheses": {
           "type": "array",
           "items": { "$ref": "#/$defs/failureAnalysisAlternative" }
-        }
+        },
+        "actionableFailure": { "$ref": "#/$defs/actionableFailure" }
       }
     },
     "truthIssue": {

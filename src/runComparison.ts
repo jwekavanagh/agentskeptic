@@ -1,11 +1,33 @@
+import {
+  buildActionableCategoryRecurrence,
+  buildCategoryHistogram,
+  type ActionableCategoryRecurrenceRow,
+  type PerRunActionable,
+} from "./actionableFailure.js";
 import { compareUtf16Id } from "./resolveExpectation.js";
 import type { Reason, StepOutcome, StepStatus, WorkflowResult } from "./types.js";
 
+/** Per compared run: actionable rollup (`complete` + low severity when workflow is trusted). */
+export function perRunActionableFromWorkflowResult(r: WorkflowResult, runIndex: number): PerRunActionable {
+  const fa = r.workflowTruthReport.failureAnalysis;
+  if (fa === null) {
+    return { runIndex, category: "complete", severity: "low" };
+  }
+  return {
+    runIndex,
+    category: fa.actionableFailure.category,
+    severity: fa.actionableFailure.severity,
+  };
+}
+
 /** JSON report shape; validate with `schemas/run-comparison-report.schema.json`. */
 export type RunComparisonReport = {
-  schemaVersion: 1;
+  schemaVersion: 2;
   workflowId: string;
   runs: Array<{ runIndex: number; displayLabel: string }>;
+  perRunActionableFailures: PerRunActionable[];
+  categoryHistogram: Array<{ category: string; count: number }>;
+  actionableCategoryRecurrence: ActionableCategoryRecurrenceRow[];
   pairwise: {
     priorRunIndex: number;
     currentRunIndex: number;
@@ -495,13 +517,20 @@ export function buildRunComparisonReport(
   const { entries: bucketA, ambiguous } = pairwiseBucketA(prior, current);
   const bucketB = pairwiseBucketB(prior, current);
 
+  const perRunActionableFailures = results.map((r, i) => perRunActionableFromWorkflowResult(r, i));
+  const categoryHistogram = buildCategoryHistogram(perRunActionableFailures);
+  const actionableCategoryRecurrence = buildActionableCategoryRecurrence(perRunActionableFailures);
+
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     workflowId: wf,
     runs: results.map((_, i) => ({
       runIndex: i,
       displayLabel: displayLabels[i]!,
     })),
+    perRunActionableFailures,
+    categoryHistogram,
+    actionableCategoryRecurrence,
     pairwise: {
       priorRunIndex: n - 2,
       currentRunIndex: n - 1,
@@ -526,6 +555,18 @@ export function formatRunComparisonReport(report: RunComparisonReport): string {
   lines.push(`cross_run_comparison:`);
   lines.push(`  workflow_id: ${report.workflowId}`);
   lines.push(`  runs: ${report.runs.map((r) => `${r.runIndex}=${r.displayLabel}`).join(", ")}`);
+  lines.push(
+    `  per_run_actionable: ${report.perRunActionableFailures.map((p) => `${p.runIndex}=${p.category}/${p.severity}`).join(", ")}`,
+  );
+  lines.push(
+    `  category_histogram: ${report.categoryHistogram.map((h) => `${h.category}×${h.count}`).join("; ") || "(none)"}`,
+  );
+  lines.push(`  actionable_category_recurrence:`);
+  for (const row of report.actionableCategoryRecurrence) {
+    lines.push(
+      `    - ${row.category} indices=${row.runIndicesAscending.join(",")} hits=${row.runsHitCount} max_streak=${row.maxConsecutiveRunStreak}`,
+    );
+  }
   lines.push(`  pairwise: prior_run_index=${report.pairwise.priorRunIndex} current_run_index=${report.pairwise.currentRunIndex}`);
   const rl = report.pairwise.runLevel;
   lines.push(`  run_level_introduced: ${rl.introducedRunLevelCodes.length ? rl.introducedRunLevelCodes.join(", ") : "(none)"}`);

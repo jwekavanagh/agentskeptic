@@ -1,3 +1,4 @@
+import { deriveActionableFailureWorkflow } from "./actionableFailure.js";
 import { buildFailureAnalysis } from "./failureAnalysis.js";
 import {
   failureDiagnosticForEventSequenceCode,
@@ -209,10 +210,17 @@ export function buildWorkflowTruthReport(engine: WorkflowEngineResult): Workflow
           })),
         } as const);
 
-  const failureAnalysis = buildFailureAnalysis(engine);
+  const failureAnalysisBase = buildFailureAnalysis(engine);
+  const failureAnalysis =
+    failureAnalysisBase === null
+      ? null
+      : {
+          ...failureAnalysisBase,
+          actionableFailure: deriveActionableFailureWorkflow(engine, failureAnalysisBase),
+        };
 
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     workflowId: engine.workflowId,
     workflowStatus: engine.status,
     trustSummary: trustSummaryForEngine(engine),
@@ -226,7 +234,7 @@ export function buildWorkflowTruthReport(engine: WorkflowEngineResult): Workflow
 export function finalizeEmittedWorkflowResult(engine: WorkflowEngineResult): WorkflowResult {
   return {
     ...engine,
-    schemaVersion: 7,
+    schemaVersion: 8,
     workflowTruthReport: buildWorkflowTruthReport(engine),
   };
 }
@@ -244,6 +252,9 @@ export function formatWorkflowTruthReportStruct(truth: WorkflowTruthReport): str
     lines.push(`  summary: ${d.summary}`);
     lines.push(`  primary_origin: ${d.primaryOrigin}`);
     lines.push(`  confidence: ${d.confidence}`);
+    lines.push(
+      `  actionable_failure: category=${d.actionableFailure.category} severity=${d.actionableFailure.severity}`,
+    );
     for (const ev of d.evidence) {
       const parts = [`scope=${ev.scope}`];
       if (ev.codes !== undefined) parts.push(`codes=${ev.codes.join(",")}`);

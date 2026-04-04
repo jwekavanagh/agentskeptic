@@ -210,6 +210,23 @@ export type VerificationRunContext = {
 
 export type FailureConfidence = "high" | "medium" | "low";
 
+export type ActionableFailureCategory =
+  | "decision_error"
+  | "bad_input"
+  | "retrieval_failure"
+  | "control_flow_problem"
+  | "state_inconsistency"
+  | "downstream_execution_failure"
+  | "ambiguous"
+  | "unclassified";
+
+export type ActionableFailureSeverity = "high" | "medium" | "low";
+
+export type ActionableFailure = {
+  category: ActionableFailureCategory;
+  severity: ActionableFailureSeverity;
+};
+
 export type FailureAnalysisEvidenceItem = {
   scope: "run_context" | "run_level" | "event_sequence" | "step" | "effect";
   codes?: string[];
@@ -226,19 +243,25 @@ export type FailureAnalysisAlternative = {
   rationale: string;
 };
 
-export type FailureAnalysis = {
+/** Built by `buildFailureAnalysis`; enriched with `actionableFailure` in `buildWorkflowTruthReport`. */
+export type FailureAnalysisBase = {
   summary: string;
   primaryOrigin: FailureOrigin;
   confidence: FailureConfidence;
+  /** Reason codes not present in SSOT origin maps (sorted unique). */
+  unknownReasonCodes: string[];
   evidence: FailureAnalysisEvidenceItem[];
   alternativeHypotheses?: FailureAnalysisAlternative[];
 };
+
+export type FailureAnalysis = FailureAnalysisBase & { actionableFailure: ActionableFailure };
 
 export type CliFailureDiagnosis = {
   summary: string;
   primaryOrigin: FailureOrigin;
   confidence: FailureConfidence;
   evidence: Array<{ referenceCode: string }>;
+  actionableFailure: ActionableFailure;
 };
 
 /** Aggregated engine payload before truth report attachment (`schemaVersion` 6). */
@@ -289,7 +312,7 @@ export type WorkflowTruthStep = {
 };
 
 export type WorkflowTruthReport = {
-  schemaVersion: 2;
+  schemaVersion: 3;
   workflowId: string;
   workflowStatus: WorkflowStatus;
   trustSummary: string;
@@ -302,9 +325,9 @@ export type WorkflowTruthReport = {
   failureAnalysis: FailureAnalysis | null;
 };
 
-/** Emitted verification result on stdout / public API (`schemaVersion` 7). */
+/** Emitted verification result on stdout / public API (`schemaVersion` 8). */
 export type WorkflowResult = Omit<WorkflowEngineResult, "schemaVersion"> & {
-  schemaVersion: 7;
+  schemaVersion: 8;
   workflowTruthReport: WorkflowTruthReport;
 };
 

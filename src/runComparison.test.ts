@@ -12,7 +12,9 @@ import {
   recurrenceSignature,
 } from "./runComparison.js";
 import type { StepOutcome, WorkflowEngineResult, WorkflowResult } from "./types.js";
-import { createEmptyVerificationRunContext } from "./verificationRunContext.js";
+import {
+  createEmptyVerificationRunContext,
+} from "./verificationRunContext.js";
 import { finalizeEmittedWorkflowResult } from "./workflowTruthReport.js";
 import { workflowEngineResultFromEmitted } from "./workflowResultNormalize.js";
 
@@ -252,7 +254,79 @@ describe("runComparison", () => {
     );
     const text = formatRunComparisonReport(r);
     expect(text).toContain("cross_run_comparison:");
+    expect(text).toContain("per_run_actionable:");
+    expect(text).toContain("actionable_category_recurrence:");
     expect(text).toContain("recurrence_patterns:");
+  });
+
+  it("actionableCategoryRecurrence: streaks and indices along compare order", () => {
+    const engMalformed = (): WorkflowEngineResult => ({
+      schemaVersion: 6,
+      workflowId: "w",
+      status: "incomplete",
+      runLevelCodes: ["MALFORMED_EVENT_LINE"],
+      runLevelReasons: [{ code: "MALFORMED_EVENT_LINE", message: "bad" }],
+      verificationPolicy: {
+        consistencyMode: "strong",
+        verificationWindowMs: 0,
+        pollIntervalMs: 0,
+      },
+      eventSequenceIntegrity: { kind: "normal" },
+      verificationRunContext: createEmptyVerificationRunContext(),
+      steps: [],
+    });
+    const engDup = (): WorkflowEngineResult => ({
+      schemaVersion: 6,
+      workflowId: "w",
+      status: "inconsistent",
+      runLevelCodes: [],
+      runLevelReasons: [],
+      verificationPolicy: {
+        consistencyMode: "strong",
+        verificationWindowMs: 0,
+        pollIntervalMs: 0,
+      },
+      eventSequenceIntegrity: { kind: "normal" },
+      verificationRunContext: createEmptyVerificationRunContext(),
+      steps: [
+        {
+          seq: 0,
+          toolId: "t",
+          intendedEffect: "",
+          verificationRequest: {
+            kind: "sql_row",
+            table: "c",
+            keyColumn: "id",
+            keyValue: "1",
+            requiredFields: {},
+          },
+          status: "inconsistent",
+          reasons: [{ code: "DUPLICATE_ROWS", message: "d" }],
+          evidenceSummary: {},
+          repeatObservationCount: 1,
+          evaluatedObservationOrdinal: 1,
+          failureDiagnostic: "workflow_execution",
+        },
+      ],
+    });
+    const r0 = finalizeEmittedWorkflowResult(engMalformed());
+    const r1 = finalizeEmittedWorkflowResult(engMalformed());
+    const r2 = finalizeEmittedWorkflowResult(engDup());
+    const r3 = finalizeEmittedWorkflowResult(engMalformed());
+    const report = buildRunComparisonReport([r0, r1, r2, r3], ["0", "1", "2", "3"]);
+    assertReportValid(report);
+    const badInput = report.actionableCategoryRecurrence.find((x) => x.category === "bad_input");
+    expect(badInput?.runIndicesAscending).toEqual([0, 1, 3]);
+    expect(badInput?.runsHitCount).toBe(3);
+    expect(badInput?.maxConsecutiveRunStreak).toBe(2);
+    const state = report.actionableCategoryRecurrence.find((x) => x.category === "state_inconsistency");
+    expect(state?.runIndicesAscending).toEqual([2]);
+    expect(state?.maxConsecutiveRunStreak).toBe(1);
+    expect(report.categoryHistogram.find((h) => h.category === "bad_input")?.count).toBe(3);
+    expect(report.categoryHistogram.find((h) => h.category === "state_inconsistency")?.count).toBe(1);
+    const histSum = report.categoryHistogram.reduce((s, h) => s + h.count, 0);
+    expect(histSum).toBe(4);
+    expect(report.perRunActionableFailures).toHaveLength(4);
   });
 
   it("CLI compare succeeds and stderr precedes valid stdout JSON", () => {
@@ -272,7 +346,7 @@ describe("runComparison", () => {
       const out = proc.stdout.trim();
       expect(out.length).toBeGreaterThan(0);
       const parsed = JSON.parse(out) as { schemaVersion: number };
-      expect(parsed.schemaVersion).toBe(1);
+      expect(parsed.schemaVersion).toBe(2);
       const v = loadSchemaValidator("run-comparison-report");
       expect(v(JSON.parse(out))).toBe(true);
       expect(proc.stderr).toContain("cross_run_comparison:");

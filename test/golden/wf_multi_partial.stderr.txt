@@ -5,6 +5,7 @@ diagnosis:
   summary: Primary failure at seq 0 tool demo.multi_contact (code VALUE_MISMATCH); origin: downstream_system_state.
   primary_origin: downstream_system_state
   confidence: medium
+  actionable_failure: category=ambiguous severity=high
   - evidence: scope=step codes=VALUE_MISMATCH seq=0 tool=demo.multi_contact
   - evidence: scope=effect codes=VALUE_MISMATCH seq=0 effect_id=secondary
   alternative_origin: downstream_system_state

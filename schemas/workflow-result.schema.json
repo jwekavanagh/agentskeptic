@@ -16,7 +16,7 @@
     "workflowTruthReport"
   ],
   "properties": {
-    "schemaVersion": { "const": 7 },
+    "schemaVersion": { "const": 8 },
     "workflowId": { "type": "string" },
     "status": {
       "type": "string",

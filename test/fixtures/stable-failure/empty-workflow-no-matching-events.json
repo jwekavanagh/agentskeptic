@@ -1,5 +1,4 @@
 {
-  "schemaVersion": 7,
   "workflowId": "no_such_workflow",
   "status": "incomplete",
   "runLevelCodes": [
@@ -20,6 +19,7 @@
     "kind": "normal"
   },
   "steps": [],
+  "schemaVersion": 8,
   "verificationRunContext": {
     "maxWireSchemaVersion": 1,
     "retrievalEvents": [],
@@ -29,7 +29,7 @@
     "toolObservedIngestIndexBySeq": {}
   },
   "workflowTruthReport": {
-    "schemaVersion": 2,
+    "schemaVersion": 3,
     "workflowId": "no_such_workflow",
     "workflowStatus": "incomplete",
     "trustSummary": "NOT TRUSTED: Verification is incomplete; the workflow cannot be fully confirmed.",
@@ -48,6 +48,7 @@
       "summary": "Run-level ingest or planning issue (NO_STEPS_FOR_WORKFLOW); origin: workflow_flow.",
       "primaryOrigin": "workflow_flow",
       "confidence": "high",
+      "unknownReasonCodes": [],
       "evidence": [
         {
           "scope": "run_level",
@@ -55,7 +56,11 @@
             "NO_STEPS_FOR_WORKFLOW"
           ]
         }
-      ]
+      ],
+      "actionableFailure": {
+        "category": "control_flow_problem",
+        "severity": "medium"
+      }
     }
   }
 }

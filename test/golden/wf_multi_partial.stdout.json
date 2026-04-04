@@ -1,5 +1,4 @@
 {
-  "schemaVersion": 7,
   "workflowId": "wf_multi_partial",
   "status": "inconsistent",
   "runLevelCodes": [],
@@ -86,6 +85,7 @@
       "failureDiagnostic": "workflow_execution"
     }
   ],
+  "schemaVersion": 8,
   "verificationRunContext": {
     "maxWireSchemaVersion": 1,
     "retrievalEvents": [],
@@ -97,7 +97,7 @@
     }
   },
   "workflowTruthReport": {
-    "schemaVersion": 2,
+    "schemaVersion": 3,
     "workflowId": "wf_multi_partial",
     "workflowStatus": "inconsistent",
     "trustSummary": "NOT TRUSTED: At least one step failed verification against the database (determinate failure).",
@@ -147,6 +147,7 @@
       "summary": "Primary failure at seq 0 tool demo.multi_contact (code VALUE_MISMATCH); origin: downstream_system_state.",
       "primaryOrigin": "downstream_system_state",
       "confidence": "medium",
+      "unknownReasonCodes": [],
       "evidence": [
         {
           "scope": "step",
@@ -174,7 +175,11 @@
           "primaryOrigin": "inputs",
           "rationale": "Stored column values differ from required fields; registry pointers or consts used to build the verification request may not match the observation payload."
         }
-      ]
+      ],
+      "actionableFailure": {
+        "category": "ambiguous",
+        "severity": "high"
+      }
     }
   }
 }
