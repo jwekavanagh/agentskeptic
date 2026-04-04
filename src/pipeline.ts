@@ -1,5 +1,4 @@
 import { DatabaseSync } from "node:sqlite";
-import { readFileSync } from "fs";
 import { aggregateWorkflow } from "./aggregate.js";
 import { loadEventsForWorkflow } from "./loadEvents.js";
 import { prepareWorkflowEvents } from "./prepareWorkflowEvents.js";
@@ -11,6 +10,7 @@ import {
   renderIntendedEffect,
   resolveVerificationRequest,
 } from "./resolveExpectation.js";
+import { loadRegistryEntriesAfterSchema } from "./toolsRegistryLoad.js";
 import {
   connectPostgresVerificationClient,
   createPostgresSqlReadBackend,
@@ -25,7 +25,11 @@ import type {
   VerificationPolicy,
   WorkflowResult,
 } from "./types.js";
-import { CLI_OPERATIONAL_CODES, runLevelIssue } from "./failureCatalog.js";
+import {
+  CLI_OPERATIONAL_CODES,
+  RETRY_OBSERVATIONS_DIVERGE_MESSAGE,
+  runLevelIssue,
+} from "./failureCatalog.js";
 import { TruthLayerError } from "./truthLayerError.js";
 import { formatWorkflowTruthReport } from "./workflowTruthReport.js";
 import {
@@ -36,35 +40,13 @@ import {
   type PolicyReconcileContext,
 } from "./verificationPolicy.js";
 
-const validateRegistry = loadSchemaValidator("tools-registry");
-
 function defaultTruthReportToStderr(report: string): void {
   process.stderr.write(`${report}\n`);
 }
 const validateEvent = loadSchemaValidator("event");
 
 export function loadToolsRegistry(registryPath: string): Map<string, ToolRegistryEntry> {
-  let raw: string;
-  try {
-    raw = readFileSync(registryPath, "utf8");
-  } catch (e) {
-    const msg = e instanceof Error ? e.message : String(e);
-    throw new TruthLayerError(CLI_OPERATIONAL_CODES.REGISTRY_READ_FAILED, msg, { cause: e });
-  }
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(raw) as unknown;
-  } catch (e) {
-    const msg = e instanceof Error ? e.message : String(e);
-    throw new TruthLayerError(CLI_OPERATIONAL_CODES.REGISTRY_JSON_SYNTAX, msg, { cause: e });
-  }
-  if (!validateRegistry(parsed)) {
-    throw new TruthLayerError(
-      CLI_OPERATIONAL_CODES.REGISTRY_SCHEMA_INVALID,
-      JSON.stringify(validateRegistry.errors ?? []),
-    );
-  }
-  return buildRegistryMap(parsed as ToolRegistryEntry[]);
+  return buildRegistryMap(loadRegistryEntriesAfterSchema(registryPath));
 }
 
 function buildDivergentStepOutcome(
@@ -86,8 +68,7 @@ function buildDivergentStepOutcome(
     reasons: [
       {
         code: "RETRY_OBSERVATIONS_DIVERGE",
-        message:
-          "Multiple observations for this seq do not all match the last observation (toolId and canonical params).",
+        message: RETRY_OBSERVATIONS_DIVERGE_MESSAGE,
       },
     ],
     evidenceSummary: {},

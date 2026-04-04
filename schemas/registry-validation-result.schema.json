@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://execution-truth-layer/schemas/registry-validation-result.schema.json",
+  "title": "RegistryValidationResult",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "valid", "structuralIssues", "resolutionIssues", "resolutionSkipped"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "valid": { "type": "boolean" },
+    "structuralIssues": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/structuralIssue" }
+    },
+    "resolutionIssues": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/resolutionIssue" }
+    },
+    "resolutionSkipped": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/resolutionSkipped" }
+    },
+    "eventLoad": { "$ref": "#/$defs/eventLoad" }
+  },
+  "$defs": {
+    "structuralIssue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "message"],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": ["json_schema", "duplicate_tool_id", "sql_effects_duplicate_effect_id"]
+        },
+        "message": { "type": "string", "minLength": 1 },
+        "instancePath": { "type": "string" },
+        "keyword": { "type": "string" },
+        "toolId": { "type": "string" },
+        "effectId": { "type": "string" }
+      }
+    },
+    "resolutionIssue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["workflowId", "code", "message", "seq", "toolId"],
+      "properties": {
+        "workflowId": { "type": "string" },
+        "code": { "type": "string" },
+        "message": { "type": "string" },
+        "seq": { "type": ["integer", "null"] },
+        "toolId": { "type": ["string", "null"] }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "code": { "const": "NO_STEPS_FOR_WORKFLOW" } } },
+          "then": {
+            "properties": {
+              "seq": { "type": "null" },
+              "toolId": { "type": "null" }
+            }
+          },
+          "else": {
+            "properties": {
+              "seq": { "type": "integer" },
+              "toolId": { "type": "string", "minLength": 1 }
+            }
+          }
+        }
+      ]
+    },
+    "resolutionSkipped": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["workflowId", "seq", "toolId", "code", "message"],
+      "properties": {
+        "workflowId": { "type": "string" },
+        "seq": { "type": "integer" },
+        "toolId": { "type": "string", "minLength": 1 },
+        "code": { "const": "RETRY_OBSERVATIONS_DIVERGE" },
+        "message": { "type": "string", "minLength": 1 }
+      }
+    },
+    "eventLoad": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["workflowId", "malformedEventLineCount"],
+      "properties": {
+        "workflowId": { "type": "string", "minLength": 1 },
+        "malformedEventLineCount": { "type": "integer", "minimum": 0 }
+      }
+    }
+  }
+}

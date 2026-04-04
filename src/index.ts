@@ -1,4 +1,16 @@
 export { verifyWorkflow, loadToolsRegistry, withWorkflowVerification } from "./pipeline.js";
+export {
+  formatRegistryValidationHumanReport,
+  structuralIssuesFromToolsRegistryAjv,
+  validateToolsRegistry,
+} from "./registryValidation.js";
+export type {
+  EventLoadSummary,
+  RegistryValidationResult,
+  ResolutionIssue,
+  ResolutionSkipped,
+  StructuralIssue,
+} from "./registryValidation.js";
 export { loadEventsForWorkflow } from "./loadEvents.js";
 export { TruthLayerError } from "./truthLayerError.js";
 export {
@@ -10,6 +22,7 @@ export {
   CLI_ERROR_SCHEMA_VERSION,
   eventSequenceIssue,
   EVENT_SEQUENCE_MESSAGES,
+  RETRY_OBSERVATIONS_DIVERGE_MESSAGE,
 } from "./failureCatalog.js";
 export {
   resolveVerificationRequest,

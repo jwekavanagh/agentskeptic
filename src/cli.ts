@@ -11,6 +11,10 @@ import {
   formatRunComparisonReport,
 } from "./runComparison.js";
 import { verifyWorkflow } from "./pipeline.js";
+import {
+  formatRegistryValidationHumanReport,
+  validateToolsRegistry,
+} from "./registryValidation.js";
 import { loadSchemaValidator } from "./schemaLoad.js";
 import { TruthLayerError } from "./truthLayerError.js";
 import type { VerificationPolicy, WorkflowResult } from "./types.js";
@@ -58,6 +62,11 @@ Exit codes:
   verify-workflow compare --prior <path> [--prior <path> ...] --current <path>
   Compare saved WorkflowResult JSON files (local only; see docs).
 
+  verify-workflow validate-registry --registry <path>
+  verify-workflow validate-registry --registry <path> --events <path> --workflow-id <id>
+  Validate tools registry JSON (and optionally resolution vs events) without a database.
+  See docs/execution-truth-layer.md (Registry validation).
+
   --help, -h  print this message and exit 0`;
 }
 
@@ -77,6 +86,115 @@ Exit codes:
 
 function writeCliError(code: string, message: string): void {
   console.error(cliErrorEnvelope(code, message));
+}
+
+function usageValidateRegistry(): string {
+  return `Usage:
+  verify-workflow validate-registry --registry <path>
+  verify-workflow validate-registry --registry <path> --events <path> --workflow-id <id>
+
+Exit codes:
+  0  registry valid (stdout: RegistryValidationResult JSON; stderr empty)
+  1  validation failed (stdout: RegistryValidationResult JSON; stderr human report)
+  3  operational failure (stderr JSON envelope only; stdout empty)
+
+Options: --registry (required), --events and --workflow-id (both or neither).
+
+  --help, -h  print this message and exit 0`;
+}
+
+function assertValidateRegistryArgsWellFormed(args: string[]): void {
+  const allowed = new Set(["--registry", "--events", "--workflow-id", "--help", "-h"]);
+  for (let i = 0; i < args.length; i++) {
+    const a = args[i]!;
+    if (a === "-h" || a === "--help") continue;
+    if (!a.startsWith("--")) {
+      throw new TruthLayerError(
+        CLI_OPERATIONAL_CODES.VALIDATE_REGISTRY_USAGE,
+        `Unexpected argument: ${a}`,
+      );
+    }
+    if (!allowed.has(a)) {
+      throw new TruthLayerError(
+        CLI_OPERATIONAL_CODES.VALIDATE_REGISTRY_USAGE,
+        `Unknown option: ${a}`,
+      );
+    }
+    if (a === "--registry" || a === "--events" || a === "--workflow-id") {
+      const v = args[i + 1];
+      if (v === undefined || v.startsWith("--")) {
+        throw new TruthLayerError(
+          CLI_OPERATIONAL_CODES.VALIDATE_REGISTRY_USAGE,
+          `Missing value after ${a}.`,
+        );
+      }
+      i++;
+    }
+  }
+}
+
+function runValidateRegistrySubcommand(args: string[]): void {
+  if (args.includes("--help") || args.includes("-h")) {
+    console.log(usageValidateRegistry());
+    process.exit(0);
+  }
+
+  try {
+    assertValidateRegistryArgsWellFormed(args);
+  } catch (e) {
+    if (e instanceof TruthLayerError) {
+      writeCliError(e.code, e.message);
+      process.exit(3);
+    }
+    throw e;
+  }
+
+  const registryPath = argValue(args, "--registry");
+  const eventsPath = argValue(args, "--events");
+  const workflowId = argValue(args, "--workflow-id");
+
+  if (!registryPath) {
+    writeCliError(
+      CLI_OPERATIONAL_CODES.VALIDATE_REGISTRY_USAGE,
+      "Missing required --registry path.",
+    );
+    process.exit(3);
+  }
+
+  let result;
+  try {
+    result = validateToolsRegistry({
+      registryPath,
+      eventsPath,
+      workflowId,
+    });
+  } catch (e) {
+    if (e instanceof TruthLayerError) {
+      writeCliError(e.code, e.message);
+      process.exit(3);
+    }
+    const msg = e instanceof Error ? e.message : String(e);
+    writeCliError(CLI_OPERATIONAL_CODES.INTERNAL_ERROR, formatOperationalMessage(msg));
+    process.exit(3);
+  }
+
+  const validateOut = loadSchemaValidator("registry-validation-result");
+  if (!validateOut(result)) {
+    writeCliError(
+      CLI_OPERATIONAL_CODES.INTERNAL_ERROR,
+      JSON.stringify(validateOut.errors ?? []),
+    );
+    process.exit(3);
+  }
+
+  console.log(JSON.stringify(result));
+
+  if (!result.valid) {
+    process.stderr.write(`${formatRegistryValidationHumanReport(result)}\n`);
+    process.exit(1);
+  }
+
+  process.exit(0);
 }
 
 function verificationPolicyFromCliArgs(args: string[]): VerificationPolicy {
@@ -198,6 +316,11 @@ async function main(): Promise<void> {
   const args = process.argv.slice(2);
   if (args[0] === "compare") {
     runCompareSubcommand(args.slice(1));
+    return;
+  }
+
+  if (args[0] === "validate-registry") {
+    runValidateRegistrySubcommand(args.slice(1));
     return;
   }
 

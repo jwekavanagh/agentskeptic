@@ -1,0 +1,29 @@
+[
+  {
+    "toolId": "example.write_order_and_line",
+    "effectDescriptionTemplate": "Order {/orderId} line item {/lineId}",
+    "verification": {
+      "kind": "sql_effects",
+      "effects": [
+        {
+          "id": "order_header",
+          "table": { "const": "orders" },
+          "key": {
+            "column": { "const": "id" },
+            "value": { "pointer": "/orderId" }
+          },
+          "requiredFields": { "pointer": "/orderFields" }
+        },
+        {
+          "id": "order_line",
+          "table": { "const": "order_lines" },
+          "key": {
+            "column": { "const": "id" },
+            "value": { "pointer": "/lineId" }
+          },
+          "requiredFields": { "pointer": "/lineFields" }
+        }
+      ]
+    }
+  }
+]

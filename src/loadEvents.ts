@@ -21,16 +21,19 @@ export function loadEventsForWorkflow(
   }
   const lines = raw.split(/\r?\n/).filter((l) => l.trim().length > 0);
   const candidates: ToolObservedEvent[] = [];
+  let malformedEventLineCount = 0;
 
   for (let i = 0; i < lines.length; i++) {
     let parsed: unknown;
     try {
       parsed = JSON.parse(lines[i]!) as unknown;
     } catch {
+      malformedEventLineCount += 1;
       runLevelReasons.push(runLevelIssue("MALFORMED_EVENT_LINE"));
       continue;
     }
     if (!validateEvent(parsed)) {
+      malformedEventLineCount += 1;
       runLevelReasons.push(runLevelIssue("MALFORMED_EVENT_LINE"));
       continue;
     }
@@ -41,5 +44,5 @@ export function loadEventsForWorkflow(
 
   const { eventsSorted, eventSequenceIntegrity } = prepareWorkflowEvents(candidates);
 
-  return { events: eventsSorted, runLevelReasons, eventSequenceIntegrity };
+  return { events: eventsSorted, runLevelReasons, eventSequenceIntegrity, malformedEventLineCount };
 }

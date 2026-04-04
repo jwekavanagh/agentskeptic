@@ -215,4 +215,40 @@ describe("JSON Schemas (SSOT)", () => {
     const report = buildRunComparisonReport([r0, r1], ["x", "y"]);
     expect(v(report)).toBe(true);
   });
+
+  it("validates registry-validation-result (golden objects)", () => {
+    const v = loadSchemaValidator("registry-validation-result");
+    const minimal = {
+      schemaVersion: 1,
+      valid: true,
+      structuralIssues: [],
+      resolutionIssues: [],
+      resolutionSkipped: [],
+    };
+    expect(v(minimal)).toBe(true);
+    expect(
+      v({
+        ...minimal,
+        eventLoad: { workflowId: "w", malformedEventLineCount: 0 },
+      }),
+    ).toBe(true);
+    expect(
+      v({
+        schemaVersion: 1,
+        valid: false,
+        structuralIssues: [],
+        resolutionIssues: [
+          {
+            workflowId: "w",
+            code: "NO_STEPS_FOR_WORKFLOW",
+            message: "No tool_observed events for this workflow id after filtering.",
+            seq: null,
+            toolId: null,
+          },
+        ],
+        resolutionSkipped: [],
+        eventLoad: { workflowId: "w", malformedEventLineCount: 2 },
+      }),
+    ).toBe(true);
+  });
 });

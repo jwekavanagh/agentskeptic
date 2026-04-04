@@ -44,6 +44,8 @@ For the CLI, a **human-readable verification report** is written to **stderr** a
 
 **Cross-run comparison:** save each `WorkflowResult` JSON from stdout, then compare runs locally, e.g. `node dist/cli.js compare --prior earlier.json --current latest.json`. Semantics and I/O are defined in **[Cross-run comparison (normative)](docs/execution-truth-layer.md#cross-run-comparison-normative)**.
 
+**Validate registry (no database):** `node dist/cli.js validate-registry --registry examples/tools.json` checks JSON Schema and structural rules; add `--events` and `--workflow-id` to also run resolver checks against an NDJSON file. Copy-paste templates live under `examples/templates/`. Full contract: **[Registry validation (`validate-registry`) — normative](docs/execution-truth-layer.md#registry-validation-validate-registry--normative)**.
+
 ## Full test suite (`npm test`)
 
 `npm test` runs **`scripts/pg-ci-init.mjs`** against Postgres, then the Node/Vitest suites. Set:

@@ -86,6 +86,13 @@ const REQUIRED = [
   "buildRunComparisonReport",
   "cross-run-comparison-normative",
   "COMPARE_WORKFLOW_ID_MISMATCH",
+  "## Registry validation (`validate-registry`) — normative",
+  "Registry validation failed:",
+  "VALIDATE_REGISTRY_USAGE",
+  "registry-validation-result.schema.json",
+  "validate-registry",
+  "examples/templates/",
+  "validateToolsRegistry",
 ];
 
 describe("docs contract (SSOT + README)", () => {

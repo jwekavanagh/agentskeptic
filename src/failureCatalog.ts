@@ -27,7 +27,13 @@ export const CLI_OPERATIONAL_CODES = {
   COMPARE_RUN_COMPARISON_REPORT_INVALID: "COMPARE_RUN_COMPARISON_REPORT_INVALID",
   VERIFICATION_POLICY_INVALID: "VERIFICATION_POLICY_INVALID",
   EVENTUAL_MODE_NOT_SUPPORTED_IN_PROCESS_HOOK: "EVENTUAL_MODE_NOT_SUPPORTED_IN_PROCESS_HOOK",
+  /** Registry validation CLI / `validateToolsRegistry` usage (see SSOT section Registry validation). */
+  VALIDATE_REGISTRY_USAGE: "VALIDATE_REGISTRY_USAGE",
 } as const;
+
+/** Same literal as step `incomplete_verification` for divergent retries (SSOT + registry validation). */
+export const RETRY_OBSERVATIONS_DIVERGE_MESSAGE =
+  "Multiple observations for this seq do not all match the last observation (toolId and canonical params).";
 
 export type OperationalCode = (typeof CLI_OPERATIONAL_CODES)[keyof typeof CLI_OPERATIONAL_CODES];
 

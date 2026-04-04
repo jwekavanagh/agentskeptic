@@ -70,7 +70,8 @@ For CI, audits, or logs written as NDJSON:
 1. To verify your checkout with bundled `examples/` artifacts, run `npm run first-run` from the repository root (see [Examples](#examples)). It builds the project, creates `examples/demo.db` from `seed.sql`, and runs two sample workflows.
 2. After **each** tool call, append one JSON object line to your NDJSON file (see [Event line schema](#event-line-schema)).
 3. Maintain `tools.json` with one entry per `toolId` your workflows emit.
-4. Run:
+4. Optionally validate the registry (and optionally resolution vs NDJSON) without a database: `node dist/cli.js validate-registry --registry <path>` or with `--events` and `--workflow-id` (see [Registry validation (`validate-registry`) — normative](#registry-validation-validate-registry--normative)).
+5. Run:
 
 ```bash
 npm run build
@@ -106,7 +107,7 @@ When the CLI exits **3**, **stderr** is exactly **one** UTF-8 line: a JSON objec
 
 - `schemaVersion`: **1**
 - `kind`: **`execution_truth_layer_error`**
-- `code`: one of **`CLI_USAGE`**, **`REGISTRY_READ_FAILED`**, **`REGISTRY_JSON_SYNTAX`**, **`REGISTRY_SCHEMA_INVALID`**, **`REGISTRY_DUPLICATE_TOOL_ID`**, **`EVENTS_READ_FAILED`**, **`SQLITE_DATABASE_OPEN_FAILED`**, **`POSTGRES_CLIENT_SETUP_FAILED`**, **`WORKFLOW_RESULT_SCHEMA_INVALID`**, **`VERIFICATION_POLICY_INVALID`**, **`INTERNAL_ERROR`**
+- `code`: one of **`CLI_USAGE`**, **`REGISTRY_READ_FAILED`**, **`REGISTRY_JSON_SYNTAX`**, **`REGISTRY_SCHEMA_INVALID`**, **`REGISTRY_DUPLICATE_TOOL_ID`**, **`EVENTS_READ_FAILED`**, **`SQLITE_DATABASE_OPEN_FAILED`**, **`POSTGRES_CLIENT_SETUP_FAILED`**, **`WORKFLOW_RESULT_SCHEMA_INVALID`**, **`VERIFICATION_POLICY_INVALID`**, **`VALIDATE_REGISTRY_USAGE`**, **`INTERNAL_ERROR`**, plus compare-subcommand codes (**`COMPARE_USAGE`**, **`COMPARE_INPUT_READ_FAILED`**, …) as documented under [Cross-run comparison](#cross-run-comparison-normative)
 - `message`: human-readable text after whitespace normalization and truncation (max **2048** JavaScript string length; see `formatOperationalMessage` in `failureCatalog.ts`)
 
 **stdout** must be empty on exit **3**. Automation should key on **`code`**, not exact **`message`**, for driver-dependent errors.
@@ -266,6 +267,65 @@ Each entry:
 | `DUPLICATE_EFFECT_ID` | Same `id` twice in `sql_effects.effects` |
 
 Resolver messages for `sql_effects` prefix per-effect failures with `effects[<id>].` (e.g. `effects[primary].requiredFields …`).
+
+**Authoring templates:** Copy-paste starting points live under [`examples/templates/`](../examples/templates/) (`sql_row` and `sql_effects` examples); they must validate against `tools-registry.schema.json`.
+
+## Registry validation (`validate-registry`) — normative
+
+This section is the **single normative contract** for registry validation. The machine shape is [`schemas/registry-validation-result.schema.json`](../schemas/registry-validation-result.schema.json). [README.md](../README.md) may repeat one example command only and must link here.
+
+### Purpose
+
+Validate a **`tools.json`** registry **without** opening SQLite or Postgres: JSON Schema, duplicate `toolId`, duplicate `sql_effects` effect `id` (within each tool), and—when event files are supplied—resolver checks (`resolveVerificationRequest`) against replayed observations (same logical-step and last-observation rules as batch verification).
+
+### CLI
+
+```text
+verify-workflow validate-registry --registry <path>
+verify-workflow validate-registry --registry <path> --events <path> --workflow-id <id>
+```
+
+- **`--registry`**: required.
+- **`--events`** and **`--workflow-id`**: **both** or **neither**. Mismatch → exit **3**, code **`VALIDATE_REGISTRY_USAGE`**.
+- Unknown options or stray positional arguments → exit **3**, **`VALIDATE_REGISTRY_USAGE`**.
+- **`--help` / `-h`**: usage on **stdout**, exit **0** (handled only when `validate-registry` is the first argument; see `cli.ts`).
+
+### Exit codes and I/O
+
+| Exit | stdout | stderr |
+|------|--------|--------|
+| **0** | Exactly one UTF-8 JSON object: `RegistryValidationResult` matching `registry-validation-result.schema.json`, with **`valid`: `true`** | **Empty** (zero bytes) |
+| **1** | Same schema; **`valid`: `false`** | Multi-line UTF-8 human report (grammar below) |
+| **3** | **Empty** (zero bytes) | Exactly **one** line: `execution_truth_layer_error` JSON envelope (same shape as [CLI operational errors](#cli-operational-errors)) |
+
+Codes for exit **3** on this subcommand include **`REGISTRY_READ_FAILED`**, **`REGISTRY_JSON_SYNTAX`**, **`EVENTS_READ_FAILED`**, **`VALIDATE_REGISTRY_USAGE`**, **`INTERNAL_ERROR`** (e.g. result failed output schema validation—should not occur in production).
+
+**Note:** Duplicate `toolId` and JSON Schema failures are **exit 1**, not **3**: they produce structured issues on stdout so automation can parse fixes.
+
+### Human stderr grammar (exit **1** only)
+
+1. First line exactly: **`Registry validation failed:`**
+2. Then zero or more lines, each starting with **`- structural (`** *kind* **`): `** *message*
+3. Then zero or more lines for resolution issues, each starting with either:
+   - **`- resolution (NO_STEPS_FOR_WORKFLOW): `** *message* (exactly one such line when there are no tool_observed events for the workflow after filtering), or
+   - **`- resolution (workflow `** *workflowId* **` seq `** *seq* **` tool `** *toolId* **`): [`** *code* **`] `** *message*
+
+Order: all **structural** lines first (JSON Schema issues sorted by `instancePath` then `keyword`; then other structural kinds in implementation order). **Resolution** lines are sorted by `seq` ascending, then `toolId` (with **`NO_STEPS_FOR_WORKFLOW`** first via null `seq`/`toolId` sort order).
+
+### `RegistryValidationResult` semantics
+
+- **`schemaVersion`**: **1**.
+- **`valid`**: **`true`** iff **`structuralIssues`** and **`resolutionIssues`** are both empty. **`resolutionSkipped`** and **`eventLoad`** do not affect **`valid`**.
+- **`structuralIssues`**: objects with **`kind`** one of **`json_schema`**, **`duplicate_tool_id`**, **`sql_effects_duplicate_effect_id`**, plus **`message`** and optional fields (`instancePath`, `keyword`, `toolId`, `effectId`).
+- **`resolutionIssues`**: for per-step resolver failures, **`seq`** (integer) and **`toolId`** (string). For **`NO_STEPS_FOR_WORKFLOW`**, **`seq`** and **`toolId`** are JSON **`null`**; **`message`** equals **`RUN_LEVEL_MESSAGES.NO_STEPS_FOR_WORKFLOW`** in `failureCatalog.ts`.
+- **`resolutionSkipped`**: divergent retry groups only: **`code`** **`RETRY_OBSERVATIONS_DIVERGE`**, **`message`** exactly **`RETRY_OBSERVATIONS_DIVERGE_MESSAGE`** in `failureCatalog.ts` (same literal as pipeline divergent step outcome).
+- **`eventLoad`**: present iff both **`--events`** and **`--workflow-id`** were passed: **`workflowId`**, **`malformedEventLineCount`** (NDJSON lines that fail JSON parse or event schema, same counting rules as `loadEventsForWorkflow`).
+
+Event-backed resolution uses **`loadEventsForWorkflow`** (including malformed line handling) and **`planLogicalSteps`**; divergent steps do not run `resolveVerificationRequest` and appear only in **`resolutionSkipped`**.
+
+### Library
+
+**`validateToolsRegistry({ registryPath, eventsPath?, workflowId? })`** returns the same object written to stdout by the CLI. If **`eventsPath`** or **`workflowId`** is set without the other, it throws **`TruthLayerError`** with **`VALIDATE_REGISTRY_USAGE`**. File read / JSON parse errors throw the same **`TruthLayerError` codes** as the CLI would use for exit **3**.
 
 ## Workflow result: multi-effect shape
 

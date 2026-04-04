@@ -113,6 +113,8 @@ export type LoadEventsResult = {
   events: ToolObservedEvent[];
   runLevelReasons: Reason[];
   eventSequenceIntegrity: EventSequenceIntegrity;
+  /** NDJSON lines that failed JSON parse or event schema (same rules as batch load). */
+  malformedEventLineCount: number;
 };
 
 /** Batch / CLI verification target (`verifyWorkflow`). In-process hook remains SQLite `dbPath` only. */

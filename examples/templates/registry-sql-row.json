@@ -1,0 +1,15 @@
+[
+  {
+    "toolId": "example.upsert_entity",
+    "effectDescriptionTemplate": "Upsert entity {/entityId} with fields {/fields}",
+    "verification": {
+      "kind": "sql_row",
+      "table": { "const": "entities" },
+      "key": {
+        "column": { "const": "id" },
+        "value": { "pointer": "/entityId" }
+      },
+      "requiredFields": { "pointer": "/fields" }
+    }
+  }
+]
