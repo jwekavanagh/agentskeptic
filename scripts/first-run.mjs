@@ -1,21 +1,15 @@
 #!/usr/bin/env node
 /**
- * Onboarding driver — invoke only via: npm run first-run (runs build, then this file).
+ * Onboarding driver — invoke via `npm start` or `npm run first-run` (runs build, then this file).
  *
- * Fixed newcomer-facing stdout lines (in order):
- * 1. "Execution Truth Layer — first verification"
- * 2. "[1/2] Workflow wf_complete (success case): you should see workflow status complete and step status verified."
- * 3. "<JSON for wf_complete>"
- * 4. "Outcome check: this run demonstrates a successful verification (status complete, step verified)."
- * 5. "[2/2] Workflow wf_missing (failure case): you should see workflow status inconsistent, step missing, reason ROW_ABSENT."
- * 6. "<JSON for wf_missing>"
- * 7. "Outcome check: this run demonstrates a failed verification against ground truth (status inconsistent, reason ROW_ABSENT)."
+ * Stdout layout (in order):
+ * 1. Banner + prerequisite explanation (plain language).
+ * 2. Case 1 narrative → human verification report → WorkflowResult JSON → key takeaways.
+ * 3. Case 2 narrative → human verification report → WorkflowResult JSON → key takeaways.
  *
- * Self-check (exit 1 if fail): workflow outcomes per plan; combined printed text must contain
- * the substrings "complete", "inconsistent", and "ROW_ABSENT" (case-sensitive).
- *
- * stderr: two human truth reports (one per verifyWorkflow call), emitted by default truthReport.
- * stdout: fixed narrative lines and JSON per workflow (unchanged self-check).
+ * Human reports are written to stdout (via truthReport) so one stream shows story + diagnosis.
+ * Self-check (exit 1 if fail): workflow outcomes; combined stdout must contain
+ * "complete", "inconsistent", and "ROW_ABSENT" (case-sensitive).
  */
 import { readFileSync, unlinkSync, existsSync } from "node:fs";
 import { join, dirname } from "node:path";
@@ -43,6 +37,21 @@ function fail(message) {
   process.exit(1);
 }
 
+function assertMinNode() {
+  const m = /^(\d+)\.(\d+)\.(\d+)/.exec(process.versions.node);
+  if (!m) fail("Could not parse Node.js version.");
+  const major = Number(m[1]);
+  const minor = Number(m[2]);
+  if (major < 22 || (major === 22 && minor < 13)) {
+    fail(
+      "Node.js >= 22.13 is required (built-in node:sqlite). See README.md Requirements. Current: " +
+        process.versions.node,
+    );
+  }
+}
+
+assertMinNode();
+
 const seedSql = readFileSync(seedPath, "utf8");
 if (existsSync(dbPath)) {
   unlinkSync(dbPath);
@@ -51,46 +60,72 @@ const db = new DatabaseSync(dbPath);
 db.exec(seedSql);
 db.close();
 
-println("Execution Truth Layer — first verification");
-
-println(
-  "[1/2] Workflow wf_complete (success case): you should see workflow status complete and step status verified.",
-);
-const r1 = await verifyWorkflow({
-  workflowId: "wf_complete",
+const verifyOpts = {
   eventsPath,
   registryPath,
   database: { kind: "sqlite", path: dbPath },
+  logStep: () => {},
+  truthReport: (report) => {
+    println("");
+    println("--- Human verification report ---");
+    println(report);
+  },
+};
+
+println("Execution Truth Layer — first run");
+println("");
+println(
+  "This tool checks tool-call logs (NDJSON) against real database rows—not the agent’s own success message.",
+);
+println("You will see two examples: one where the database matches the log, and one where it does not.");
+println("");
+
+println(
+  "[1/2] Workflow wf_complete — the log says crm.upsert_contact ran for record id c_ok with Alice/active.",
+);
+println(
+  "The bundled SQLite database has that contact row. Expect verification to succeed (complete / verified).",
+);
+println("");
+
+const r1 = await verifyWorkflow({
+  ...verifyOpts,
+  workflowId: "wf_complete",
 });
 println(JSON.stringify(r1));
+const s1 = r1.steps[0];
 println(
-  "Outcome check: this run demonstrates a successful verification (status complete, step verified).",
+  `Key takeaways: workflow.status=${r1.status}; first step.status=${s1?.status ?? "n/a"}; this run matched the database.`,
 );
 
 if (r1.status !== "complete") fail(`Expected wf_complete workflow status complete, got ${r1.status}`);
-const s1 = r1.steps[0];
 if (!s1 || s1.status !== "verified") {
   fail(`Expected wf_complete first step verified, got ${s1?.status ?? "missing step"}`);
 }
 
+println("");
 println(
-  "[2/2] Workflow wf_missing (failure case): you should see workflow status inconsistent, step missing, reason ROW_ABSENT.",
+  "[2/2] Workflow wf_missing — the log shows the same tool for record id missing_id, as if that row were written.",
 );
+println(
+  "There is no contacts row for missing_id in the database. The log and reality disagree; expect inconsistent / missing / ROW_ABSENT.",
+);
+println("");
+
 const r2 = await verifyWorkflow({
+  ...verifyOpts,
   workflowId: "wf_missing",
-  eventsPath,
-  registryPath,
-  database: { kind: "sqlite", path: dbPath },
 });
 println(JSON.stringify(r2));
+const s2 = r2.steps[0];
+const code0 = s2?.reasons[0]?.code ?? "n/a";
 println(
-  "Outcome check: this run demonstrates a failed verification against ground truth (status inconsistent, reason ROW_ABSENT).",
+  `Key takeaways: workflow.status=${r2.status}; first step.status=${s2?.status ?? "n/a"}; first reason.code=${code0} (row absent in DB).`,
 );
 
 if (r2.status !== "inconsistent") {
   fail(`Expected wf_missing workflow status inconsistent, got ${r2.status}`);
 }
-const s2 = r2.steps[0];
 if (!s2 || s2.status !== "missing") {
   fail(`Expected wf_missing first step missing, got ${s2?.status ?? "missing step"}`);
 }

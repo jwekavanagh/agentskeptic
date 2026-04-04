@@ -16,7 +16,7 @@ const adminUrl = process.env.POSTGRES_ADMIN_URL;
 
 describe("Postgres session read-only (applyPostgresVerificationSessionGuards)", () => {
   before(() => {
-    assert.ok(adminUrl && adminUrl.length > 0, "POSTGRES_ADMIN_URL must be set (run npm test with Postgres; see README)");
+    assert.ok(adminUrl && adminUrl.length > 0, "POSTGRES_ADMIN_URL must be set (run npm run test:ci with Postgres; see README)");
   });
 
   it("INSERT fails with read-only transaction after guards; SELECT still succeeds", async () => {

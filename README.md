@@ -2,68 +2,73 @@
 
 MVP **Execution Truth Layer**: verify agent workflow steps against **SQLite** or **Postgres** ground truth using an append-only **NDJSON** event log and a **`tools.json`** registry.
 
-Authoritative specification: **[docs/execution-truth-layer.md](docs/execution-truth-layer.md)**.
+**Authoritative specification:** **[docs/execution-truth-layer.md](docs/execution-truth-layer.md)**.
 
-The **CI workflow truth contract** (Postgres CLI, machine-readable **`verify-workflow`** I/O) is defined only in the SSOT: **[CI workflow truth contract (Postgres CLI)](docs/execution-truth-layer.md#ci-workflow-truth-contract-postgres-cli)**.
+**CI workflow truth contract** (Postgres CLI, machine-readable **`verify-workflow`** I/O): **[CI workflow truth contract (Postgres CLI)](docs/execution-truth-layer.md#ci-workflow-truth-contract-postgres-cli)**.
 
 ## Requirements
 
 - **Node.js ≥ 22.13** (uses built-in [`node:sqlite`](https://nodejs.org/api/sqlite.html))
-- **Runtime dependency [`pg`](https://node-postgres.com/)** for Postgres batch/CLI verification
+- **Runtime dependency [`pg`](https://node-postgres.com/)** when using Postgres verification paths
 
-## Quick start
+## Primary path: try it in one command
 
 ```bash
 npm install
-npm run first-run
+npm start
 ```
 
-The first run uses bundled `examples/events.ndjson` and `examples/tools.json`. It creates `examples/demo.db` from `examples/seed.sql` (this file is gitignored), verifies workflow `wf_complete` against the database (expect **complete** / **verified**), then verifies `wf_missing` (expect **inconsistent** / **missing** / **ROW_ABSENT**). You see both a passing and a failing verification without authoring your own events or registry.
+**`npm start`** runs the same onboarding as **`npm run first-run`**: it builds, seeds **`examples/demo.db`** from **`examples/seed.sql`**, then verifies **`wf_complete`** (database matches the log → **complete** / **verified**) and **`wf_missing`** (the log references a contact id that **does not exist** in the DB → **inconsistent** / **missing** / **ROW_ABSENT**). You get plain-language framing, **human verification reports** printed to **stdout**, and **workflow result JSON** for each run—no need to author events or registry entries first.
 
-Each JSON object printed for a workflow matches [`schemas/workflow-result.schema.json`](schemas/workflow-result.schema.json) (`schemaVersion` **6** with required **`workflowTruthReport`** — structured truth SSOT: [`schemas/workflow-truth-report.schema.json`](schemas/workflow-truth-report.schema.json); see [Structured workflow truth report](docs/execution-truth-layer.md#structured-workflow-truth-report-normative)). Engine-only JSON (`schemaVersion` **5**) is [`schemas/workflow-engine-result.schema.json`](schemas/workflow-engine-result.schema.json). Emitted results require **`verificationPolicy`** and **`eventSequenceIntegrity`**; each step includes **`repeatObservationCount`** and **`evaluatedObservationOrdinal`**; each non-verified step includes **`failureDiagnostic`** — see [Verification diagnostics](docs/execution-truth-layer.md#verification-diagnostics-normative). The CLI supports **strong** (default) and **eventual** consistency modes; see [Verification policy (normative)](docs/execution-truth-layer.md#verification-policy-normative). **`verify-workflow compare`** accepts v5 or v6 inputs per [`schemas/workflow-result-compare-input.schema.json`](schemas/workflow-result-compare-input.schema.json).
+**Why SQLite first:** file-backed SQLite needs no Docker or hosted database, so you can judge the idea immediately. **Postgres** and **`npm run test:ci`** are for full CI parity (same reconciliation rules; see SSOT).
 
-**In-process hook (single boundary):** see [Low-friction integration (in-process)](docs/execution-truth-layer.md#low-friction-integration-in-process) in the SSOT — one `await withWorkflowVerification` at the workflow root (**SQLite only**). For Postgres, use batch `await verifyWorkflow` or the CLI.
+**Permissions (demo):** creating **`examples/demo.db`** uses read/write access to that file path only; verification queries use read-only SQLite access as described in the SSOT.
 
-Try the runnable demo (temp DB + one `observeStep`):
+## Local validation (no Postgres)
 
 ```bash
-npm run example:workflow-hook
+npm test
 ```
 
-To run the same check through the CLI (after `npm run first-run` so `examples/demo.db` exists):
+Runs **`npm run build`**, **`npm run test:vitest`**, SQLite-only **`npm run test:node:sqlite`**, and **`scripts/first-run.mjs`**. No **`POSTGRES_*`** variables required.
 
-```bash
-node dist/cli.js --workflow-id wf_complete --events examples/events.ndjson --registry examples/tools.json --db examples/demo.db
-```
-
-Postgres (exactly one of `--db` or `--postgres-url`):
-
-```bash
-node dist/cli.js --workflow-id wf_complete --events examples/events.ndjson --registry examples/tools.json --postgres-url "postgresql://user:pass@host:5432/dbname"
-```
-
-For the CLI, a **human-readable verification report** is written to **stderr** and the machine-readable **workflow result JSON** to **stdout** on verdict exits **0–2**; operational failures use exit **3** with a **single-line JSON error** on stderr (see [CLI operational errors](docs/execution-truth-layer.md#cli-operational-errors)). Full format and stream order are in the SSOT **[Human truth report](docs/execution-truth-layer.md#human-truth-report)**.
-
-**Cross-run comparison:** save each `WorkflowResult` JSON from stdout, then compare runs locally, e.g. `node dist/cli.js compare --prior earlier.json --current latest.json`. Semantics and I/O are defined in **[Cross-run comparison (normative)](docs/execution-truth-layer.md#cross-run-comparison-normative)**.
-
-**Validate registry (no database):** `node dist/cli.js validate-registry --registry examples/tools.json` checks JSON Schema and structural rules; add `--events` and `--workflow-id` to also run resolver checks against an NDJSON file. Copy-paste templates live under `examples/templates/`. Full contract: **[Registry validation (`validate-registry`) — normative](docs/execution-truth-layer.md#registry-validation-validate-registry--normative)**.
-
-## Full test suite (`npm test`)
-
-`npm test` runs **`scripts/pg-ci-init.mjs`** against Postgres, then the Node/Vitest suites. Set:
-
-- **`POSTGRES_ADMIN_URL`** — superuser (e.g. `postgresql://postgres:postgres@127.0.0.1:5432/postgres`)
-- **`POSTGRES_VERIFICATION_URL`** — `verifier_ro` after init (e.g. `postgresql://verifier_ro:verifier@127.0.0.1:5432/postgres`)
-
-One local Postgres 16+ instance:
+## Full CI suite (Postgres)
 
 ```bash
 docker run -d --name etl-pg -p 5432:5432 -e POSTGRES_PASSWORD=postgres postgres:16
 export POSTGRES_ADMIN_URL=postgresql://postgres:postgres@127.0.0.1:5432/postgres
 export POSTGRES_VERIFICATION_URL=postgresql://verifier_ro:verifier@127.0.0.1:5432/postgres
-npm test
+npm run test:ci
 ```
 
-(On Windows PowerShell, use `$env:POSTGRES_ADMIN_URL="..."` instead of `export`.)
+(On Windows PowerShell, use `$env:POSTGRES_ADMIN_URL="..."`.) Matches [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
 
-CI uses [`.github/workflows/ci.yml`](.github/workflows/ci.yml) with the same URL shape.
+## Automation and CLI (short)
+
+For **`verify-workflow`**, a **human-readable verification report** is written to **stderr** and the machine-readable **workflow result JSON** to **stdout** on verdict exits **0–2**; operational failures use exit **3** with a **single-line JSON error** on stderr (see [CLI operational errors](docs/execution-truth-layer.md#cli-operational-errors)). Full format and stream order: **[Human truth report](docs/execution-truth-layer.md#human-truth-report)**. Use **`--no-truth-report`** when you want empty stderr on verdict paths for logs/parsers. Exit codes: **0** complete, **1** inconsistent, **2** incomplete, **3** operational.
+
+After **`npm start`**, replay via CLI:
+
+```bash
+node dist/cli.js --workflow-id wf_complete --events examples/events.ndjson --registry examples/tools.json --db examples/demo.db
+```
+
+Postgres (exactly one of **`--db`** or **`--postgres-url`**):
+
+```bash
+node dist/cli.js --workflow-id wf_complete --events examples/events.ndjson --registry examples/tools.json --postgres-url "postgresql://user:pass@host:5432/dbname"
+```
+
+**Cross-run comparison:** `node dist/cli.js compare --prior earlier.json --current latest.json` — see [Cross-run comparison (normative)](docs/execution-truth-layer.md#cross-run-comparison-normative).
+
+**Validate registry (no database):** `node dist/cli.js validate-registry --registry examples/tools.json` — see [Registry validation (`validate-registry`) — normative](docs/execution-truth-layer.md#registry-validation-validate-registry--normative). Copy-paste templates: **`examples/templates/`**.
+
+**In-process hook (SQLite):** **`npm run example:workflow-hook`** — one **`await withWorkflowVerification`** at the workflow root; see [Low-friction integration (in-process)](docs/execution-truth-layer.md#low-friction-integration-in-process).
+
+## Advanced topics (normative detail only in SSOT)
+
+Schema versions (**`schemaVersion` `6`** on emitted results, engine shape **`5`**), **`workflowTruthReport`**, **`verificationPolicy`**, **`eventSequenceIntegrity`**, **`failureDiagnostic`**, **`verify-workflow compare`** inputs, **strong** vs **eventual** consistency, Postgres session guards, and the **`test:workflow-truth-contract`** / **`ci-workflow-truth-postgres-contract.test.mjs`** CI contract are specified in **[docs/execution-truth-layer.md](docs/execution-truth-layer.md)**—not duplicated here.
+
+## License
+
+Released under the **MIT License** — see **[LICENSE](LICENSE)**.

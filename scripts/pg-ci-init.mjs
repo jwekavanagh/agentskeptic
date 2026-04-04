@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Idempotent Postgres schema for CI/local `npm test`.
+ * Idempotent Postgres schema for CI / `npm run test:ci` (via `npm run test:postgres`).
  * Requires POSTGRES_ADMIN_URL (superuser). Creates verifier_ro + seed tables + readonly_probe.
  */
 import pg from "pg";
