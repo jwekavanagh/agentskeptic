@@ -47,7 +47,7 @@ describe("CI workflow truth contract (Postgres CLI)", () => {
     const parsed = JSON.parse(r.stdout.trim());
     const validateResult = loadSchemaValidator("workflow-result");
     assert.equal(validateResult(parsed), true, JSON.stringify(validateResult.errors ?? []));
-    assert.equal(parsed.schemaVersion, 6);
+    assert.equal(parsed.schemaVersion, 7);
     assert.equal(parsed.workflowId, "wf_complete");
     assert.equal(parsed.status, "complete");
     assert.equal(parsed.steps[0]?.status, "verified");
@@ -93,10 +93,17 @@ describe("CI workflow truth contract (Postgres CLI)", () => {
     assert.equal(r.status, 3);
     assert.equal(r.stdout.trim(), "");
     const err = JSON.parse(r.stderr.trim());
+    assert.equal(err.schemaVersion, 2);
     assert.equal(err.kind, "execution_truth_layer_error");
     assert.equal(err.code, "CLI_USAGE");
     assert.equal(typeof err.message, "string");
     assert.ok(err.message.length > 0);
     assert.ok(err.message.length <= 2048);
+    assert.ok(err.failureDiagnosis && typeof err.failureDiagnosis === "object");
+    assert.equal(typeof err.failureDiagnosis.summary, "string");
+    assert.ok(err.failureDiagnosis.summary.length > 0);
+    assert.equal(typeof err.failureDiagnosis.primaryOrigin, "string");
+    assert.ok(["high", "medium", "low"].includes(err.failureDiagnosis.confidence));
+    assert.ok(Array.isArray(err.failureDiagnosis.evidence));
   });
 });

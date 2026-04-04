@@ -1,32 +1,53 @@
 import { isDeepStrictEqual } from "node:util";
-import { CLI_OPERATIONAL_CODES } from "./failureCatalog.js";
+import { CLI_OPERATIONAL_CODES } from "./cliOperationalCodes.js";
 import { TruthLayerError } from "./truthLayerError.js";
 import type { WorkflowEngineResult, WorkflowResult } from "./types.js";
+import { createEmptyVerificationRunContext } from "./verificationRunContext.js";
 import { finalizeEmittedWorkflowResult } from "./workflowTruthReport.js";
 
 export function workflowEngineResultFromEmitted(emitted: WorkflowResult): WorkflowEngineResult {
-  const { workflowTruthReport: _t, schemaVersion: _s, ...rest } = emitted;
-  return { ...rest, schemaVersion: 5 };
+  const {
+    workflowTruthReport: _workflowTruthReport,
+    schemaVersion: _schemaVersion,
+    verificationRunContext: ctxIn,
+    ...rest
+  } = emitted;
+  return {
+    ...rest,
+    schemaVersion: 6,
+    verificationRunContext: ctxIn ?? createEmptyVerificationRunContext(),
+  };
 }
 
 /**
- * Compare input may be v5 engine JSON or v6 emitted JSON. Returns canonical v6 emitted result.
- * v6 files must have `workflowTruthReport` consistent with recomputation from engine fields.
+ * Compare input may be v5 engine JSON or v6/v7 emitted JSON. Returns canonical v7 emitted result.
+ * v6/v7 files with `workflowTruthReport.schemaVersion >= 2` must match recomputation from engine fields.
+ * Legacy truth report `schemaVersion` 1 is upgraded without equality check.
  */
 export function normalizeToEmittedWorkflowResult(
   parsed: WorkflowEngineResult | WorkflowResult,
 ): WorkflowResult {
-  if (parsed.schemaVersion === 5) {
-    return finalizeEmittedWorkflowResult(parsed);
+  if ((parsed as { schemaVersion: number }).schemaVersion === 5) {
+    const p5 = parsed as unknown as Omit<WorkflowEngineResult, "schemaVersion" | "verificationRunContext"> & {
+      schemaVersion: 5;
+    };
+    const { schemaVersion: _s, ...rest } = p5;
+    return finalizeEmittedWorkflowResult({
+      ...rest,
+      schemaVersion: 6,
+      verificationRunContext: createEmptyVerificationRunContext(),
+    });
   }
-  const v6 = parsed;
-  const engine = workflowEngineResultFromEmitted(v6);
+  const emitted = parsed as WorkflowResult;
+  const engine = workflowEngineResultFromEmitted(emitted);
   const rebuilt = finalizeEmittedWorkflowResult(engine);
-  if (!isDeepStrictEqual(rebuilt.workflowTruthReport, v6.workflowTruthReport)) {
-    throw new TruthLayerError(
-      CLI_OPERATIONAL_CODES.COMPARE_WORKFLOW_TRUTH_MISMATCH,
-      "workflowTruthReport does not match engine fields (recomputed truth differs from file).",
-    );
+  if (emitted.workflowTruthReport.schemaVersion >= 2) {
+    if (!isDeepStrictEqual(rebuilt.workflowTruthReport, emitted.workflowTruthReport)) {
+      throw new TruthLayerError(
+        CLI_OPERATIONAL_CODES.COMPARE_WORKFLOW_TRUTH_MISMATCH,
+        "workflowTruthReport does not match engine fields (recomputed truth differs from file).",
+      );
+    }
   }
   return rebuilt;
 }

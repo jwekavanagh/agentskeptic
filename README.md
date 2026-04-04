@@ -124,7 +124,7 @@ npm run test:ci
 
 ## Advanced topics (normative detail only in SSOT)
 
-Schema versions (**`schemaVersion` `6`** on emitted results, engine shape **`5`**), **`workflowTruthReport`**, **`verificationPolicy`**, **`eventSequenceIntegrity`**, **`failureDiagnostic`**, **`verify-workflow compare`** inputs, **strong** vs **eventual** consistency, Postgres session guards, and **`test:workflow-truth-contract`** / **`ci-workflow-truth-postgres-contract.test.mjs`** are specified in **[docs/execution-truth-layer.md](docs/execution-truth-layer.md)**—not duplicated here.
+Schema versions (**`schemaVersion` `7`** on emitted **`WorkflowResult`**, engine shape **`6`**, truth subtree **`schemaVersion` `2`** with **`failureAnalysis`** and **`verificationRunContext`**), **`workflowTruthReport`**, **`verificationPolicy`**, **`eventSequenceIntegrity`**, **`failureDiagnostic`**, CLI stderr envelope **`schemaVersion` `2`** with **`failureDiagnosis`**, **`verify-workflow compare`** inputs, **strong** vs **eventual** consistency, Postgres session guards, and **`test:workflow-truth-contract`** / **`ci-workflow-truth-postgres-contract.test.mjs`** are specified in **[docs/execution-truth-layer.md](docs/execution-truth-layer.md)**—not duplicated here.
 
 ## License
 

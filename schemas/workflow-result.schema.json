@@ -12,10 +12,11 @@
     "runLevelReasons",
     "verificationPolicy",
     "eventSequenceIntegrity",
+    "verificationRunContext",
     "workflowTruthReport"
   ],
   "properties": {
-    "schemaVersion": { "const": 6 },
+    "schemaVersion": { "const": 7 },
     "workflowId": { "type": "string" },
     "status": {
       "type": "string",
@@ -73,6 +74,9 @@
           }
         }
       ]
+    },
+    "verificationRunContext": {
+      "$ref": "https://execution-truth-layer/schemas/workflow-engine-result.schema.json#/$defs/verificationRunContext"
     },
     "workflowTruthReport": {
       "$ref": "https://execution-truth-layer/schemas/workflow-truth-report.schema.json"

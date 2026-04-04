@@ -1,3 +1,5 @@
+import type { FailureOrigin } from "./failureOriginTypes.js";
+
 /** v1 wire line: `tool_observed` without `runEventId`. */
 export type ToolObservedEventV1 = {
   schemaVersion: 1;
@@ -176,9 +178,72 @@ export type EventSequenceIntegrity =
   | { kind: "normal" }
   | { kind: "irregular"; reasons: Reason[] };
 
-/** Aggregated engine payload before truth report attachment (`schemaVersion` 5). */
+/** Digest of v2 run graph + tool_observed positions; built at verify time from `runEvents`. */
+export type VerificationRunContext = {
+  maxWireSchemaVersion: 1 | 2;
+  retrievalEvents: Array<{
+    ingestIndex: number;
+    runEventId: string | null;
+    source: string;
+    status: "ok" | "empty" | "error";
+  }>;
+  controlEvents: Array<{
+    ingestIndex: number;
+    runEventId: string | null;
+    controlKind: ControlRunEvent["controlKind"];
+    decision?: "taken" | "skipped";
+    label?: string;
+  }>;
+  modelTurnEvents: Array<{
+    ingestIndex: number;
+    runEventId: string | null;
+    status: ModelTurnRunEvent["status"];
+  }>;
+  toolSkippedEvents: Array<{
+    ingestIndex: number;
+    toolId: string;
+    reason: string;
+  }>;
+  /** Last capture-order ingest index per tool_observed seq (string keys in JSON). */
+  toolObservedIngestIndexBySeq: Record<string, number>;
+};
+
+export type FailureConfidence = "high" | "medium" | "low";
+
+export type FailureAnalysisEvidenceItem = {
+  scope: "run_context" | "run_level" | "event_sequence" | "step" | "effect";
+  codes?: string[];
+  ingestIndex?: number;
+  seq?: number;
+  toolId?: string;
+  effectId?: string;
+  source?: string;
+  runEventId?: string | null;
+};
+
+export type FailureAnalysisAlternative = {
+  primaryOrigin: FailureOrigin;
+  rationale: string;
+};
+
+export type FailureAnalysis = {
+  summary: string;
+  primaryOrigin: FailureOrigin;
+  confidence: FailureConfidence;
+  evidence: FailureAnalysisEvidenceItem[];
+  alternativeHypotheses?: FailureAnalysisAlternative[];
+};
+
+export type CliFailureDiagnosis = {
+  summary: string;
+  primaryOrigin: FailureOrigin;
+  confidence: FailureConfidence;
+  evidence: Array<{ referenceCode: string }>;
+};
+
+/** Aggregated engine payload before truth report attachment (`schemaVersion` 6). */
 export type WorkflowEngineResult = {
-  schemaVersion: 5;
+  schemaVersion: 6;
   workflowId: string;
   status: WorkflowStatus;
   runLevelCodes: string[];
@@ -186,6 +251,7 @@ export type WorkflowEngineResult = {
   verificationPolicy: VerificationPolicy;
   eventSequenceIntegrity: EventSequenceIntegrity;
   steps: StepOutcome[];
+  verificationRunContext: VerificationRunContext;
 };
 
 export type WorkflowTruthIssue = {
@@ -223,7 +289,7 @@ export type WorkflowTruthStep = {
 };
 
 export type WorkflowTruthReport = {
-  schemaVersion: 1;
+  schemaVersion: 2;
   workflowId: string;
   workflowStatus: WorkflowStatus;
   trustSummary: string;
@@ -232,11 +298,13 @@ export type WorkflowTruthReport = {
     | { kind: "normal" }
     | { kind: "irregular"; issues: WorkflowTruthIssue[] };
   steps: WorkflowTruthStep[];
+  /** JSON `null` when workflow is complete; object when incomplete or inconsistent. */
+  failureAnalysis: FailureAnalysis | null;
 };
 
-/** Emitted verification result on stdout / public API (`schemaVersion` 6). */
+/** Emitted verification result on stdout / public API (`schemaVersion` 7). */
 export type WorkflowResult = Omit<WorkflowEngineResult, "schemaVersion"> & {
-  schemaVersion: 6;
+  schemaVersion: 7;
   workflowTruthReport: WorkflowTruthReport;
 };
 

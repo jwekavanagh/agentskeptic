@@ -1,6 +1,16 @@
 workflow_id: wf_multi_partial
 workflow_status: inconsistent
 trust: NOT TRUSTED: At least one step failed verification against the database (determinate failure).
+diagnosis:
+  summary: Primary failure at seq 0 tool demo.multi_contact (code VALUE_MISMATCH); origin: downstream_system_state.
+  primary_origin: downstream_system_state
+  confidence: medium
+  - evidence: scope=step codes=VALUE_MISMATCH seq=0 tool=demo.multi_contact
+  - evidence: scope=effect codes=VALUE_MISMATCH seq=0 effect_id=secondary
+  alternative_origin: downstream_system_state
+    rationale: Stored column values differ from required fields; the live database state may have diverged from what the tool reported.
+  alternative_origin: inputs
+    rationale: Stored column values differ from required fields; registry pointers or consts used to build the verification request may not match the observation payload.
 run_level: (none)
 event_sequence: normal
 steps:

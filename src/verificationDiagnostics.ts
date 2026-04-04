@@ -4,30 +4,10 @@ import {
   formatOperationalMessage,
 } from "./failureCatalog.js";
 import { compareUtf16Id } from "./resolveExpectation.js";
+import { RESOLVE_FAILURE_CODES } from "./resolveFailureCodes.js";
 import type { FailureDiagnostic, Reason, StepOutcome, StepVerificationRequest } from "./types.js";
 
-/**
- * Every `code` returned on `{ ok: false }` from resolveVerificationRequest / resolveSqlRowSpec paths
- * in resolveExpectation.ts. Keep in sync with that module (verificationDiagnostics.test.ts asserts parity).
- */
-export const RESOLVE_FAILURE_CODES: ReadonlySet<string> = new Set([
-  "CONST_STRING_EMPTY",
-  "STRING_SPEC_POINTER_MISSING",
-  "STRING_SPEC_TYPE",
-  "STRING_SPEC_EMPTY",
-  "KEY_VALUE_POINTER_MISSING",
-  "KEY_VALUE_NOT_SCALAR",
-  "KEY_VALUE_SPEC_INVALID",
-  "TABLE_POINTER_INVALID",
-  "TABLE_SPEC_INVALID",
-  "INVALID_IDENTIFIER",
-  "REQUIRED_FIELDS_POINTER_MISSING",
-  "REQUIRED_FIELDS_NOT_OBJECT",
-  "REQUIRED_FIELDS_VALUE_UNDEFINED",
-  "REQUIRED_FIELDS_VALUE_NOT_SCALAR",
-  "UNSUPPORTED_VERIFICATION_KIND",
-  "DUPLICATE_EFFECT_ID",
-]);
+export { RESOLVE_FAILURE_CODES };
 
 /** Reason codes that produce effect `incomplete_verification` in reconciler.ts (connector + row read). */
 export const RECONCILER_INCOMPLETE_VERIFICATION_CODES: ReadonlySet<string> = new Set([

@@ -11,9 +11,12 @@ import {
   TRUST_LINE_EVENT_SEQUENCE_IRREGULAR_SUFFIX,
 } from "../dist/workflowTruthReport.js";
 import { eventSequenceIssue } from "../dist/failureCatalog.js";
+import { createEmptyVerificationRunContext } from "../dist/verificationRunContext.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, "..");
+
+const emptyCtx = createEmptyVerificationRunContext();
 
 const vp = {
   consistencyMode: "strong",
@@ -38,6 +41,15 @@ steps:
 const GOLDEN_MISSING = `workflow_id: wf_missing
 workflow_status: inconsistent
 trust: NOT TRUSTED: At least one step failed verification against the database (determinate failure).
+diagnosis:
+  summary: Primary failure at seq 0 tool crm.upsert_contact (code ROW_ABSENT); origin: downstream_system_state.
+  primary_origin: downstream_system_state
+  confidence: medium
+  - evidence: scope=step codes=ROW_ABSENT seq=0 tool=crm.upsert_contact
+  alternative_origin: downstream_system_state
+    rationale: The database has no row at the verified key; the tool log may not have committed a write, or replication lag prevented observation.
+  alternative_origin: tool_use
+    rationale: The database has no row at the verified key; the registry key/value or pointer resolution from tool params may not match the row that was written.
 run_level: (none)
 event_sequence: normal
 steps:
@@ -51,6 +63,11 @@ steps:
 const GOLDEN_INCOMPLETE_UNKNOWN_TOOL = `workflow_id: wf_unknown_tool
 workflow_status: incomplete
 trust: NOT TRUSTED: Verification is incomplete; the workflow cannot be fully confirmed.
+diagnosis:
+  summary: Primary failure at seq 0 tool nope.tool (code UNKNOWN_TOOL); origin: tool_use.
+  primary_origin: tool_use
+  confidence: high
+  - evidence: scope=step codes=UNKNOWN_TOOL seq=0 tool=nope.tool
 run_level: (none)
 event_sequence: normal
 steps:
@@ -68,6 +85,11 @@ const NO_STEPS_MSG = "No tool_observed events for this workflow id after filteri
 const GOLDEN_MALFORMED = `workflow_id: wf_complete
 workflow_status: incomplete
 trust: NOT TRUSTED: Verification is incomplete; the workflow cannot be fully confirmed.
+diagnosis:
+  summary: Run-level ingest or planning issue (MALFORMED_EVENT_LINE, NO_STEPS_FOR_WORKFLOW); origin: inputs.
+  primary_origin: inputs
+  confidence: medium
+  - evidence: scope=run_level codes=MALFORMED_EVENT_LINE,NO_STEPS_FOR_WORKFLOW
 run_level:
   - detail: ${MALFORMED_MSG}
     category: workflow_execution
@@ -81,6 +103,11 @@ steps:`;
 const GOLDEN_EMPTY_STEPS = `workflow_id: no_such_workflow
 workflow_status: incomplete
 trust: NOT TRUSTED: Verification is incomplete; the workflow cannot be fully confirmed.
+diagnosis:
+  summary: Run-level ingest or planning issue (NO_STEPS_FOR_WORKFLOW); origin: workflow_flow.
+  primary_origin: workflow_flow
+  confidence: high
+  - evidence: scope=run_level codes=NO_STEPS_FOR_WORKFLOW
 run_level:
   - detail: ${NO_STEPS_MSG}
     category: workflow_execution
@@ -103,6 +130,11 @@ steps:
 const GOLDEN_UNCERTAIN_TRUST = `workflow_id: wf_uncertain
 workflow_status: incomplete
 trust: ${TRUST_LINE_UNCERTAIN_WITHIN_WINDOW}
+diagnosis:
+  summary: Primary failure at seq 0 tool t (code ROW_NOT_OBSERVED_WITHIN_WINDOW); origin: downstream_system_state.
+  primary_origin: downstream_system_state
+  confidence: high
+  - evidence: scope=step codes=ROW_NOT_OBSERVED_WITHIN_WINDOW seq=0 tool=t
 run_level: (none)
 event_sequence: normal
 steps:
@@ -115,7 +147,8 @@ steps:
 describe("formatWorkflowTruthReport", () => {
   it("golden complete / inconsistent missing / incomplete unknown tool", () => {
     const complete = {
-      schemaVersion: 5,
+      schemaVersion: 6,
+      verificationRunContext: emptyCtx,
       workflowId: "wf_complete",
       status: "complete",
       runLevelCodes: [],
@@ -139,7 +172,8 @@ describe("formatWorkflowTruthReport", () => {
     assert.equal(normTruthText(formatWorkflowTruthReport(complete)), normTruthText(GOLDEN_COMPLETE));
 
     const missing = {
-      schemaVersion: 5,
+      schemaVersion: 6,
+      verificationRunContext: emptyCtx,
       workflowId: "wf_missing",
       status: "inconsistent",
       runLevelCodes: [],
@@ -163,7 +197,8 @@ describe("formatWorkflowTruthReport", () => {
     assert.equal(normTruthText(formatWorkflowTruthReport(missing)), normTruthText(GOLDEN_MISSING));
 
     const unknownTool = {
-      schemaVersion: 5,
+      schemaVersion: 6,
+      verificationRunContext: emptyCtx,
       workflowId: "wf_unknown_tool",
       status: "incomplete",
       runLevelCodes: [],
@@ -193,7 +228,8 @@ describe("formatWorkflowTruthReport", () => {
   it("irregular event_sequence extends trust line and lists capture reason", () => {
     const captureReason = eventSequenceIssue("CAPTURE_ORDER_NOT_MONOTONIC_IN_SEQ");
     const r = {
-      schemaVersion: 5,
+      schemaVersion: 6,
+      verificationRunContext: emptyCtx,
       workflowId: "w",
       status: "complete",
       runLevelCodes: [],
@@ -235,7 +271,8 @@ describe("formatWorkflowTruthReport", () => {
 
   it("golden malformed run-level and empty steps", () => {
     const malformed = {
-      schemaVersion: 5,
+      schemaVersion: 6,
+      verificationRunContext: emptyCtx,
       workflowId: "wf_complete",
       status: "incomplete",
       runLevelCodes: ["MALFORMED_EVENT_LINE", "NO_STEPS_FOR_WORKFLOW"],
@@ -250,7 +287,8 @@ describe("formatWorkflowTruthReport", () => {
     assert.equal(normTruthText(formatWorkflowTruthReport(malformed)), normTruthText(GOLDEN_MALFORMED));
 
     const empty = {
-      schemaVersion: 5,
+      schemaVersion: 6,
+      verificationRunContext: emptyCtx,
       workflowId: "no_such_workflow",
       status: "incomplete",
       runLevelCodes: ["NO_STEPS_FOR_WORKFLOW"],
@@ -264,7 +302,8 @@ describe("formatWorkflowTruthReport", () => {
 
   it("unknown run-level code uses fallback explanation", () => {
     const r = {
-      schemaVersion: 5,
+      schemaVersion: 6,
+      verificationRunContext: emptyCtx,
       workflowId: "w",
       status: "complete",
       runLevelCodes: ["UNKNOWN_CODE_X"],
@@ -292,7 +331,8 @@ describe("formatWorkflowTruthReport", () => {
 
   it("multi-step: each step line uses HUMAN_REPORT_RESULT_PHRASE for result=", () => {
     const result = {
-      schemaVersion: 5,
+      schemaVersion: 6,
+      verificationRunContext: emptyCtx,
       workflowId: "multi",
       status: "inconsistent",
       runLevelCodes: [],
@@ -356,7 +396,8 @@ describe("formatWorkflowTruthReport", () => {
 
   it("uncertain-only step uses dedicated trust line and label", () => {
     const uncertain = {
-      schemaVersion: 5,
+      schemaVersion: 6,
+      verificationRunContext: emptyCtx,
       workflowId: "wf_uncertain",
       status: "incomplete",
       runLevelCodes: [],
@@ -411,7 +452,8 @@ describe("formatWorkflowTruthReport", () => {
       evaluatedObservationOrdinal: 1,
     }));
     const r = {
-      schemaVersion: 5,
+      schemaVersion: 6,
+      verificationRunContext: emptyCtx,
       workflowId: "s",
       status: "incomplete",
       runLevelCodes: [],
@@ -429,7 +471,8 @@ describe("formatWorkflowTruthReport", () => {
 
   it("run-level reason message is trimmed; whitespace-only becomes (no message)", () => {
     const trimmed = {
-      schemaVersion: 5,
+      schemaVersion: 6,
+      verificationRunContext: emptyCtx,
       workflowId: "w",
       status: "complete",
       runLevelCodes: ["X"],
@@ -442,7 +485,8 @@ describe("formatWorkflowTruthReport", () => {
     assert.ok(formatWorkflowTruthReport(trimmed).includes("reference_code: X"));
 
     const blank = {
-      schemaVersion: 5,
+      schemaVersion: 6,
+      verificationRunContext: emptyCtx,
       workflowId: "w",
       status: "complete",
       runLevelCodes: ["Y"],
@@ -457,7 +501,8 @@ describe("formatWorkflowTruthReport", () => {
 
   it("empty reason message renders (no message)", () => {
     const r = {
-      schemaVersion: 5,
+      schemaVersion: 6,
+      verificationRunContext: emptyCtx,
       workflowId: "w",
       status: "incomplete",
       runLevelCodes: [],
@@ -485,7 +530,8 @@ describe("formatWorkflowTruthReport", () => {
 
   it("reason with field appends field=", () => {
     const r = {
-      schemaVersion: 5,
+      schemaVersion: 6,
+      verificationRunContext: emptyCtx,
       workflowId: "w",
       status: "incomplete",
       runLevelCodes: [],
@@ -513,7 +559,8 @@ describe("formatWorkflowTruthReport", () => {
 
   it("newlines in toolId sanitized", () => {
     const r = {
-      schemaVersion: 5,
+      schemaVersion: 6,
+      verificationRunContext: emptyCtx,
       workflowId: "w",
       status: "complete",
       runLevelCodes: [],
@@ -539,7 +586,8 @@ describe("formatWorkflowTruthReport", () => {
 
   it("intendedEffect newlines collapsed to single line", () => {
     const r = {
-      schemaVersion: 5,
+      schemaVersion: 6,
+      verificationRunContext: emptyCtx,
       workflowId: "w",
       status: "complete",
       runLevelCodes: [],

@@ -11,6 +11,7 @@ import {
   formatVerificationTargetSummary,
   withFailureDiagnostic,
 } from "./verificationDiagnostics.js";
+import { createEmptyVerificationRunContext } from "./verificationRunContext.js";
 import type { StepOutcome, StepVerificationRequest } from "./types.js";
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -218,13 +219,14 @@ describe("stderr category parity with JSON failureDiagnostic", () => {
       requiredFields: { a: "b" },
     };
     const result = {
-      schemaVersion: 5 as const,
+      schemaVersion: 6 as const,
       workflowId: "w",
       status: "inconsistent" as const,
       runLevelCodes: [] as string[],
       runLevelReasons: [] as { code: string; message: string }[],
       verificationPolicy: { consistencyMode: "strong" as const, verificationWindowMs: 0, pollIntervalMs: 0 },
       eventSequenceIntegrity: { kind: "normal" as const },
+      verificationRunContext: createEmptyVerificationRunContext(),
       steps: [
         withFailureDiagnostic(
           step({

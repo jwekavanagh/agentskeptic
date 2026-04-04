@@ -1,0 +1,54 @@
+{
+  "$id": "https://execution-truth-layer/schemas/cli-error-envelope.schema.json",
+  "title": "ExecutionTruthLayerCliError",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "kind",
+    "code",
+    "message",
+    "failureDiagnosis"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 2 },
+    "kind": { "const": "execution_truth_layer_error" },
+    "code": { "type": "string" },
+    "message": { "type": "string", "maxLength": 2048 },
+    "failureDiagnosis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["summary", "primaryOrigin", "confidence", "evidence"],
+      "properties": {
+        "summary": { "type": "string", "maxLength": 2048 },
+        "primaryOrigin": {
+          "type": "string",
+          "enum": [
+            "decision_making",
+            "inputs",
+            "retrieval",
+            "tool_use",
+            "workflow_flow",
+            "downstream_system_state"
+          ]
+        },
+        "confidence": {
+          "type": "string",
+          "enum": ["high", "medium", "low"]
+        },
+        "evidence": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["referenceCode"],
+            "properties": {
+              "referenceCode": { "type": "string" }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 6,
+  "schemaVersion": 7,
   "workflowId": "wf_multi_partial",
   "status": "inconsistent",
   "runLevelCodes": [],
@@ -86,8 +86,18 @@
       "failureDiagnostic": "workflow_execution"
     }
   ],
+  "verificationRunContext": {
+    "maxWireSchemaVersion": 1,
+    "retrievalEvents": [],
+    "controlEvents": [],
+    "modelTurnEvents": [],
+    "toolSkippedEvents": [],
+    "toolObservedIngestIndexBySeq": {
+      "0": 0
+    }
+  },
   "workflowTruthReport": {
-    "schemaVersion": 1,
+    "schemaVersion": 2,
     "workflowId": "wf_multi_partial",
     "workflowStatus": "inconsistent",
     "trustSummary": "NOT TRUSTED: At least one step failed verification against the database (determinate failure).",
@@ -132,6 +142,39 @@
           }
         ]
       }
-    ]
+    ],
+    "failureAnalysis": {
+      "summary": "Primary failure at seq 0 tool demo.multi_contact (code VALUE_MISMATCH); origin: downstream_system_state.",
+      "primaryOrigin": "downstream_system_state",
+      "confidence": "medium",
+      "evidence": [
+        {
+          "scope": "step",
+          "seq": 0,
+          "toolId": "demo.multi_contact",
+          "codes": [
+            "VALUE_MISMATCH"
+          ]
+        },
+        {
+          "scope": "effect",
+          "effectId": "secondary",
+          "seq": 0,
+          "codes": [
+            "VALUE_MISMATCH"
+          ]
+        }
+      ],
+      "alternativeHypotheses": [
+        {
+          "primaryOrigin": "downstream_system_state",
+          "rationale": "Stored column values differ from required fields; the live database state may have diverged from what the tool reported."
+        },
+        {
+          "primaryOrigin": "inputs",
+          "rationale": "Stored column values differ from required fields; registry pointers or consts used to build the verification request may not match the observation payload."
+        }
+      ]
+    }
   }
 }

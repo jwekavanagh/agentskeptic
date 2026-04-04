@@ -148,7 +148,7 @@ describe("buildExecutionTraceView", () => {
       },
     ];
     const engine: WorkflowEngineResult = {
-      schemaVersion: 5,
+      schemaVersion: 6,
       workflowId: "w",
       status: "complete",
       runLevelCodes: [],
@@ -159,6 +159,14 @@ describe("buildExecutionTraceView", () => {
         pollIntervalMs: 0,
       },
       eventSequenceIntegrity: { kind: "normal" },
+      verificationRunContext: {
+        maxWireSchemaVersion: 2,
+        retrievalEvents: [],
+        controlEvents: [],
+        modelTurnEvents: [],
+        toolSkippedEvents: [],
+        toolObservedIngestIndexBySeq: { "0": 0 },
+      },
       steps: [
         {
           seq: 0,

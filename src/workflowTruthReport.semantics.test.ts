@@ -7,6 +7,9 @@ import {
 import type { StepOutcome, WorkflowEngineResult } from "./types.js";
 import { STEP_STATUS_TRUTH_LABELS, TRUST_LINE_UNCERTAIN_WITHIN_WINDOW, buildWorkflowTruthReport } from "./workflowTruthReport.js";
 import { loadSchemaValidator } from "./schemaLoad.js";
+import { createEmptyVerificationRunContext } from "./verificationRunContext.js";
+
+const emptyCtx = createEmptyVerificationRunContext();
 
 const strongPolicy = {
   consistencyMode: "strong" as const,
@@ -37,17 +40,19 @@ function verifiedStep(seq: number, toolId: string): StepOutcome {
 describe("buildWorkflowTruthReport (formatter-independent semantics)", () => {
   it("complete all verified: trust line and VERIFIED labels", () => {
     const engine: WorkflowEngineResult = {
-      schemaVersion: 5,
+      schemaVersion: 6,
       workflowId: "w",
       status: "complete",
       runLevelCodes: [],
       runLevelReasons: [],
       verificationPolicy: strongPolicy,
       eventSequenceIntegrity: { kind: "normal" },
+      verificationRunContext: emptyCtx,
       steps: [verifiedStep(0, "t1")],
     };
     const truth = buildWorkflowTruthReport(engine);
-    expect(truth.schemaVersion).toBe(1);
+    expect(truth.schemaVersion).toBe(2);
+    expect(truth.failureAnalysis).toBeNull();
     expect(truth.workflowId).toBe("w");
     expect(truth.workflowStatus).toBe("complete");
     expect(truth.trustSummary).toBe(
@@ -81,17 +86,22 @@ describe("buildWorkflowTruthReport (formatter-independent semantics)", () => {
       failureDiagnostic: "workflow_execution",
     };
     const engine: WorkflowEngineResult = {
-      schemaVersion: 5,
+      schemaVersion: 6,
       workflowId: "w",
       status: "inconsistent",
       runLevelCodes: [],
       runLevelReasons: [],
       verificationPolicy: strongPolicy,
       eventSequenceIntegrity: { kind: "normal" },
+      verificationRunContext: emptyCtx,
       steps: [step],
     };
     const truth = buildWorkflowTruthReport(engine);
     expect(truth.workflowStatus).toBe("inconsistent");
+    expect(truth.failureAnalysis).not.toBeNull();
+    expect(truth.failureAnalysis!.primaryOrigin).toBe("downstream_system_state");
+    expect(truth.failureAnalysis!.confidence).toBe("medium");
+    expect(truth.failureAnalysis!.alternativeHypotheses).toHaveLength(2);
     expect(truth.steps[0]!.outcomeLabel).toBe(STEP_STATUS_TRUTH_LABELS.missing);
     expect(truth.steps[0]!.failureCategory).toBe("workflow_execution");
     const vt = formatVerificationTargetSummary(vr);
@@ -100,7 +110,7 @@ describe("buildWorkflowTruthReport (formatter-independent semantics)", () => {
 
   it("run-level issue: runLevelIssues mirror reasons with categories", () => {
     const engine: WorkflowEngineResult = {
-      schemaVersion: 5,
+      schemaVersion: 6,
       workflowId: "w",
       status: "incomplete",
       runLevelCodes: ["NO_STEPS_FOR_WORKFLOW"],
@@ -109,9 +119,11 @@ describe("buildWorkflowTruthReport (formatter-independent semantics)", () => {
       ],
       verificationPolicy: strongPolicy,
       eventSequenceIntegrity: { kind: "normal" },
+      verificationRunContext: emptyCtx,
       steps: [],
     };
     const truth = buildWorkflowTruthReport(engine);
+    expect(truth.failureAnalysis!.primaryOrigin).toBe("workflow_flow");
     expect(truth.runLevelIssues).toHaveLength(1);
     expect(truth.runLevelIssues[0]!.code).toBe("NO_STEPS_FOR_WORKFLOW");
     expect(truth.runLevelIssues[0]!.category).toBe(
@@ -132,23 +144,26 @@ describe("buildWorkflowTruthReport (formatter-independent semantics)", () => {
         requiredFields: {},
       },
       status: "uncertain",
-      reasons: [{ code: "ROW_ABSENT", message: "window" }],
+      reasons: [{ code: "ROW_NOT_OBSERVED_WITHIN_WINDOW", message: "window" }],
       evidenceSummary: {},
       repeatObservationCount: 1,
       evaluatedObservationOrdinal: 1,
       failureDiagnostic: "observation_uncertainty",
     };
     const engine: WorkflowEngineResult = {
-      schemaVersion: 5,
+      schemaVersion: 6,
       workflowId: "w",
       status: "incomplete",
       runLevelCodes: [],
       runLevelReasons: [],
       verificationPolicy: strongPolicy,
       eventSequenceIntegrity: { kind: "normal" },
+      verificationRunContext: emptyCtx,
       steps: [step],
     };
     const truth = buildWorkflowTruthReport(engine);
+    expect(truth.failureAnalysis!.primaryOrigin).toBe("downstream_system_state");
+    expect(truth.failureAnalysis!.alternativeHypotheses).toBeUndefined();
     expect(truth.trustSummary).toBe(TRUST_LINE_UNCERTAIN_WITHIN_WINDOW);
     expect(truth.steps[0]!.outcomeLabel).toBe("UNCERTAIN_NOT_OBSERVED_WITHIN_WINDOW");
     expect(truth.steps[0]!.failureCategory).toBe(

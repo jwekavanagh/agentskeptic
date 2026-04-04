@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 6,
+  "schemaVersion": 7,
   "workflowId": "wf_multi_ok",
   "status": "complete",
   "runLevelCodes": [],
@@ -71,8 +71,18 @@
       "evaluatedObservationOrdinal": 1
     }
   ],
+  "verificationRunContext": {
+    "maxWireSchemaVersion": 1,
+    "retrievalEvents": [],
+    "controlEvents": [],
+    "modelTurnEvents": [],
+    "toolSkippedEvents": [],
+    "toolObservedIngestIndexBySeq": {
+      "0": 0
+    }
+  },
   "workflowTruthReport": {
-    "schemaVersion": 1,
+    "schemaVersion": 2,
     "workflowId": "wf_multi_ok",
     "workflowStatus": "complete",
     "trustSummary": "TRUSTED: Every step matched the database under the configured verification rules.",
@@ -105,6 +115,7 @@
           }
         ]
       }
-    ]
+    ],
+    "failureAnalysis": null
   }
 }

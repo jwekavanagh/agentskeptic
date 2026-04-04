@@ -10,10 +10,11 @@
     "trustSummary",
     "runLevelIssues",
     "eventSequence",
-    "steps"
+    "steps",
+    "failureAnalysis"
   ],
   "properties": {
-    "schemaVersion": { "const": 1 },
+    "schemaVersion": { "const": 2 },
     "workflowId": { "type": "string" },
     "workflowStatus": {
       "type": "string",
@@ -52,9 +53,75 @@
     "steps": {
       "type": "array",
       "items": { "$ref": "#/$defs/truthStep" }
+    },
+    "failureAnalysis": {
+      "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/failureAnalysis" }]
     }
   },
   "$defs": {
+    "failureOrigin": {
+      "type": "string",
+      "enum": [
+        "decision_making",
+        "inputs",
+        "retrieval",
+        "tool_use",
+        "workflow_flow",
+        "downstream_system_state"
+      ]
+    },
+    "failureAnalysisEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scope"],
+      "properties": {
+        "scope": {
+          "type": "string",
+          "enum": ["run_context", "run_level", "event_sequence", "step", "effect"]
+        },
+        "codes": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "ingestIndex": { "type": "integer", "minimum": 0 },
+        "seq": { "type": "integer", "minimum": 0 },
+        "toolId": { "type": "string" },
+        "effectId": { "type": "string" },
+        "source": { "type": "string" },
+        "runEventId": { "type": ["string", "null"] }
+      }
+    },
+    "failureAnalysisAlternative": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["primaryOrigin", "rationale"],
+      "properties": {
+        "primaryOrigin": { "$ref": "#/$defs/failureOrigin" },
+        "rationale": { "type": "string", "maxLength": 2048 }
+      }
+    },
+    "failureAnalysis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["summary", "primaryOrigin", "confidence", "evidence"],
+      "properties": {
+        "summary": { "type": "string", "maxLength": 2048 },
+        "primaryOrigin": { "$ref": "#/$defs/failureOrigin" },
+        "confidence": {
+          "type": "string",
+          "enum": ["high", "medium", "low"]
+        },
+        "evidence": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/failureAnalysisEvidence" }
+        },
+        "alternativeHypotheses": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/failureAnalysisAlternative" }
+        }
+      }
+    },
     "truthIssue": {
       "type": "object",
       "additionalProperties": false,

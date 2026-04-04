@@ -46,6 +46,7 @@ import {
   type PolicyReconcileContext,
 } from "./verificationPolicy.js";
 import { withFailureDiagnostic } from "./verificationDiagnostics.js";
+import { buildVerificationRunContext } from "./verificationRunContext.js";
 
 function defaultTruthReportToStderr(report: string): void {
   process.stderr.write(`${report}\n`);
@@ -318,7 +319,11 @@ export async function verifyWorkflow(options: {
   const truthReport = options.truthReport ?? defaultTruthReportToStderr;
   const verificationPolicy = resolveVerificationPolicyInput(options.verificationPolicy);
 
-  const { events, runLevelReasons, eventSequenceIntegrity } = loadEventsForWorkflow(eventsPath, workflowId);
+  const { events, runEvents, runLevelReasons, eventSequenceIntegrity } = loadEventsForWorkflow(
+    eventsPath,
+    workflowId,
+  );
+  const verificationRunContext = buildVerificationRunContext(runEvents);
   const registry = loadToolsRegistry(registryPath);
 
   let steps: StepOutcome[];
@@ -385,13 +390,14 @@ export async function verifyWorkflow(options: {
     }
   }
 
-  const engine = aggregateWorkflow(
+  const engineBase = aggregateWorkflow(
     workflowId,
     steps,
     runLevelReasons,
     verificationPolicy,
     eventSequenceIntegrity,
   );
+  const engine = { ...engineBase, verificationRunContext };
   truthReport(formatWorkflowTruthReport(engine));
   return finalizeEmittedWorkflowResult(engine);
 }
@@ -468,13 +474,14 @@ class WorkflowVerificationSession {
       logStep: this.logStep,
       verificationPolicy: this.verificationPolicy,
     });
-    return aggregateWorkflow(
+    const base = aggregateWorkflow(
       this.workflowId,
       steps,
       [...this.runLevelReasons],
       this.verificationPolicy,
       eventSequenceIntegrity,
     );
+    return { ...base, verificationRunContext: buildVerificationRunContext(this.bufferedRunEvents) };
   }
 }
 

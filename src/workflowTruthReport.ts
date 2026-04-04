@@ -1,3 +1,4 @@
+import { buildFailureAnalysis } from "./failureAnalysis.js";
 import {
   failureDiagnosticForEventSequenceCode,
   failureDiagnosticForRunLevelCode,
@@ -208,21 +209,24 @@ export function buildWorkflowTruthReport(engine: WorkflowEngineResult): Workflow
           })),
         } as const);
 
+  const failureAnalysis = buildFailureAnalysis(engine);
+
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     workflowId: engine.workflowId,
     workflowStatus: engine.status,
     trustSummary: trustSummaryForEngine(engine),
     runLevelIssues,
     eventSequence,
     steps: engine.steps.map(buildTruthStep),
+    failureAnalysis,
   };
 }
 
 export function finalizeEmittedWorkflowResult(engine: WorkflowEngineResult): WorkflowResult {
   return {
     ...engine,
-    schemaVersion: 6,
+    schemaVersion: 7,
     workflowTruthReport: buildWorkflowTruthReport(engine),
   };
 }
@@ -233,6 +237,30 @@ export function formatWorkflowTruthReportStruct(truth: WorkflowTruthReport): str
   lines.push(`workflow_id: ${sanitizeOneLineId(truth.workflowId)}`);
   lines.push(`workflow_status: ${truth.workflowStatus}`);
   lines.push(`trust: ${truth.trustSummary}`);
+
+  if (truth.failureAnalysis !== null) {
+    const d = truth.failureAnalysis;
+    lines.push("diagnosis:");
+    lines.push(`  summary: ${d.summary}`);
+    lines.push(`  primary_origin: ${d.primaryOrigin}`);
+    lines.push(`  confidence: ${d.confidence}`);
+    for (const ev of d.evidence) {
+      const parts = [`scope=${ev.scope}`];
+      if (ev.codes !== undefined) parts.push(`codes=${ev.codes.join(",")}`);
+      if (ev.ingestIndex !== undefined) parts.push(`ingest_index=${ev.ingestIndex}`);
+      if (ev.seq !== undefined) parts.push(`seq=${ev.seq}`);
+      if (ev.toolId !== undefined) parts.push(`tool=${sanitizeOneLineId(ev.toolId)}`);
+      if (ev.effectId !== undefined) parts.push(`effect_id=${sanitizeOneLineId(ev.effectId)}`);
+      if (ev.source !== undefined) parts.push(`source=${sanitizeOneLineId(ev.source)}`);
+      lines.push(`  - evidence: ${parts.join(" ")}`);
+    }
+    if (d.alternativeHypotheses !== undefined) {
+      for (const alt of d.alternativeHypotheses) {
+        lines.push(`  alternative_origin: ${alt.primaryOrigin}`);
+        lines.push(`    rationale: ${alt.rationale}`);
+      }
+    }
+  }
 
   if (truth.runLevelIssues.length === 0) {
     lines.push("run_level: (none)");

@@ -12,6 +12,7 @@ import {
   recurrenceSignature,
 } from "./runComparison.js";
 import type { StepOutcome, WorkflowEngineResult, WorkflowResult } from "./types.js";
+import { createEmptyVerificationRunContext } from "./verificationRunContext.js";
 import { finalizeEmittedWorkflowResult } from "./workflowTruthReport.js";
 import { workflowEngineResultFromEmitted } from "./workflowResultNormalize.js";
 
@@ -48,7 +49,7 @@ function sqlRowStep(
 function wf(steps: StepOutcome[], id = "wf_cmp"): WorkflowResult {
   const bad = steps.some((s) => s.status !== "verified");
   const engine: WorkflowEngineResult = {
-    schemaVersion: 5,
+    schemaVersion: 6,
     workflowId: id,
     status: bad ? "inconsistent" : "complete",
     runLevelCodes: [],
@@ -59,6 +60,7 @@ function wf(steps: StepOutcome[], id = "wf_cmp"): WorkflowResult {
       pollIntervalMs: 0,
     },
     eventSequenceIntegrity: { kind: "normal" },
+    verificationRunContext: createEmptyVerificationRunContext(),
     steps,
   };
   return finalizeEmittedWorkflowResult(engine);

@@ -33,7 +33,7 @@ describe("WorkflowAggregator precedence", () => {
       eventSeqNormal,
     );
     expect(r.status).toBe("complete");
-    expect(r.schemaVersion).toBe(5);
+    expect(r.schemaVersion).toBe(6);
     expect(r.eventSequenceIntegrity).toEqual(eventSeqNormal);
     expect(r.runLevelReasons).toEqual([]);
     expect(r.runLevelCodes).toEqual([]);

@@ -5,9 +5,12 @@ import { fileURLToPath } from "url";
 import { buildRunComparisonReport } from "./runComparison.js";
 import { loadSchemaValidator } from "./schemaLoad.js";
 import type { StepOutcome, WorkflowEngineResult, WorkflowResult } from "./types.js";
+import { createEmptyVerificationRunContext } from "./verificationRunContext.js";
 import { finalizeEmittedWorkflowResult } from "./workflowTruthReport.js";
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
+
+const emptyCtx = createEmptyVerificationRunContext();
 
 describe("JSON Schemas (SSOT)", () => {
   it("validates tool_observed event lines", () => {
@@ -66,7 +69,7 @@ describe("JSON Schemas (SSOT)", () => {
   it("validates workflow result shape from golden pipeline output", () => {
     const v = loadSchemaValidator("workflow-result");
     const engine: WorkflowEngineResult = {
-      schemaVersion: 5,
+      schemaVersion: 6,
       workflowId: "wf_complete",
       status: "complete",
       runLevelCodes: [],
@@ -77,6 +80,7 @@ describe("JSON Schemas (SSOT)", () => {
         pollIntervalMs: 0,
       },
       eventSequenceIntegrity: { kind: "normal" },
+      verificationRunContext: emptyCtx,
       steps: [
         {
           seq: 0,
@@ -103,7 +107,7 @@ describe("JSON Schemas (SSOT)", () => {
   it("validates multi-effect workflow result (sql_effects + evidenceSummary.effects)", () => {
     const v = loadSchemaValidator("workflow-result");
     const engine: WorkflowEngineResult = {
-      schemaVersion: 5,
+      schemaVersion: 6,
       workflowId: "wf_multi",
       status: "inconsistent",
       runLevelCodes: [],
@@ -114,6 +118,7 @@ describe("JSON Schemas (SSOT)", () => {
         pollIntervalMs: 0,
       },
       eventSequenceIntegrity: { kind: "normal" },
+      verificationRunContext: emptyCtx,
       steps: [
         {
           seq: 0,
@@ -176,7 +181,7 @@ describe("JSON Schemas (SSOT)", () => {
   it("rejects single-effect step evidenceSummary with effectCount", () => {
     const v = loadSchemaValidator("workflow-engine-result");
     const bad = {
-      schemaVersion: 5,
+      schemaVersion: 6,
       workflowId: "w",
       status: "complete",
       runLevelCodes: [],
@@ -187,6 +192,7 @@ describe("JSON Schemas (SSOT)", () => {
         pollIntervalMs: 0,
       },
       eventSequenceIntegrity: { kind: "normal" },
+      verificationRunContext: emptyCtx,
       steps: [
         {
           seq: 0,
@@ -231,7 +237,7 @@ describe("JSON Schemas (SSOT)", () => {
       ...(ok ? {} : { failureDiagnostic: "workflow_execution" as const }),
     });
     const engine0: WorkflowEngineResult = {
-      schemaVersion: 5,
+      schemaVersion: 6,
       workflowId: "w",
       status: "complete",
       runLevelCodes: [],
@@ -242,6 +248,7 @@ describe("JSON Schemas (SSOT)", () => {
         pollIntervalMs: 0,
       },
       eventSequenceIntegrity: { kind: "normal" },
+      verificationRunContext: emptyCtx,
       steps: [step(0, "a", true)],
     };
     const r0: WorkflowResult = finalizeEmittedWorkflowResult(engine0);
@@ -257,7 +264,7 @@ describe("JSON Schemas (SSOT)", () => {
     const vTruth = loadSchemaValidator("workflow-truth-report");
     const vResult = loadSchemaValidator("workflow-result");
     const engine: WorkflowEngineResult = {
-      schemaVersion: 5,
+      schemaVersion: 6,
       workflowId: "wf_complete",
       status: "complete",
       runLevelCodes: [],
@@ -268,6 +275,7 @@ describe("JSON Schemas (SSOT)", () => {
         pollIntervalMs: 0,
       },
       eventSequenceIntegrity: { kind: "normal" },
+      verificationRunContext: emptyCtx,
       steps: [
         {
           seq: 0,
@@ -312,10 +320,10 @@ describe("JSON Schemas (SSOT)", () => {
     expect(v(v5only)).toBe(false);
   });
 
-  it("workflow-result-compare-input accepts v5 engine and v6 emitted", () => {
+  it("workflow-result-compare-input accepts v6 engine and v7 emitted", () => {
     const vCmp = loadSchemaValidator("workflow-result-compare-input");
     const engine: WorkflowEngineResult = {
-      schemaVersion: 5,
+      schemaVersion: 6,
       workflowId: "w",
       status: "complete",
       runLevelCodes: [],
@@ -326,6 +334,7 @@ describe("JSON Schemas (SSOT)", () => {
         pollIntervalMs: 0,
       },
       eventSequenceIntegrity: { kind: "normal" },
+      verificationRunContext: emptyCtx,
       steps: [
         {
           seq: 0,

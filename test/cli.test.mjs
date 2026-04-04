@@ -111,9 +111,13 @@ describe("CLI verify-workflow", () => {
     assert.equal(r.stdout.trim(), "");
     const err = JSON.parse(r.stderr.trim());
     assert.equal(err.kind, "execution_truth_layer_error");
+    assert.equal(err.schemaVersion, 2);
     assert.equal(err.code, "CLI_USAGE");
     assert.ok(err.message.length > 0);
     assert.ok(err.message.length <= 2048);
+    assert.equal(err.failureDiagnosis.primaryOrigin, "inputs");
+    assert.equal(err.failureDiagnosis.confidence, "high");
+    assert.equal(err.failureDiagnosis.evidence[0].referenceCode, "CLI_USAGE");
   });
 
   it("eventual without window/poll → exit 3 CLI_USAGE", () => {
