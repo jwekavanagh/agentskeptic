@@ -1,10 +1,11 @@
 import { runLevelIssue } from "./failureCatalog.js";
-import type { Reason, StepOutcome, WorkflowResult, WorkflowStatus } from "./types.js";
+import type { Reason, StepOutcome, VerificationPolicy, WorkflowResult, WorkflowStatus } from "./types.js";
 
 export function aggregateWorkflow(
   workflowId: string,
   steps: StepOutcome[],
   runLevelReasonsIncoming: Reason[],
+  verificationPolicy: VerificationPolicy,
 ): WorkflowResult {
   const runLevelReasons: Reason[] = [...runLevelReasonsIncoming];
   if (steps.length === 0) {
@@ -30,11 +31,12 @@ export function aggregateWorkflow(
   }
 
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     workflowId,
     status,
     runLevelCodes: [...runLevelCodes],
     runLevelReasons: [...runLevelReasons],
+    verificationPolicy,
     steps,
   };
 }

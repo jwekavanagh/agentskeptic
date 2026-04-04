@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { aggregateWorkflow } from "../src/aggregate.js";
-import type { StepOutcome } from "../src/types.js";
+import type { StepOutcome, VerificationPolicy } from "../src/types.js";
+
+const strongPolicy: VerificationPolicy = {
+  consistencyMode: "strong",
+  verificationWindowMs: 0,
+  pollIntervalMs: 0,
+};
 
 function step(partial: Partial<StepOutcome> & Pick<StepOutcome, "seq" | "toolId" | "status">): StepOutcome {
   return {
@@ -20,9 +26,10 @@ describe("WorkflowAggregator precedence", () => {
       "w",
       [step({ seq: 0, toolId: "t", status: "verified" })],
       [],
+      strongPolicy,
     );
     expect(r.status).toBe("complete");
-    expect(r.schemaVersion).toBe(2);
+    expect(r.schemaVersion).toBe(3);
     expect(r.runLevelReasons).toEqual([]);
     expect(r.runLevelCodes).toEqual([]);
   });
@@ -32,6 +39,7 @@ describe("WorkflowAggregator precedence", () => {
       "w",
       [step({ seq: 0, toolId: "t", status: "verified" })],
       [{ code: "TEST_BLOCKING_CODE", message: "blocking" }],
+      strongPolicy,
     );
     expect(r.status).toBe("incomplete");
     expect(r.runLevelCodes).toEqual(["TEST_BLOCKING_CODE"]);
@@ -45,6 +53,7 @@ describe("WorkflowAggregator precedence", () => {
         step({ seq: 1, toolId: "t", status: "incomplete_verification" }),
       ],
       [],
+      strongPolicy,
     );
     expect(r.status).toBe("incomplete");
   });
@@ -54,6 +63,7 @@ describe("WorkflowAggregator precedence", () => {
       "w",
       [step({ seq: 0, toolId: "t", status: "missing" })],
       [],
+      strongPolicy,
     );
     expect(r.status).toBe("inconsistent");
     expect(r.runLevelReasons).toEqual([]);
@@ -64,12 +74,13 @@ describe("WorkflowAggregator precedence", () => {
       "w",
       [step({ seq: 0, toolId: "t", status: "partially_verified" })],
       [],
+      strongPolicy,
     );
     expect(r.status).toBe("inconsistent");
   });
 
   it("incomplete when zero steps adds NO_STEPS_FOR_WORKFLOW", () => {
-    const r = aggregateWorkflow("w", [], []);
+    const r = aggregateWorkflow("w", [], [], strongPolicy);
     expect(r.status).toBe("incomplete");
     expect(r.runLevelCodes).toEqual(["NO_STEPS_FOR_WORKFLOW"]);
     expect(r.runLevelReasons.map((x) => x.code)).toEqual(["NO_STEPS_FOR_WORKFLOW"]);
@@ -80,7 +91,34 @@ describe("WorkflowAggregator precedence", () => {
       "w",
       [step({ seq: 0, toolId: "t", status: "missing" })],
       [],
+      strongPolicy,
     );
     expect(r.status).not.toBe("complete");
+  });
+
+  it("incomplete when only uncertain steps (with verified)", () => {
+    const r = aggregateWorkflow(
+      "w",
+      [
+        step({ seq: 0, toolId: "t", status: "verified" }),
+        step({ seq: 1, toolId: "t", status: "uncertain" }),
+      ],
+      [],
+      strongPolicy,
+    );
+    expect(r.status).toBe("incomplete");
+  });
+
+  it("inconsistent when uncertain and missing on different steps", () => {
+    const r = aggregateWorkflow(
+      "w",
+      [
+        step({ seq: 0, toolId: "t", status: "uncertain" }),
+        step({ seq: 1, toolId: "t", status: "missing" }),
+      ],
+      [],
+      strongPolicy,
+    );
+    expect(r.status).toBe("inconsistent");
   });
 });

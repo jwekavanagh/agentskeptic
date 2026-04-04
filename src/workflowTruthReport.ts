@@ -6,11 +6,12 @@ export const STEP_STATUS_TRUTH_LABELS: Record<StepStatus, string> = {
   inconsistent: "FAILED_VALUE_MISMATCH",
   incomplete_verification: "INCOMPLETE_CANNOT_VERIFY",
   partially_verified: "PARTIALLY_VERIFIED",
+  uncertain: "UNCERTAIN_NOT_OBSERVED_WITHIN_WINDOW",
 };
 
-/** Per-effect rows use reconciler statuses only (never `partially_verified`). */
+/** Per-effect rows use reconciler statuses only (never `partially_verified` or `uncertain`). */
 export const EFFECT_STATUS_TRUTH_LABELS: Record<
-  Exclude<StepStatus, "partially_verified">,
+  Exclude<StepStatus, "partially_verified" | "uncertain">,
   string
 > = {
   verified: "VERIFIED",
@@ -26,6 +27,24 @@ const TRUST_LINE_BY_STATUS: Record<WorkflowStatus, string> = {
     "NOT_TRUSTED: At least one step failed verification against the database (determinate failure).",
 };
 
+/** Human report trust line when the only failures are `uncertain` (eventual window exhausted). */
+export const TRUST_LINE_UNCERTAIN_WITHIN_WINDOW =
+  "NOT_TRUSTED: At least one step could not be confirmed within the verification window (row not observed; replication or processing delay is possible).";
+
+function trustLineForResult(result: WorkflowResult): string {
+  if (
+    result.status === "incomplete" &&
+    result.runLevelReasons.length === 0 &&
+    result.steps.some((s) => s.status === "uncertain") &&
+    !result.steps.some((s) =>
+      ["missing", "inconsistent", "partially_verified", "incomplete_verification"].includes(s.status),
+    )
+  ) {
+    return TRUST_LINE_UNCERTAIN_WITHIN_WINDOW;
+  }
+  return TRUST_LINE_BY_STATUS[result.status];
+}
+
 function sanitizeOneLineId(value: string): string {
   return value.replace(/\r\n|\r|\n/g, "_");
 }
@@ -37,7 +56,7 @@ function singleLineIntended(effect: string): string {
 
 type EffectEvidenceRow = {
   id: string;
-  status: Exclude<StepStatus, "partially_verified">;
+  status: Exclude<StepStatus, "partially_verified" | "uncertain">;
   reasons: Reason[];
 };
 
@@ -67,7 +86,7 @@ export function formatWorkflowTruthReport(result: WorkflowResult): string {
 
   lines.push(`workflow_id: ${sanitizeOneLineId(result.workflowId)}`);
   lines.push(`workflow_status: ${result.status}`);
-  lines.push(`trust: ${TRUST_LINE_BY_STATUS[result.status]}`);
+  lines.push(`trust: ${trustLineForResult(result)}`);
 
   if (result.runLevelReasons.length === 0) {
     lines.push("run_level: (none)");

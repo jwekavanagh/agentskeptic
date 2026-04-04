@@ -10,7 +10,9 @@ import { fileURLToPath } from "node:url";
 import { dirname } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import * as api from "../dist/index.js";
+import { CLI_OPERATIONAL_CODES } from "../dist/failureCatalog.js";
 import { verifyWorkflow, withWorkflowVerification } from "../dist/pipeline.js";
+import { TruthLayerError } from "../dist/truthLayerError.js";
 import { loadSchemaValidator } from "../dist/schemaLoad.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -58,6 +60,29 @@ describe("withWorkflowVerification", () => {
     assert.equal(api.STEP_STATUS_TRUTH_LABELS.verified, "VERIFIED");
     assert.equal(Object.hasOwn(api, "createWorkflowVerificationSession"), false);
     assert.equal(Object.hasOwn(api, "finish"), false);
+  });
+
+  it("eventual verificationPolicy rejects before run", async () => {
+    await assert.rejects(
+      withWorkflowVerification(
+        {
+          workflowId: "wf_complete",
+          registryPath,
+          dbPath,
+          logStep: noopLog,
+          truthReport: () => {},
+          verificationPolicy: {
+            consistencyMode: "eventual",
+            verificationWindowMs: 100,
+            pollIntervalMs: 50,
+          },
+        },
+        async () => {},
+      ),
+      (e) =>
+        e instanceof TruthLayerError &&
+        e.code === CLI_OPERATIONAL_CODES.EVENTUAL_MODE_NOT_SUPPORTED_IN_PROCESS_HOOK,
+    );
   });
 
   it("parity wf_complete wf_missing wf_dup_seq wf_divergent_retry vs verifyWorkflow", async () => {

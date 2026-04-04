@@ -29,6 +29,7 @@ This document is the authoritative specification for the MVP. The product verifi
 | `aggregate.ts` | Workflow status precedence |
 | `workflowTruthReport.ts` | `formatWorkflowTruthReport`, `STEP_STATUS_TRUTH_LABELS`; fixed human report grammar |
 | `runComparison.ts` | `buildRunComparisonReport`, `formatRunComparisonReport`, `logicalStepKeyFromStep`, `recurrenceSignature`; cross-run comparison |
+| `verificationPolicy.ts` | `VerificationPolicy` normalization/validation; `executeVerificationWithPolicySync` / `executeVerificationWithPolicyAsync` (strong vs eventual polling); `createSqlitePolicyContext` |
 | `pipeline.ts` | Orchestration: `runLogicalStepsVerification` (internal), async `verifyWorkflow`, sync `verifyToolObservedStep`, `withWorkflowVerification` (SQLite `dbPath` only); default `truthReport` / `logStep` |
 | `cli.ts` | CLI entry: legacy verify + `compare` subcommand |
 
@@ -40,7 +41,7 @@ This document is the authoritative specification for the MVP. The product verifi
 
 Primary integration for running workflows in code: **`await withWorkflowVerification(options, run)`** from `pipeline.ts` (re-exported in the package entry). The `run` callback receives **`observeStep`**; call it after each tool with one [event line](#event-line-schema) object. There is **no** public `finish` — after `run` completes successfully, the library builds the **`WorkflowResult`** (including SQL verification) **before** closing the read-only SQLite handle in **`finally`**.
 
-**`withWorkflowVerification` is SQLite-only** (option `dbPath` → read-only file). For Postgres ground truth, replay NDJSON and call **`await verifyWorkflow`** with `database: { kind: "postgres", connectionString }` or use the CLI (`--postgres-url`). **Why:** Keeps `observeStep` synchronous and a single stable hook; async `pg` is isolated to batch verification.
+**`withWorkflowVerification` is SQLite-only** (option `dbPath` → read-only file) and supports **`consistencyMode: "strong"` only**. Eventual consistency polling requires the batch/async path: use **`await verifyWorkflow`** (or CLI) with `verificationPolicy.consistencyMode: "eventual"`. Passing eventual policy to `withWorkflowVerification` fails before the user `run` with operational code **`EVENTUAL_MODE_NOT_SUPPORTED_IN_PROCESS_HOOK`**. For Postgres ground truth, replay NDJSON and call **`await verifyWorkflow`** with `database: { kind: "postgres", connectionString }` or use the CLI (`--postgres-url`). **Why:** Keeps `observeStep` synchronous and a single stable hook; async `pg` and polling are isolated to batch verification.
 
 One root boundary; library owns DB close in finally; avoids silent leaks when integrators omit a terminal call.
 
@@ -91,7 +92,9 @@ node dist/cli.js --workflow-id <id> --events <path> --registry <path> --postgres
 
 **I/O order (CLI — verdict paths 0/1/2):** **`verifyWorkflow`** emits the human report via default **`truthReport`** to **stderr** first, then the CLI writes **stdout**. So: **stderr (human) → stdout (JSON)**.
 
-**stdout:** Single JSON object matching `schemas/workflow-result.schema.json` (`schemaVersion` **`2`**; includes required **`runLevelReasons`** alongside **`runLevelCodes`**; each step includes **`repeatObservationCount`** and **`evaluatedObservationOrdinal`**).
+**stdout:** Single JSON object matching `schemas/workflow-result.schema.json` (`schemaVersion` **`3`**; required **`verificationPolicy`** `{ consistencyMode, verificationWindowMs, pollIntervalMs }`; includes required **`runLevelReasons`** alongside **`runLevelCodes`**; each step includes **`repeatObservationCount`** and **`evaluatedObservationOrdinal`**).
+
+**Verification policy (CLI):** Default is **`strong`** (single read per check). For **`eventual`**, pass **`--consistency eventual`** plus required **`--verification-window-ms`** and **`--poll-interval-ms`** (integers ≥ 1, **`pollIntervalMs` ≤ `verificationWindowMs`**). With **`strong`**, do not pass the millisecond flags. See [Verification policy (normative)](#verification-policy-normative).
 
 **stderr (verdict paths):** One **human truth report** per verification (same text as `formatWorkflowTruthReport`); see [Human truth report](#human-truth-report).
 
@@ -101,7 +104,7 @@ When the CLI exits **3**, **stderr** is exactly **one** UTF-8 line: a JSON objec
 
 - `schemaVersion`: **1**
 - `kind`: **`execution_truth_layer_error`**
-- `code`: one of **`CLI_USAGE`**, **`REGISTRY_READ_FAILED`**, **`REGISTRY_JSON_SYNTAX`**, **`REGISTRY_SCHEMA_INVALID`**, **`REGISTRY_DUPLICATE_TOOL_ID`**, **`EVENTS_READ_FAILED`**, **`SQLITE_DATABASE_OPEN_FAILED`**, **`POSTGRES_CLIENT_SETUP_FAILED`**, **`WORKFLOW_RESULT_SCHEMA_INVALID`**, **`INTERNAL_ERROR`**
+- `code`: one of **`CLI_USAGE`**, **`REGISTRY_READ_FAILED`**, **`REGISTRY_JSON_SYNTAX`**, **`REGISTRY_SCHEMA_INVALID`**, **`REGISTRY_DUPLICATE_TOOL_ID`**, **`EVENTS_READ_FAILED`**, **`SQLITE_DATABASE_OPEN_FAILED`**, **`POSTGRES_CLIENT_SETUP_FAILED`**, **`WORKFLOW_RESULT_SCHEMA_INVALID`**, **`VERIFICATION_POLICY_INVALID`**, **`INTERNAL_ERROR`**
 - `message`: human-readable text after whitespace normalization and truncation (max **2048** JavaScript string length; see `formatOperationalMessage` in `failureCatalog.ts`)
 
 **stdout** must be empty on exit **3**. Automation should key on **`code`**, not exact **`message`**, for driver-dependent errors.
@@ -116,7 +119,7 @@ This section is **normative**: literals and line shape match `formatWorkflowTrut
 - **stderr human / stdout JSON:** Automation keeps a single JSON record on stdout (`jq`, pipes); operators read the verdict on stderr.
 - **Default `truthReport` to stderr:** Gives a clear truth signal without extra configuration; silent tests pass `truthReport: () => {}`.
 - **Default `logStep` no-op:** Removes the old default of one JSON object per step on stderr, which duplicated `WorkflowResult` and conflicted with the human report.
-- **Fixed `trust:` lines and step labels (`STEP_STATUS_TRUTH_LABELS`):** Stable strings for alerts, screenshots, and training; each `trust:` line maps to one `WorkflowStatus` from `aggregate.ts`.
+- **Fixed `trust:` lines and step labels (`STEP_STATUS_TRUTH_LABELS`):** Stable strings for alerts, screenshots, and training; most `trust:` lines map to one `WorkflowStatus` from `aggregate.ts`, except the **eventual-window uncertainty** line which applies when `workflow_status` is `incomplete` under the narrow rule in the grammar below.
 - **Run-level lines:** Each line uses **`runLevelReasons`** from `WorkflowResult`: `code` + `message` from each `Reason` (same literals as `failureCatalog.ts` for catalog-defined codes).
 - **No trailing newline inside the returned string:** The default `truthReport` implementation appends `\n` when writing to stderr.
 
@@ -127,7 +130,8 @@ This section is **normative**: literals and line shape match `formatWorkflowTrut
    - `workflow_status: ` + exactly `complete`, `incomplete`, or `inconsistent`.
    - `trust: ` + exactly one of:
      - `TRUSTED: Every step matched the database under the configured verification rules.` when status is `complete`.
-     - `NOT_TRUSTED: Verification is incomplete; the workflow cannot be fully confirmed.` when status is `incomplete`.
+     - `NOT_TRUSTED: Verification is incomplete; the workflow cannot be fully confirmed.` when status is `incomplete`, **except** when the narrower rule below applies.
+     - `NOT_TRUSTED: At least one step could not be confirmed within the verification window (row not observed; replication or processing delay is possible).` when status is `incomplete`, **`runLevelReasons` is empty**, at least one step has **`uncertain`**, and **no** step has status in **`{ missing, inconsistent, partially_verified, incomplete_verification }`**.
      - `NOT_TRUSTED: At least one step failed verification against the database (determinate failure).` when status is `inconsistent`.
 
 2. **Run-level**
@@ -147,6 +151,7 @@ This section is **normative**: literals and line shape match `formatWorkflowTrut
 | `inconsistent` | `FAILED_VALUE_MISMATCH` |
 | `incomplete_verification` | `INCOMPLETE_CANNOT_VERIFY` |
 | `partially_verified` | `PARTIALLY_VERIFIED` |
+| `uncertain` | `UNCERTAIN_NOT_OBSERVED_WITHIN_WINDOW` |
 
    - Immediately after that header line: exactly one line `    observations: evaluated=` + decimal `evaluatedObservationOrdinal` + ` of ` + decimal `repeatObservationCount` + ` in_capture_order` (four spaces before `observations:`; no trailing spaces; no period).
    - For each reason: `    reason: [` + code + `] ` + trimmed message, or `(no message)` if the message is empty after trim; if `field` is set and non-empty, append ` field=` + field value.
@@ -343,9 +348,13 @@ Used for `<expected>` and `<actual>`:
 
 Coercion is **only** what this section defines; there is no separate `String(row[col]).trim()` equality path.
 
+## Verification policy (normative)
+
+**`WorkflowResult.verificationPolicy`** is always emitted (see schema). **`strong`:** timing fields are **`0`**; one SQL read per logical step (or one multi-effect rollup per step). **`eventual`:** **`verificationWindowMs`** and **`pollIntervalMs`** are integers ≥ **1** with **`pollIntervalMs` ≤ `verificationWindowMs`**. The executor repeats reads until a terminal outcome or the window elapses. Row absence alone until the window ends → step **`uncertain`** (not **`missing`**). Determinate outcomes (**`inconsistent`**, **`incomplete_verification`**, **`partially_verified`**) stop polling immediately. **SQLite:** `strong` uses the synchronous runner; `eventual` uses the async runner with real delays between polls. **Postgres:** always the async path.
+
 ## Workflow status (PRD-aligned)
 
-Step statuses: `verified` | `missing` | `inconsistent` | `incomplete_verification` | `partially_verified`.
+Step statuses: `verified` | `missing` | `inconsistent` | `incomplete_verification` | `partially_verified` | `uncertain`.
 
 | Workflow status | Condition |
 |-----------------|-----------|
@@ -353,9 +362,11 @@ Step statuses: `verified` | `missing` | `inconsistent` | `incomplete_verificatio
 | `inconsistent` | Not incomplete as above, and any step in `{ missing, inconsistent, partially_verified }`. |
 | `complete` | Not incomplete, every step `verified`. |
 
+**Note:** Step **`uncertain`** does not by itself force `incomplete` before determinate failures are checked: e.g. **`uncertain` + `missing`** → workflow **`inconsistent`**. **`uncertain`** alone (with other steps `verified` or only `uncertain`) yields **`incomplete`** via the default branch when no step is `incomplete_verification`.
+
 **PRD mapping:** PRD §4 “Failed” (determinate bad outcome) ↔ `inconsistent`. §4 “Incomplete” (cannot confirm) ↔ `incomplete`. §6 three bullets ↔ these three strings. **Multi-effect:** step-level “partial success” is `partially_verified`; the workflow is still **`inconsistent`** until every step is `verified`.
 
-**Compatibility:** `WorkflowResult.schemaVersion` remains **2**; consumers must allow the new step `status` literal `partially_verified` and `verificationRequest.kind` `sql_effects` (see [`schemas/workflow-result.schema.json`](../schemas/workflow-result.schema.json)).
+**Compatibility:** `WorkflowResult.schemaVersion` is **3**; required **`verificationPolicy`**; consumers must allow step `status` **`uncertain`** (see [`schemas/workflow-result.schema.json`](../schemas/workflow-result.schema.json)).
 
 ## Cross-run comparison (normative)
 

@@ -7,6 +7,7 @@ import { fileURLToPath } from "node:url";
 import { dirname } from "node:path";
 import { spawnSync } from "node:child_process";
 import { DatabaseSync } from "node:sqlite";
+import { CLI_OPERATIONAL_CODES } from "../dist/failureCatalog.js";
 import { formatWorkflowTruthReport } from "../dist/workflowTruthReport.js";
 import { loadSchemaValidator } from "../dist/schemaLoad.js";
 
@@ -82,6 +83,70 @@ describe("CLI verify-workflow", () => {
     assert.equal(err.code, "CLI_USAGE");
     assert.ok(err.message.length > 0);
     assert.ok(err.message.length <= 2048);
+  });
+
+  it("eventual without window/poll → exit 3 CLI_USAGE", () => {
+    const r = spawnSync(process.execPath, [
+      "--no-warnings",
+      cliJs,
+      "--workflow-id",
+      "wf_complete",
+      "--events",
+      eventsPath,
+      "--registry",
+      registryPath,
+      "--db",
+      dbPath,
+      "--consistency",
+      "eventual",
+    ], { encoding: "utf8", cwd: root });
+    assert.equal(r.status, 3);
+    const err = JSON.parse(r.stderr.trim());
+    assert.equal(err.code, CLI_OPERATIONAL_CODES.CLI_USAGE);
+  });
+
+  it("eventual with poll > window → exit 3 VERIFICATION_POLICY_INVALID", () => {
+    const r = spawnSync(process.execPath, [
+      "--no-warnings",
+      cliJs,
+      "--workflow-id",
+      "wf_complete",
+      "--events",
+      eventsPath,
+      "--registry",
+      registryPath,
+      "--db",
+      dbPath,
+      "--consistency",
+      "eventual",
+      "--verification-window-ms",
+      "10",
+      "--poll-interval-ms",
+      "50",
+    ], { encoding: "utf8", cwd: root });
+    assert.equal(r.status, 3);
+    const err = JSON.parse(r.stderr.trim());
+    assert.equal(err.code, CLI_OPERATIONAL_CODES.VERIFICATION_POLICY_INVALID);
+  });
+
+  it("strong with window flag → exit 3 CLI_USAGE", () => {
+    const r = spawnSync(process.execPath, [
+      "--no-warnings",
+      cliJs,
+      "--workflow-id",
+      "wf_complete",
+      "--events",
+      eventsPath,
+      "--registry",
+      registryPath,
+      "--db",
+      dbPath,
+      "--verification-window-ms",
+      "100",
+    ], { encoding: "utf8", cwd: root });
+    assert.equal(r.status, 3);
+    const err = JSON.parse(r.stderr.trim());
+    assert.equal(err.code, CLI_OPERATIONAL_CODES.CLI_USAGE);
   });
 
   it("wf_missing exit 1 and inconsistent trust line", () => {

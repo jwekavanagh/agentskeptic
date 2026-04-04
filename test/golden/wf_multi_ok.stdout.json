@@ -1,9 +1,14 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "workflowId": "wf_multi_ok",
   "status": "complete",
   "runLevelCodes": [],
   "runLevelReasons": [],
+  "verificationPolicy": {
+    "consistencyMode": "strong",
+    "verificationWindowMs": 0,
+    "pollIntervalMs": 0
+  },
   "steps": [
     {
       "seq": 0,

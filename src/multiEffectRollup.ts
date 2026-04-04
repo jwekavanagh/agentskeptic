@@ -1,7 +1,7 @@
 import type { DatabaseSync } from "node:sqlite";
 import { reconcileSqlRow, reconcileSqlRowAsync } from "./reconciler.js";
 import type { SqlReadBackend } from "./sqlReadBackend.js";
-import type { Reason, ResolvedEffect, SqlEffectsVerificationPayload, StepStatus } from "./types.js";
+import type { Reason, ResolvedEffect, SqlEffectsVerificationPayload, StepStatus, VerificationScalar } from "./types.js";
 import { compareUtf16Id } from "./resolveExpectation.js";
 
 export type MultiEffectRollupOutput = {
@@ -100,6 +100,23 @@ function buildRollup(
       effects: effectRows,
     },
   };
+}
+
+/** Build rollup from per-effect reconcile rows (sorted by effect id). Used by verification policy executor. */
+export function rollupMultiEffectsFromReconciledRows(
+  rows: Array<{
+    id: string;
+    status: StepStatus;
+    reasons: Reason[];
+    evidenceSummary: Record<string, unknown>;
+    table: string;
+    keyColumn: string;
+    keyValue: string;
+    requiredFields: Record<string, VerificationScalar>;
+  }>,
+): MultiEffectRollupOutput {
+  const sorted = [...rows].sort((a, b) => compareUtf16Id(a.id, b.id));
+  return buildRollup(sorted);
 }
 
 export function rollupMultiEffectsSync(db: DatabaseSync, effects: ResolvedEffect[]): MultiEffectRollupOutput {

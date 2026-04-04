@@ -40,11 +40,16 @@ describe("JSON Schemas (SSOT)", () => {
   it("validates workflow result shape from golden pipeline output", () => {
     const v = loadSchemaValidator("workflow-result");
     const result = {
-      schemaVersion: 2,
+      schemaVersion: 3,
       workflowId: "wf_complete",
       status: "complete",
       runLevelCodes: [],
       runLevelReasons: [],
+      verificationPolicy: {
+        consistencyMode: "strong",
+        verificationWindowMs: 0,
+        pollIntervalMs: 0,
+      },
       steps: [
         {
           seq: 0,
@@ -71,11 +76,16 @@ describe("JSON Schemas (SSOT)", () => {
   it("validates multi-effect workflow result (sql_effects + evidenceSummary.effects)", () => {
     const v = loadSchemaValidator("workflow-result");
     const result = {
-      schemaVersion: 2,
+      schemaVersion: 3,
       workflowId: "wf_multi",
       status: "inconsistent",
       runLevelCodes: [],
       runLevelReasons: [],
+      verificationPolicy: {
+        consistencyMode: "strong",
+        verificationWindowMs: 0,
+        pollIntervalMs: 0,
+      },
       steps: [
         {
           seq: 0,
@@ -132,11 +142,16 @@ describe("JSON Schemas (SSOT)", () => {
   it("rejects single-effect step evidenceSummary with effectCount", () => {
     const v = loadSchemaValidator("workflow-result");
     const bad = {
-      schemaVersion: 2,
+      schemaVersion: 3,
       workflowId: "w",
       status: "complete",
       runLevelCodes: [],
       runLevelReasons: [],
+      verificationPolicy: {
+        consistencyMode: "strong",
+        verificationWindowMs: 0,
+        pollIntervalMs: 0,
+      },
       steps: [
         {
           seq: 0,
@@ -180,11 +195,16 @@ describe("JSON Schemas (SSOT)", () => {
       evaluatedObservationOrdinal: 1,
     });
     const r0: WorkflowResult = {
-      schemaVersion: 2,
+      schemaVersion: 3,
       workflowId: "w",
       status: "complete",
       runLevelCodes: [],
       runLevelReasons: [],
+      verificationPolicy: {
+        consistencyMode: "strong",
+        verificationWindowMs: 0,
+        pollIntervalMs: 0,
+      },
       steps: [step(0, "a", true)],
     };
     const r1: WorkflowResult = { ...r0, steps: [step(0, "a", true)] };

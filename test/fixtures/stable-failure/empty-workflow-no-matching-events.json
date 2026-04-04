@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "workflowId": "no_such_workflow",
   "status": "incomplete",
   "runLevelCodes": ["NO_STEPS_FOR_WORKFLOW"],
@@ -9,5 +9,10 @@
       "message": "No tool_observed events for this workflow id after filtering."
     }
   ],
+  "verificationPolicy": {
+    "consistencyMode": "strong",
+    "verificationWindowMs": 0,
+    "pollIntervalMs": 0
+  },
   "steps": []
 }

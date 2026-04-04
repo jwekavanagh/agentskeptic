@@ -66,7 +66,15 @@ export type StepStatus =
   | "missing"
   | "inconsistent"
   | "incomplete_verification"
-  | "partially_verified";
+  | "partially_verified"
+  | "uncertain";
+
+/** Active verification timing/consistency contract (emitted on WorkflowResult). */
+export type VerificationPolicy = {
+  consistencyMode: "strong" | "eventual";
+  verificationWindowMs: number;
+  pollIntervalMs: number;
+};
 
 export type Reason = { code: string; message: string; field?: string };
 
@@ -87,11 +95,12 @@ export type StepOutcome = {
 export type WorkflowStatus = "complete" | "incomplete" | "inconsistent";
 
 export type WorkflowResult = {
-  schemaVersion: 2;
+  schemaVersion: 3;
   workflowId: string;
   status: WorkflowStatus;
   runLevelCodes: string[];
   runLevelReasons: Reason[];
+  verificationPolicy: VerificationPolicy;
   steps: StepOutcome[];
 };
 

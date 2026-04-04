@@ -22,7 +22,16 @@ export {
   logicalStepKeyFromStep,
   recurrenceSignature,
 } from "./runComparison.js";
-export { formatWorkflowTruthReport, STEP_STATUS_TRUTH_LABELS } from "./workflowTruthReport.js";
+export {
+  formatWorkflowTruthReport,
+  STEP_STATUS_TRUTH_LABELS,
+  TRUST_LINE_UNCERTAIN_WITHIN_WINDOW,
+} from "./workflowTruthReport.js";
+export {
+  DEFAULT_VERIFICATION_POLICY,
+  normalizeVerificationPolicy,
+  resolveVerificationPolicyInput,
+} from "./verificationPolicy.js";
 export { fetchRowsForVerification, ConnectorError } from "./sqlConnector.js";
 export {
   applyPostgresVerificationSessionGuards,
@@ -36,6 +45,7 @@ export type {
   ToolRegistryEntry,
   VerificationRequest,
   VerificationDatabase,
+  VerificationPolicy,
   WorkflowResult,
   StepOutcome,
 } from "./types.js";

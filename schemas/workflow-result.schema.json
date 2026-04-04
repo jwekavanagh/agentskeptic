@@ -3,9 +3,17 @@
   "title": "WorkflowResult",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "workflowId", "status", "steps", "runLevelCodes", "runLevelReasons"],
+  "required": [
+    "schemaVersion",
+    "workflowId",
+    "status",
+    "steps",
+    "runLevelCodes",
+    "runLevelReasons",
+    "verificationPolicy"
+  ],
   "properties": {
-    "schemaVersion": { "const": 2 },
+    "schemaVersion": { "const": 3 },
     "workflowId": { "type": "string" },
     "status": {
       "type": "string",
@@ -18,6 +26,16 @@
     "runLevelReasons": {
       "type": "array",
       "items": { "$ref": "#/$defs/reason" }
+    },
+    "verificationPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["consistencyMode", "verificationWindowMs", "pollIntervalMs"],
+      "properties": {
+        "consistencyMode": { "type": "string", "enum": ["strong", "eventual"] },
+        "verificationWindowMs": { "type": "integer", "minimum": 0 },
+        "pollIntervalMs": { "type": "integer", "minimum": 0 }
+      }
     },
     "steps": {
       "type": "array",
@@ -127,7 +145,14 @@
             },
             "status": {
               "type": "string",
-              "enum": ["verified", "missing", "inconsistent", "incomplete_verification", "partially_verified"]
+              "enum": [
+                "verified",
+                "missing",
+                "inconsistent",
+                "incomplete_verification",
+                "partially_verified",
+                "uncertain"
+              ]
             },
             "reasons": {
               "type": "array",
@@ -166,7 +191,11 @@
                     "type": "array",
                     "minItems": 2,
                     "items": { "$ref": "#/$defs/effectOutcome" }
-                  }
+                  },
+                  "attempts": { "type": "integer", "minimum": 1 },
+                  "elapsedMs": { "type": "integer", "minimum": 0 },
+                  "verificationWindowMs": { "type": "integer", "minimum": 1 },
+                  "pollIntervalMs": { "type": "integer", "minimum": 1 }
                 }
               }
             }

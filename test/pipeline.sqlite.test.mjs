@@ -36,6 +36,12 @@ describe("verifyWorkflow integration", () => {
   const noopLog = () => {};
   const sqliteDb = () => ({ kind: "sqlite", path: dbPath });
 
+  const strongPolicy = {
+    consistencyMode: "strong",
+    verificationWindowMs: 0,
+    pollIntervalMs: 0,
+  };
+
   it("wf_complete → complete", async () => {
     const r = await verifyWorkflow({
       workflowId: "wf_complete",
@@ -47,6 +53,31 @@ describe("verifyWorkflow integration", () => {
     });
     assert.equal(r.status, "complete");
     assert.equal(r.steps[0]?.status, "verified");
+    assert.deepStrictEqual(r.verificationPolicy, strongPolicy);
+  });
+
+  it("wf_complete eventual wiring → complete, schema v3 policy echoed", async () => {
+    const r = await verifyWorkflow({
+      workflowId: "wf_complete",
+      eventsPath,
+      registryPath,
+      database: sqliteDb(),
+      logStep: noopLog,
+      truthReport: () => {},
+      verificationPolicy: {
+        consistencyMode: "eventual",
+        verificationWindowMs: 500,
+        pollIntervalMs: 100,
+      },
+    });
+    assert.equal(r.schemaVersion, 3);
+    assert.equal(r.status, "complete");
+    assert.equal(r.steps[0]?.status, "verified");
+    assert.deepStrictEqual(r.verificationPolicy, {
+      consistencyMode: "eventual",
+      verificationWindowMs: 500,
+      pollIntervalMs: 100,
+    });
   });
 
   it("wf_missing → inconsistent / ROW_ABSENT", async () => {
@@ -130,7 +161,7 @@ describe("verifyWorkflow integration", () => {
       logStep: noopLog,
       truthReport: () => {},
     });
-    assert.equal(r.schemaVersion, 2);
+    assert.equal(r.schemaVersion, 3);
     assert.equal(r.status, "complete");
     assert.equal(r.steps.length, 1);
     assert.equal(r.steps[0]?.status, "verified");

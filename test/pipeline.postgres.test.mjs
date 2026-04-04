@@ -44,6 +44,35 @@ describe("verifyWorkflow Postgres integration", () => {
     });
     assert.equal(r.status, "complete");
     assert.equal(r.steps[0]?.status, "verified");
+    assert.equal(r.schemaVersion, 3);
+    assert.deepStrictEqual(r.verificationPolicy, {
+      consistencyMode: "strong",
+      verificationWindowMs: 0,
+      pollIntervalMs: 0,
+    });
+  });
+
+  it("wf_complete eventual wiring → complete, policy echoed", async () => {
+    const r = await verifyWorkflow({
+      workflowId: "wf_complete",
+      eventsPath,
+      registryPath,
+      database: pgDb(),
+      logStep: noopLog,
+      truthReport: () => {},
+      verificationPolicy: {
+        consistencyMode: "eventual",
+        verificationWindowMs: 500,
+        pollIntervalMs: 100,
+      },
+    });
+    assert.equal(r.status, "complete");
+    assert.equal(r.steps[0]?.status, "verified");
+    assert.deepStrictEqual(r.verificationPolicy, {
+      consistencyMode: "eventual",
+      verificationWindowMs: 500,
+      pollIntervalMs: 100,
+    });
   });
 
   it("wf_missing → inconsistent / ROW_ABSENT", async () => {

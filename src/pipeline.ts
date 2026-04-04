@@ -3,8 +3,7 @@ import { readFileSync } from "fs";
 import { aggregateWorkflow } from "./aggregate.js";
 import { loadEventsForWorkflow } from "./loadEvents.js";
 import { planLogicalSteps, type LogicalStepPlan } from "./planLogicalSteps.js";
-import { rollupMultiEffectsAsync, rollupMultiEffectsSync } from "./multiEffectRollup.js";
-import { reconcileSqlRow, reconcileSqlRowAsync } from "./reconciler.js";
+import { reconcileSqlRowAsync } from "./reconciler.js";
 import { loadSchemaValidator } from "./schemaLoad.js";
 import {
   buildRegistryMap,
@@ -22,11 +21,19 @@ import type {
   ToolObservedEvent,
   ToolRegistryEntry,
   VerificationDatabase,
+  VerificationPolicy,
   WorkflowResult,
 } from "./types.js";
 import { CLI_OPERATIONAL_CODES, runLevelIssue } from "./failureCatalog.js";
 import { TruthLayerError } from "./truthLayerError.js";
 import { formatWorkflowTruthReport } from "./workflowTruthReport.js";
+import {
+  createSqlitePolicyContext,
+  executeVerificationWithPolicyAsync,
+  executeVerificationWithPolicySync,
+  resolveVerificationPolicyInput,
+  type PolicyReconcileContext,
+} from "./verificationPolicy.js";
 
 const validateRegistry = loadSchemaValidator("tools-registry");
 
@@ -88,15 +95,35 @@ function buildDivergentStepOutcome(
   };
 }
 
+function logStepOutcome(
+  logStep: (line: object) => void,
+  workflowId: string,
+  outcome: StepOutcome,
+): void {
+  logStep({
+    workflowId,
+    seq: outcome.seq,
+    toolId: outcome.toolId,
+    intendedEffect: outcome.intendedEffect,
+    verificationRequest: outcome.verificationRequest,
+    status: outcome.status,
+    reasons: outcome.reasons,
+    evidenceSummary: outcome.evidenceSummary,
+    repeatObservationCount: outcome.repeatObservationCount,
+    evaluatedObservationOrdinal: outcome.evaluatedObservationOrdinal,
+  });
+}
+
 export function verifyToolObservedStep(options: {
   workflowId: string;
   ev: ToolObservedEvent;
   registry: Map<string, ToolRegistryEntry>;
   db: DatabaseSync;
   logStep: (line: object) => void;
+  verificationPolicy: VerificationPolicy;
   repeatObservationCount?: number;
 }): StepOutcome {
-  const { workflowId, ev, registry, db, logStep } = options;
+  const { workflowId, ev, registry, db, logStep, verificationPolicy } = options;
   const repeatObservationCount = options.repeatObservationCount ?? 1;
   const evaluatedObservationOrdinal = repeatObservationCount;
   const entry = registry.get(ev.toolId);
@@ -112,18 +139,7 @@ export function verifyToolObservedStep(options: {
       repeatObservationCount,
       evaluatedObservationOrdinal,
     };
-    logStep({
-      workflowId,
-      seq: ev.seq,
-      toolId: ev.toolId,
-      intendedEffect: outcome.intendedEffect,
-      verificationRequest: null,
-      status: outcome.status,
-      reasons: outcome.reasons,
-      evidenceSummary: outcome.evidenceSummary,
-      repeatObservationCount,
-      evaluatedObservationOrdinal,
-    });
+    logStepOutcome(logStep, workflowId, outcome);
     return outcome;
   }
 
@@ -141,73 +157,23 @@ export function verifyToolObservedStep(options: {
       repeatObservationCount,
       evaluatedObservationOrdinal,
     };
-    logStep({
-      workflowId,
-      seq: ev.seq,
-      toolId: ev.toolId,
-      intendedEffect,
-      verificationRequest: null,
-      status: outcome.status,
-      reasons: outcome.reasons,
-      evidenceSummary: outcome.evidenceSummary,
-      repeatObservationCount,
-      evaluatedObservationOrdinal,
-    });
+    logStepOutcome(logStep, workflowId, outcome);
     return outcome;
   }
 
-  if (resolved.verificationKind === "sql_effects") {
-    const rolled = rollupMultiEffectsSync(db, resolved.effects);
-    const outcome: StepOutcome = {
-      seq: ev.seq,
-      toolId: ev.toolId,
-      intendedEffect,
-      verificationRequest: rolled.verificationRequest,
-      status: rolled.status,
-      reasons: rolled.reasons,
-      evidenceSummary: rolled.evidenceSummary,
-      repeatObservationCount,
-      evaluatedObservationOrdinal,
-    };
-    logStep({
-      workflowId,
-      seq: ev.seq,
-      toolId: ev.toolId,
-      intendedEffect,
-      verificationRequest: rolled.verificationRequest,
-      status: outcome.status,
-      reasons: outcome.reasons,
-      evidenceSummary: outcome.evidenceSummary,
-      repeatObservationCount,
-      evaluatedObservationOrdinal,
-    });
-    return outcome;
-  }
-
-  const rec = reconcileSqlRow(db, resolved.request);
+  const exec = executeVerificationWithPolicySync(db, resolved, verificationPolicy);
   const outcome: StepOutcome = {
     seq: ev.seq,
     toolId: ev.toolId,
     intendedEffect,
-    verificationRequest: resolved.request,
-    status: rec.status,
-    reasons: rec.reasons,
-    evidenceSummary: rec.evidenceSummary,
+    verificationRequest: exec.verificationRequest,
+    status: exec.status,
+    reasons: exec.reasons,
+    evidenceSummary: exec.evidenceSummary,
     repeatObservationCount,
     evaluatedObservationOrdinal,
   };
-  logStep({
-    workflowId,
-    seq: ev.seq,
-    toolId: ev.toolId,
-    intendedEffect,
-    verificationRequest: resolved.request,
-    status: outcome.status,
-    reasons: outcome.reasons,
-    evidenceSummary: outcome.evidenceSummary,
-    repeatObservationCount,
-    evaluatedObservationOrdinal,
-  });
+  logStepOutcome(logStep, workflowId, outcome);
   return outcome;
 }
 
@@ -215,11 +181,12 @@ async function verifyToolObservedStepAsync(options: {
   workflowId: string;
   ev: ToolObservedEvent;
   registry: Map<string, ToolRegistryEntry>;
-  backend: SqlReadBackend;
+  ctx: PolicyReconcileContext;
   logStep: (line: object) => void;
+  verificationPolicy: VerificationPolicy;
   repeatObservationCount?: number;
 }): Promise<StepOutcome> {
-  const { workflowId, ev, registry, backend, logStep } = options;
+  const { workflowId, ev, registry, ctx, logStep, verificationPolicy } = options;
   const repeatObservationCount = options.repeatObservationCount ?? 1;
   const evaluatedObservationOrdinal = repeatObservationCount;
   const entry = registry.get(ev.toolId);
@@ -235,18 +202,7 @@ async function verifyToolObservedStepAsync(options: {
       repeatObservationCount,
       evaluatedObservationOrdinal,
     };
-    logStep({
-      workflowId,
-      seq: ev.seq,
-      toolId: ev.toolId,
-      intendedEffect: outcome.intendedEffect,
-      verificationRequest: null,
-      status: outcome.status,
-      reasons: outcome.reasons,
-      evidenceSummary: outcome.evidenceSummary,
-      repeatObservationCount,
-      evaluatedObservationOrdinal,
-    });
+    logStepOutcome(logStep, workflowId, outcome);
     return outcome;
   }
 
@@ -264,73 +220,23 @@ async function verifyToolObservedStepAsync(options: {
       repeatObservationCount,
       evaluatedObservationOrdinal,
     };
-    logStep({
-      workflowId,
-      seq: ev.seq,
-      toolId: ev.toolId,
-      intendedEffect,
-      verificationRequest: null,
-      status: outcome.status,
-      reasons: outcome.reasons,
-      evidenceSummary: outcome.evidenceSummary,
-      repeatObservationCount,
-      evaluatedObservationOrdinal,
-    });
+    logStepOutcome(logStep, workflowId, outcome);
     return outcome;
   }
 
-  if (resolved.verificationKind === "sql_effects") {
-    const rolled = await rollupMultiEffectsAsync(backend, resolved.effects);
-    const outcome: StepOutcome = {
-      seq: ev.seq,
-      toolId: ev.toolId,
-      intendedEffect,
-      verificationRequest: rolled.verificationRequest,
-      status: rolled.status,
-      reasons: rolled.reasons,
-      evidenceSummary: rolled.evidenceSummary,
-      repeatObservationCount,
-      evaluatedObservationOrdinal,
-    };
-    logStep({
-      workflowId,
-      seq: ev.seq,
-      toolId: ev.toolId,
-      intendedEffect,
-      verificationRequest: rolled.verificationRequest,
-      status: outcome.status,
-      reasons: outcome.reasons,
-      evidenceSummary: outcome.evidenceSummary,
-      repeatObservationCount,
-      evaluatedObservationOrdinal,
-    });
-    return outcome;
-  }
-
-  const rec = await reconcileSqlRowAsync(backend, resolved.request);
+  const exec = await executeVerificationWithPolicyAsync(resolved, verificationPolicy, ctx);
   const outcome: StepOutcome = {
     seq: ev.seq,
     toolId: ev.toolId,
     intendedEffect,
-    verificationRequest: resolved.request,
-    status: rec.status,
-    reasons: rec.reasons,
-    evidenceSummary: rec.evidenceSummary,
+    verificationRequest: exec.verificationRequest,
+    status: exec.status,
+    reasons: exec.reasons,
+    evidenceSummary: exec.evidenceSummary,
     repeatObservationCount,
     evaluatedObservationOrdinal,
   };
-  logStep({
-    workflowId,
-    seq: ev.seq,
-    toolId: ev.toolId,
-    intendedEffect,
-    verificationRequest: resolved.request,
-    status: outcome.status,
-    reasons: outcome.reasons,
-    evidenceSummary: outcome.evidenceSummary,
-    repeatObservationCount,
-    evaluatedObservationOrdinal,
-  });
+  logStepOutcome(logStep, workflowId, outcome);
   return outcome;
 }
 
@@ -340,6 +246,7 @@ function runLogicalStepsVerificationSync(options: {
   registry: Map<string, ToolRegistryEntry>;
   db: DatabaseSync;
   logStep: (line: object) => void;
+  verificationPolicy: VerificationPolicy;
 }): StepOutcome[] {
   const plans = planLogicalSteps(options.events);
   const out: StepOutcome[] = [];
@@ -347,18 +254,7 @@ function runLogicalStepsVerificationSync(options: {
     const n = plan.repeatObservationCount;
     if (plan.divergent) {
       const outcome = buildDivergentStepOutcome(plan, options.registry);
-      options.logStep({
-        workflowId: options.workflowId,
-        seq: outcome.seq,
-        toolId: outcome.toolId,
-        intendedEffect: outcome.intendedEffect,
-        verificationRequest: null,
-        status: outcome.status,
-        reasons: outcome.reasons,
-        evidenceSummary: outcome.evidenceSummary,
-        repeatObservationCount: n,
-        evaluatedObservationOrdinal: n,
-      });
+      logStepOutcome(options.logStep, options.workflowId, outcome);
       out.push(outcome);
       continue;
     }
@@ -369,6 +265,7 @@ function runLogicalStepsVerificationSync(options: {
         registry: options.registry,
         db: options.db,
         logStep: options.logStep,
+        verificationPolicy: options.verificationPolicy,
         repeatObservationCount: n,
       }),
     );
@@ -380,8 +277,9 @@ async function runLogicalStepsVerificationAsync(options: {
   workflowId: string;
   events: ToolObservedEvent[];
   registry: Map<string, ToolRegistryEntry>;
-  backend: SqlReadBackend;
+  ctx: PolicyReconcileContext;
   logStep: (line: object) => void;
+  verificationPolicy: VerificationPolicy;
 }): Promise<StepOutcome[]> {
   const plans = planLogicalSteps(options.events);
   const out: StepOutcome[] = [];
@@ -389,18 +287,7 @@ async function runLogicalStepsVerificationAsync(options: {
     const n = plan.repeatObservationCount;
     if (plan.divergent) {
       const outcome = buildDivergentStepOutcome(plan, options.registry);
-      options.logStep({
-        workflowId: options.workflowId,
-        seq: outcome.seq,
-        toolId: outcome.toolId,
-        intendedEffect: outcome.intendedEffect,
-        verificationRequest: null,
-        status: outcome.status,
-        reasons: outcome.reasons,
-        evidenceSummary: outcome.evidenceSummary,
-        repeatObservationCount: n,
-        evaluatedObservationOrdinal: n,
-      });
+      logStepOutcome(options.logStep, options.workflowId, outcome);
       out.push(outcome);
       continue;
     }
@@ -409,8 +296,9 @@ async function runLogicalStepsVerificationAsync(options: {
         workflowId: options.workflowId,
         ev: plan.last,
         registry: options.registry,
-        backend: options.backend,
+        ctx: options.ctx,
         logStep: options.logStep,
+        verificationPolicy: options.verificationPolicy,
         repeatObservationCount: n,
       }),
     );
@@ -423,12 +311,14 @@ export async function verifyWorkflow(options: {
   eventsPath: string;
   registryPath: string;
   database: VerificationDatabase;
+  verificationPolicy?: VerificationPolicy;
   logStep?: (line: object) => void;
   truthReport?: (report: string) => void;
 }): Promise<WorkflowResult> {
   const { eventsPath, registryPath, workflowId, database } = options;
   const log = options.logStep ?? (() => {});
   const truthReport = options.truthReport ?? defaultTruthReportToStderr;
+  const verificationPolicy = resolveVerificationPolicyInput(options.verificationPolicy);
 
   const { events, runLevelReasons } = loadEventsForWorkflow(eventsPath, workflowId);
   const registry = loadToolsRegistry(registryPath);
@@ -444,13 +334,26 @@ export async function verifyWorkflow(options: {
       throw new TruthLayerError(CLI_OPERATIONAL_CODES.SQLITE_DATABASE_OPEN_FAILED, msg, { cause: e });
     }
     try {
-      steps = runLogicalStepsVerificationSync({
-        workflowId,
-        events,
-        registry,
-        db,
-        logStep: log,
-      });
+      if (verificationPolicy.consistencyMode === "strong") {
+        steps = runLogicalStepsVerificationSync({
+          workflowId,
+          events,
+          registry,
+          db,
+          logStep: log,
+          verificationPolicy,
+        });
+      } else {
+        const ctx = createSqlitePolicyContext(db);
+        steps = await runLogicalStepsVerificationAsync({
+          workflowId,
+          events,
+          registry,
+          ctx,
+          logStep: log,
+          verificationPolicy,
+        });
+      }
     } finally {
       db.close();
     }
@@ -463,13 +366,17 @@ export async function verifyWorkflow(options: {
       throw new TruthLayerError(CLI_OPERATIONAL_CODES.POSTGRES_CLIENT_SETUP_FAILED, msg, { cause: e });
     }
     const backend = createPostgresSqlReadBackend(client);
+    const ctx: PolicyReconcileContext = {
+      reconcileRow: (req) => reconcileSqlRowAsync(backend, req),
+    };
     try {
       steps = await runLogicalStepsVerificationAsync({
         workflowId,
         events,
         registry,
-        backend,
+        ctx,
         logStep: log,
+        verificationPolicy,
       });
     } finally {
       try {
@@ -480,7 +387,7 @@ export async function verifyWorkflow(options: {
     }
   }
 
-  const result = aggregateWorkflow(workflowId, steps, runLevelReasons);
+  const result = aggregateWorkflow(workflowId, steps, runLevelReasons, verificationPolicy);
   truthReport(formatWorkflowTruthReport(result));
   return result;
 }
@@ -492,6 +399,7 @@ class WorkflowVerificationSession {
   private readonly registry: Map<string, ToolRegistryEntry>;
   private readonly db: DatabaseSync;
   private readonly logStep: (line: object) => void;
+  private readonly verificationPolicy: VerificationPolicy;
   private readonly bufferedEvents: ToolObservedEvent[] = [];
   private readonly runLevelReasons: Reason[] = [];
   private observeForbidden = false;
@@ -502,11 +410,13 @@ class WorkflowVerificationSession {
     registry: Map<string, ToolRegistryEntry>,
     db: DatabaseSync,
     logStep: (line: object) => void,
+    verificationPolicy: VerificationPolicy,
   ) {
     this.workflowId = workflowId;
     this.registry = registry;
     this.db = db;
     this.logStep = logStep;
+    this.verificationPolicy = verificationPolicy;
   }
 
   observeStep(value: unknown): undefined {
@@ -547,8 +457,9 @@ class WorkflowVerificationSession {
       registry: this.registry,
       db: this.db,
       logStep: this.logStep,
+      verificationPolicy: this.verificationPolicy,
     });
-    return aggregateWorkflow(this.workflowId, steps, [...this.runLevelReasons]);
+    return aggregateWorkflow(this.workflowId, steps, [...this.runLevelReasons], this.verificationPolicy);
   }
 }
 
@@ -557,6 +468,7 @@ export async function withWorkflowVerification(
     workflowId: string;
     registryPath: string;
     dbPath: string;
+    verificationPolicy?: VerificationPolicy;
     logStep?: (line: object) => void;
     truthReport?: (report: string) => void;
   },
@@ -564,6 +476,14 @@ export async function withWorkflowVerification(
 ): Promise<WorkflowResult> {
   const log = options.logStep ?? (() => {});
   const truthReport = options.truthReport ?? defaultTruthReportToStderr;
+  const verificationPolicy = resolveVerificationPolicyInput(options.verificationPolicy);
+  if (verificationPolicy.consistencyMode === "eventual") {
+    throw new TruthLayerError(
+      CLI_OPERATIONAL_CODES.EVENTUAL_MODE_NOT_SUPPORTED_IN_PROCESS_HOOK,
+      "withWorkflowVerification does not support eventual consistency mode; use verifyWorkflow with batch replay instead.",
+    );
+  }
+
   let session: WorkflowVerificationSession | undefined;
   let runFailure: unknown;
   let result: WorkflowResult | undefined;
@@ -576,7 +496,7 @@ export async function withWorkflowVerification(
       const msg = e instanceof Error ? e.message : String(e);
       throw new TruthLayerError(CLI_OPERATIONAL_CODES.SQLITE_DATABASE_OPEN_FAILED, msg, { cause: e });
     }
-    session = new WorkflowVerificationSession(options.workflowId, registry, db, log);
+    session = new WorkflowVerificationSession(options.workflowId, registry, db, log, verificationPolicy);
     await Promise.resolve(run((v) => session!.observeStep(v)));
     result = session.buildWorkflowResult();
   } catch (e) {

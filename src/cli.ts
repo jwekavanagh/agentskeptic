@@ -13,7 +13,8 @@ import {
 import { verifyWorkflow } from "./pipeline.js";
 import { loadSchemaValidator } from "./schemaLoad.js";
 import { TruthLayerError } from "./truthLayerError.js";
-import type { WorkflowResult } from "./types.js";
+import type { VerificationPolicy, WorkflowResult } from "./types.js";
+import { resolveVerificationPolicyInput } from "./verificationPolicy.js";
 
 function argValue(args: string[], name: string): string | undefined {
   const i = args.indexOf(name);
@@ -37,6 +38,14 @@ function usageVerify(): string {
   return `Usage:
   verify-workflow --workflow-id <id> --events <path> --registry <path> --db <sqlitePath>
   verify-workflow --workflow-id <id> --events <path> --registry <path> --postgres-url <url>
+
+Optional consistency (default strong):
+  --consistency strong|eventual
+  With eventual, required:
+  --verification-window-ms <int>
+  --poll-interval-ms <int>   (must be >= 1 and <= window)
+
+With strong, do not pass --verification-window-ms or --poll-interval-ms.
 
 Provide exactly one of --db or --postgres-url.
 
@@ -68,6 +77,37 @@ Exit codes:
 
 function writeCliError(code: string, message: string): void {
   console.error(cliErrorEnvelope(code, message));
+}
+
+function verificationPolicyFromCliArgs(args: string[]): VerificationPolicy {
+  const mode = argValue(args, "--consistency") ?? "strong";
+  if (mode !== "strong" && mode !== "eventual") {
+    throw new TruthLayerError(CLI_OPERATIONAL_CODES.CLI_USAGE, "Invalid --consistency; use strong or eventual.");
+  }
+  const windowRaw = argValue(args, "--verification-window-ms");
+  const pollRaw = argValue(args, "--poll-interval-ms");
+  if (mode === "strong") {
+    if (windowRaw !== undefined || pollRaw !== undefined) {
+      throw new TruthLayerError(
+        CLI_OPERATIONAL_CODES.CLI_USAGE,
+        "strong consistency does not accept --verification-window-ms or --poll-interval-ms.",
+      );
+    }
+    return resolveVerificationPolicyInput({ consistencyMode: "strong", verificationWindowMs: 0, pollIntervalMs: 0 });
+  }
+  if (windowRaw === undefined || pollRaw === undefined) {
+    throw new TruthLayerError(
+      CLI_OPERATIONAL_CODES.CLI_USAGE,
+      "eventual consistency requires --verification-window-ms and --poll-interval-ms.",
+    );
+  }
+  const verificationWindowMs = Number(windowRaw);
+  const pollIntervalMs = Number(pollRaw);
+  return resolveVerificationPolicyInput({
+    consistencyMode: "eventual",
+    verificationWindowMs,
+    pollIntervalMs,
+  });
 }
 
 function runCompareSubcommand(args: string[]): void {
@@ -186,6 +226,17 @@ async function main(): Promise<void> {
     process.exit(3);
   }
 
+  let verificationPolicy: VerificationPolicy;
+  try {
+    verificationPolicy = verificationPolicyFromCliArgs(args);
+  } catch (e) {
+    if (e instanceof TruthLayerError) {
+      writeCliError(e.code, e.message);
+      process.exit(3);
+    }
+    throw e;
+  }
+
   let result;
   try {
     result = await verifyWorkflow({
@@ -195,6 +246,7 @@ async function main(): Promise<void> {
       database: postgresUrl
         ? { kind: "postgres", connectionString: postgresUrl }
         : { kind: "sqlite", path: dbPath! },
+      verificationPolicy,
     });
   } catch (e) {
     if (e instanceof TruthLayerError) {
