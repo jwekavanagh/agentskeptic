@@ -9,6 +9,23 @@ This document is the authoritative specification for the MVP. The product verifi
 - **SQLite via `node:sqlite`**: Read-only `SELECT` against a file path gives reproducible ground truth in CI. The reference plan named `better-sqlite3`; this repo uses Node’s built-in module (**Node ≥ 22.13**) to avoid native compilation on constrained environments while preserving the same reconciliation rules as Postgres (see [SQL connector contract](#sql-connector-contract)).
 - **Postgres via `pg` (batch/CLI only)**: `verifyWorkflow` can target PostgreSQL using a single `pg.Client` per run, session read-only guards (`applyPostgresVerificationSessionGuards`), then verification `SELECT`s only. The in-process hook does **not** use Postgres (see [Postgres verification (batch and CLI)](#postgres-verification-batch-and-cli)).
 
+## Product requirements: outcome verification (Slice 2–3)
+
+This subsection maps **outcome verification** product acceptance criteria to this MVP’s emitted artifacts. **Structural SSOT** remains [`schemas/workflow-result.schema.json`](../schemas/workflow-result.schema.json) and [`schemas/workflow-truth-report.schema.json`](../schemas/workflow-truth-report.schema.json); do not treat the bullets below as a second field catalog.
+
+| Acceptance theme | Where it appears in the product |
+|------------------|----------------------------------|
+| Expected outcome checked against **actual system state** (SQL rows), not an agent success flag | Each logical `tool_observed` step yields a read-only keyed `SELECT` + field checks; results drive `WorkflowResult.steps[].status`, `reasons`, and `evidenceSummary` (see [Reconciler rule table](#reconciler-rule-table-sql_row) and `reconciler.ts`). |
+| Expectations come from **registry + params**, not from the event line | [`schemas/event.schema.json`](../schemas/event.schema.json) forbids embedded expectation payloads on events; `resolveExpectation` builds `verificationRequest` from `tools.json` and `tool_observed.params`. |
+| **Clear verification result per step** | Machine: `WorkflowResult.steps[]` (`status`, `reasons`, `verificationRequest`, `evidenceSummary`) and `workflowTruthReport.steps[]` (`outcomeLabel`, …). Human: [Human truth report](#human-truth-report) lines `seq=` / `result=` / `reference_code:`. |
+| **Not successfully verified** when state does not match | Non-`verified` step statuses (`missing`, `inconsistent`, `incomplete_verification`, `partially_verified`, `uncertain`) with reasons; see [Workflow status](#workflow-status-prd-aligned) rollup. |
+| **Absent record** | Typically `ROW_ABSENT` → step `missing` → truth `FAILED_ROW_MISSING`. |
+| **Wrong values** | Typically `VALUE_MISMATCH` (and `evidenceSummary.expected` / `actual` / `field`) → step `inconsistent` → truth `FAILED_VALUE_MISMATCH`. |
+| **Duplicate rows at key** | `DUPLICATE_ROWS` → step `inconsistent`. |
+| **Which step** in a multi-step workflow | `steps[].seq`, `steps[].toolId`; truth report steps align by `seq`. |
+
+**Proof in repo:** Requirement-level black-box tests live in `src/verificationAgainstSystemState.requirements.test.ts` (Vitest), using `verifyWorkflow` and SQLite seeded from `examples/seed.sql` only.
+
 ## Audiences
 
 ### Engineer
