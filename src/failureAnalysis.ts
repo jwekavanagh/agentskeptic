@@ -159,7 +159,13 @@ function buildSummary(
     case "p5": {
       const st = detail.driverStep;
       const pc = detail.primaryCode ?? "";
-      return `Primary failure at seq ${st?.seq ?? "?"} tool ${st?.toolId ?? "?"} (code ${pc}); origin: ${origin}.`;
+      let s = `Primary failure at seq ${st?.seq ?? "?"} tool ${st?.toolId ?? "?"} (code ${pc}); origin: ${origin}.`;
+      const rollup = st?.reasons[0]?.code;
+      if (rollup !== undefined && MULTI_EFFECT_ROLLUP_CODES.has(rollup)) {
+        s +=
+          " Multi-effect verification: authoritative per-effect outcomes are under workflowTruthReport.steps[].effects.";
+      }
+      return s;
     }
     default:
       return `Verification did not complete; origin: ${origin}.`;

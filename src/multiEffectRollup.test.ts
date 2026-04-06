@@ -65,7 +65,7 @@ describe("rollupMultiEffectsSync", () => {
     expect(out.reasons).toEqual([
       {
         code: "MULTI_EFFECT_PARTIAL",
-        message: "Verified 1 of 2 effects; not verified: y",
+        message: "Verified 1 of 2 effects; not verified: y. Per effect: y (VALUE_MISMATCH)",
       },
     ]);
     const fx = out.evidenceSummary.effects as Array<{ id: string; status: string }>;
@@ -86,7 +86,7 @@ describe("rollupMultiEffectsSync", () => {
     const out = rollupMultiEffectsSync({} as DatabaseSync, effects);
     expect(out.status).toBe("inconsistent");
     expect(out.reasons[0]!.code).toBe("MULTI_EFFECT_ALL_FAILED");
-    expect(out.reasons[0]!.message).toBe("All 2 effects failed: m, n");
+    expect(out.reasons[0]!.message).toBe("All 2 effects failed: m, n. Per effect: m (ROW_ABSENT); n (ROW_ABSENT)");
   });
 
   it("incomplete_verification when any effect incomplete", () => {

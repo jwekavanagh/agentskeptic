@@ -1,4 +1,5 @@
 import type { DatabaseSync } from "node:sqlite";
+import { formatOperationalMessage } from "./failureCatalog.js";
 import { reconcileSqlRow, reconcileSqlRowAsync } from "./reconciler.js";
 import type { SqlReadBackend } from "./sqlReadBackend.js";
 import type { Reason, ResolvedEffect, SqlEffectsVerificationPayload, StepStatus, VerificationScalar } from "./types.js";
@@ -18,6 +19,17 @@ type EffectRow = {
   reasons: Reason[];
   evidenceSummary: Record<string, unknown>;
 };
+
+/** Sorted by effect id; each segment is `id (firstReasonCode)`. */
+function formatPerEffectFailureCodes(rows: EffectRow[]): string {
+  const parts = [...rows]
+    .sort((a, b) => compareUtf16Id(a.id, b.id))
+    .map((e) => {
+      const code = e.reasons[0]?.code ?? "UNKNOWN";
+      return `${e.id} (${code})`;
+    });
+  return parts.join("; ");
+}
 
 function buildRollup(
   sorted: Array<{
@@ -72,22 +84,26 @@ function buildRollup(
   } else if (verified.length === 0) {
     status = "inconsistent";
     const ids = effectRows.map((e) => e.id).sort(compareUtf16Id);
+    const detail = formatPerEffectFailureCodes(effectRows);
     reasons = [
       {
         code: SQL_VERIFICATION_OUTCOME_CODE.MULTI_EFFECT_ALL_FAILED,
-        message: `All ${n} effects failed: ${ids.join(", ")}`,
+        message: formatOperationalMessage(
+          `All ${n} effects failed: ${ids.join(", ")}. Per effect: ${detail}`,
+        ),
       },
     ];
   } else {
     status = "partially_verified";
-    const bad = effectRows
-      .filter((e) => e.status === "missing" || e.status === "inconsistent")
-      .map((e) => e.id)
-      .sort(compareUtf16Id);
+    const badRows = effectRows.filter((e) => e.status === "missing" || e.status === "inconsistent");
+    const bad = badRows.map((e) => e.id).sort(compareUtf16Id);
+    const detail = formatPerEffectFailureCodes(badRows);
     reasons = [
       {
         code: SQL_VERIFICATION_OUTCOME_CODE.MULTI_EFFECT_PARTIAL,
-        message: `Verified ${verified.length} of ${n} effects; not verified: ${bad.join(", ")}`,
+        message: formatOperationalMessage(
+          `Verified ${verified.length} of ${n} effects; not verified: ${bad.join(", ")}. Per effect: ${detail}`,
+        ),
       },
     ];
   }

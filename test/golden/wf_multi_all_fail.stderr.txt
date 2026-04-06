@@ -3,7 +3,7 @@ workflow_status: inconsistent
 trust: NOT TRUSTED: At least one step failed verification against the database (determinate failure).
 execution_path: Full upstream execution-path visibility requires schemaVersion 2 run events (retrieval, model_turn, control, tool_skipped) with run graph fields.
 diagnosis:
-  summary: Primary failure at seq 0 tool demo.multi_contact (code ROW_ABSENT); origin: downstream_system_state.
+  summary: Primary failure at seq 0 tool demo.multi_contact (code ROW_ABSENT); origin: downstream_system_state. Multi-effect verification: authoritative per-effect outcomes are under workflowTruthReport.steps[].effects.
   primary_origin: downstream_system_state
   confidence: medium
   actionable_failure: category=ambiguous severity=high
@@ -22,7 +22,7 @@ steps:
     intended: Multi "missing_one" "missing_two"
     verify_target: sql_effects count=2 primary:contacts.id=missing_one; secondary:contacts.id=missing_two
     category: workflow_execution
-    detail: All 2 effects failed: primary, secondary
+    detail: All 2 effects failed: primary, secondary. Per effect: primary (ROW_ABSENT); secondary (ROW_ABSENT)
     reference_code: MULTI_EFFECT_ALL_FAILED
     effect: id=primary result=Expected row is missing from the database (the log implies a write that is not present).
       detail: No row matched key (table=contacts id=missing_one)

@@ -146,7 +146,12 @@ describe("JSON Schemas (SSOT)", () => {
             ],
           },
           status: "partially_verified",
-          reasons: [{ code: "MULTI_EFFECT_PARTIAL", message: "Verified 1 of 2 effects; not verified: b" }],
+          reasons: [
+            {
+              code: "MULTI_EFFECT_PARTIAL",
+              message: "Verified 1 of 2 effects; not verified: b. Per effect: b (ROW_ABSENT)",
+            },
+          ],
           evidenceSummary: {
             effectCount: 2,
             effects: [

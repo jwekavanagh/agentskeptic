@@ -23,8 +23,10 @@ This subsection maps **outcome verification** product acceptance criteria to thi
 | **Wrong values** | Typically `VALUE_MISMATCH` (and `evidenceSummary.expected` / `actual` / `field`) → step `inconsistent` → truth `FAILED_VALUE_MISMATCH`. |
 | **Duplicate rows at key** | `DUPLICATE_ROWS` → step `inconsistent`. |
 | **Which step** in a multi-step workflow | `steps[].seq`, `steps[].toolId`; truth report steps align by `seq`. |
+| **Slice 3 — Partial multi-effect completion** | Registry `sql_effects` (≥2 row checks): step `partially_verified` / `MULTI_EFFECT_PARTIAL` when some effects `verified` and others `missing` or `inconsistent`; `inconsistent` / `MULTI_EFFECT_ALL_FAILED` when all fail; per-effect rows in `WorkflowResult.steps[].evidenceSummary.effects` and `workflowTruthReport.steps[].effects` (each with `outcomeLabel`, `reasons`). Step-level rollup `reasons[0].message` includes a **Per effect:** clause listing `effectId (firstReasonCode)` for each failed effect (see [Step rollup (multi-effect only)](#workflow-result-multi-effect-shape)). Workflow status remains `inconsistent` when any step is `partially_verified` ([Workflow status](#workflow-status-prd-aligned)). Example tool: `crm.upsert_contact_multi` in [`examples/tools.json`](../examples/tools.json). |
+| **Slice 3 — Actionable verification failure feedback** | **Why / what failed:** `WorkflowResult.steps[].reasons` and per-effect `reasons` in `evidenceSummary.effects`; **human stderr:** `detail:` / `reference_code:` under each step and effect ([Human truth report](#human-truth-report)). **Step + expectation + observation:** `workflowTruthReport.steps[]` has `seq`, `toolId`, `verifyTarget`, `intendedEffect.narrative`, `observedExecution.paramsCanonical`. **Kinds for action:** `outcomeLabel`, `failureDiagnostic` on each non-verified step, `reasons[].code`, plus `workflowTruthReport.failureAnalysis` (`summary`, `primaryOrigin`, `evidence` with `scope` `step` / `effect`, `actionableFailure.category` / `severity`). When the driver step’s first reason is a multi-effect rollup code (`MULTI_EFFECT_*`), `failureAnalysis.summary` (P5) appends a sentence pointing operators to **`workflowTruthReport.steps[].effects`** for authoritative per-effect outcomes. |
 
-**Proof in repo:** Requirement-level black-box tests live in `src/verificationAgainstSystemState.requirements.test.ts` (Vitest), using `verifyWorkflow` and SQLite seeded from `examples/seed.sql` only.
+**Proof in repo:** Requirement-level black-box tests live in `src/verificationAgainstSystemState.requirements.test.ts` (Vitest), using `verifyWorkflow` and SQLite seeded from `examples/seed.sql` only. Slice 3 coverage includes tests **H–L** (multi-effect partial / all-fail / all-pass, actionable feedback, human report substrings) and **Negative:** complete workflow `failureAnalysis === null`.
 
 ## Audiences
 
@@ -71,6 +73,10 @@ This subsection maps **outcome verification** product acceptance criteria to thi
 | `debugRunIndex.ts` | **`RunListItem`** facets for filters (**`pathFindingCodes`** from truth report); customer sentinel **`__unspecified__`** when **`agent-run.json`** omits **`customerId`** (ok rows) or on load errors |
 | `debugServer.ts` | Local HTTP on **127.0.0.1** only: JSON APIs + static **`debug-ui/`** (copied to **`dist/debug-ui/`** on build) |
 | `agentRunRecord.ts` | **`buildAgentRunRecordForBundle`**, **`sha256Hex`**; types aligned with [`schemas/agent-run-record.schema.json`](../schemas/agent-run-record.schema.json) |
+
+### Integrator (stdout JSON)
+
+For **multi-effect** tools (`verification.kind === "sql_effects"` in the registry), read **`WorkflowResult.steps[].verificationRequest.effects`**, **`evidenceSummary.effectCount`**, and **`evidenceSummary.effects[]`** (`id`, `status`, `reasons`, `evidenceSummary` per effect). Structured truth mirrors effect breakdown under **`workflowTruthReport.steps[].effects`**. Cross-run automation should use these fields—not only the step-level rollup message.
 
 ### Engineer note: shared step core
 
@@ -355,6 +361,7 @@ Step- and effect-level **`detail:`** / **`reference_code:`** pairs align with **
 
 ### Operator
 
+- **Reading order (human truth report):** (1) **`trust:`** — overall verdict. (2) **`diagnosis:`** — `summary`, origins, **`actionable_failure`**. (3) **`steps:`** — for the failing line: **`seq=`** / **`tool=`** / **`result=`**, then **`verify_target:`**, **`intended:`**, **`observed_execution:`**. (4) Step-level **`detail:`** / **`reference_code:`** (rollup reason). (5) For **`sql_effects`**, each **`effect: id=`** block with its own **`detail:`** / **`reference_code:`** (per-effect reconciler outcome).
 - **Reading logs:** Treat **stderr** as the human verdict for a verification run; **stdout** (CLI) is the machine-readable `WorkflowResult`. Correlate them by process / timestamp in your log stack.
 - **`trust:` line:** Treat as **trusted** only when it is the `TRUSTED:` sentence **and** `workflow_status: complete`. Any line starting with `NOT TRUSTED:` means the workflow must not be treated as fully verified—investigate `steps:`, `run_level:`, and **`event_sequence:`**.
 - **Exit codes:** 0 = `complete`, 1 = `inconsistent`, 2 = `incomplete`, 3 = operational failure ([CLI operational errors](#cli-operational-errors)); **`--help`** exits **0**.
@@ -596,7 +603,7 @@ The step’s **`evidenceSummary`** **must** be exactly:
 
 with **`effects`** sorted by **`id`** (UTF-16 lexicographic). Single-`sql_row` steps **must not** use top-level keys `effectCount` or `effects` on `evidenceSummary` (schema-enforced).
 
-**Step rollup (multi-effect only):** all effects `verified` → step `verified`. Any effect `incomplete_verification` → step `incomplete_verification`. Else if every effect is `missing` or `inconsistent` → step `inconsistent` with one summary reason `MULTI_EFFECT_ALL_FAILED`. Else if at least one `verified` and at least one `missing`/`inconsistent` → step `partially_verified` with one summary reason `MULTI_EFFECT_PARTIAL`.
+**Step rollup (multi-effect only):** all effects `verified` → step `verified`. Any effect `incomplete_verification` → step `incomplete_verification`. Else if every effect is `missing` or `inconsistent` → step `inconsistent` with one summary reason `MULTI_EFFECT_ALL_FAILED` whose `message` lists failed effect ids and, after **`Per effect:`**, each failed effect as **`id (firstReasonCode)`** separated by **`; `** (UTF-16 sorted by `id`), passed through `formatOperationalMessage`. Else if at least one `verified` and at least one `missing`/`inconsistent` → step `partially_verified` with one summary reason `MULTI_EFFECT_PARTIAL` using the same **`Per effect:`** pattern for non-verified effects only.
 
 ## SQL connector contract
 

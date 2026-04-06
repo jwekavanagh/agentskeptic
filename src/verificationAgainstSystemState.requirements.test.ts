@@ -6,6 +6,7 @@ import { DatabaseSync } from "node:sqlite";
 import { describe, expect, it, beforeAll, afterAll } from "vitest";
 import { loadSchemaValidator } from "./schemaLoad.js";
 import { verifyWorkflow } from "./pipeline.js";
+import { formatWorkflowTruthReportStruct } from "./workflowTruthReport.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = join(__dirname, "..");
@@ -176,5 +177,173 @@ describe("Slice 2–3: verification against system state (requirements)", () => 
       expectation: {},
     };
     expect(validateEvent(bad)).toBe(false);
+  });
+
+  function multiEvent(
+    workflowId: string,
+    params: Record<string, unknown>,
+  ): string {
+    return `${JSON.stringify({
+      schemaVersion: 1,
+      workflowId,
+      seq: 0,
+      type: "tool_observed" as const,
+      toolId: "crm.upsert_contact_multi",
+      params,
+    })}\n`;
+  }
+
+  it("H: multi-effect partial — some effects verified, one missing", async () => {
+    const p = join(dir, "slice3_multi_partial.ndjson");
+    writeFileSync(
+      p,
+      multiEvent("wf_slice3_multi_partial", {
+        primaryRecordId: "c_slice3_multi_partial_ok",
+        primaryFields: { name: "PartialPrimary", status: "active" },
+        secondaryRecordId: "c_slice3_multi_partial_missing",
+        secondaryFields: { name: "X", status: "y" },
+      }),
+    );
+    const r = await verifyWorkflow({
+      workflowId: "wf_slice3_multi_partial",
+      eventsPath: p,
+      registryPath,
+      database: sqliteDb(),
+      logStep: noop,
+      truthReport: noop,
+    });
+    expect(r.status).toBe("inconsistent");
+    expect(r.steps[0]?.status).toBe("partially_verified");
+    expect(r.steps[0]?.reasons[0]?.code).toBe("MULTI_EFFECT_PARTIAL");
+    const effects = r.steps[0]?.evidenceSummary.effects as Array<{ id: string; status: string }>;
+    expect(effects).toHaveLength(2);
+    const st = new Set(effects.map((e) => e.status));
+    expect(st.has("verified")).toBe(true);
+    expect(st.has("missing")).toBe(true);
+    const truthStep = r.workflowTruthReport.steps[0]!;
+    expect(truthStep.outcomeLabel).toBe("PARTIALLY_VERIFIED");
+    expect(truthStep.effects).toBeDefined();
+    expect(truthStep.effects!.some((e) => e.outcomeLabel === "VERIFIED")).toBe(true);
+    expect(truthStep.effects!.some((e) => e.outcomeLabel === "FAILED_ROW_MISSING")).toBe(true);
+    expect(validateWorkflowResult(r)).toBe(true);
+
+    const human = formatWorkflowTruthReportStruct(r.workflowTruthReport);
+    expect(human).toContain("seq=0 tool=crm.upsert_contact_multi");
+    expect(human).toContain("verify_target:");
+    expect(human).toContain("effect: id=");
+    expect(human).toContain("reference_code: ROW_ABSENT");
+  });
+
+  it("I: multi-effect all failed", async () => {
+    const p = join(dir, "slice3_multi_all_fail.ndjson");
+    writeFileSync(
+      p,
+      multiEvent("wf_slice3_multi_all_fail", {
+        primaryRecordId: "c_slice3_multi_fail_a",
+        primaryFields: { name: "X", status: "y" },
+        secondaryRecordId: "c_slice3_multi_fail_b",
+        secondaryFields: { name: "X", status: "y" },
+      }),
+    );
+    const r = await verifyWorkflow({
+      workflowId: "wf_slice3_multi_all_fail",
+      eventsPath: p,
+      registryPath,
+      database: sqliteDb(),
+      logStep: noop,
+      truthReport: noop,
+    });
+    expect(r.status).toBe("inconsistent");
+    expect(r.steps[0]?.status).toBe("inconsistent");
+    expect(r.steps[0]?.reasons[0]?.code).toBe("MULTI_EFFECT_ALL_FAILED");
+    const effects = r.steps[0]?.evidenceSummary.effects as Array<{ id: string; status: string }>;
+    expect(effects?.every((e) => e.status === "missing")).toBe(true);
+    expect(validateWorkflowResult(r)).toBe(true);
+  });
+
+  it("J: multi-effect all verified", async () => {
+    const p = join(dir, "slice3_multi_ok.ndjson");
+    writeFileSync(
+      p,
+      multiEvent("wf_slice3_multi_ok", {
+        primaryRecordId: "c_slice3_multi_pass_a",
+        primaryFields: { name: "Alice2", status: "active" },
+        secondaryRecordId: "c_slice3_multi_pass_b",
+        secondaryFields: { name: "Bob2", status: "active" },
+      }),
+    );
+    const r = await verifyWorkflow({
+      workflowId: "wf_slice3_multi_ok",
+      eventsPath: p,
+      registryPath,
+      database: sqliteDb(),
+      logStep: noop,
+      truthReport: noop,
+    });
+    expect(r.status).toBe("complete");
+    expect(r.steps[0]?.status).toBe("verified");
+    expect(r.steps[0]?.reasons).toEqual([]);
+    expect(validateWorkflowResult(r)).toBe(true);
+  });
+
+  it("K: actionable failure feedback — single-effect missing", async () => {
+    const r = await verifyWorkflow({
+      workflowId: "wf_missing",
+      eventsPath,
+      registryPath,
+      database: sqliteDb(),
+      logStep: noop,
+      truthReport: noop,
+    });
+    expect(r.workflowTruthReport.failureAnalysis).not.toBeNull();
+    const fa = r.workflowTruthReport.failureAnalysis!;
+    expect(fa.evidence.some((e) => e.scope === "step" && e.seq === 0)).toBe(true);
+    expect(fa.actionableFailure.category).toBe("ambiguous");
+    expect(r.steps[0]?.failureDiagnostic).toBe("workflow_execution");
+    expect(r.workflowTruthReport.steps[0]?.seq).toBe(0);
+    expect(r.workflowTruthReport.steps[0]?.toolId).toBe("crm.upsert_contact");
+    expect(r.workflowTruthReport.steps[0]?.verifyTarget).toContain("contacts");
+    expect(r.workflowTruthReport.steps[0]?.intendedEffect.narrative.length).toBeGreaterThan(0);
+    expect(r.workflowTruthReport.steps[0]?.observedExecution.paramsCanonical.length).toBeGreaterThan(0);
+  });
+
+  it("L: actionable feedback — multi-effect partial driver", async () => {
+    const p = join(dir, "slice3_multi_partial_L.ndjson");
+    writeFileSync(
+      p,
+      multiEvent("wf_slice3_multi_partial_L", {
+        primaryRecordId: "c_slice3_multi_partial_ok",
+        primaryFields: { name: "PartialPrimary", status: "active" },
+        secondaryRecordId: "c_slice3_multi_partial_missing",
+        secondaryFields: { name: "X", status: "y" },
+      }),
+    );
+    const r = await verifyWorkflow({
+      workflowId: "wf_slice3_multi_partial_L",
+      eventsPath: p,
+      registryPath,
+      database: sqliteDb(),
+      logStep: noop,
+      truthReport: noop,
+    });
+    const fa = r.workflowTruthReport.failureAnalysis!;
+    const scopes = fa.evidence.map((e) => e.scope);
+    expect(scopes.includes("step") && scopes.includes("effect")).toBe(true);
+    expect(fa.evidence.some((e) => e.scope === "effect" && e.effectId === "secondary")).toBe(true);
+    expect(fa.summary).toContain("Multi-effect verification:");
+    expect(fa.summary).toContain("workflowTruthReport.steps[].effects");
+    expect(fa.actionableFailure.category).toBe("ambiguous");
+  });
+
+  it("Negative: complete workflow has no failure analysis", async () => {
+    const r = await verifyWorkflow({
+      workflowId: "wf_complete",
+      eventsPath,
+      registryPath,
+      database: sqliteDb(),
+      logStep: noop,
+      truthReport: noop,
+    });
+    expect(r.workflowTruthReport.failureAnalysis).toBeNull();
   });
 });

@@ -3,7 +3,7 @@ workflow_status: inconsistent
 trust: NOT TRUSTED: At least one step failed verification against the database (determinate failure).
 execution_path: Full upstream execution-path visibility requires schemaVersion 2 run events (retrieval, model_turn, control, tool_skipped) with run graph fields.
 diagnosis:
-  summary: Primary failure at seq 0 tool demo.multi_contact (code VALUE_MISMATCH); origin: downstream_system_state.
+  summary: Primary failure at seq 0 tool demo.multi_contact (code VALUE_MISMATCH); origin: downstream_system_state. Multi-effect verification: authoritative per-effect outcomes are under workflowTruthReport.steps[].effects.
   primary_origin: downstream_system_state
   confidence: medium
   actionable_failure: category=ambiguous severity=high
@@ -22,7 +22,7 @@ steps:
     intended: Multi "c_ok" "c_partial"
     verify_target: sql_effects count=2 primary:contacts.id=c_ok; secondary:contacts.id=c_partial
     category: workflow_execution
-    detail: Verified 1 of 2 effects; not verified: secondary
+    detail: Verified 1 of 2 effects; not verified: secondary. Per effect: secondary (VALUE_MISMATCH)
     reference_code: MULTI_EFFECT_PARTIAL
     effect: id=primary result=Matched the database.
     effect: id=secondary result=A row was found, but required values do not match.
