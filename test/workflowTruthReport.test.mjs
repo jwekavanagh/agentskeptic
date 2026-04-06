@@ -24,6 +24,11 @@ const vp = {
   pollIntervalMs: 0,
 };
 
+/** Canonical digests for golden steps (matches `canonicalJsonForParams` on tool_observed.params). */
+const PC_EMPTY = "{}";
+const PC_C_OK = '{"fields":{"name":"Alice","status":"active"},"recordId":"c_ok"}';
+const PC_MISSING = '{"fields":{"name":"X","status":"Y"},"recordId":"missing_id"}';
+
 function normTruthText(s) {
   return s.replace(/\r\n/g, "\n").trimEnd();
 }
@@ -37,6 +42,7 @@ event_sequence: normal
 steps:
   - seq=0 tool=crm.upsert_contact result=Matched the database.
     observations: evaluated=1 of 1 in_capture_order
+    observed_execution: ${PC_C_OK}
     intended: Upsert contact "c_ok" with fields {"name":"Alice","status":"active"}`;
 
 const GOLDEN_MISSING = `workflow_id: wf_missing
@@ -58,10 +64,11 @@ event_sequence: normal
 steps:
   - seq=0 tool=crm.upsert_contact result=Expected row is missing from the database (the log implies a write that is not present).
     observations: evaluated=1 of 1 in_capture_order
+    observed_execution: ${PC_MISSING}
+    intended: Upsert contact "missing_id" with fields {"name":"X","status":"Y"}
     category: workflow_execution
     detail: No row matched key
-    reference_code: ROW_ABSENT
-    intended: Upsert contact "missing_id" with fields {"name":"X","status":"Y"}`;
+    reference_code: ROW_ABSENT`;
 
 const GOLDEN_INCOMPLETE_UNKNOWN_TOOL = `workflow_id: wf_unknown_tool
 workflow_status: incomplete
@@ -80,10 +87,11 @@ event_sequence: normal
 steps:
   - seq=0 tool=nope.tool result=This step could not be fully verified (registry, connector, or data shape issue).
     observations: evaluated=1 of 1 in_capture_order
+    observed_execution: ${PC_EMPTY}
+    intended: Unknown tool: nope.tool
     category: verification_setup
     detail: Unknown toolId: nope.tool
-    reference_code: UNKNOWN_TOOL
-    intended: Unknown tool: nope.tool`;
+    reference_code: UNKNOWN_TOOL`;
 
 const MALFORMED_MSG =
   "Event line was missing, invalid JSON, or failed schema validation for a tool observation.";
@@ -143,7 +151,8 @@ run_level:
 event_sequence: normal
 steps:
   - seq=0 tool=t result=Matched the database.
-    observations: evaluated=1 of 1 in_capture_order`;
+    observations: evaluated=1 of 1 in_capture_order
+    observed_execution: ${PC_EMPTY}`;
 
 const GOLDEN_UNCERTAIN_TRUST = `workflow_id: wf_uncertain
 workflow_status: incomplete
@@ -160,6 +169,7 @@ event_sequence: normal
 steps:
   - seq=0 tool=t result=The expected row did not appear within the verification window.
     observations: evaluated=1 of 1 in_capture_order
+    observed_execution: ${PC_EMPTY}
     category: observation_uncertainty
     detail: No row within window
     reference_code: ROW_NOT_OBSERVED_WITHIN_WINDOW`;
@@ -178,7 +188,8 @@ describe("formatWorkflowTruthReport", () => {
         {
           seq: 0,
           toolId: "crm.upsert_contact",
-          intendedEffect: 'Upsert contact "c_ok" with fields {"name":"Alice","status":"active"}',
+          intendedEffect: { narrative: 'Upsert contact "c_ok" with fields {"name":"Alice","status":"active"}' },
+          observedExecution: { paramsCanonical: PC_C_OK },
           verificationRequest: {},
           status: "verified",
           reasons: [],
@@ -202,7 +213,8 @@ describe("formatWorkflowTruthReport", () => {
         {
           seq: 0,
           toolId: "crm.upsert_contact",
-          intendedEffect: 'Upsert contact "missing_id" with fields {"name":"X","status":"Y"}',
+          intendedEffect: { narrative: 'Upsert contact "missing_id" with fields {"name":"X","status":"Y"}' },
+          observedExecution: { paramsCanonical: PC_MISSING },
           verificationRequest: {},
           status: "missing",
           reasons: [{ code: "ROW_ABSENT", message: "No row matched key" }],
@@ -226,7 +238,8 @@ describe("formatWorkflowTruthReport", () => {
         {
           seq: 0,
           toolId: "nope.tool",
-          intendedEffect: "Unknown tool: nope.tool",
+          intendedEffect: { narrative: "Unknown tool: nope.tool" },
+          observedExecution: { paramsCanonical: PC_EMPTY },
           verificationRequest: null,
           status: "incomplete_verification",
           reasons: [{ code: "UNKNOWN_TOOL", message: "Unknown toolId: nope.tool" }],
@@ -259,7 +272,8 @@ describe("formatWorkflowTruthReport", () => {
         {
           seq: 0,
           toolId: "t",
-          intendedEffect: "",
+          intendedEffect: { narrative: "" },
+          observedExecution: { paramsCanonical: PC_EMPTY },
           verificationRequest: null,
           status: "verified",
           reasons: [],
@@ -326,7 +340,8 @@ describe("formatWorkflowTruthReport", () => {
         {
           seq: 0,
           toolId: "t",
-          intendedEffect: "",
+          intendedEffect: { narrative: "" },
+          observedExecution: { paramsCanonical: PC_EMPTY },
           verificationRequest: null,
           status: "verified",
           reasons: [],
@@ -352,7 +367,8 @@ describe("formatWorkflowTruthReport", () => {
         {
           seq: 0,
           toolId: "a",
-          intendedEffect: "",
+          intendedEffect: { narrative: "" },
+          observedExecution: { paramsCanonical: PC_EMPTY },
           verificationRequest: null,
           status: "verified",
           reasons: [],
@@ -363,7 +379,8 @@ describe("formatWorkflowTruthReport", () => {
         {
           seq: 1,
           toolId: "b",
-          intendedEffect: "",
+          intendedEffect: { narrative: "" },
+          observedExecution: { paramsCanonical: PC_EMPTY },
           verificationRequest: null,
           status: "missing",
           reasons: [{ code: "X", message: "y" }],
@@ -374,7 +391,8 @@ describe("formatWorkflowTruthReport", () => {
         {
           seq: 2,
           toolId: "c",
-          intendedEffect: "",
+          intendedEffect: { narrative: "" },
+          observedExecution: { paramsCanonical: PC_EMPTY },
           verificationRequest: null,
           status: "inconsistent",
           reasons: [{ code: "P", message: "q" }],
@@ -416,7 +434,8 @@ describe("formatWorkflowTruthReport", () => {
         {
           seq: 0,
           toolId: "t",
-          intendedEffect: "",
+          intendedEffect: { narrative: "" },
+          observedExecution: { paramsCanonical: PC_EMPTY },
           verificationRequest: null,
           status: "uncertain",
           reasons: [{ code: "ROW_NOT_OBSERVED_WITHIN_WINDOW", message: "No row within window" }],
@@ -451,7 +470,8 @@ describe("formatWorkflowTruthReport", () => {
     const steps = statuses.map((status) => ({
       seq: seq++,
       toolId: "t",
-      intendedEffect: "",
+      intendedEffect: { narrative: "" },
+      observedExecution: { paramsCanonical: PC_EMPTY },
       verificationRequest: null,
       status,
       reasons: reasonFor(status),
@@ -517,7 +537,8 @@ describe("formatWorkflowTruthReport", () => {
         {
           seq: 0,
           toolId: "t",
-          intendedEffect: "",
+          intendedEffect: { narrative: "" },
+          observedExecution: { paramsCanonical: PC_EMPTY },
           verificationRequest: null,
           status: "incomplete_verification",
           reasons: [{ code: "CONNECTOR_ERROR", message: "   " }],
@@ -545,7 +566,8 @@ describe("formatWorkflowTruthReport", () => {
         {
           seq: 0,
           toolId: "t",
-          intendedEffect: "",
+          intendedEffect: { narrative: "" },
+          observedExecution: { paramsCanonical: PC_EMPTY },
           verificationRequest: null,
           status: "incomplete_verification",
           reasons: [{ code: "CONNECTOR_ERROR", message: "msg", field: "col" }],
@@ -573,7 +595,8 @@ describe("formatWorkflowTruthReport", () => {
         {
           seq: 0,
           toolId: "bad\nid",
-          intendedEffect: "",
+          intendedEffect: { narrative: "" },
+          observedExecution: { paramsCanonical: PC_EMPTY },
           verificationRequest: null,
           status: "verified",
           reasons: [],
@@ -599,7 +622,8 @@ describe("formatWorkflowTruthReport", () => {
         {
           seq: 0,
           toolId: "t",
-          intendedEffect: "line1\nline2",
+          intendedEffect: { narrative: "line1\nline2" },
+          observedExecution: { paramsCanonical: PC_EMPTY },
           verificationRequest: null,
           status: "verified",
           reasons: [],

@@ -84,7 +84,8 @@ describe("JSON Schemas (SSOT)", () => {
         {
           seq: 0,
           toolId: "crm.upsert_contact",
-          intendedEffect: "x",
+          intendedEffect: { narrative: "x" },
+          observedExecution: { paramsCanonical: "{}" },
           verificationRequest: {
             kind: "sql_row",
             table: "contacts",
@@ -121,7 +122,8 @@ describe("JSON Schemas (SSOT)", () => {
         {
           seq: 0,
           toolId: "demo.multi",
-          intendedEffect: "x",
+          intendedEffect: { narrative: "x" },
+          observedExecution: { paramsCanonical: "{}" },
           verificationRequest: {
             kind: "sql_effects",
             effects: [
@@ -194,7 +196,8 @@ describe("JSON Schemas (SSOT)", () => {
         {
           seq: 0,
           toolId: "t",
-          intendedEffect: "",
+          intendedEffect: { narrative: "" },
+          observedExecution: { paramsCanonical: "{}" },
           verificationRequest: {
             kind: "sql_row",
             table: "contacts",
@@ -218,7 +221,8 @@ describe("JSON Schemas (SSOT)", () => {
     const step = (seq: number, kv: string, ok: boolean): StepOutcome => ({
       seq,
       toolId: "t",
-      intendedEffect: "",
+      intendedEffect: { narrative: "" },
+      observedExecution: { paramsCanonical: "{}" },
       verificationRequest: {
         kind: "sql_row",
         table: "contacts",
@@ -275,7 +279,8 @@ describe("JSON Schemas (SSOT)", () => {
         {
           seq: 0,
           toolId: "t",
-          intendedEffect: "x",
+          intendedEffect: { narrative: "x" },
+          observedExecution: { paramsCanonical: "{}" },
           verificationRequest: {
             kind: "sql_row",
             table: "contacts",
@@ -314,7 +319,7 @@ describe("JSON Schemas (SSOT)", () => {
     expect(v(v5only)).toBe(false);
   });
 
-  it("workflow-result-compare-input accepts v7 engine, v9 frozen, and v10 emitted", () => {
+  it("workflow-result-compare-input accepts v7 engine, v9 frozen, and v11 emitted", () => {
     const vCmp = loadSchemaValidator("workflow-result-compare-input");
     const engine: WorkflowEngineResult = {
       schemaVersion: 7,
@@ -332,7 +337,8 @@ describe("JSON Schemas (SSOT)", () => {
         {
           seq: 0,
           toolId: "t",
-          intendedEffect: "",
+          intendedEffect: { narrative: "" },
+          observedExecution: { paramsCanonical: "{}" },
           verificationRequest: {
             kind: "sql_row",
             table: "c",
@@ -359,7 +365,7 @@ describe("JSON Schemas (SSOT)", () => {
     expect(vCmp(v9Compat)).toBe(true);
   });
 
-  it("workflow-result v10 rejects stray runLevelCodes", () => {
+  it("workflow-result v11 rejects stray runLevelCodes", () => {
     const v = loadSchemaValidator("workflow-result");
     const engine: WorkflowEngineResult = {
       schemaVersion: 7,
@@ -377,7 +383,8 @@ describe("JSON Schemas (SSOT)", () => {
         {
           seq: 0,
           toolId: "t",
-          intendedEffect: "",
+          intendedEffect: { narrative: "" },
+          observedExecution: { paramsCanonical: "{}" },
           verificationRequest: {
             kind: "sql_row",
             table: "c",

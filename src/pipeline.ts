@@ -3,6 +3,7 @@ import { aggregateWorkflow } from "./aggregate.js";
 import { isToolObservedRunEvent } from "./executionTrace.js";
 import { loadEventsForWorkflow } from "./loadEvents.js";
 import { prepareWorkflowEvents } from "./prepareWorkflowEvents.js";
+import { canonicalJsonForParams } from "./canonicalParams.js";
 import { planLogicalSteps, type LogicalStepPlan } from "./planLogicalSteps.js";
 import { reconcileSqlRowAsync } from "./reconciler.js";
 import { loadSchemaValidator } from "./schemaLoad.js";
@@ -18,6 +19,8 @@ import {
   type SqlReadBackend,
 } from "./sqlReadBackend.js";
 import type {
+  IntendedEffect,
+  ObservedExecution,
   Reason,
   StepOutcome,
   RunEvent,
@@ -58,6 +61,21 @@ export function loadToolsRegistry(registryPath: string): Map<string, ToolRegistr
   return buildRegistryMap(loadRegistryEntriesAfterSchema(registryPath));
 }
 
+function observedExecutionFromParams(params: Record<string, unknown>): ObservedExecution {
+  return { paramsCanonical: canonicalJsonForParams(params) };
+}
+
+function intendedEffectNarrative(
+  entry: ToolRegistryEntry | undefined,
+  toolId: string,
+  params: Record<string, unknown>,
+): IntendedEffect {
+  const narrative = entry
+    ? renderIntendedEffect(entry.effectDescriptionTemplate, params)
+    : `Unknown tool: ${toolId}`;
+  return { narrative };
+}
+
 function buildDivergentStepOutcome(
   plan: LogicalStepPlan,
   registry: Map<string, ToolRegistryEntry>,
@@ -65,13 +83,11 @@ function buildDivergentStepOutcome(
   const last = plan.last;
   const n = plan.repeatObservationCount;
   const entry = registry.get(last.toolId);
-  const intendedEffect = entry
-    ? renderIntendedEffect(entry.effectDescriptionTemplate, last.params)
-    : `Unknown tool: ${last.toolId}`;
   return {
     seq: plan.seq,
     toolId: last.toolId,
-    intendedEffect,
+    intendedEffect: intendedEffectNarrative(entry, last.toolId, last.params),
+    observedExecution: observedExecutionFromParams(last.params),
     verificationRequest: null,
     status: "incomplete_verification",
     reasons: [
@@ -96,6 +112,7 @@ function logStepOutcome(
     seq: outcome.seq,
     toolId: outcome.toolId,
     intendedEffect: outcome.intendedEffect,
+    observedExecution: outcome.observedExecution,
     verificationRequest: outcome.verificationRequest,
     status: outcome.status,
     reasons: outcome.reasons,
@@ -123,7 +140,8 @@ export function verifyToolObservedStep(options: {
     const outcome: StepOutcome = {
       seq: ev.seq,
       toolId: ev.toolId,
-      intendedEffect: `Unknown tool: ${ev.toolId}`,
+      intendedEffect: intendedEffectNarrative(undefined, ev.toolId, ev.params),
+      observedExecution: observedExecutionFromParams(ev.params),
       verificationRequest: null,
       status: "incomplete_verification",
       reasons: [{ code: SQL_VERIFICATION_OUTCOME_CODE.UNKNOWN_TOOL, message: `Unknown toolId: ${ev.toolId}` }],
@@ -136,13 +154,15 @@ export function verifyToolObservedStep(options: {
     return finalized;
   }
 
-  const intendedEffect = renderIntendedEffect(entry.effectDescriptionTemplate, ev.params);
+  const intendedEffect = intendedEffectNarrative(entry, ev.toolId, ev.params);
+  const observedExecution = observedExecutionFromParams(ev.params);
   const resolved = resolveVerificationRequest(entry, ev.params);
   if (!resolved.ok) {
     const outcome: StepOutcome = {
       seq: ev.seq,
       toolId: ev.toolId,
       intendedEffect,
+      observedExecution,
       verificationRequest: null,
       status: "incomplete_verification",
       reasons: [{ code: resolved.code, message: resolved.message }],
@@ -160,6 +180,7 @@ export function verifyToolObservedStep(options: {
     seq: ev.seq,
     toolId: ev.toolId,
     intendedEffect,
+    observedExecution,
     verificationRequest: exec.verificationRequest,
     status: exec.status,
     reasons: exec.reasons,
@@ -189,7 +210,8 @@ async function verifyToolObservedStepAsync(options: {
     const outcome: StepOutcome = {
       seq: ev.seq,
       toolId: ev.toolId,
-      intendedEffect: `Unknown tool: ${ev.toolId}`,
+      intendedEffect: intendedEffectNarrative(undefined, ev.toolId, ev.params),
+      observedExecution: observedExecutionFromParams(ev.params),
       verificationRequest: null,
       status: "incomplete_verification",
       reasons: [{ code: SQL_VERIFICATION_OUTCOME_CODE.UNKNOWN_TOOL, message: `Unknown toolId: ${ev.toolId}` }],
@@ -202,13 +224,15 @@ async function verifyToolObservedStepAsync(options: {
     return finalized;
   }
 
-  const intendedEffect = renderIntendedEffect(entry.effectDescriptionTemplate, ev.params);
+  const intendedEffect = intendedEffectNarrative(entry, ev.toolId, ev.params);
+  const observedExecution = observedExecutionFromParams(ev.params);
   const resolved = resolveVerificationRequest(entry, ev.params);
   if (!resolved.ok) {
     const outcome: StepOutcome = {
       seq: ev.seq,
       toolId: ev.toolId,
       intendedEffect,
+      observedExecution,
       verificationRequest: null,
       status: "incomplete_verification",
       reasons: [{ code: resolved.code, message: resolved.message }],
@@ -226,6 +250,7 @@ async function verifyToolObservedStepAsync(options: {
     seq: ev.seq,
     toolId: ev.toolId,
     intendedEffect,
+    observedExecution,
     verificationRequest: exec.verificationRequest,
     status: exec.status,
     reasons: exec.reasons,

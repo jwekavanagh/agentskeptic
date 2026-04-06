@@ -26,7 +26,8 @@ function verifiedStep(seq: number, toolId: string): StepOutcome {
   return {
     seq,
     toolId,
-    intendedEffect: "ok",
+    intendedEffect: { narrative: "ok" },
+    observedExecution: { paramsCanonical: "{}" },
     verificationRequest: {
       kind: "sql_row",
       table: "t",
@@ -55,7 +56,7 @@ describe("buildWorkflowTruthReport (formatter-independent semantics)", () => {
       steps: [verifiedStep(0, "t1")],
     };
     const truth = buildWorkflowTruthReport(engine);
-    expect(truth.schemaVersion).toBe(4);
+    expect(truth.schemaVersion).toBe(5);
     expect(truth.failureAnalysis).toBeNull();
     expect(truth.executionPathFindings).toEqual([]);
     expect(truth.executionPathSummary).toBe(
@@ -84,7 +85,8 @@ describe("buildWorkflowTruthReport (formatter-independent semantics)", () => {
     const step: StepOutcome = {
       seq: 0,
       toolId: "t",
-      intendedEffect: "",
+      intendedEffect: { narrative: "" },
+      observedExecution: { paramsCanonical: "{}" },
       verificationRequest: vr,
       status: "missing",
       reasons: [{ code: "ROW_ABSENT", message: "m" }],
@@ -150,7 +152,8 @@ describe("buildWorkflowTruthReport (formatter-independent semantics)", () => {
     const step: StepOutcome = {
       seq: 0,
       toolId: "t",
-      intendedEffect: "",
+      intendedEffect: { narrative: "" },
+      observedExecution: { paramsCanonical: "{}" },
       verificationRequest: {
         kind: "sql_row",
         table: "t",

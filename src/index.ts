@@ -36,6 +36,7 @@ export {
   renderIntendedEffect,
   buildRegistryMap,
 } from "./resolveExpectation.js";
+export { canonicalJsonForParams } from "./canonicalParams.js";
 export { reconcileSqlRow, reconcileSqlRowAsync } from "./reconciler.js";
 export { aggregateWorkflow } from "./aggregate.js";
 export {
@@ -110,6 +111,8 @@ export type {
   WorkflowTruthStep,
   StepOutcome,
   EventSequenceIntegrity,
+  IntendedEffect,
+  ObservedExecution,
 } from "./types.js";
 export type { BucketAEntry, RunComparisonReport } from "./runComparison.js";
 export type { SqlReadBackend } from "./sqlReadBackend.js";

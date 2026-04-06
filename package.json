@@ -19,7 +19,8 @@
     "test": "npm run build && npm run test:vitest && npm run test:node:sqlite && node scripts/first-run.mjs",
     "test:ci": "npm run build && npm run test:vitest && npm run test:node:sqlite && npm run test:postgres && node scripts/first-run.mjs",
     "example:workflow-hook": "npm run build && node examples/workflow-runner.mjs",
-    "verify-workflow": "node dist/cli.js"
+    "verify-workflow": "node dist/cli.js",
+    "migrate:workflow-result-v11": "npm run build && node scripts/migrate-workflow-result-v11.mjs"
   },
   "engines": {
     "node": ">=22.13.0"

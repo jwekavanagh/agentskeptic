@@ -156,10 +156,21 @@ export type FailureDiagnostic =
   | "verification_setup"
   | "observation_uncertainty";
 
+/** Rendered registry template for the evaluated tool_observed step (audit / review). */
+export type IntendedEffect = {
+  narrative: string;
+};
+
+/** Canonical digest of evaluated `tool_observed.params` (same serialization as retry divergence). */
+export type ObservedExecution = {
+  paramsCanonical: string;
+};
+
 export type StepOutcome = {
   seq: number;
   toolId: string;
-  intendedEffect: string;
+  intendedEffect: IntendedEffect;
+  observedExecution: ObservedExecution;
   verificationRequest: StepVerificationRequest;
   status: StepStatus;
   reasons: Reason[];
@@ -346,14 +357,15 @@ export type WorkflowTruthStep = {
     | "UNCERTAIN_NOT_OBSERVED_WITHIN_WINDOW";
   observations: { evaluatedOrdinal: number; repeatCount: number };
   reasons: Reason[];
-  intendedEffect: string;
+  intendedEffect: IntendedEffect;
+  observedExecution: ObservedExecution;
   failureCategory?: FailureDiagnostic;
   verifyTarget: string | null;
   effects?: WorkflowTruthEffect[];
 };
 
 export type WorkflowTruthReport = {
-  schemaVersion: 4;
+  schemaVersion: 5;
   workflowId: string;
   workflowStatus: WorkflowStatus;
   trustSummary: string;
@@ -368,9 +380,9 @@ export type WorkflowTruthReport = {
   executionPathSummary: string;
 };
 
-/** Emitted verification result on stdout / public API (`schemaVersion` 10). */
+/** Emitted verification result on stdout / public API (`schemaVersion` 11). */
 export type WorkflowResult = Omit<WorkflowEngineResult, "schemaVersion"> & {
-  schemaVersion: 10;
+  schemaVersion: 11;
   workflowTruthReport: WorkflowTruthReport;
 };
 

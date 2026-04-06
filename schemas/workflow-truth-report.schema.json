@@ -16,7 +16,7 @@
     "executionPathSummary"
   ],
   "properties": {
-    "schemaVersion": { "const": 4 },
+    "schemaVersion": { "const": 5 },
     "workflowId": { "type": "string" },
     "workflowStatus": {
       "type": "string",
@@ -275,6 +275,7 @@
             "observations",
             "reasons",
             "intendedEffect",
+            "observedExecution",
             "verifyTarget"
           ],
           "properties": {
@@ -304,7 +305,22 @@
               "type": "array",
               "items": { "$ref": "#/$defs/reason" }
             },
-            "intendedEffect": { "type": "string" },
+            "intendedEffect": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["narrative"],
+              "properties": {
+                "narrative": { "type": "string" }
+              }
+            },
+            "observedExecution": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["paramsCanonical"],
+              "properties": {
+                "paramsCanonical": { "type": "string" }
+              }
+            },
             "failureCategory": {
               "type": "string",
               "enum": [

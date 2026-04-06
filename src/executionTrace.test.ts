@@ -173,7 +173,8 @@ describe("buildExecutionTraceView", () => {
         {
           seq: 0,
           toolId: "crm.upsert_contact",
-          intendedEffect: "x",
+          intendedEffect: { narrative: "x" },
+          observedExecution: { paramsCanonical: "{}" },
           verificationRequest: {
             kind: "sql_row",
             table: "contacts",

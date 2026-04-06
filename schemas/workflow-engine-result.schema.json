@@ -254,6 +254,22 @@
         }
       }
     },
+    "intendedEffect": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["narrative"],
+      "properties": {
+        "narrative": { "type": "string" }
+      }
+    },
+    "observedExecution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["paramsCanonical"],
+      "properties": {
+        "paramsCanonical": { "type": "string" }
+      }
+    },
     "step": {
       "allOf": [
         {
@@ -263,6 +279,7 @@
             "seq",
             "toolId",
             "intendedEffect",
+            "observedExecution",
             "verificationRequest",
             "status",
             "reasons",
@@ -273,7 +290,8 @@
           "properties": {
             "seq": { "type": "integer", "minimum": 0 },
             "toolId": { "type": "string" },
-            "intendedEffect": { "type": "string" },
+            "intendedEffect": { "$ref": "#/$defs/intendedEffect" },
+            "observedExecution": { "$ref": "#/$defs/observedExecution" },
             "verificationRequest": {
               "oneOf": [
                 { "type": "null" },

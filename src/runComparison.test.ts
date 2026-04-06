@@ -32,7 +32,8 @@ function sqlRowStep(
   return {
     seq,
     toolId,
-    intendedEffect: "",
+    intendedEffect: { narrative: "" },
+    observedExecution: { paramsCanonical: "{}" },
     verificationRequest: {
       kind: "sql_row",
       table: "contacts",
@@ -164,7 +165,8 @@ describe("runComparison", () => {
     const step: StepOutcome = {
       seq: 0,
       toolId: "t",
-      intendedEffect: "",
+      intendedEffect: { narrative: "" },
+      observedExecution: { paramsCanonical: "{}" },
       verificationRequest: vr,
       status: "inconsistent",
       reasons: [],
@@ -205,7 +207,8 @@ describe("runComparison", () => {
     const nullFail = (seq: number, tool: string): StepOutcome => ({
       seq,
       toolId: tool,
-      intendedEffect: "",
+      intendedEffect: { narrative: "" },
+      observedExecution: { paramsCanonical: "{}" },
       verificationRequest: null,
       status: "incomplete_verification",
       reasons: [{ code: "UNKNOWN_TOOL", message: "u" }],
@@ -288,7 +291,8 @@ describe("runComparison", () => {
         {
           seq: 0,
           toolId: "t",
-          intendedEffect: "",
+          intendedEffect: { narrative: "" },
+          observedExecution: { paramsCanonical: "{}" },
           verificationRequest: {
             kind: "sql_row",
             table: "c",

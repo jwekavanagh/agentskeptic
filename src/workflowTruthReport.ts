@@ -156,7 +156,8 @@ function pushHumanReasonLines(lines: string[], r: Reason, indent: string): void 
 function buildTruthStep(s: StepOutcome): WorkflowTruthStep {
   const label = STEP_STATUS_TRUTH_LABELS[s.status] as WorkflowTruthStep["outcomeLabel"];
   const vt = formatVerificationTargetSummary(s.verificationRequest);
-  const intended = singleLineIntended(s.intendedEffect);
+  const narrative = singleLineIntended(s.intendedEffect.narrative);
+  const paramsCanonical = singleLineIntended(s.observedExecution.paramsCanonical);
   const base: WorkflowTruthStep = {
     seq: s.seq,
     toolId: s.toolId,
@@ -166,7 +167,8 @@ function buildTruthStep(s: StepOutcome): WorkflowTruthStep {
       repeatCount: s.repeatObservationCount,
     },
     reasons: s.reasons.map(copyReason),
-    intendedEffect: intended,
+    intendedEffect: { narrative },
+    observedExecution: { paramsCanonical },
     verifyTarget: vt === null ? null : vt,
   };
   if (s.status !== "verified") {
@@ -231,7 +233,7 @@ export function buildWorkflowTruthReport(engine: WorkflowEngineResult): Workflow
   );
 
   return {
-    schemaVersion: 4,
+    schemaVersion: 5,
     workflowId: engine.workflowId,
     workflowStatus: engine.status,
     trustSummary: trustSummaryForEngine(engine),
@@ -247,7 +249,7 @@ export function buildWorkflowTruthReport(engine: WorkflowEngineResult): Workflow
 export function finalizeEmittedWorkflowResult(engine: WorkflowEngineResult): WorkflowResult {
   return {
     ...engine,
-    schemaVersion: 10,
+    schemaVersion: 11,
     workflowTruthReport: buildWorkflowTruthReport(engine),
   };
 }
@@ -336,18 +338,19 @@ export function formatWorkflowTruthReportStruct(truth: WorkflowTruthReport): str
     lines.push(
       `    observations: evaluated=${s.observations.evaluatedOrdinal} of ${s.observations.repeatCount} in_capture_order`,
     );
+    lines.push(`    observed_execution: ${s.observedExecution.paramsCanonical}`);
+    if (s.intendedEffect.narrative.length > 0) {
+      lines.push(`    intended: ${s.intendedEffect.narrative}`);
+    }
+    if (s.verifyTarget !== null) {
+      lines.push(`    verify_target: ${s.verifyTarget}`);
+    }
     if (s.outcomeLabel !== "VERIFIED") {
       const cat = s.failureCategory!;
       lines.push(`    category: ${cat}`);
-      if (s.verifyTarget !== null) {
-        lines.push(`    verify_target: ${s.verifyTarget}`);
-      }
     }
     for (const r of s.reasons) {
       pushHumanReasonLines(lines, r, "    ");
-    }
-    if (s.intendedEffect.length > 0) {
-      lines.push(`    intended: ${s.intendedEffect}`);
     }
 
     if (s.effects !== undefined) {

@@ -51,7 +51,7 @@ describe("CI workflow truth contract (Postgres CLI)", () => {
     const parsed = JSON.parse(r.stdout.trim());
     const validateResult = loadSchemaValidator("workflow-result");
     assert.equal(validateResult(parsed), true, JSON.stringify(validateResult.errors ?? []));
-    assert.equal(parsed.schemaVersion, 10);
+    assert.equal(parsed.schemaVersion, 11);
     assert.equal(parsed.workflowId, "wf_complete");
     assert.equal(parsed.status, "complete");
     assert.equal(parsed.steps[0]?.status, "verified");

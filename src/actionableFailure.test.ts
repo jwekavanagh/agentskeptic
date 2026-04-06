@@ -49,7 +49,8 @@ describe("deriveSeverityWorkflow", () => {
             {
               seq: 0,
               toolId: "t",
-              intendedEffect: "",
+              intendedEffect: { narrative: "" },
+              observedExecution: { paramsCanonical: "{}" },
               verificationRequest: null,
               status: "missing",
               reasons: [{ code: "ROW_ABSENT", message: "m" }],
@@ -72,7 +73,8 @@ describe("deriveSeverityWorkflow", () => {
             {
               seq: 0,
               toolId: "t",
-              intendedEffect: "",
+              intendedEffect: { narrative: "" },
+              observedExecution: { paramsCanonical: "{}" },
               verificationRequest: {
                 kind: "sql_row",
                 table: "t",
@@ -217,7 +219,8 @@ describe("ambiguous category with high severity (workflow)", () => {
         {
           seq: 0,
           toolId: "t",
-          intendedEffect: "",
+          intendedEffect: { narrative: "" },
+          observedExecution: { paramsCanonical: "{}" },
           verificationRequest: {
             kind: "sql_row",
             table: "t",

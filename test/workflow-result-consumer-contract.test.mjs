@@ -1,5 +1,5 @@
 /**
- * WorkflowResult stdout: required keys for consumers plus runLevelReasons (v10).
+ * WorkflowResult stdout: required keys for consumers plus runLevelReasons (v11).
  */
 import { describe, it, before, after } from "node:test";
 import assert from "node:assert/strict";
@@ -64,12 +64,20 @@ describe("WorkflowResult consumer contract (CLI stdout)", () => {
     ]) {
       assert.ok(k in parsed, `missing key ${k}`);
     }
-    assert.equal(parsed.schemaVersion, 10);
+    assert.equal(parsed.schemaVersion, 11);
     assert.equal(typeof parsed.schemaVersion, "number");
     assert.equal(typeof parsed.workflowId, "string");
     assert.equal(typeof parsed.status, "string");
     assert.ok(Array.isArray(parsed.runLevelReasons));
     assert.ok(Array.isArray(parsed.steps));
     assert.equal(parsed.runLevelReasons.length, 0);
+    const s0 = parsed.steps[0];
+    assert.ok(s0 && typeof s0 === "object");
+    assert.equal(s0.intendedEffect?.narrative?.includes("Upsert contact"), true);
+    assert.equal(
+      s0.observedExecution?.paramsCanonical,
+      '{"fields":{"name":"Alice","status":"active"},"recordId":"c_ok"}',
+    );
+    assert.equal(parsed.workflowTruthReport?.schemaVersion, 5);
   });
 });

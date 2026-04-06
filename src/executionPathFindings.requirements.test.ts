@@ -38,7 +38,8 @@ function verifiedStep(seq: number, toolId: string): StepOutcome {
   return {
     seq,
     toolId,
-    intendedEffect: "x",
+    intendedEffect: { narrative: "x" },
+    observedExecution: { paramsCanonical: "{}" },
     verificationRequest: {
       kind: "sql_row",
       table: "t",
@@ -59,7 +60,8 @@ describe("buildExecutionPathFindings (product requirements)", () => {
     const step: StepOutcome = {
       seq: 0,
       toolId: "bad.tool",
-      intendedEffect: "",
+      intendedEffect: { narrative: "" },
+      observedExecution: { paramsCanonical: "{}" },
       verificationRequest: null,
       status: "incomplete_verification",
       reasons: [{ code: "STRING_SPEC_POINTER_MISSING", message: "m" }],
@@ -87,7 +89,8 @@ describe("buildExecutionPathFindings (product requirements)", () => {
     const step: StepOutcome = {
       seq: 0,
       toolId: "nope",
-      intendedEffect: "Unknown tool: nope",
+      intendedEffect: { narrative: "Unknown tool: nope" },
+      observedExecution: { paramsCanonical: "{}" },
       verificationRequest: null,
       status: "incomplete_verification",
       reasons: [{ code: "UNKNOWN_TOOL", message: "u" }],
@@ -220,7 +223,8 @@ describe("buildExecutionPathFindings (product requirements)", () => {
     const step: StepOutcome = {
       seq: 0,
       toolId: "t",
-      intendedEffect: "",
+      intendedEffect: { narrative: "" },
+      observedExecution: { paramsCanonical: "{}" },
       verificationRequest: {
         kind: "sql_row",
         table: "t",
@@ -316,7 +320,8 @@ describe("buildExecutionPathFindings (product requirements)", () => {
             {
               seq: 0,
               toolId: "t",
-              intendedEffect: "",
+              intendedEffect: { narrative: "" },
+              observedExecution: { paramsCanonical: "{}" },
               verificationRequest: null,
               status: "incomplete_verification",
               reasons: [{ code: "TABLE_POINTER_INVALID", message: "m" }],

@@ -1,9 +1,6 @@
 import { describe, expect, it } from "vitest";
-import {
-  canonicalJsonForParams,
-  planLogicalSteps,
-  stableSortEventsBySeq,
-} from "./planLogicalSteps.js";
+import { canonicalJsonForParams } from "./canonicalParams.js";
+import { planLogicalSteps, stableSortEventsBySeq } from "./planLogicalSteps.js";
 import type { ToolObservedEvent } from "./types.js";
 
 function ev(over: Partial<ToolObservedEvent> & Pick<ToolObservedEvent, "seq" | "toolId">): ToolObservedEvent {

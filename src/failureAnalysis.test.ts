@@ -11,7 +11,8 @@ const strongPolicy = {
 
 function step(partial: Partial<StepOutcome> & Pick<StepOutcome, "seq" | "toolId" | "status">): StepOutcome {
   return {
-    intendedEffect: "",
+    intendedEffect: { narrative: "" },
+    observedExecution: { paramsCanonical: "{}" },
     verificationRequest: null,
     reasons: [],
     evidenceSummary: {},
