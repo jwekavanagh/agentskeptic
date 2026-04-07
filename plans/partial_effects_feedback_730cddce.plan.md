@@ -1,6 +1,6 @@
 ---
-name: Slice 3 partial effects feedback
-overview: "Close Slice 3 product gaps by proving and sharpening the existing multi-effect rollup and truth-report pipeline: add seeded examples and requirements-level tests for `sql_effects`, improve step-level failure messages and P5 failure-analysis copy so operators see verification-kind distinctions without new wire types or parallel abstractions."
+name: Partial effects feedback
+overview: "Close multi-effect product gaps by proving and sharpening the existing multi-effect rollup and truth-report pipeline: add seeded examples and requirements-level tests for `sql_effects`, improve step-level failure messages and P5 failure-analysis copy so operators see verification-kind distinctions without new wire types or parallel abstractions."
 todos:
   - id: seed-and-registry
     content: Extend examples/seed.sql and examples/tools.json with sql_effects tool + rows for partial/all-fail/all-pass scenarios
@@ -14,13 +14,13 @@ todos:
   - id: requirements-tests
     content: Add verificationAgainstSystemState tests H–L (multi-effect + actionable assertions + human report substrings)
     status: completed
-  - id: docs-slice3
-    content: Update execution-truth-layer.md Slice 3 mapping, operator reading order, rollup message normative text if changed
+  - id: docs-partial-effects
+    content: Update execution-truth-layer.md multi-effect mapping, operator reading order, rollup message normative text if changed
     status: completed
 isProject: false
 ---
 
-# Slice 3: Partial multi-effect detection and actionable verification feedback
+# Partial multi-effect detection and actionable verification feedback
 
 ## Analysis
 
@@ -138,7 +138,7 @@ All tests assert **observable outputs**, not internal call order.
 
 Update [`docs/execution-truth-layer.md`](c:\Users\kavan\OneDrive\projects\project-nod\docs\execution-truth-layer.md) only:
 
-- In the **Slice 2–3** mapping table (or immediately below it), add **two rows** for Slice 3 items **4** and **7**: each row lists **acceptance theme → exact artifacts** (`steps[].status` values, `evidenceSummary.effects`, `workflowTruthReport.steps[].effects`, `failureAnalysis`, `actionableFailure`, human report sections).
+- In the **outcome verification** mapping table (or immediately below it), add **two rows** for multi-effect items **4** and **7**: each row lists **acceptance theme → exact artifacts** (`steps[].status` values, `evidenceSummary.effects`, `workflowTruthReport.steps[].effects`, `failureAnalysis`, `actionableFailure`, human report sections).
 - Add a short **“Operator reading order”** bullet list: trust line → diagnosis → failing step → `verify_target` → step reasons → effect blocks (multi-effect).
 - Update **Step rollup (multi-effect)** prose if the rollup message format changes (keep one normative description; remove duplication elsewhere only if the same sentence appears twice).
 

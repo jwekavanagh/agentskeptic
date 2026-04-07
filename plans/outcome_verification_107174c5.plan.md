@@ -1,20 +1,20 @@
 ---
-name: Slice 2 Outcome Verification
-overview: Lock Slice 2–3 to the existing SQLite-backed verifyWorkflow path with one new Vitest module and a doc mapping; every proof is black-box on emitted WorkflowResult plus one schema-validator assertion in that same file, and the slice completes only when npm test passes.
+name: Outcome verification
+overview: Lock outcome verification to the existing SQLite-backed verifyWorkflow path with one new Vitest module and a doc mapping; every proof is black-box on emitted WorkflowResult plus one schema-validator assertion in that same file, and completion is only when npm test passes.
 todos:
-  - id: doc-slice-map
-    content: Add Slice 2–3 acceptance → artifacts mapping subsection to docs/execution-truth-layer.md
+  - id: doc-outcome-map
+    content: Add outcome verification acceptance → artifacts mapping subsection to docs/execution-truth-layer.md
     status: completed
   - id: req-tests
     content: Add src/verificationAgainstSystemState.requirements.test.ts (Vitest, verifyWorkflow-only, temp DB from examples/seed.sql)
     status: completed
   - id: npm-test
-    content: Run npm test from repo root; exit code 0 is the sole slice completion gate
+    content: Run npm test from repo root; exit code 0 is the sole completion gate
     status: completed
 isProject: false
 ---
 
-# Slice 2–3: Verify outcomes against system state (implementation plan)
+# Verify outcomes against system state (implementation plan)
 
 ## Analysis
 
@@ -30,15 +30,15 @@ isProject: false
 | Distinguish verified vs failed verification | `status === "verified"` vs other statuses; matching `outcomeLabel` on truth report. |
 | See which steps are affected | Each step carries `seq` and `toolId`; multi-step workflows yield multiple `steps[]` entries aligned with evaluation order. |
 
-### What must be built for this slice
+### What must be built
 
 1. One **documentation** subsection mapping acceptance criteria → emitted fields and codes (link to existing Human truth report / reconciler sections; schemas remain shape SSOT).
-2. One **Vitest** module [`src/verificationAgainstSystemState.requirements.test.ts`](c:/Users/kavan/OneDrive/projects/project-nod/src/verificationAgainstSystemState.requirements.test.ts) that proves Slice 2–3 using **only** the path defined under Design (no second test style).
+2. One **Vitest** module [`src/verificationAgainstSystemState.requirements.test.ts`](c:/Users/kavan/OneDrive/projects/project-nod/src/verificationAgainstSystemState.requirements.test.ts) that proves outcome verification using **only** the path defined under Design (no second test style).
 
 ### What must not happen (constraints / out of scope)
 
 - No new verification backend or duplicate “verifier” abstraction.
-- No new `StepStatus` or `outcomeLabel` literals; this slice does not change the taxonomy.
+- No new `StepStatus` or `outcomeLabel` literals; this work does not change the taxonomy.
 - No relaxation of the event schema (no expectations on the wire).
 
 ### What must be provable (observability artifacts)
@@ -50,11 +50,11 @@ isProject: false
 
 ## Design
 
-### Single architecture for this slice
+### Single architecture
 
 All new proofs use **one mechanism**: `await verifyWorkflow({ workflowId, eventsPath, registryPath, database, logStep: noop, truthReport: noop })` from [`src/pipeline.ts`](c:/Users/kavan/OneDrive/projects/project-nod/src/pipeline.ts) (Vitest imports `./pipeline.js` like other `src/*.test.ts` files).
 
-**Database:** Before each test file run (or `beforeAll`), create a **temporary directory**, materialize SQLite at `join(dir, "verify.db")` by executing **exactly** the contents of [`examples/seed.sql`](c:/Users/kavan/OneDrive/projects/project-nod/examples/seed.sql) via `DatabaseSync` — same pattern as [`test/pipeline.sqlite.test.mjs`](c:/Users/kavan/OneDrive/projects/project-nod/test/pipeline.sqlite.test.mjs) lines 20–27. **Tear down** the directory in `afterAll`. **No** `demo.db`, **no** Postgres, **no** direct `reconcileFromRows` calls in this slice’s tests.
+**Database:** Before each test file run (or `beforeAll`), create a **temporary directory**, materialize SQLite at `join(dir, "verify.db")` by executing **exactly** the contents of [`examples/seed.sql`](c:/Users/kavan/OneDrive/projects/project-nod/examples/seed.sql) via `DatabaseSync` — same pattern as [`test/pipeline.sqlite.test.mjs`](c:/Users/kavan/OneDrive/projects/project-nod/test/pipeline.sqlite.test.mjs) lines 20–27. **Tear down** the directory in `afterAll`. **No** `demo.db`, **no** Postgres, **no** direct `reconcileFromRows` calls in these tests.
 
 **Events and registry:**
 
@@ -65,7 +65,7 @@ All new proofs use **one mechanism**: `await verifyWorkflow({ workflowId, events
 
 ```mermaid
 flowchart LR
-  subgraph sliceProof [Slice2 proof path only]
+  subgraph verifyProof [Outcome verification proof path only]
     T[temp SQLite from examples/seed.sql]
     E[eventsPath shared or temp NDJSON]
     R[examples/tools.json]
@@ -80,8 +80,8 @@ flowchart LR
 
 ### Requirement satisfaction (explicit)
 
-- **Slice 2:** `verifyWorkflow` resolves expectations from registry + observations, reads SQL, emits per-step results; no success flag from the agent is consulted.
-- **Slice 3:** `missing`, `inconsistent`, `partially_verified`, `incomplete_verification`, `uncertain` remain the distinct non-success outcomes; this slice documents and tests representative cases reachable on the SQLite path above.
+- **Outcome vs SQL:** `verifyWorkflow` resolves expectations from registry + observations, reads SQL, emits per-step results; no success flag from the agent is consulted.
+- **Non-success kinds:** `missing`, `inconsistent`, `partially_verified`, `incomplete_verification`, `uncertain` remain the distinct non-success outcomes; this plan documents and tests representative cases reachable on the SQLite path above.
 
 ### Failure modes (reference)
 
@@ -96,11 +96,11 @@ flowchart LR
 
 ## Implementation
 
-1. **Documentation** — Add subsection **“Product requirements: outcome verification (Slice 2–3)”** to [`docs/execution-truth-layer.md`](c:/Users/kavan/OneDrive/projects/project-nod/docs/execution-truth-layer.md): map each acceptance bullet to `WorkflowResult` / `workflowTruthReport` fields and typical `reasons[].code` values, with links to Human truth report and Reconciler rule table. **Completion:** subsection merged; no new duplicate field tables (schemas stay SSOT).
+1. **Documentation** — Add subsection **“Product requirements: outcome verification”** to [`docs/execution-truth-layer.md`](c:/Users/kavan/OneDrive/projects/project-nod/docs/execution-truth-layer.md): map each acceptance bullet to `WorkflowResult` / `workflowTruthReport` fields and typical `reasons[].code` values, with links to Human truth report and Reconciler rule table. **Completion:** subsection merged; no new duplicate field tables (schemas stay SSOT).
 
 2. **Tests** — Create [`src/verificationAgainstSystemState.requirements.test.ts`](c:/Users/kavan/OneDrive/projects/project-nod/src/verificationAgainstSystemState.requirements.test.ts) implementing **exactly** the seven cases listed in Testing (fixed names below). **Completion:** file exists and `npm run test:vitest` includes it (default Vitest `include` already covers `src/**/*.test.ts`).
 
-3. **Verification** — From repository root after dependencies are installed, run **`npm test`**. **Completion:** process exits **0**. This is the **only** slice completion command (runs `build`, Vitest, SQLite `node:test` suite including existing pipeline tests, and `first-run`). No alternate local command and no “if Postgres” branch for this slice.
+3. **Verification** — From repository root after dependencies are installed, run **`npm test`**. **Completion:** process exits **0**. This is the **only** completion command (runs `build`, Vitest, SQLite `node:test` suite including existing pipeline tests, and `first-run`). No alternate local command and no “if Postgres” branch for this plan.
 
 ---
 
@@ -114,10 +114,10 @@ flowchart LR
 |----|-------------------|-------------|-------------------------|
 | A | Verified outcome matches DB | `workflowId: "wf_complete"`, `eventsPath` + `registryPath` = shared `examples` paths | `r.status === "complete"`; `r.steps[0].status === "verified"`; `r.steps[0].reasons` empty; `r.workflowTruthReport.steps[0].outcomeLabel === "VERIFIED"`; `r.steps[0].evidenceSummary.rowCount === 1`; `loadSchemaValidator("workflow-result")(r) === true` |
 | B | Missing record despite capture | `workflowId: "wf_missing"`, shared events | `r.steps[0].status === "missing"`; `r.steps[0].reasons[0].code === "ROW_ABSENT"`; `r.steps[0].evidenceSummary.rowCount === 0`; truth `outcomeLabel === "FAILED_ROW_MISSING"` |
-| C | Falsification: observation + “success-shaped” params do not imply verified | Ephemeral NDJSON in temp dir: one `tool_observed` line, `workflowId: "wf_slice2_fake_ok"`, `params: { ok: true, recordId: "nope", fields: { name: "x", status: "y" } }` (same shape as [`test/pipeline.sqlite.test.mjs`](c:/Users/kavan/OneDrive/projects/project-nod/test/pipeline.sqlite.test.mjs) “ignores params.ok”) | `r.steps[0].status === "missing"` (not `verified`); `r.steps[0].reasons[0].code === "ROW_ABSENT"` — **fails if** a future shortcut trusts `ok` or presence of the event alone |
+| C | Falsification: observation + “success-shaped” params do not imply verified | Ephemeral NDJSON in temp dir: one `tool_observed` line, `workflowId: "wf_verify_fake_ok"`, `params: { ok: true, recordId: "nope", fields: { name: "x", status: "y" } }` (same shape as [`test/pipeline.sqlite.test.mjs`](c:/Users/kavan/OneDrive/projects/project-nod/test/pipeline.sqlite.test.mjs) “ignores params.ok”) | `r.steps[0].status === "missing"` (not `verified`); `r.steps[0].reasons[0].code === "ROW_ABSENT"` — **fails if** a future shortcut trusts `ok` or presence of the event alone |
 | D | Wrong value vs expected | `workflowId: "wf_partial"`, shared events | `r.steps[0].status === "inconsistent"`; `r.steps[0].reasons[0].code === "VALUE_MISMATCH"`; `evidenceSummary` has `expected`, `actual`, `field`; truth `outcomeLabel === "FAILED_VALUE_MISMATCH"` |
 | E | Duplicate rows in system state | `workflowId: "wf_duplicate_rows"`, shared events | `r.steps[0].status === "inconsistent"`; `r.steps[0].reasons[0].code === "DUPLICATE_ROWS"` |
-| F | Which step failed (multi-step) | Ephemeral NDJSON in temp dir: two lines, same `workflowId: "wf_slice2_twostep"`, `seq` 0 then 1 — line 0 same params as `wf_complete` line; line 1 same as `wf_missing` (recordId `missing_id`) | `r.steps.length === 2`; `r.steps[0].seq === 0`, `r.steps[0].status === "verified"`; `r.steps[1].seq === 1`, `r.steps[1].status === "missing"`; `r.workflowTruthReport.steps[0].seq === 0`, `outcomeLabel === "VERIFIED"`; `r.workflowTruthReport.steps[1].seq === 1`, `outcomeLabel === "FAILED_ROW_MISSING"` |
+| F | Which step failed (multi-step) | Ephemeral NDJSON in temp dir: two lines, same `workflowId: "wf_verify_twostep"`, `seq` 0 then 1 — line 0 same params as `wf_complete` line; line 1 same as `wf_missing` (recordId `missing_id`) | `r.steps.length === 2`; `r.steps[0].seq === 0`, `r.steps[0].status === "verified"`; `r.steps[1].seq === 1`, `r.steps[1].status === "missing"`; `r.workflowTruthReport.steps[0].seq === 0`, `outcomeLabel === "VERIFIED"`; `r.workflowTruthReport.steps[1].seq === 1`, `outcomeLabel === "FAILED_ROW_MISSING"` |
 | G | Expectations cannot be smuggled on the event | In-test object: valid `tool_observed` fields plus `"expectation": {}` | `loadSchemaValidator("event")` from [`src/schemaLoad.ts`](c:/Users/kavan/OneDrive/projects/project-nod/src/schemaLoad.ts) returns **false** for that object — **fails if** wire schema ever allows caller-supplied expectation payloads |
 
 **Regression bar:** Cases B and C fail if verification ignores DB state; case D fails if value checks regress; case G fails if the event schema regresses to allow embedded expectations.
@@ -126,7 +126,7 @@ flowchart LR
 
 ## Documentation
 
-- Add the Slice 2–3 mapping subsection only; keep schemas as structural SSOT.
+- Add the outcome verification mapping subsection only; keep schemas as structural SSOT.
 - Audiences: **Engineer** (modules + test file name), **Integrator** (parse `WorkflowResult`; expectations not on events), **Operator** (human report `seq=` / `result=` / `reference_code:`).
 - **Why:** One verifier (`verifyWorkflow` + reconciler) stays authoritative; documentation explains PRD mapping without introducing a parallel spec.
 
@@ -134,7 +134,7 @@ flowchart LR
 
 ## Validation
 
-| Product requirement | Proof produced by this slice | Negative / falsification |
+| Product requirement | Proof produced by this plan | Negative / falsification |
 |--------------------|------------------------------|---------------------------|
 | Outcome evaluated against system state | Test **A** (`evidenceSummary.rowCount`, verified status); **B**/`**D**/`**E** tie failures to DB-backed codes and evidence | **B** fails if row absent yields `verified` |
 | Not based on workflow success claim | **C** (fake `ok` + missing row still `missing`); **G** (embedded `expectation` rejected) | **C** fails if `ok: true` or observation alone yields `verified`; **G** fails if schema accepts `expectation` |

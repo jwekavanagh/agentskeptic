@@ -1,5 +1,5 @@
 ---
-name: Slice 5 Verdict Audit
+name: Verdict audit
 overview: Surface the existing workflow-level verdict and step-linked evidence clearly for reviewers (especially Debug Console), and make the canonical SHA-256 run bundle writable from library code and optionally from `withWorkflowVerification`, reusing one shared writer with full corpus-loader validation—without adding new WorkflowResult fields or competing status enums.
 todos:
   - id: agent-run-bundle
@@ -14,8 +14,8 @@ todos:
   - id: persist-in-process
     content: withWorkflowVerification persistBundle + deterministic NDJSON capture + integration test
     status: completed
-  - id: docs-slice5
-    content: execution-truth-layer.md Slice 5 + audience sections (engineer/integrator/operator); README one-line pointer
+  - id: docs-verdict-audit
+    content: execution-truth-layer.md workflow verdict + audience sections (engineer/integrator/operator); README one-line pointer
     status: completed
   - id: validation-tests
     content: Bundle round-trip, empty-events bundle, integrity negative, debugServer workflowVerdictSurface
@@ -23,13 +23,13 @@ todos:
 isProject: false
 ---
 
-# Slice 5: Workflow verdict clarity and auditable run records (revised)
+# Workflow verdict clarity and auditable run records (revised)
 
 ## Analysis
 
 ### Product requirements → engineering requirements
 
-| Product (Slice 5) | Engineering requirement |
+| Product requirement | Engineering requirement |
 |-------------------|-------------------------|
 | **6 — Overall workflow result** after evaluating observed steps | The emitted **`WorkflowResult`** remains the single machine verdict (`status`: `complete` \| `incomplete` \| `inconsistent`), derived only from aggregated step outcomes + run-level reasons + empty-step rule ([`src/aggregate.ts`](src/aggregate.ts)). Review surfaces must show that verdict **first**, then **`workflowTruthReport.trustSummary`**, plus step-level evidence in `steps` / `workflowTruthReport.steps`. |
 | **6 — Distinguish complete vs incomplete vs inconsistent** | No new enum. UI/API must surface **`WorkflowResult.status`** and **`workflowTruthReport.trustSummary`** without requiring the user to hunt inside raw JSON. |
@@ -39,13 +39,13 @@ isProject: false
 
 ### Canonical audit lifecycle (product behavior, normative)
 
-This slice does **not** introduce a second storage format.
+This work does **not** introduce a second storage format.
 
 1. **Preserve:** Call **`writeAgentRunBundle({ outDir, eventsNdjson, workflowResult })`**. The **`runId`** in `agent-run.json` is **`path.basename(path.resolve(outDir))`**, matching today’s CLI. **`workflowResult.workflowId`** must equal the manifest’s `workflowId` (same rule as [`buildAgentRunRecordForBundle`](src/agentRunRecord.ts) today).
 2. **Link:** `agent-run.json` holds **`artifacts.events`** and **`artifacts.workflowResult`** with **`relativePath`**, **`byteLength`**, **`sha256`** (hex). Integrity is **exact byte equality**, not semantic re-parse.
 3. **Retrieve (programmatic):** Call **`loadCorpusRun(corpusRoot, runId)`** (already exported from [`src/index.ts`](src/index.ts) / [`src/debugCorpus.ts`](src/debugCorpus.ts)). **`corpusRoot`** is the parent directory whose child **`runId`** is the run folder. Success is **`loadStatus === "ok"`**, which yields **`workflowResult`**, **`agentRunRecord`**, **`paths`**, and enough context to re-load events.
 4. **Retrieve / review (interactive):** Run **`verify-workflow debug --corpus <corpusRoot>`** and use the Debug Console; **`GET /api/runs/:id`** returns the same loaded objects the UI uses, plus the new **`workflowVerdictSurface`** field for ok rows.
-5. **Review (offline):** Open **`workflow-result.json`** and **`events.ndjson`** under the run directory; interpret **`status`** / **`workflowTruthReport`** per existing SSOT. Human stderr from a **re-run** of `verify-workflow` is optional and not required for Slice 5 acceptance.
+5. **Review (offline):** Open **`workflow-result.json`** and **`events.ndjson`** under the run directory; interpret **`status`** / **`workflowTruthReport`** per existing SSOT. Human stderr from a **re-run** of `verify-workflow` is optional and not required for verdict-audit acceptance.
 
 ### Empty `events.ndjson` (decided contract, not TBD)
 
@@ -56,7 +56,7 @@ This slice does **not** introduce a second storage format.
 
 ### What must not happen
 
-- No second workflow verdict enum; no **`WorkflowResult` / workflow-truth-report `schemaVersion` bump** for Slice 5.
+- No second workflow verdict enum; no **`WorkflowResult` / workflow-truth-report `schemaVersion` bump** for this verdict work.
 - No alternate audit container (no DB table, no fourth required file).
 - Do not weaken integrity rules in [`debugCorpus.ts`](src/debugCorpus.ts).
 
@@ -167,12 +167,12 @@ Every case below states **exact expected outputs** or **exact error codes**—no
 
 Single SSOT remains **[`docs/execution-truth-layer.md`](docs/execution-truth-layer.md)**. Add **structured** material (headings to implement verbatim intent):
 
-1. **Product requirements table (Slice 5)** — Map PR 6 → `WorkflowResult.status`, `workflowTruthReport.trustSummary`, `workflowVerdictSurface`, human `trust:` line. Map PR 8 → three-file bundle, `writeAgentRunBundle`, `loadCorpusRun`, Debug Console, manifest integrity.
+1. **Product requirements table (workflow verdict)** — Map PR 6 → `WorkflowResult.status`, `workflowTruthReport.trustSummary`, `workflowVerdictSurface`, human `trust:` line. Map PR 8 → three-file bundle, `writeAgentRunBundle`, `loadCorpusRun`, Debug Console, manifest integrity.
 2. **Engineer** — New module **`agentRunBundle.ts`**; per-file atomic write + rename order; **`captureNdjsonUtf8`** semantics (enqueue order, includes all buffered v2 run events). Reference tests that lock behavior.
 3. **Integrator** — **Preserve:** call `writeAgentRunBundle` or CLI `--write-run-bundle`. **Retrieve:** `loadCorpusRun(corpusRoot, runId)` return shape. **In-process:** `withWorkflowVerification` + `persistBundle` lifecycle (numbered list mirroring Design). **Empty events:** when it occurs and that it is valid.
 4. **Operator** — Debug Console verdict panel reads server field; corrupted bundle manifests surface **`ARTIFACT_*`** / **`WORKFLOW_RESULT_*`** codes; do not treat a directory as trusted until `loadCorpusRun` is **ok**.
 
-**[`README.md`](README.md):** One short sentence pointing to the new Slice 5 anchor in `execution-truth-layer.md` (no second spec).
+**[`README.md`](README.md):** One short sentence pointing to the workflow verdict anchor in `execution-truth-layer.md` (no second spec).
 
 ---
 

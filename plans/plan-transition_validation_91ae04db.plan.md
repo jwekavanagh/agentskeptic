@@ -1,5 +1,5 @@
 ---
-name: Plan-transition validation slice
+name: Plan-transition validation
 overview: Add a single CLI path that ingests Before ref, After ref, and Plan.md (YAML front matter only), parses git name-status (-z) per Git >=2.30.0, evaluates closed rule kinds (including requireRenameFromTo with required boolean includeCopy), then emits WorkflowResult plus schema-valid synthetic events for bundles/compare/debug.
 todos:
   - id: schema-frontmatter
@@ -168,7 +168,7 @@ Each rule has **`id`** (string, `^[a-zA-Z0-9._-]+$`) and **`description`** (opti
 - **“Must be modified, not added”** on `src/foo.ts`: `matchingRowsMustHaveRowKinds` with pattern `src/foo.ts` and `rowKinds: ["modify"]` (an **add** row matching that path fails).
 - **“Must delete”:** `requireMatchingRow` pattern `path/to/x`, `rowKinds: ["delete"]`.
 - **“Must rename”:** `requireRenameFromTo` with **`includeCopy: false`** (+ optional `forbidMatchingRows`).
-- **“Rename or copy (two-path change)”:** `requireRenameFromTo` with **`includeCopy: true`** — satisfied by **either** a `rename` **or** a `copy` row matching both patterns (`K = { rename, copy }`). **Not** a guarantee the row is `copy` only; stricter “copy-only” is **out of scope** for this slice.
+- **“Rename or copy (two-path change)”:** `requireRenameFromTo` with **`includeCopy: true`** — satisfied by **either** a `rename` **or** a `copy` row matching both patterns (`K = { rename, copy }`). **Not** a guarantee the row is `copy` only; stricter “copy-only” is **out of scope** for this plan.
 - **“Must only touch these files”:** `allChangedPathsMustMatchAllowlist` with `allowPatterns` listing allowed globs.
 - **“Must not change anything outside this set”:** same as allowlist rule.
 - **“Must not touch path”:** `forbidMatchingRows`.
@@ -257,7 +257,7 @@ Exactly **one** line in `events.ndjson` (UTF-8, trailing `\n`), valid against [`
 
 ## Validation
 
-| Product claim | Meaning in this slice | Proof |
+| Product claim | Meaning in this plan | Proof |
 |---------------|----------------------|-------|
 | “Matches intended change in Plan.md” | All **declared** rules in `planValidation` hold for the git diff | Every rule kind has ≥1 passing **and** ≥1 failing integration test; false-positive rows in Testing. |
 | Status-specific intent | Not only path presence | `add` vs `modify` test. |

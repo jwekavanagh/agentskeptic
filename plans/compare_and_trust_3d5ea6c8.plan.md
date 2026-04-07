@@ -1,6 +1,6 @@
 ---
-name: Slice 6 Compare and Trust
-overview: Slice 6 ships RunComparisonReport v3 only, server-rendered HTML as the sole Debug UI surface for compare and run-trust panels (no view-model JSON on the wire), internal TS helpers tested via Vitest on HTML strings, Playwright on the full server+UI, and one named automated proof per acceptance row.
+name: Compare and trust
+overview: Compare and trust ships RunComparisonReport v3 only, server-rendered HTML as the sole Debug UI surface for compare and run-trust panels (no view-model JSON on the wire), internal TS helpers tested via Vitest on HTML strings, Playwright on the full server+UI, and one named automated proof per acceptance row.
 todos:
   - id: schema-v3-core
     content: RunComparisonReport schemaVersion 3 + buildRunComparisonReport/formatRunComparisonReport; AJV + runComparison.test.ts + CLI golden
@@ -15,18 +15,18 @@ todos:
     content: Add @playwright/test; test/debug-ui/*.spec.ts; extend test:ci with npx playwright install chromium && npm run test:debug-ui
     status: completed
   - id: readme-ssot
-    content: README Slice 6 subsection + execution-truth-layer.md Slice 6 + API/HTML contract + v2→v3 breaking note
+    content: README compare/trust subsection + execution-truth-layer.md compare section + API/HTML contract + v2→v3 breaking note
     status: completed
 isProject: false
 ---
 
-# Slice 6: Compare runs + independent verification (locked plan)
+# Compare runs + independent verification (locked plan)
 
 ## Analysis
 
 ### Product requirements → engineering requirements
 
-| Product (Slice 6) | Engineering outcome |
+| Product requirement | Engineering outcome |
 |-------------------|---------------------|
 | **9.1** Multiple workflow results | [`buildRunComparisonReport`](src/runComparison.ts) over ordered `WorkflowResult[]` (length ≥ 2); CLI compare; [`POST /api/compare`](src/debugServer.ts). |
 | **9.2** Highlight introduced / resolved / recurring | Required **`compareHighlights`** inside [`RunComparisonReport`](schemas/run-comparison-report.schema.json) v3; HTML panel lists derived **only** from `report` inside **`renderComparePanelHtml`**. |
@@ -45,8 +45,8 @@ isProject: false
 ### Must not happen / boundaries
 
 - **No** second compare JSON contract; **no** view-model JSON on the wire for these panels.
-- **No** browser-bundled duplicate renderer for Slice 6 panels.
-- **No** optional docs: **README.md** **must** add **“Slice 6 — Compare and trust surfaces”** with links to SSOT Slice 6 anchor and **`npm run test:debug-ui`**.
+- **No** browser-bundled duplicate renderer for compare/trust panels.
+- **No** optional docs: **README.md** **must** add **“Compare and trust surfaces”** with links to the SSOT compare section and **`npm run test:debug-ui`**.
 
 ### Internal implementation (not an API contract)
 
@@ -121,9 +121,9 @@ Deterministic order:
 3. **Vitest** — `src/debugPanels.test.ts` golden strings for both renderers; extend `runComparison.test.ts` for v3 and AC 9.2 fixture.
 4. **`debugServer.ts`** — wire POST/GET responses; **`comparePanelHtml`** and **`runTrustPanelHtml`** non-empty on success; **no other keys** on those success bodies. Add **`src/debugServer.test.ts`** tests **`it("debug_api_POST_compare_200_json_has_exact_keys", …)`** and **`it("debug_api_GET_run_detail_ok_json_has_exact_keys", …)`** that `Object.keys(res).sort((a,b)=>a.localeCompare(b))` equals the **pinned UTF-16-sorted arrays** from the contract above (same arrays as documented in SSOT).
 5. **`debug-ui/app.js` + `index.html`** — compare and run-detail use **only** `comparePanelHtml` / `runTrustPanelHtml`.
-6. **Playwright** — specs under `test/debug-ui/` using corpus `test/fixtures/debug-ui-slice6/`.
+6. **Playwright** — specs under `test/debug-ui/` using corpus `test/fixtures/debug-ui-compare/`.
 7. **`package.json`** — `"test:debug-ui": "playwright test"`; **`test:ci`** **must** end with **`npx playwright install chromium`** then **`npm run test:debug-ui`** (same order every time; no separate “document install” step).
-8. **README + SSOT** — Slice 6 + API keys + HTML hook list + breaking v2→v3.
+8. **README + SSOT** — compare/trust + API keys + HTML hook list + breaking v2→v3.
 
 ---
 
@@ -132,16 +132,16 @@ Deterministic order:
 | Layer | Role |
 |-------|------|
 | Vitest | Report JSON, `formatRunComparisonReport`, **exact HTML** from `renderComparePanelHtml` / `renderRunTrustPanelHtml` for pinned fixtures |
-| Playwright | End-to-end Debug server + browser: assertions use substrings from **`test/fixtures/debug-ui-slice6/expected-strings.json`** only (same file as Vitest substring checks). |
+| Playwright | End-to-end Debug server + browser: assertions use substrings from **`test/fixtures/debug-ui-compare/expected-strings.json`** only (same file as Vitest substring checks). |
 
-**Drift guard (required):** Single file **`test/fixtures/debug-ui-slice6/expected-strings.json`** holds every substring used in Playwright assertions and any matching Vitest substring checks. **Vitest** and **Playwright** both load that path relative to repo root (same Node `readFileSync` / `JSON.parse` pattern in both); **no** duplicate expected literals in spec files except the JSON itself.
+**Drift guard (required):** Single file **`test/fixtures/debug-ui-compare/expected-strings.json`** holds every substring used in Playwright assertions and any matching Vitest substring checks. **Vitest** and **Playwright** both load that path relative to repo root (same Node `readFileSync` / `JSON.parse` pattern in both); **no** duplicate expected literals in spec files except the JSON itself.
 
 ---
 
 ## Documentation
 
-- **README.md:** Required **“Slice 6 — Compare and trust surfaces”**: v3 stdout, pointer to SSOT for Debug API success shapes, `npm run test:debug-ui`, link to SSOT.
-- **`docs/execution-truth-layer.md`:** Slice 6 matrix; **Debug API (normative success shapes)** subsection that **copies the same key lists** as Non-negotiable observables (compare `200`: `comparePanelHtml`, `humanSummary`, `report`; run detail `200` ok: full eleven-key list in UTF-16 sorted order); **HTML hooks** table; reliability algorithm; v3 breaking note; reference **`debug_api_*_exact_keys`** tests as enforcement.
+- **README.md:** Required **“Compare and trust surfaces”**: v3 stdout, pointer to SSOT for Debug API success shapes, `npm run test:debug-ui`, link to SSOT.
+- **`docs/execution-truth-layer.md`:** Compare runs matrix; **Debug API (normative success shapes)** subsection that **copies the same key lists** as Non-negotiable observables (compare `200`: `comparePanelHtml`, `humanSummary`, `report`; run detail `200` ok: full eleven-key list in UTF-16 sorted order); **HTML hooks** table; reliability algorithm; v3 breaking note; reference **`debug_api_*_exact_keys`** tests as enforcement.
 
 ---
 
@@ -151,11 +151,11 @@ Each row has **exactly one** primary proof path: **one** test file and **one** `
 
 | AC | Primary proof |
 |----|----------------|
-| **9.1** | **`src/slice6.compare.ac.test.ts`** — **`it("AC_9_1_multi_run_compare_emits_schema_v3", …)`**: `buildRunComparisonReport` with **three** normalized `WorkflowResult` fixtures, AJV-valid v3, `report.runs.length === 3`. |
-| **9.2** | **`src/slice6.compare.ac.test.ts`** — **`it("AC_9_2_compareHighlights_match_fixture", …)`**: `toEqual` pinned golden object for `compareHighlights` (fixture path named in test file). |
-| **9.3** | **`test/debug-ui/ac-9-3.spec.ts`** — **`test("AC_9_3_compare_panel_markup", …)`**: POST compare with **≥2** run ids from `test/fixtures/debug-ui-slice6/`; `page.locator('[data-etl-section="compare-result"]')` visible; **all four** elements **`[data-etl-headline]`**, **`[data-etl-window-trend]`**, **`[data-etl-pairwise-trend]`**, **`[data-etl-recurrence]`** present; **all three** lists **`ul[data-etl-list="introduced"]`**, **`resolved`**, **`recurring`** present. |
-| **9.4** | **`src/slice6.compare.ac.test.ts`** — **`it("AC_9_4_headlineVerdict_window_pairwise_divergence", …)`**: pinned multi-run fixture where `windowTrend !== pairwiseTrend`; assert **`headlineVerdict`** and **full** **`headlineRationale`** **exact** match **`test/fixtures/debug-ui-slice6/headline-ac-9-4.json`** (sole golden for this assertion). |
-| **10.1–10.2** | **`src/verificationAgainstSystemState.requirements.test.ts`** — **`it("AC_10_1_AC_10_2_independent_sql_evidence_not_execution_narrative", async () => { … })`** (**this test must be added** inside the existing `describe("Slice 2–3: verification against system state (requirements)", …)`; it is the **only** named proof for this row). **Required setup:** use the **same** pattern as tests **A/B** in that file: temp DB created from **`examples/seed.sql`** (via `beforeAll`), **`examples/events.ndjson`**, **`examples/tools.json`**, `database: { kind: "sqlite", path: dbPath }`. **Required call:** `verifyWorkflow({ workflowId: "wf_missing", eventsPath, registryPath, database: sqliteDb(), logStep: noop, truthReport: noop })`. **Required assertions:** `steps[0].status === "missing"`, `steps[0].reasons[0].code === "ROW_ABSENT"`, `steps[0].evidenceSummary.rowCount === 0`, `workflowTruthReport.steps[0].outcomeLabel === "FAILED_ROW_MISSING"`. **Proves:** verdict is fixed by **read-only SQL** + registry for that key, not by inferring success from the observation alone. |
+| **9.1** | **`src/compare.acceptance.test.ts`** — **`it("AC_9_1_multi_run_compare_emits_schema_v3", …)`**: `buildRunComparisonReport` with **three** normalized `WorkflowResult` fixtures, AJV-valid v3, `report.runs.length === 3`. |
+| **9.2** | **`src/compare.acceptance.test.ts`** — **`it("AC_9_2_compareHighlights_match_fixture", …)`**: `toEqual` pinned golden object for `compareHighlights` (fixture path named in test file). |
+| **9.3** | **`test/debug-ui/ac-9-3.spec.ts`** — **`test("AC_9_3_compare_panel_markup", …)`**: POST compare with **≥2** run ids from `test/fixtures/debug-ui-compare/`; `page.locator('[data-etl-section="compare-result"]')` visible; **all four** elements **`[data-etl-headline]`**, **`[data-etl-window-trend]`**, **`[data-etl-pairwise-trend]`**, **`[data-etl-recurrence]`** present; **all three** lists **`ul[data-etl-list="introduced"]`**, **`resolved`**, **`recurring`** present. |
+| **9.4** | **`src/compare.acceptance.test.ts`** — **`it("AC_9_4_headlineVerdict_window_pairwise_divergence", …)`**: pinned multi-run fixture where `windowTrend !== pairwiseTrend`; assert **`headlineVerdict`** and **full** **`headlineRationale`** **exact** match **`test/fixtures/debug-ui-compare/headline-ac-9-4.json`** (sole golden for this assertion). |
+| **10.1–10.2** | **`src/verificationAgainstSystemState.requirements.test.ts`** — **`it("AC_10_1_AC_10_2_independent_sql_evidence_not_execution_narrative", async () => { … })`** (**this test must be added** inside the existing `describe("Verification against system state (requirements)", …)`; it is the **only** named proof for this row). **Required setup:** use the **same** pattern as tests **A/B** in that file: temp DB created from **`examples/seed.sql`** (via `beforeAll`), **`examples/events.ndjson`**, **`examples/tools.json`**, `database: { kind: "sqlite", path: dbPath }`. **Required call:** `verifyWorkflow({ workflowId: "wf_missing", eventsPath, registryPath, database: sqliteDb(), logStep: noop, truthReport: noop })`. **Required assertions:** `steps[0].status === "missing"`, `steps[0].reasons[0].code === "ROW_ABSENT"`, `steps[0].evidenceSummary.rowCount === 0`, `workflowTruthReport.steps[0].outcomeLabel === "FAILED_ROW_MISSING"`. **Proves:** verdict is fixed by **read-only SQL** + registry for that key, not by inferring success from the observation alone. |
 | **10.3** | **`test/debug-ui/ac-10-3.spec.ts`** — **`test("AC_10_3_sql_evidence_column", …)`**: GET run detail for fixture run; `locator('[data-etl-field="sql-evidence"]')` first row text **contains** substring from **`expected-strings.json`**. |
 | **10.4** | **`test/debug-ui/ac-10-4.spec.ts`** — **`test("AC_10_4_execution_path", …)`** (single test): open fixture run **with** `executionPathFindings` → assert expected finding `code` text visible; then open fixture run **without** concerns → assert execution-path section text **equals** `expected-strings.json` **`executionPathEmpty`** value **exactly**. |
 
