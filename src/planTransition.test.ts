@@ -528,6 +528,8 @@ isProject: false
 
 # Work
 
+## Implementation
+
 Edit \`src/tracked.ts\`.
 `;
     const planPath = path.join(dir, "Plan.md");
@@ -568,6 +570,8 @@ isProject: false
 
 # Work
 
+## Implementation
+
 Edit \`src/tracked.ts\`.
 `;
     const planPath = path.join(dir, "Plan.md");
@@ -606,6 +610,8 @@ isProject: false
 ---
 
 # Work
+
+## Implementation
 
 Edit \`src/tracked.ts\`.
 `;
@@ -655,6 +661,8 @@ isProject: false
 
 # Body
 
+## Implementation
+
 Change \`src/only.ts\`.
 `;
     const { rules, source } = loadPlanTransitionRules(md);
@@ -677,6 +685,8 @@ isProject: false
 ---
 
 # Body
+
+## Implementation
 
 Touch \`src/a.ts\` and \`src/b.ts\`.
 `;
@@ -809,6 +819,9 @@ planValidation:
       kind: forbidMatchingRows
       pattern: "nope.txt"
 ---
+
+## Implementation
+
 Also \`src/ignored.ts\` in prose.
 `;
     const { rules, source } = loadPlanTransitionRules(md);
@@ -994,6 +1007,8 @@ overview: x
 ---
 
 # x
+
+## Implementation
 
 \`src/t.ts\`
 `;

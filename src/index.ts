@@ -86,13 +86,13 @@ export {
   buildPlanTransitionEventsNdjson,
   buildPlanTransitionWorkflowResult,
   evaluatePlanRules,
-  extractMarkdownBodyAfterFrontMatter,
   loadPlanTransitionRules,
   parseGitNameStatusZ,
   parseGitVersionTriple,
   PLAN_RULE_CODES,
   preflightPatternString,
 } from "./planTransition.js";
+export { extractMarkdownBodyAfterFrontMatter } from "./planTransitionPathHarvest.js";
 export type { PlanDiffRow, PlanDiffRowKind, TransitionRulesProvenance } from "./planTransition.js";
 export { PLAN_TRANSITION_WORKFLOW_ID } from "./planTransitionConstants.js";
 export { writeAgentRunBundle } from "./agentRunBundle.js";

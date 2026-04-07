@@ -18,11 +18,8 @@ const GOLDEN_SLICE_2 = [
   "docs/execution-truth-layer.md",
   "examples/seed.sql",
   "schemas/workflow-result.schema.json",
-  "src/pipeline.ts",
-  "src/reconciler.ts",
   "src/schemaLoad.ts",
   "src/verificationAgainstSystemState.requirements.test.ts",
-  "test/pipeline.sqlite.test.mjs",
 ];
 
 const GOLDEN_SLICE_6 = [
@@ -30,12 +27,9 @@ const GOLDEN_SLICE_6 = [
   "docs/execution-truth-layer.md",
   "examples/seed.sql",
   "examples/tools.json",
-  "schemas/run-comparison-report.schema.json",
   "src/debugPanels.test.ts",
   "src/debugPanels.ts",
   "src/debugServer.test.ts",
-  "src/debugServer.ts",
-  "src/runComparison.ts",
   "src/slice6.compare.ac.test.ts",
   "src/verificationAgainstSystemState.requirements.test.ts",
   "test/debug-ui/ac-10-3.spec.ts",
@@ -46,20 +40,24 @@ const GOLDEN_SLICE_6 = [
 ];
 
 describe("harvestQualifyingPathsFromPlan", () => {
-  it("ISO-LINK: extracts only from markdown link targets", () => {
+  it("ISO-LINK: extracts only from markdown link targets in obligation section", () => {
     const md = `---
 name: x
 ---
+
+## Implementation
 
 See [x](src/a.ts) and [y](./schemas/b.json).
 `;
     expect(harvestQualifyingPathsFromPlan(md, {})).toEqual(["schemas/b.json", "src/a.ts"]);
   });
 
-  it("ISO-TICK: extracts only from inline backticks", () => {
+  it("ISO-TICK: extracts only from inline backticks in obligation section", () => {
     const md = `---
 name: x
 ---
+
+## Implementation
 
 Use \`docs/x.md\` and \`examples/y.sql\`.
 `;
@@ -76,10 +74,24 @@ name: x
     expect(harvestQualifyingPathsFromPlan(md, fm)).toEqual(["src/z.ts"]);
   });
 
-  it("does not harvest paths that appear only inside fenced code blocks", () => {
+  it("TODO-REF: reference-only phrase in todo content still harvests paths (no reference filter on todos)", () => {
+    const md = `---
+name: x
+todos:
+  - id: t
+    content: 'same shape as [x](src/from-todo.ts)'
+---
+
+`;
+    expect(harvestQualifyingPathsFromPlan(md, fmFromPlanMarkdown(md))).toEqual(["src/from-todo.ts"]);
+  });
+
+  it("does not harvest paths that appear only inside fenced code blocks in obligation section", () => {
     const md = `---
 name: x
 ---
+
+## Implementation
 
 \`\`\`text
 src/hidden.ts
@@ -95,7 +107,34 @@ Touch \`src/visible.ts\`.
 name: x
 ---
 
+## Implementation
+
 \`src/../x.ts\`
+`;
+    expect(harvestQualifyingPathsFromPlan(md, {})).toEqual([]);
+  });
+
+  it("does not harvest from non-obligation sections when todos empty", () => {
+    const md = `---
+name: x
+todos: []
+---
+
+## Analysis
+
+Touch [orphan](src/orphan.ts).
+`;
+    expect(harvestQualifyingPathsFromPlan(md, fmFromPlanMarkdown(md))).toEqual([]);
+  });
+
+  it("skips reference-only lines in obligation sections", () => {
+    const md = `---
+name: x
+---
+
+## Testing
+
+Like (same shape as [\`test/ref.mjs\`](c:/x/y/test/ref.mjs)) for comparison.
 `;
     expect(harvestQualifyingPathsFromPlan(md, {})).toEqual([]);
   });
@@ -103,12 +142,18 @@ name: x
   it("GOLD-S2: slice_2 plan matches pinned array", () => {
     const p = path.join(repoRoot, "plans", "slice_2_outcome_verification_107174c5.plan.md");
     const md = readFileSync(p, "utf8");
-    expect(harvestQualifyingPathsFromPlan(md, fmFromPlanMarkdown(md))).toEqual(GOLDEN_SLICE_2);
+    const result = harvestQualifyingPathsFromPlan(md, fmFromPlanMarkdown(md));
+    expect(result).toEqual(GOLDEN_SLICE_2);
+    expect(result).not.toContain("src/pipeline.ts");
+    expect(result).not.toContain("src/reconciler.ts");
   });
 
   it("GOLD-S6: slice_6 plan matches pinned array", () => {
     const p = path.join(repoRoot, "plans", "slice_6_compare_and_trust_3d5ea6c8.plan.md");
     const md = readFileSync(p, "utf8");
-    expect(harvestQualifyingPathsFromPlan(md, fmFromPlanMarkdown(md))).toEqual(GOLDEN_SLICE_6);
+    const result = harvestQualifyingPathsFromPlan(md, fmFromPlanMarkdown(md));
+    expect(result).toEqual(GOLDEN_SLICE_6);
+    expect(result).not.toContain("schemas/run-comparison-report.schema.json");
+    expect(result).not.toContain("src/runComparison.ts");
   });
 });

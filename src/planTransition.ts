@@ -12,7 +12,10 @@ import type { Reason, StepOutcome, WorkflowResult } from "./types.js";
 import { finalizeEmittedWorkflowResult } from "./workflowTruthReport.js";
 import { resolveVerificationPolicyInput } from "./verificationPolicy.js";
 import { PLAN_TRANSITION_WORKFLOW_ID } from "./planTransitionConstants.js";
-import { harvestQualifyingPathsFromPlan } from "./planTransitionPathHarvest.js";
+import {
+  extractMarkdownBodyAfterFrontMatter,
+  harvestQualifyingPathsFromPlan,
+} from "./planTransitionPathHarvest.js";
 
 export { PLAN_TRANSITION_WORKFLOW_ID } from "./planTransitionConstants.js";
 
@@ -21,7 +24,7 @@ const PICOMATCH_OPTIONS = { dot: true, nocase: false } as const;
 const EVIDENCE_CAP = 50;
 
 const PLAN_INSUFFICIENT_SPEC_DETAIL =
-  "No machine-checkable plan transition rules were found. Add planValidation (schemaVersion: 1, rules) under YAML front matter; or add exactly one heading \"Repository transition validation\" followed by a single yaml or yml fenced block with the same structure; or, when neither is present, cite qualifying repo-relative file paths in the plan body or in front matter todos[].content (markdown links and inline backticks under src/, schemas/, examples/, docs/, test/, debug-ui/, plans/) so each cited path can be required to appear in the git name-status diff.";
+  "No machine-checkable plan transition rules were found. Add planValidation (schemaVersion: 1, rules) under YAML front matter; or add exactly one heading \"Repository transition validation\" followed by a single yaml or yml fenced block with the same structure; or, when neither is present, cite qualifying repo-relative file paths in H2 sections titled Implementation, Testing, Documentation, or Validation (markdown links and inline backticks under src/, schemas/, examples/, docs/, test/, debug-ui/, plans/) and/or in front matter todos[].content so each cited path can be required to appear in the git name-status diff.";
 
 const PLAN_BODY_FIRST_FENCE_MUST_BE_YAML =
   "The first fenced code block in the \"Repository transition validation\" section must use the yaml or yml language tag.";
@@ -305,32 +308,6 @@ export function extractPlanFrontMatterYamlSource(md: string): string {
 
 function stripUtf8Bom(s: string): string {
   return s.charCodeAt(0) === 0xfeff ? s.slice(1) : s;
-}
-
-export function extractMarkdownBodyAfterFrontMatter(md: string): string {
-  if (!md.startsWith("---\n") && !md.startsWith("---\r\n")) {
-    throw new TruthLayerError(
-      CLI_OPERATIONAL_CODES.PLAN_VALIDATION_NO_FRONT_MATTER,
-      "Plan.md must start with YAML front matter (--- on line 1).",
-    );
-  }
-  const rest = md.slice(3).replace(/^\r?\n/, "");
-  const end = rest.search(/\n---\s*(?:\r?\n|$)/);
-  if (end === -1) {
-    throw new TruthLayerError(
-      CLI_OPERATIONAL_CODES.PLAN_VALIDATION_NO_FRONT_MATTER,
-      "Plan.md front matter must end with a closing --- line.",
-    );
-  }
-  const afterClose = rest.slice(end);
-  const delim = afterClose.match(/^\r?\n---\s*(?:\r?\n|$)/);
-  if (!delim) {
-    throw new TruthLayerError(
-      CLI_OPERATIONAL_CODES.PLAN_VALIDATION_NO_FRONT_MATTER,
-      "Plan.md front matter must end with a closing --- line.",
-    );
-  }
-  return afterClose.slice(delim[0].length);
 }
 
 function markdownHeadingLevel(line: string): number | null {

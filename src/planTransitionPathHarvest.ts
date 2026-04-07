@@ -24,11 +24,19 @@ const BACKTICK_PATH_RE = new RegExp(
   "g",
 );
 
+/** Obligation H2 titles: Implementation, Testing, Documentation, Validation (and common prefixes/suffixes). */
+export const PLAN_TRANSITION_OBLIGATION_H2_TITLE_RE =
+  /^(?:.{0,120}?\b)?(implementation|testing|documentation|validation)\b(?:\s|[:\u2014\u2013\-]|$)/i;
+
+/** Reference-only lines in obligation sections: do not harvest paths from these lines (todos exempt). */
+export const PLAN_TRANSITION_REFERENCE_ONLY_LINE_RE =
+  /\b(?:same\s+shape\s+as|similar\s+to|mirrors(?:\s+existing)?|for\s+example|e\.g\.)\b/i;
+
 function stripUtf8Bom(s: string): string {
   return s.charCodeAt(0) === 0xfeff ? s.slice(1) : s;
 }
 
-function extractMarkdownBodyAfterFrontMatter(md: string): string {
+export function extractMarkdownBodyAfterFrontMatter(md: string): string {
   if (!md.startsWith("---\n") && !md.startsWith("---\r\n")) {
     throw new TruthLayerError(
       CLI_OPERATIONAL_CODES.PLAN_VALIDATION_NO_FRONT_MATTER,
@@ -167,6 +175,37 @@ function harvestFromText(text: string, into: Set<string>): void {
   }
 }
 
+/**
+ * Concatenate bodies of H2 sections whose titles match PLAN_TRANSITION_OBLIGATION_H2_TITLE_RE,
+ * in document order, joined with `\n` between sections.
+ */
+function extractObligationBodyConcat(body: string): string {
+  const lines = body.split("\n");
+  const parts: string[] = [];
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i]!;
+    const h2 = /^##\s+(.+?)\s*$/.exec(line);
+    if (!h2) {
+      i += 1;
+      continue;
+    }
+    const title = h2[1]!.trim();
+    if (!PLAN_TRANSITION_OBLIGATION_H2_TITLE_RE.test(title)) {
+      i += 1;
+      continue;
+    }
+    i += 1;
+    const chunk: string[] = [];
+    while (i < lines.length && !/^##\s+/.test(lines[i]!)) {
+      chunk.push(lines[i]!);
+      i += 1;
+    }
+    parts.push(chunk.join("\n"));
+  }
+  return parts.join("\n");
+}
+
 function collectTodoContentStrings(fm: Record<string, unknown>): string[] {
   const raw = fm.todos;
   if (!Array.isArray(raw)) return [];
@@ -180,14 +219,19 @@ function collectTodoContentStrings(fm: Record<string, unknown>): string[] {
 }
 
 /**
- * Returns sorted unique repo-relative paths (UTF-16 lexicographic) from plan body + todo content.
+ * Returns sorted unique repo-relative paths (UTF-16 lexicographic) from obligation H2 sections
+ * (Implementation, Testing, Documentation, Validation) plus front matter todos[].content.
  */
 export function harvestQualifyingPathsFromPlan(md: string, fm: Record<string, unknown>): string[] {
   const m = stripUtf8Bom(md);
   const body = extractMarkdownBodyAfterFrontMatter(m).replace(/\r\n/g, "\n");
-  const bodyScan = stripAllFencedBlocks(body);
+  const obligationConcat = extractObligationBodyConcat(body);
+  const obligationScan = stripAllFencedBlocks(obligationConcat);
   const into = new Set<string>();
-  harvestFromText(bodyScan, into);
+  for (const line of obligationScan.split("\n")) {
+    if (PLAN_TRANSITION_REFERENCE_ONLY_LINE_RE.test(line)) continue;
+    harvestFromText(line, into);
+  }
   for (const todo of collectTodoContentStrings(fm)) {
     harvestFromText(todo, into);
   }
