@@ -147,7 +147,29 @@ Rules come from **one** of three sources ([Where rules come from](#where-rules-c
 
 ### Derived citations (`derived_citations`)
 
-**Scan surfaces:** (1) Plan body after front matter, with **all** fenced code blocks removed (same fence line rules as elsewhere: opening `^```(\S*)\s*$`, closing `^```\s*$`, inclusive). (2) Each front matter **`todos[]`** element that is an object with **`content`** a string — run the **same** extractors on **`content`** only.
+**Pipeline** (implemented in **`planTransitionPathHarvest.ts`**; inputs: full plan markdown **`md`**, parsed front matter object **`fm`** for **`todos`** only):
+
+1. Strip a leading UTF-8 BOM from **`md`** if present.
+2. **`body`** = markdown after closing front matter delimiter, with **`\r\n` → `\n`** (same rules as elsewhere for valid `---` … `---` plans).
+3. **Obligation body text:** Scan **`body`** top to bottom. A line **opens** an obligation section iff it matches **`^##\s+(.+?)\s*$`** and the obligation-title regex below matches **`title`** = trim of capture group 1. The **section body** is every following line until the next line matching **`^##\s+`** (exclusive) or EOF. **Concatenate** all matching section bodies in encounter order, joining with a single **`\n`** between sections (no extra blank line).
+4. **`obligationScan`** = **all** fenced code blocks removed from that concatenation (opening line **`^```(\S*)\s*$`**, closing **`^```\s*$`**, inclusive — same as elsewhere).
+5. Split **`obligationScan`** on **`\n`**. For each line, if the reference-only line regex below matches the line, **skip** it; otherwise run the **extractors** on that line only.
+6. **Todos:** For each **`fm.todos[]`** element with string **`content`**, run the **extractors** on the **entire** **`content`** string — **no** line split and **no** reference-only filter.
+7. **Dedupe** with a set; **sort** UTF-16 string order.
+
+**Obligation H2 title** — applied to **`title`** (trimmed text after **`## `**):
+
+```javascript
+const PLAN_TRANSITION_OBLIGATION_H2_TITLE_RE =
+  /^(?:.{0,120}?\b)?(implementation|testing|documentation|validation)\b(?:\s|[:\u2014\u2013\-]|$)/i;
+```
+
+**Reference-only line** — applied to each single line of **`obligationScan`** after fence strip (**not** applied to todo strings):
+
+```javascript
+const PLAN_TRANSITION_REFERENCE_ONLY_LINE_RE =
+  /\b(?:same\s+shape\s+as|similar\s+to|mirrors(?:\s+existing)?|for\s+example|e\.g\.)\b/i;
+```
 
 **Extractors (deterministic):**
 
@@ -156,7 +178,7 @@ Rules come from **one** of three sources ([Where rules come from](#where-rules-c
 
 **Normalization:** trim ASCII space/tab; optional **`file:`** URL via `URL` + pathname; `\` → `/`; strip leading `./`; reject `..`, ASCII controls, spaces, `?`, `#`, and `//` in the candidate; take the **last** path anchored at allowed roots **`src/`**, **`schemas/`**, **`examples/`**, **`docs/`**, **`test/`**, **`debug-ui/`**, **`plans/`**; final segment must use an allowed extension (**`ts`**, **`tsx`**, **`js`**, **`mjs`**, **`json`**, **`md`**, **`sql`**, case-insensitive on input; canonical paths lowercase the extension only). **Dedupe** with a set; **sort** UTF-16 string order.
 
-**Product meaning:** **Each** harvested path **must** appear on at least one parsed diff row (any path position on that row), with **`rowKind`** ∈ **`{add, modify, delete, rename, copy, type_change}`** — i.e. the same semantics as an explicit **`requireMatchingRow`** rule per path. **Not** a global scope gate: other changed paths may appear in the diff without being cited. **Does not** interpret narrative requirements beyond these obligations.
+**Product meaning:** **Each** harvested path **must** appear on at least one parsed diff row (any path position on that row), with **`rowKind`** ∈ **`{add, modify, delete, rename, copy, type_change}`** — i.e. the same semantics as an explicit **`requireMatchingRow`** rule per path. **Not** a global scope gate: other changed paths may appear in the diff without being cited. Paths in **Analysis**, **Design**, or other non-obligation sections do **not** produce derived rules unless they also appear in an obligation section or in **`todos[].content`**.
 
 ### Front matter YAML (always)
 
@@ -249,7 +271,7 @@ Exit codes match batch verify (**0** / **1** / **2** / **3**). Operational codes
 | `canonicalParams.ts` | `canonicalJsonForParams` — deterministic params serialization (retry divergence + `observedExecution.paramsCanonical`) |
 | `planLogicalSteps.ts` | Stable sort, group by `seq`, canonical params equality, divergence vs last observation |
 | `planTransition.ts` | **`plan-transition`**: git version gate, `-z` name-status parse, load rules from front matter **`planValidation`**, body **`Repository transition validation`** YAML fence, or **`derived_citations`** path harvest, rule eval → **`StepOutcome[]`**, **`buildPlanTransitionWorkflowResult`** (returns **`workflowResult`** + provenance), synthetic **`events.ndjson`** meta line |
-| `planTransitionPathHarvest.ts` | Deterministic path citation harvest for **`derived_citations`** (links, inline backticks, **`todos[].content`**, fenced-block stripping) |
+| `planTransitionPathHarvest.ts` | Deterministic path citation harvest for **`derived_citations`**: obligation **H2** sections (Implementation / Testing / Documentation / Validation), per-line reference-only filter, **`todos[].content`** (full string, no filter), links + inline backticks, fenced-block stripping |
 | `planTransitionConstants.ts` | **`PLAN_TRANSITION_WORKFLOW_ID`** (`wf_plan_transition`) — imported by truth report / debug panels without a cycle through `planTransition.ts` |
 | `resolveExpectation.ts` | Registry + params → `VerificationRequest`; `renderIntendedEffect` for step `intendedEffect.narrative` |
 | `valueVerification.ts` | Canonical display strings + `verificationScalarsEqual` (single scalar comparison table) |
