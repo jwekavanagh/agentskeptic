@@ -24,7 +24,7 @@ const PICOMATCH_OPTIONS = { dot: true, nocase: false } as const;
 const EVIDENCE_CAP = 50;
 
 const PLAN_INSUFFICIENT_SPEC_DETAIL =
-  "No machine-checkable plan transition rules were found. Add planValidation (schemaVersion: 1, rules) under YAML front matter; or add exactly one heading \"Repository transition validation\" followed by a single yaml or yml fenced block with the same structure; or, when neither is present, cite qualifying repo-relative file paths in H2 sections titled Implementation, Testing, Documentation, or Validation (markdown links and inline backticks under src/, schemas/, examples/, docs/, test/, debug-ui/, plans/) and/or in front matter todos[].content so each cited path can be required to appear in the git name-status diff.";
+  "No machine-checkable plan transition rules were found. Add planValidation (schemaVersion: 1, rules) under YAML front matter; or add exactly one heading \"Repository transition validation\" followed by a single yaml or yml fenced block with the same structure; or, when neither is present, derive rules from paths harvested only under obligation-bearing rules: H2 sections titled Implementation, Deliverables, Testing, Documentation, or Validation (see docs — Derived citations: action/modal/numbered-fragment gates, strong-root prefixes, Testing Expect: skip, body line fragmentation, todo semicolon segmentation) plus front matter todos[].content, so each harvested path can be required to appear in the git name-status diff.";
 
 const PLAN_BODY_FIRST_FENCE_MUST_BE_YAML =
   "The first fenced code block in the \"Repository transition validation\" section must use the yaml or yml language tag.";

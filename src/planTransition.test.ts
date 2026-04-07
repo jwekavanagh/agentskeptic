@@ -530,7 +530,7 @@ isProject: false
 
 ## Implementation
 
-Edit \`src/tracked.ts\`.
+Change \`src/tracked.ts\`.
 `;
     const planPath = path.join(dir, "Plan.md");
     writeFileSync(planPath, planBody, "utf8");
@@ -572,7 +572,7 @@ isProject: false
 
 ## Implementation
 
-Edit \`src/tracked.ts\`.
+Change \`src/tracked.ts\`.
 `;
     const planPath = path.join(dir, "Plan.md");
     writeFileSync(planPath, planBody, "utf8");
@@ -613,7 +613,7 @@ isProject: false
 
 ## Implementation
 
-Edit \`src/tracked.ts\`.
+Change \`src/tracked.ts\`.
 `;
     const planPath = path.join(dir, "Plan.md");
     writeFileSync(planPath, planBody, "utf8");
@@ -1010,7 +1010,7 @@ overview: x
 
 ## Implementation
 
-\`src/t.ts\`
+Change \`src/t.ts\`.
 `;
     const planPath = path.join(dir, "Plan.md");
     writeFileSync(planPath, plan, "utf8");

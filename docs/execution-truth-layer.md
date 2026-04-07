@@ -147,28 +147,37 @@ Rules come from **one** of three sources ([Where rules come from](#where-rules-c
 
 ### Derived citations (`derived_citations`)
 
+**Normative expected outputs (evaluation corpus):** The sorted path arrays the product expects for the five evaluation plans under **`plans/`** are stored only in **[`test/fixtures/plan-derived-citations/expected-harvest.json`](../test/fixtures/plan-derived-citations/expected-harvest.json)**. Do not duplicate those lists in prose here.
+
 **Pipeline** (implemented in **`planTransitionPathHarvest.ts`**; inputs: full plan markdown **`md`**, parsed front matter object **`fm`** for **`todos`** only):
 
 1. Strip a leading UTF-8 BOM from **`md`** if present.
-2. **`body`** = markdown after closing front matter delimiter, with **`\r\n` → `\n`** (same rules as elsewhere for valid `---` … `---` plans).
-3. **Obligation body text:** Scan **`body`** top to bottom. A line **opens** an obligation section iff it matches **`^##\s+(.+?)\s*$`** and the obligation-title regex below matches **`title`** = trim of capture group 1. The **section body** is every following line until the next line matching **`^##\s+`** (exclusive) or EOF. **Concatenate** all matching section bodies in encounter order, joining with a single **`\n`** between sections (no extra blank line).
-4. **`obligationScan`** = **all** fenced code blocks removed from that concatenation (opening line **`^```(\S*)\s*$`**, closing **`^```\s*$`**, inclusive — same as elsewhere).
-5. Split **`obligationScan`** on **`\n`**. For each line, if the reference-only line regex below matches the line, **skip** it; otherwise run the **extractors** on that line only.
-6. **Todos:** For each **`fm.todos[]`** element with string **`content`**, run the **extractors** on the **entire** **`content`** string — **no** line split and **no** reference-only filter.
-7. **Dedupe** with a set; **sort** UTF-16 string order.
+2. **`body`** = markdown after closing front matter delimiter, with **`\r\n` → `\n`**.
+3. **Single linear scan** of **`body`** lines (fenced blocks skipped line-by-line: lines inside **`^```(\S*)\s*$`** … **`^```\s*$`** pairs are not harvested). Track **`inObligation`** from **`^##\s+(.+?)\s*$`**: enter when **`title`** matches **`PLAN_TRANSITION_OBLIGATION_H2_TITLE_RE`**, exit when any **`##`** line’s title does not match. Only non-heading lines while **`inObligation`** and **not** inside a fence are processed.
+4. **Per obligation line** (full line **`L`**):
+   - If **`L`** matches **`PLAN_TRANSITION_REFERENCE_ONLY_LINE_RE`** → skip **`L`**.
+   - If the current obligation H2 title matches **`/^testing\b/i`** at its start (trimmed title) **and** **`L`** contains the substring **`Expect:`** → skip **`L`**.
+   - Split **`L`** into **fragments** on **`/\.\s+/g`** (period + ASCII whitespace). Trim each fragment; drop empties.
+   - For each fragment **`F`**: if **`F`** matches **`PLAN_TRANSITION_REFERENCE_ONLY_LINE_RE`** → skip **`F`**. Else run the **extractors** on **`F`** only. For each normalized qualifying path **`P`**:
+     - If **`P`** starts with **`examples/`**, **`docs/`**, **`schemas/`**, or **`plans/`** → keep **`P`** iff **`F`** matches **`PLAN_TRANSITION_STRONG_ACTION_RE`**.
+     - If **`P`** starts with **`src/`**, **`test/`**, or **`debug-ui/`** → keep **`P`** iff **`F`** matches **`PLAN_TRANSITION_STRONG_ACTION_RE`** **or** **`PLAN_TRANSITION_NORMATIVE_MODAL_RE`** **or** **`/^\s*\d+\.\s/`** (numbered deliverable fragment).
+5. **Todos:** For each **`fm.todos[]`** element with string **`content`**, split **only** on the literal **`"; "`** (semicolon + space). If **`"; "`** never appears, treat the trimmed **`content`** as a single segment. For each non-empty trimmed segment **`S`**, apply the same fragment-level rules as step 4 (reference skip on **`S`**, **no** **`Expect:`** line rule, extractors on **`S`**, same path-prefix gates using **`S`** as the text).
+6. **Dedupe** with a set; **sort** UTF-16 string order.
+
+**Exported symbols** (literal regex bodies live in **`planTransitionPathHarvest.ts`**): **`PLAN_TRANSITION_OBLIGATION_H2_TITLE_RE`**, **`PLAN_TRANSITION_REFERENCE_ONLY_LINE_RE`**, **`PLAN_TRANSITION_STRONG_ACTION_RE`** (includes **`wire(?!\s+schema)`** so the English noun phrase “wire schema” does not count as the **`wire`** deliverable verb), **`PLAN_TRANSITION_NORMATIVE_MODAL_RE`**, **`PLAN_TRANSITION_NUMBERED_FRAGMENT_RE`**, **`STRONG_ROOT_PREFIXES`**, **`WEAK_ROOT_PREFIXES`**.
 
 **Obligation H2 title** — applied to **`title`** (trimmed text after **`## `**):
 
 ```javascript
 const PLAN_TRANSITION_OBLIGATION_H2_TITLE_RE =
-  /^(?:.{0,120}?\b)?(implementation|testing|documentation|validation)\b(?:\s|[:\u2014\u2013\-]|$)/i;
+  /^(?:.{0,120}?\b)?(implementation|deliverables|testing|documentation|validation)\b(?:\s|[:\u2014\u2013\-]|$)/i;
 ```
 
-**Reference-only line** — applied to each single line of **`obligationScan`** after fence strip (**not** applied to todo strings):
+**Reference-only** — applied to a **full obligation line** before fragmentation, and again to each **fragment** / **todo segment**:
 
 ```javascript
 const PLAN_TRANSITION_REFERENCE_ONLY_LINE_RE =
-  /\b(?:same\s+shape\s+as|similar\s+to|mirrors(?:\s+existing)?|for\s+example|hypothetical|chosen\s+in\s+fixture)\b|(?:e\.g\.|i\.e\.)(?=\s|,|$)/i;
+  /\b(?:same\s+pattern|same\s+shape\s+as|seeded\s+from|required\s+setup|use\s+the\s+same|similar\s+to|mirrors(?:\s+existing)?|for\s+example|hypothetical|chosen\s+in\s+fixture)\b|(?:e\.g\.|i\.e\.)(?=\s|,|$)/i;
 ```
 
 Abbreviated **`e.g.`** / **`i.e.`** use a lookahead after the final dot because a trailing **`\b`** does not match between **`.`** and following whitespace in JavaScript.
@@ -180,7 +189,7 @@ Abbreviated **`e.g.`** / **`i.e.`** use a lookahead after the final dot because 
 
 **Normalization:** trim ASCII space/tab; optional **`file:`** URL via `URL` + pathname; `\` → `/`; strip leading `./`; reject `..`, ASCII controls, spaces, `?`, `#`, and `//` in the candidate; take the **last** path anchored at allowed roots **`src/`**, **`schemas/`**, **`examples/`**, **`docs/`**, **`test/`**, **`debug-ui/`**, **`plans/`**; final segment must use an allowed extension (**`ts`**, **`tsx`**, **`js`**, **`mjs`**, **`json`**, **`md`**, **`sql`**, case-insensitive on input; canonical paths lowercase the extension only). **Dedupe** with a set; **sort** UTF-16 string order.
 
-**Product meaning:** **Each** harvested path **must** appear on at least one parsed diff row (any path position on that row), with **`rowKind`** ∈ **`{add, modify, delete, rename, copy, type_change}`** — i.e. the same semantics as an explicit **`requireMatchingRow`** rule per path. **Not** a global scope gate: other changed paths may appear in the diff without being cited. Paths in **Analysis**, **Design**, or other non-obligation sections do **not** produce derived rules unless they also appear in an obligation section or in **`todos[].content`**.
+**Product meaning:** **Each** harvested path **must** appear on at least one parsed diff row (any path position on that row), with **`rowKind`** ∈ **`{add, modify, delete, rename, copy, type_change}`** — i.e. the same semantics as an explicit **`requireMatchingRow`** rule per path. **Not** a global scope gate: other changed paths may appear in the diff without being cited. Paths in **Analysis**, **Design**, or other non-obligation sections do **not** produce derived rules unless they also appear in an obligation section or in **`todos[].content`** (subject to the gates above).
 
 ### Front matter YAML (always)
 
