@@ -21,7 +21,7 @@ todos:
     content: Vitest/CLI tests for wrong-status passes, allowlist leaks, rename shape, adversarial patterns
     status: pending
   - id: docs-readme
-    content: execution-truth-layer.md SSOT + README; Validation maps rules→transition claims
+    content: workflow-verifier.md SSOT + README; Validation maps rules→transition claims
     status: completed
 isProject: false
 ---
@@ -243,7 +243,7 @@ Exactly **one** line in `events.ndjson` (UTF-8, trailing `\n`), valid against [`
 
 ## Documentation
 
-**SSOT** [`docs/execution-truth-layer.md`](docs/execution-truth-layer.md): new section **Plan transition validation** —
+**SSOT** [`docs/workflow-verifier.md`](docs/workflow-verifier.md): new section **Plan transition validation** —
 
 - **Engineer:** minimum Git **2.30.0**, preflight `git --version`, git command (`-z`), row model, rule kinds (including **required** `includeCopy`), picomatch options, pattern preflight, operational codes, synthetic event contract, golden fixture paths for parser tests.
 - **Integrator:** how to encode intents (table mapping scenarios → rule combinations); front matter example; **explicit statement** that markdown body is not verified.
