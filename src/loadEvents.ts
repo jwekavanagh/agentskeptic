@@ -23,15 +23,30 @@ export function loadEventsForWorkflow(
     const msg = e instanceof Error ? e.message : String(e);
     throw new TruthLayerError(CLI_OPERATIONAL_CODES.EVENTS_READ_FAILED, msg, { cause: e });
   }
-  const lines = raw.split(/\r?\n/).filter((l) => l.trim().length > 0);
+
+  const allLines = raw.split(/\r?\n/);
+  let eventFileNonEmptyLines = 0;
+  for (const line of allLines) {
+    if (line.trim().length > 0) {
+      eventFileNonEmptyLines += 1;
+    }
+  }
+
   const toolCandidates: ToolObservedEvent[] = [];
   const runEvents: RunEvent[] = [];
   let malformedEventLineCount = 0;
+  let schemaValidEvents = 0;
+  let toolObservedForRequestedWorkflowId = 0;
+  let toolObservedForOtherWorkflowIds = 0;
 
-  for (let i = 0; i < lines.length; i++) {
+  for (let i = 0; i < allLines.length; i++) {
+    const line = allLines[i]!;
+    if (line.trim().length === 0) {
+      continue;
+    }
     let parsed: unknown;
     try {
-      parsed = JSON.parse(lines[i]!) as unknown;
+      parsed = JSON.parse(line) as unknown;
     } catch {
       malformedEventLineCount += 1;
       runLevelReasons.push(runLevelIssue("MALFORMED_EVENT_LINE"));
@@ -43,7 +58,17 @@ export function loadEventsForWorkflow(
       continue;
     }
     const ev = parsed as RunEvent;
-    if (ev.workflowId !== workflowId) continue;
+    schemaValidEvents += 1;
+    if (isToolObserved(ev)) {
+      if (ev.workflowId === workflowId) {
+        toolObservedForRequestedWorkflowId += 1;
+      } else {
+        toolObservedForOtherWorkflowIds += 1;
+      }
+    }
+    if (ev.workflowId !== workflowId) {
+      continue;
+    }
     runEvents.push(ev);
     if (isToolObserved(ev)) {
       toolCandidates.push(ev);
@@ -58,5 +83,11 @@ export function loadEventsForWorkflow(
     runLevelReasons,
     eventSequenceIntegrity,
     malformedEventLineCount,
+    eventFileAggregateCounts: {
+      eventFileNonEmptyLines,
+      schemaValidEvents,
+      toolObservedForRequestedWorkflowId,
+      toolObservedForOtherWorkflowIds,
+    },
   };
 }

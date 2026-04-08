@@ -129,7 +129,11 @@ describe("buildWorkflowTruthReport (formatter-independent semantics)", () => {
       workflowId: "w",
       status: "incomplete",
       runLevelReasons: [
-        { code: "NO_STEPS_FOR_WORKFLOW", message: "No tool_observed events for this workflow id after filtering." },
+        {
+          code: "NO_STEPS_FOR_WORKFLOW",
+          message:
+            'No tool_observed events for workflowId "w" after filtering. event_file_non_empty_lines=0 schema_valid_events=0 tool_observed_for_workflow=0 tool_observed_other_workflows=0.',
+        },
       ],
       verificationPolicy: strongPolicy,
       eventSequenceIntegrity: { kind: "normal" },

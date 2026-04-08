@@ -2,6 +2,7 @@ import { DatabaseSync } from "node:sqlite";
 import { aggregateWorkflow } from "./aggregate.js";
 import { isToolObservedRunEvent } from "./executionTrace.js";
 import { loadEventsForWorkflow } from "./loadEvents.js";
+import { enrichNoStepsRunLevelReasons } from "./noStepsMessage.js";
 import { prepareWorkflowEvents } from "./prepareWorkflowEvents.js";
 import { canonicalJsonForParams } from "./canonicalParams.js";
 import { planLogicalSteps, type LogicalStepPlan } from "./planLogicalSteps.js";
@@ -347,10 +348,8 @@ export async function verifyWorkflow(options: {
   const truthReport = options.truthReport ?? defaultTruthReportToStderr;
   const verificationPolicy = resolveVerificationPolicyInput(options.verificationPolicy);
 
-  const { events, runEvents, runLevelReasons, eventSequenceIntegrity } = loadEventsForWorkflow(
-    eventsPath,
-    workflowId,
-  );
+  const load = loadEventsForWorkflow(eventsPath, workflowId);
+  const { events, runEvents, runLevelReasons, eventSequenceIntegrity } = load;
   const verificationRunContext = buildVerificationRunContext(runEvents);
   const registry = loadToolsRegistry(registryPath);
 
@@ -427,6 +426,7 @@ export async function verifyWorkflow(options: {
     verificationPolicy,
     eventSequenceIntegrity,
   );
+  enrichNoStepsRunLevelReasons(workflowId, engineBase.runLevelReasons, load.eventFileAggregateCounts);
   const engine = { ...engineBase, verificationRunContext };
   truthReport(formatWorkflowTruthReport(engine));
   return finalizeEmittedWorkflowResult(engine);
@@ -511,6 +511,12 @@ class WorkflowVerificationSession {
       this.verificationPolicy,
       eventSequenceIntegrity,
     );
+    enrichNoStepsRunLevelReasons(this.workflowId, base.runLevelReasons, {
+      eventFileNonEmptyLines: 0,
+      schemaValidEvents: 0,
+      toolObservedForRequestedWorkflowId: 0,
+      toolObservedForOtherWorkflowIds: 0,
+    });
     return { ...base, verificationRunContext: buildVerificationRunContext(this.bufferedRunEvents) };
   }
 

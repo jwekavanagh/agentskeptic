@@ -11,6 +11,7 @@ import {
 } from "../dist/workflowTruthReport.js";
 import { eventSequenceIssue } from "../dist/failureCatalog.js";
 import { createEmptyVerificationRunContext } from "../dist/verificationRunContext.js";
+import { formatNoStepsForWorkflowMessage } from "../dist/noStepsMessage.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, "..");
@@ -38,7 +39,14 @@ function loadTruthGolden(name) {
 
 const MALFORMED_MSG =
   "Event line was missing, invalid JSON, or failed schema validation for a tool observation.";
-const NO_STEPS_MSG = "No tool_observed events for this workflow id after filtering.";
+const zeroCounts = {
+  eventFileNonEmptyLines: 0,
+  schemaValidEvents: 0,
+  toolObservedForRequestedWorkflowId: 0,
+  toolObservedForOtherWorkflowIds: 0,
+};
+const NO_STEPS_MSG_WF_COMPLETE = formatNoStepsForWorkflowMessage("wf_complete", zeroCounts);
+const NO_STEPS_MSG_NO_SUCH = formatNoStepsForWorkflowMessage("no_such_workflow", zeroCounts);
 
 describe("formatWorkflowTruthReport", () => {
   it("golden complete / inconsistent missing / incomplete unknown tool", () => {
@@ -171,7 +179,7 @@ describe("formatWorkflowTruthReport", () => {
       status: "incomplete",
       runLevelReasons: [
         { code: "MALFORMED_EVENT_LINE", message: MALFORMED_MSG },
-        { code: "NO_STEPS_FOR_WORKFLOW", message: NO_STEPS_MSG },
+        { code: "NO_STEPS_FOR_WORKFLOW", message: NO_STEPS_MSG_WF_COMPLETE },
       ],
       verificationPolicy: vp,
       eventSequenceIntegrity: { kind: "normal" },
@@ -184,7 +192,7 @@ describe("formatWorkflowTruthReport", () => {
       verificationRunContext: emptyCtx,
       workflowId: "no_such_workflow",
       status: "incomplete",
-      runLevelReasons: [{ code: "NO_STEPS_FOR_WORKFLOW", message: NO_STEPS_MSG }],
+      runLevelReasons: [{ code: "NO_STEPS_FOR_WORKFLOW", message: NO_STEPS_MSG_NO_SUCH }],
       verificationPolicy: vp,
       eventSequenceIntegrity: { kind: "normal" },
       steps: [],

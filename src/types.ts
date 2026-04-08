@@ -757,6 +757,14 @@ export type ExecutionTraceView = {
   backwardPaths: ExecutionTraceBackwardPath[];
 };
 
+/** Aggregate counts over the raw event file (see `loadEventsForWorkflow`). */
+export type EventFileAggregateCounts = {
+  eventFileNonEmptyLines: number;
+  schemaValidEvents: number;
+  toolObservedForRequestedWorkflowId: number;
+  toolObservedForOtherWorkflowIds: number;
+};
+
 export type LoadEventsResult = {
   /** `tool_observed` only, sorted for verification (`prepareWorkflowEvents`). */
   events: ToolObservedEvent[];
@@ -766,6 +774,7 @@ export type LoadEventsResult = {
   eventSequenceIntegrity: EventSequenceIntegrity;
   /** NDJSON lines that failed JSON parse or event schema (same rules as batch load). */
   malformedEventLineCount: number;
+  eventFileAggregateCounts: EventFileAggregateCounts;
 };
 
 /** Batch / CLI verification target (`verifyWorkflow`). In-process hook remains SQLite `dbPath` only. */

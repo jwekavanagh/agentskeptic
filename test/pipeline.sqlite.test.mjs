@@ -9,6 +9,8 @@ import { DatabaseSync } from "node:sqlite";
 import { verifyWorkflow, withWorkflowVerification } from "../dist/pipeline.js";
 import { formatWorkflowTruthReport } from "../dist/workflowTruthReport.js";
 import { loadSchemaValidator } from "../dist/schemaLoad.js";
+import { loadEventsForWorkflow } from "../dist/loadEvents.js";
+import { formatNoStepsForWorkflowMessage } from "../dist/noStepsMessage.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, "..");
@@ -363,6 +365,11 @@ describe("verifyWorkflow integration", () => {
       "NO_STEPS_FOR_WORKFLOW",
     ]);
     assert.equal(r.runLevelReasons.length, 2);
+    const malformedCounts = loadEventsForWorkflow(badFile, "wf_complete").eventFileAggregateCounts;
+    assert.equal(
+      r.runLevelReasons[1]?.message,
+      formatNoStepsForWorkflowMessage("wf_complete", malformedCounts),
+    );
   });
 
   it("empty workflow id filter → incomplete", async () => {
@@ -378,6 +385,11 @@ describe("verifyWorkflow integration", () => {
     assert.equal(r.steps.length, 0);
     assert.deepStrictEqual(r.runLevelReasons.map((x) => x.code), ["NO_STEPS_FOR_WORKFLOW"]);
     assert.equal(r.runLevelReasons[0]?.code, "NO_STEPS_FOR_WORKFLOW");
+    const noStepsCounts = loadEventsForWorkflow(eventsPath, "no_such_workflow").eventFileAggregateCounts;
+    assert.equal(
+      r.runLevelReasons[0]?.message,
+      formatNoStepsForWorkflowMessage("no_such_workflow", noStepsCounts),
+    );
   });
 
   it("truthReport receives formatWorkflowTruthReport(result) once (verifyWorkflow)", async () => {

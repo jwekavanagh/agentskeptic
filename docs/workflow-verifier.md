@@ -369,7 +369,7 @@ Normative contracts:
 
 For CI, audits, or logs written as NDJSON:
 
-1. To verify your checkout with bundled `examples/` artifacts, run `npm start` from the repository root (see [Examples](#examples)) — that runs **`npm run build`** then **`scripts/first-run.mjs`** (DB seed + sample workflows). **`npm run first-run`** alone does **not** compile TypeScript; use it only after a successful **`npm run build`**.
+1. To verify your checkout with bundled `examples/` artifacts, run **`npm start`** from the repository root (see [Examples](#examples)) — that runs **`npm run build`** then **`scripts/demo.mjs`** (DB seed + two sample CLI invocations).
 2. After **each** tool call, append one JSON object line to your NDJSON file (see [Event line schema](#event-line-schema)).
 3. Maintain `tools.json` with one entry per `toolId` your workflows emit.
 4. Optionally validate the registry (and optionally resolution vs NDJSON) without a database: `node dist/cli.js validate-registry --registry <path>` or with `--events` and `--workflow-id` (see [Registry validation (`validate-registry`) — normative](#registry-validation-validate-registry--normative)).
@@ -446,7 +446,7 @@ There is **no** separate CI-only report format. Integrators should parse **stdou
 | **stdout** | Empty |
 | **stderr** | One line; JSON with **`schemaVersion`** **2**, **`kind`** **`execution_truth_layer_error`**, **`code`** **`CLI_USAGE`**, **`message`** non-empty string length ≤ **2048**, required **`failureDiagnosis`** (`summary`, **`primaryOrigin`**, **`confidence`**, **`evidence`**, **`actionableFailure`**) — see [`schemas/cli-error-envelope.schema.json`](../schemas/cli-error-envelope.schema.json) |
 
-**Enforcement:** **`test/ci-workflow-truth-postgres-contract.test.mjs`** implements these three cases; **`npm run test:workflow-truth-contract`** runs that file alone. **`npm run test:ci`** runs the full CI suite (build, Vitest, SQLite `node:test` files, **`npm run test:postgres`** which runs **`scripts/pg-ci-init.mjs`** then all Postgres-backed `node:test` files including this contract, then Playwright for the Debug Console). GitHub Actions runs **`npm run test:ci`** after **`npm ci`**. Local **`npm test`** additionally runs **`scripts/first-run.mjs`** for the bundled demo smoke.
+**Enforcement:** **`test/ci-workflow-truth-postgres-contract.test.mjs`** implements these three cases; **`npm run test:workflow-truth-contract`** runs that file alone. **`npm run test:ci`** runs the full CI suite (build, Vitest, SQLite `node:test` files, **`npm run test:postgres`** which runs **`scripts/pg-ci-init.mjs`** then all Postgres-backed `node:test` files including this contract, then Playwright for the Debug Console). GitHub Actions runs **`npm run test:ci`** after **`npm ci`**. Local **`npm test`** additionally runs **`node scripts/demo.mjs`** and adoption verdict scripts after SQLite tests; see [Adoption validation specification](adoption-validation-spec.md).
 
 <!-- ci:workflow-result-normative-prose:end -->
 
@@ -609,7 +609,7 @@ These fields are **verification** metadata for **external** consumers: they desc
 2. **Run-level**
    - If `runLevelReasons` is empty: line exactly `run_level: (none)`.
    - Otherwise: line `run_level:` then for each entry in **`runLevelReasons`** order: line `  - detail: ` + `reason.message` (trimmed), or `(no message)` if empty after trim; then line `    category: ` + category from `failureDiagnosticForRunLevelCode(reason.code)`; then line `    reference_code: ` + `reason.code`.
-   - Run-level codes in JSON are **only** on **`runLevelReasons[].code`** (v13 stdout has **no** separate **`runLevelCodes`** array). When there are no matching events for the workflow id, the library appends **`NO_STEPS_FOR_WORKFLOW`** with message `No tool_observed events for this workflow id after filtering.`
+   - Run-level codes in JSON are **only** on **`runLevelReasons[].code`** (v13 stdout has **no** separate **`runLevelCodes`** array). When there are no matching **`tool_observed`** events for the workflow id after filtering, the library appends **`NO_STEPS_FOR_WORKFLOW`**; the reason **`message`** is **`formatNoStepsForWorkflowMessage(workflowId, eventFileAggregateCounts)`** (see [Adoption integrator command](#adoption-integrator-command)).
    - Catalog literal for **`MALFORMED_EVENT_LINE`**: `Event line was missing, invalid JSON, or failed schema validation for a tool observation.`
 
 3. **Event sequence integrity**
@@ -664,7 +664,7 @@ Step- and effect-level **`detail:`** / **`reference_code:`** / **`user_meaning:`
 - **`trust:` line:** Treat as **trusted** only when it is the `TRUSTED:` sentence **and** `workflow_status: complete`. Any line starting with `NOT TRUSTED:` means the workflow must not be treated as fully verified—investigate `steps:`, `run_level:`, and **`event_sequence:`**.
 - **Exit codes:** 0 = `complete`, 1 = `inconsistent`, 2 = `incomplete`, 3 = operational failure ([CLI operational errors](#cli-operational-errors)); **`--help`** exits **0**.
 - DB user should be **read-only** in production (Postgres: **SELECT-only** role; the product also sets **session read-only** via `applyPostgresVerificationSessionGuards`).
-- **`npm test`** (default local validation) runs **`npm run build`**, **`npm run test:vitest`**, SQLite-only **`npm run test:node:sqlite`**, and **`scripts/first-run.mjs`** — **no** Postgres. **`npm install` does not run `tsc`** (there is no **`prepare`** script). **`npm run test:ci`** requires Postgres 16+ and env **`POSTGRES_ADMIN_URL`** (superuser, runs [`scripts/pg-ci-init.mjs`](../scripts/pg-ci-init.mjs) inside **`npm run test:postgres`**) and **`POSTGRES_VERIFICATION_URL`** (role `verifier_ro` / SELECT-only on seeded tables). CI sets both; locally use the README Docker one-liner and export the same URLs for **`npm run test:ci`**.
+- **`npm test`** (default local validation) runs **`npm run build`**, **`npm run test:vitest`**, SQLite-only **`npm run test:node:sqlite`**, **`node scripts/demo.mjs`**, then adoption verdict record/verify scripts — **no** Postgres. **`npm install` does not run `tsc`** (there is no **`prepare`** script). **`npm run test:ci`** requires Postgres 16+ and env **`POSTGRES_ADMIN_URL`** (superuser, runs [`scripts/pg-ci-init.mjs`](../scripts/pg-ci-init.mjs) inside **`npm run test:postgres`**) and **`POSTGRES_VERIFICATION_URL`** (role `verifier_ro` / SELECT-only on seeded tables). CI sets both; locally use the README Docker one-liner and export the same URLs for **`npm run test:ci`**.
 - SQLite file must exist when `readOnly: true` is used (Node `DatabaseSync`).
 - Redact secrets from `params` before writing events if logs are retained; **redact params in retained logs** when those logs leave the trust boundary. The human report can include registry narrative inside **`declared:`** (`intent=…`)—apply the same redaction policy if that text can contain secrets.
 
@@ -866,7 +866,7 @@ Order: all **structural** lines first (JSON Schema issues sorted by `instancePat
 - **`schemaVersion`**: **1**.
 - **`valid`**: **`true`** iff **`structuralIssues`** and **`resolutionIssues`** are both empty. **`resolutionSkipped`** and **`eventLoad`** do not affect **`valid`**.
 - **`structuralIssues`**: objects with **`kind`** one of **`json_schema`**, **`duplicate_tool_id`**, **`sql_effects_duplicate_effect_id`**, plus **`message`** and optional fields (`instancePath`, `keyword`, `toolId`, `effectId`).
-- **`resolutionIssues`**: for per-step resolver failures, **`seq`** (integer) and **`toolId`** (string). For **`NO_STEPS_FOR_WORKFLOW`**, **`seq`** and **`toolId`** are JSON **`null`**; **`message`** equals **`RUN_LEVEL_MESSAGES.NO_STEPS_FOR_WORKFLOW`** in `failureCatalog.ts`.
+- **`resolutionIssues`**: for per-step resolver failures, **`seq`** (integer) and **`toolId`** (string). For **`NO_STEPS_FOR_WORKFLOW`**, **`seq`** and **`toolId`** are JSON **`null`**; **`message`** equals **`formatNoStepsForWorkflowMessage(workflowId, eventFileAggregateCounts)`** for that validation’s event load (same template as batch **`runLevelReasons[].message`**).
 - **`resolutionSkipped`**: divergent retry groups only: **`code`** **`RETRY_OBSERVATIONS_DIVERGE`**, **`message`** exactly **`RETRY_OBSERVATIONS_DIVERGE_MESSAGE`** in `failureCatalog.ts` (same literal as pipeline divergent step outcome).
 - **`eventLoad`**: present iff both **`--events`** and **`--workflow-id`** were passed: **`workflowId`**, **`malformedEventLineCount`** (NDJSON lines that fail JSON parse or event schema, same counting rules as `loadEventsForWorkflow`).
 
@@ -1457,11 +1457,31 @@ Optional **`--write-report <path>`:** after a successful report build, the same 
 
 Run **`assurance run --write-report <artifactPath>`** on your cadence, publish **`artifactPath`**, then run **`assurance stale --report <artifactPath> --max-age-hours …`** in a later job to detect **missed or stale** verification. This repository schedules **`assurance run`** with [`examples/assurance/manifest.json`](../examples/assurance/manifest.json) via [`.github/workflows/assurance-scheduled.yml`](../.github/workflows/assurance-scheduled.yml).
 
+## Adoption integrator command
+
+Copy-paste batch verification after a successful compile:
+
+```bash
+npm run build
+workflow-verifier --workflow-id <id> --events <path> --registry <path> --db <sqlitePath>
+```
+
+**`LoadEventsResult.eventFileAggregateCounts`** (from event ingest) has four numeric fields:
+
+| Field | Meaning |
+|-------|---------|
+| **`eventFileNonEmptyLines`** | Count of physical lines in the events file with `trim().length > 0`. |
+| **`schemaValidEvents`** | Count of lines where JSON parses and the object validates as a schema-valid event line. |
+| **`toolObservedForRequestedWorkflowId`** | Among schema-valid lines, count of **`tool_observed`** events whose **`workflowId`** equals the loader’s requested id. |
+| **`toolObservedForOtherWorkflowIds`** | Among schema-valid lines, count of **`tool_observed`** events whose **`workflowId`** differs from the requested id. |
+
+When no **`tool_observed`** events remain for the requested **`workflowId`** after ingest filtering, **`runLevelReasons`** includes **`NO_STEPS_FOR_WORKFLOW`** and the reason **`message`** is exactly the return value of **`formatNoStepsForWorkflowMessage(workflowId, eventFileAggregateCounts)`** in **`src/noStepsMessage.ts`**: a single sentence that JSON-stringifies **`workflowId`**, appends **`after filtering.`**, then **`event_file_non_empty_lines=`**, **`schema_valid_events=`**, **`tool_observed_for_workflow=`**, and **`tool_observed_other_workflows=`** with the four numeric fields from **`eventFileAggregateCounts`**. The human truth report on stderr contains that same string as a contiguous substring once the message is enriched before report formatting.
+
 ## Examples
 
 Bundled files under [`examples/`](../examples/): `seed.sql`, `tools.json`, `events.ndjson`. The assurance manifest uses [`examples/minimal-ci-enforcement/ci-check.sqlite`](../examples/minimal-ci-enforcement/ci-check.sqlite) (database created from that folder’s `seed.sql`, same data as the temp DB in [`examples/minimal-ci-enforcement/run.mjs`](../examples/minimal-ci-enforcement/run.mjs)).
 
-- **Onboarding:** run **`npm start`** or **`npm run first-run`** from the repository root (same command). The onboarding driver is [`scripts/first-run.mjs`](../scripts/first-run.mjs) (`npm run build && node scripts/first-run.mjs`). It seeds `examples/demo.db`, prints plain-language framing plus **human verification reports on stdout** (via a custom **`truthReport`** callback), then verifies workflows `wf_complete` (expect `complete` / `verified`) and `wf_missing` (expect `inconsistent` / `missing` / `ROW_ABSENT`). **`example:workflow-hook`:** run **`npm run example:workflow-hook`** for a minimal **`withWorkflowVerification`** + **`observeStep`** demo (SQLite temp DB, one event from **`examples/events.ndjson`**).
+- **Onboarding:** run **`npm start`** from the repository root (`npm run build` then [`scripts/demo.mjs`](../scripts/demo.mjs)). It (re)seeds **`examples/demo.db`**, then runs **`node dist/cli.js`** twice with inherited stdio for **`wf_complete`** (expect **`complete` / `verified`**) and **`wf_missing`** (expect **`inconsistent` / `missing` / `ROW_ABSENT`**). **`example:workflow-hook`:** run **`npm run example:workflow-hook`** for a minimal **`withWorkflowVerification`** + **`observeStep`** demo (SQLite temp DB, one event from **`examples/events.ndjson`**).
 - **CLI log streams:** For the CLI, a **human-readable verification report** is written to **stderr** and the machine-readable **workflow result JSON** to **stdout** on verdict exits **0–2** (default **`truthReport`**); full format is **[Human truth report](#human-truth-report)**. Repository README links use **`docs/workflow-verifier.md#human-truth-report`** for that section.
 
 (Node may print an experimental warning for `node:sqlite` depending on version.)

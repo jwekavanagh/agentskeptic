@@ -13,6 +13,8 @@ import {
 import { formatWorkflowTruthReport } from "../dist/workflowTruthReport.js";
 import { loadSchemaValidator } from "../dist/schemaLoad.js";
 import { loadCorpusRun, resolveCorpusRootReal } from "../dist/debugCorpus.js";
+import { loadEventsForWorkflow } from "../dist/loadEvents.js";
+import { formatNoStepsForWorkflowMessage } from "../dist/noStepsMessage.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, "..");
@@ -365,6 +367,11 @@ describe("CLI workflow-verifier", () => {
       assert.equal(out.resolutionIssues[0].code, "NO_STEPS_FOR_WORKFLOW");
       assert.equal(out.resolutionIssues[0].seq, null);
       assert.equal(out.resolutionIssues[0].toolId, null);
+      const { eventFileAggregateCounts } = loadEventsForWorkflow(eventsPath, "wf___none___");
+      assert.equal(
+        out.resolutionIssues[0].message,
+        formatNoStepsForWorkflowMessage("wf___none___", eventFileAggregateCounts),
+      );
     });
 
     it("divergent-only workflow → exit 0; resolutionSkipped populated", () => {

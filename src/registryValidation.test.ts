@@ -5,7 +5,8 @@ import { tmpdir } from "os";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
 import { loadSchemaValidator } from "./schemaLoad.js";
-import { RUN_LEVEL_MESSAGES } from "./failureCatalog.js";
+import { formatNoStepsForWorkflowMessage } from "./noStepsMessage.js";
+import { loadEventsForWorkflow } from "./loadEvents.js";
 import { TruthLayerError } from "./truthLayerError.js";
 import {
   structuralIssuesFromToolsRegistryAjv,
@@ -150,7 +151,12 @@ describe("registryValidation", () => {
       expect(r.valid).toBe(false);
       expect(r.resolutionIssues).toHaveLength(1);
       expect(r.resolutionIssues[0]!.code).toBe("NO_STEPS_FOR_WORKFLOW");
-      expect(r.resolutionIssues[0]!.message).toBe(RUN_LEVEL_MESSAGES.NO_STEPS_FOR_WORKFLOW);
+      const { eventFileAggregateCounts } = loadEventsForWorkflow(
+        join(root, "examples", "events.ndjson"),
+        "wf_nonexistent___",
+      );
+      const expected = formatNoStepsForWorkflowMessage("wf_nonexistent___", eventFileAggregateCounts);
+      expect(r.resolutionIssues[0]!.message).toBe(expected);
       expect(r.resolutionIssues[0]!.seq).toBeNull();
       expect(r.resolutionIssues[0]!.toolId).toBeNull();
       expect(r.eventLoad?.malformedEventLineCount).toBe(0);

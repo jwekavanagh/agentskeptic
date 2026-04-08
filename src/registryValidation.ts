@@ -1,11 +1,8 @@
 import { readFileSync } from "fs";
 import type { ErrorObject } from "ajv";
-import {
-  CLI_OPERATIONAL_CODES,
-  RETRY_OBSERVATIONS_DIVERGE_MESSAGE,
-  RUN_LEVEL_MESSAGES,
-} from "./failureCatalog.js";
+import { CLI_OPERATIONAL_CODES, RETRY_OBSERVATIONS_DIVERGE_MESSAGE } from "./failureCatalog.js";
 import { loadEventsForWorkflow } from "./loadEvents.js";
+import { formatNoStepsForWorkflowMessage } from "./noStepsMessage.js";
 import { planLogicalSteps } from "./planLogicalSteps.js";
 import { buildRegistryMap, resolveVerificationRequest } from "./resolveExpectation.js";
 import { loadSchemaValidator } from "./schemaLoad.js";
@@ -242,7 +239,8 @@ export function validateToolsRegistry(input: {
   }
 
   if (evp !== undefined && wfid !== undefined) {
-    const { events, malformedEventLineCount } = loadEventsForWorkflow(evp, wfid);
+    const loadEv = loadEventsForWorkflow(evp, wfid);
+    const { events, malformedEventLineCount, eventFileAggregateCounts } = loadEv;
     const eventLoad: EventLoadSummary = { workflowId: wfid, malformedEventLineCount };
 
     if (events.length === 0) {
@@ -254,7 +252,7 @@ export function validateToolsRegistry(input: {
           {
             workflowId: wfid,
             code: REGISTRY_VALIDATION_CODE.NO_STEPS_FOR_WORKFLOW,
-            message: RUN_LEVEL_MESSAGES.NO_STEPS_FOR_WORKFLOW,
+            message: formatNoStepsForWorkflowMessage(wfid, eventFileAggregateCounts),
             seq: null,
             toolId: null,
           },

@@ -43,6 +43,7 @@ export {
 } from "./executionTrace.js";
 export type { BuildExecutionTraceViewInput } from "./executionTrace.js";
 export { loadEventsForWorkflow } from "./loadEvents.js";
+export { formatNoStepsForWorkflowMessage, enrichNoStepsRunLevelReasons } from "./noStepsMessage.js";
 export { TruthLayerError } from "./truthLayerError.js";
 export {
   CLI_OPERATIONAL_CODES,
@@ -147,6 +148,7 @@ export type {
   ExecutionTraceVerificationLink,
   ExecutionTraceView,
   FailureDiagnostic,
+  EventFileAggregateCounts,
   LoadEventsResult,
   ModelTurnRunEvent,
   Reason,
