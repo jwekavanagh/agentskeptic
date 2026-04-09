@@ -89,9 +89,7 @@ Retries, partial failures, and race conditions mean a success flag in a trace is
 
 **Trust boundary (once):** a green trace or OK tool response does **not** prove the row you care about exists with the right values. This tool only shows whether **read-only `SELECT`s** at verification time matched **expected** rows/fields under your rules—**not** causality or execution correctness in the deep sense.
 
-**This is for you if** you have **structured tool activity** (JSON/NDJSON your pipeline can emit), **SQL-accessible** ground truth (SQLite, Postgres, or a mirror), and care about reliability or compliance.
-
-**This is not for you if** you rely on raw logs only, have no SQL ground truth, or need causal guarantees (“this API call definitely caused this row”). Prefer tracing or audit products for that.
+**Web-facing qualification** (“for you” / “not for you” on the commercial site) is maintained in **`website/src/content/productCopy.ts`** so homepage copy does not drift from a second source in this README.
 
 **Declared → expected → observed** (how reports reason about runs):
 

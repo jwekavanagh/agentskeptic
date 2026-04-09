@@ -12,7 +12,7 @@ const traceRoot =
     : undefined;
 
 const nextConfig: NextConfig = {
-  serverExternalPackages: ["nodemailer", "postgres"],
+  serverExternalPackages: ["nodemailer", "postgres", "workflow-verifier"],
   ...(traceRoot ? { outputFileTracingRoot: traceRoot } : {}),
 };
 

@@ -32,3 +32,30 @@ Another process is locking `website/.next` (common with **OneDrive** under `OneD
 ## Vercel / CI monorepo tracing
 
 Set env **`NEXT_CONFIG_TRACE_ROOT=1`** on the **website** build so `outputFileTracingRoot` includes the repo root (not needed for local `npm run dev`).
+
+## Engine build, demo API, and fixtures
+
+The homepage **Try it** flow calls `POST /api/demo/verify`, which runs the same `verifyWorkflow` engine as the CLI against repo **`examples/`** files.
+
+- From **repo root**, build the engine before relying on the demo API or running **`npm run build`** inside `website/`:
+
+  ```bash
+  npm run build
+  ```
+
+  Or build engine + site in one step:
+
+  ```bash
+  npm run build:website
+  ```
+
+- **Preflight** (Node ≥ 22.13, `node:sqlite`, fixture files): from repo root run **`npm run check:web-demo-prereqs`** (also executed at the end of **`npm run validate-commercial`**).
+
+- After **engine output** changes, regenerate committed example snippets for the static **Example** section:
+
+  ```bash
+  npm run build
+  npm run generate:web-demo-snippets
+  ```
+
+Architecture, contracts, and operator checklist: **[`docs/website-product-experience.md`](../docs/website-product-experience.md)**.

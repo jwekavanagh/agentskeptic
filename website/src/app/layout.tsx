@@ -1,10 +1,17 @@
+import { siteMetadata } from "@/content/siteMetadata";
 import type { Metadata } from "next";
 import "./globals.css";
 import { Providers } from "./providers";
+import { SiteFooter } from "./SiteFooter";
+import { SiteHeader } from "./SiteHeader";
 
 export const metadata: Metadata = {
-  title: "Workflow Verifier",
-  description: "Verify agent workflows against your database",
+  title: siteMetadata.title,
+  description: siteMetadata.description,
+  openGraph: {
+    title: siteMetadata.openGraph.title,
+    description: siteMetadata.openGraph.description,
+  },
 };
 
 export default function RootLayout({
@@ -15,7 +22,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <Providers>{children}</Providers>
+        <SiteHeader />
+        <Providers>
+          <div className="site-main">{children}</div>
+        </Providers>
+        <SiteFooter />
       </body>
     </html>
   );

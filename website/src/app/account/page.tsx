@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 
@@ -11,7 +10,7 @@ import { and, eq, isNull } from "drizzle-orm";
 export default async function AccountPage() {
   const session = await auth();
   if (!session?.user?.id) {
-    redirect("/auth/signin");
+    redirect("/auth/signin?callbackUrl=%2Faccount");
   }
 
   const keys = await db
@@ -24,11 +23,6 @@ export default async function AccountPage() {
   return (
     <main>
       <h1>Account</h1>
-      <p style={{ color: "var(--muted)" }}>
-        <Link href="/">Home</Link>
-        {" · "}
-        <Link href="/pricing">Pricing</Link>
-      </p>
       <div className="card" style={{ marginTop: "1rem" }}>
         <p>
           Signed in as <strong>{session.user.email}</strong>

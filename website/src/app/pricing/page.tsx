@@ -1,3 +1,4 @@
+import { productCopy } from "@/content/productCopy";
 import { loadCommercialPlans } from "@/lib/plans";
 import { PricingClient, type PlanRow } from "./PricingClient";
 
@@ -11,10 +12,14 @@ export default function PricingPage() {
       headline: p.marketingHeadline,
       displayPrice: p.displayPrice,
       includedMonthly: p.includedMonthly,
+      audience: p.audience,
+      valueUnlock: p.valueUnlock,
     };
   });
   return (
     <main>
+      <h1>Pricing</h1>
+      <p className="muted pricing-recap">{productCopy.pricingRecap}</p>
       <PricingClient plans={plans} />
     </main>
   );

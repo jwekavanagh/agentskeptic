@@ -2,6 +2,9 @@
   "name": "workflow-verifier-web",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=22.13.0"
+  },
   "scripts": {
     "dev": "next dev --webpack",
     "build": "next build --webpack",
@@ -21,6 +24,7 @@
     "react-dom": "^19.0.0",
     "resend": "^4.0.1",
     "stripe": "^17.5.0",
+    "workflow-verifier": "file:..",
     "zod": "^3.24.1"
   },
   "devDependencies": {

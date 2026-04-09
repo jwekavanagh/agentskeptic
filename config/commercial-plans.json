@@ -6,6 +6,8 @@
       "monthlyUsdCents": 0,
       "displayPrice": "Free",
       "marketingHeadline": "Starter",
+      "audience": "Individuals and early prototypes validating the CLI on real workflows.",
+      "valueUnlock": "Included monthly verifications at no cost; API key for the commercial CLI build.",
       "stripePriceEnvKey": null
     },
     "team": {
@@ -13,6 +15,8 @@
       "monthlyUsdCents": 10000,
       "displayPrice": "$100/mo",
       "marketingHeadline": "Team",
+      "audience": "Small teams running verification in CI or staging with steady volume.",
+      "valueUnlock": "Higher monthly included verifications and subscription billing via Stripe.",
       "stripePriceEnvKey": "STRIPE_PRICE_TEAM"
     },
     "business": {
@@ -20,6 +24,8 @@
       "monthlyUsdCents": 30000,
       "displayPrice": "$300/mo",
       "marketingHeadline": "Business",
+      "audience": "Larger pipelines or multiple services needing headroom and predictable billing.",
+      "valueUnlock": "Highest standard tier limits before enterprise negotiation.",
       "stripePriceEnvKey": "STRIPE_PRICE_BUSINESS"
     },
     "enterprise": {
@@ -27,6 +33,8 @@
       "monthlyUsdCents": null,
       "displayPrice": "Custom",
       "marketingHeadline": "Enterprise",
+      "audience": "Organizations needing custom limits, terms, or procurement.",
+      "valueUnlock": "Tailored volume and sales-led onboarding.",
       "stripePriceEnvKey": null
     }
   }

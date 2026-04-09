@@ -31,6 +31,8 @@ export type CommercialPlansFile = {
       monthlyUsdCents: number | null;
       displayPrice: string;
       marketingHeadline: string;
+      audience: string;
+      valueUnlock: string;
       stripePriceEnvKey: string | null;
     }
   >;

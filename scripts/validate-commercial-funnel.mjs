@@ -59,6 +59,11 @@ if (
   process.exit(1);
 }
 
+if (!run(process.execPath, ["scripts/check-web-demo-prereqs.mjs"])) {
+  writeVerdict("not_solved", layers);
+  process.exit(1);
+}
+
 if (process.env.COMMERCIAL_PACK_SMOKE === "1") {
   if (
     !run(process.execPath, ["scripts/pack-smoke-commercial.mjs"], {

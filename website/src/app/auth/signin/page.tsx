@@ -1,17 +1,22 @@
 "use client";
 
+import { productCopy } from "@/content/productCopy";
+import { emailSignInOptions } from "@/lib/sanitizeInternalCallbackUrl";
 import { signIn } from "next-auth/react";
-import Link from "next/link";
-import { useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useState } from "react";
 
-export default function SignInPage() {
+function SignInForm() {
+  const searchParams = useSearchParams();
+  const rawCallback = searchParams.get("callbackUrl");
+
   const [email, setEmail] = useState("");
   const [msg, setMsg] = useState<string | null>(null);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setMsg(null);
-    const r = await signIn("email", { email, redirect: false });
+    const r = await signIn("email", emailSignInOptions(email, rawCallback));
     if (r?.error) {
       setMsg("Could not send sign-in email.");
     } else {
@@ -20,13 +25,14 @@ export default function SignInPage() {
   }
 
   return (
-    <main>
-      <h1>Sign in</h1>
-      <p style={{ color: "var(--muted)" }}>
-        <Link href="/">Home</Link>
-        {" · "}
-        <Link href="/pricing">Pricing</Link>
-      </p>
+    <>
+      <h1>{productCopy.signInPurpose.title}</h1>
+      <p className="muted">{productCopy.signInPurpose.intro}</p>
+      <ul className="signin-benefits">
+        {productCopy.signInPurpose.benefits.map((b) => (
+          <li key={b}>{b}</li>
+        ))}
+      </ul>
       <form onSubmit={onSubmit} className="card" style={{ maxWidth: "24rem", marginTop: "1rem" }}>
         <label htmlFor="email">Email</label>
         <input
@@ -52,6 +58,16 @@ export default function SignInPage() {
         </button>
       </form>
       {msg && <p style={{ marginTop: "1rem" }}>{msg}</p>}
+    </>
+  );
+}
+
+export default function SignInPage() {
+  return (
+    <main>
+      <Suspense fallback={<p className="muted">Loading…</p>}>
+        <SignInForm />
+      </Suspense>
     </main>
   );
 }

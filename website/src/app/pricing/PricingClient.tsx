@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { productCopy } from "@/content/productCopy";
 import Link from "next/link";
+import { useState } from "react";
 import { useSession } from "next-auth/react";
 
 export type PlanRow = {
@@ -9,12 +10,15 @@ export type PlanRow = {
   headline: string;
   displayPrice: string;
   includedMonthly: number | null;
+  audience: string;
+  valueUnlock: string;
 };
 
 export function PricingClient({ plans }: { plans: PlanRow[] }) {
   const { status } = useSession();
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState<string | null>(null);
+  const authed = status === "authenticated";
 
   async function checkout(plan: "team" | "business") {
     setErr(null);
@@ -38,13 +42,7 @@ export function PricingClient({ plans }: { plans: PlanRow[] }) {
 
   return (
     <>
-      <h1>Pricing</h1>
-      <p style={{ color: "var(--muted)" }}>
-        <Link href="/">Home</Link>
-        {" · "}
-        <Link href="/auth/signin">Sign in</Link>
-      </p>
-      {err && <p style={{ color: "#f4212e" }}>{err}</p>}
+      {err && <p className="error-text">{err}</p>}
       <div className="pricing-grid" style={{ marginTop: "1.5rem" }}>
         {plans.map((p) => (
           <div key={p.id} className="card" data-plan={p.id}>
@@ -58,26 +56,50 @@ export function PricingClient({ plans }: { plans: PlanRow[] }) {
                 ? "Custom"
                 : `${p.includedMonthly.toLocaleString()} verifications / month`}
             </p>
-            {p.id === "team" && (
-              <button
-                type="button"
-                disabled={status !== "authenticated" || loading !== null}
-                onClick={() => checkout("team")}
-                style={{ marginTop: "0.75rem" }}
-              >
-                {loading === "team" ? "…" : "Subscribe"}
-              </button>
-            )}
-            {p.id === "business" && (
-              <button
-                type="button"
-                disabled={status !== "authenticated" || loading !== null}
-                onClick={() => checkout("business")}
-                style={{ marginTop: "0.75rem" }}
-              >
-                {loading === "business" ? "…" : "Subscribe"}
-              </button>
-            )}
+            <p className="muted" style={{ marginTop: "0.75rem", fontSize: "0.95rem" }}>
+              <strong>Who it&apos;s for:</strong> {p.audience}
+            </p>
+            <p className="muted" style={{ marginTop: "0.35rem", fontSize: "0.95rem" }}>
+              <strong>Unlocks:</strong> {p.valueUnlock}
+            </p>
+            {p.id === "team" &&
+              (authed ? (
+                <button
+                  type="button"
+                  disabled={loading !== null}
+                  onClick={() => checkout("team")}
+                  style={{ marginTop: "0.75rem" }}
+                >
+                  {loading === "team" ? "…" : "Subscribe"}
+                </button>
+              ) : (
+                <Link
+                  className="btn-pricing-secondary"
+                  href="/auth/signin?callbackUrl=%2Fpricing"
+                  style={{ marginTop: "0.75rem" }}
+                >
+                  {productCopy.pricingSignInCta}
+                </Link>
+              ))}
+            {p.id === "business" &&
+              (authed ? (
+                <button
+                  type="button"
+                  disabled={loading !== null}
+                  onClick={() => checkout("business")}
+                  style={{ marginTop: "0.75rem" }}
+                >
+                  {loading === "business" ? "…" : "Subscribe"}
+                </button>
+              ) : (
+                <Link
+                  className="btn-pricing-secondary"
+                  href="/auth/signin?callbackUrl=%2Fpricing"
+                  style={{ marginTop: "0.75rem" }}
+                >
+                  {productCopy.pricingSignInCta}
+                </Link>
+              ))}
             {p.id === "enterprise" && (
               <a
                 className="btn"
@@ -90,11 +112,6 @@ export function PricingClient({ plans }: { plans: PlanRow[] }) {
           </div>
         ))}
       </div>
-      {status !== "authenticated" && (
-        <p style={{ marginTop: "1rem", color: "var(--muted)" }}>
-          Sign in to subscribe to Team or Business.
-        </p>
-      )}
     </>
   );
 }
