@@ -5,8 +5,7 @@ import Stripe from "stripe";
 import { db } from "@/db/client";
 import { stripeEvents, users } from "@/db/schema";
 import type { PlanId } from "@/lib/plans";
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? "");
+import { getStripe } from "@/lib/stripeServer";
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   const body = await req.text();
@@ -18,7 +17,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   let event: Stripe.Event;
   try {
-    event = stripe.webhooks.constructEvent(body, sig, whSecret);
+    event = getStripe().webhooks.constructEvent(body, sig, whSecret);
   } catch {
     return new NextResponse("Invalid signature", { status: 400 });
   }

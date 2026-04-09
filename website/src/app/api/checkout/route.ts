@@ -2,9 +2,7 @@ import { auth } from "@/auth";
 import { loadCommercialPlans } from "@/lib/plans";
 import type { PlanId } from "@/lib/plans";
 import { NextRequest, NextResponse } from "next/server";
-import Stripe from "stripe";
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? "");
+import { getStripe } from "@/lib/stripeServer";
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   const session = await auth();
@@ -36,7 +34,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   const base = process.env.NEXT_PUBLIC_APP_URL ?? "http://127.0.0.1:3000";
 
-  const checkout = await stripe.checkout.sessions.create({
+  const checkout = await getStripe().checkout.sessions.create({
     mode: "subscription",
     customer_email: session.user.email,
     line_items: [{ price: priceId, quantity: 1 }],

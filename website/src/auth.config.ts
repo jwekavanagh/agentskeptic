@@ -21,6 +21,13 @@ export const authConfig = {
   }),
   providers: [
     Email({
+      // Auth.js validates a Nodemailer `server` even when `sendVerificationRequest` sends via Resend/Mailpit.
+      server: process.env.EMAIL_SERVER ?? {
+        host: "127.0.0.1",
+        port: 1025,
+        secure: false,
+        auth: { user: "", pass: "" },
+      },
       from: process.env.EMAIL_FROM ?? "Workflow Verifier <onboarding@example.com>",
       sendVerificationRequest: async ({ identifier, url }) => {
         await sendMagicLink(identifier, url);
