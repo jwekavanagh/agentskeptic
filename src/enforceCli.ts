@@ -24,6 +24,11 @@ import { formatQuickVerifyHumanReport } from "./quickVerify/formatQuickVerifyHum
 import { buildQuickContractEventsNdjson } from "./quickVerify/buildQuickContractEventsNdjson.js";
 import type { WorkflowResult } from "./types.js";
 import { runLicensePreflightIfNeeded } from "./commercial/licensePreflight.js";
+import { LICENSE_PREFLIGHT_ENABLED } from "./generated/commercialBuildFlags.js";
+
+/** User-facing message for OSS builds when `enforce` is invoked; exported for tests. */
+export const ENFORCE_OSS_GATE_MESSAGE =
+  "The OSS build cannot run workflow-verifier enforce (CI lock gating). Install the published npm package workflow-verifier, set WORKFLOW_VERIFIER_API_KEY, and point COMMERCIAL_LICENSE_API_BASE_URL at your license server; or run npm run build:commercial with COMMERCIAL_LICENSE_API_BASE_URL set. Policy: docs/commercial-enforce-gate-normative.md";
 
 function writeCliError(code: string, message: string): void {
   console.error(cliErrorEnvelope(code, message));
@@ -331,6 +336,10 @@ export async function runEnforce(args: string[]): Promise<void> {
   if (args.includes("--help") || args.includes("-h")) {
     console.log(usageEnforce());
     process.exit(0);
+  }
+  if (!LICENSE_PREFLIGHT_ENABLED) {
+    writeCliError(CLI_OPERATIONAL_CODES.ENFORCE_REQUIRES_COMMERCIAL_BUILD, ENFORCE_OSS_GATE_MESSAGE);
+    process.exit(3);
   }
   const mode = args[0];
   if (mode === "batch") {

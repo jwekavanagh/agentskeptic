@@ -248,17 +248,17 @@ Streams, exit codes, and operational errors: [Human truth report](docs/workflow-
 
 **Why SQLite in the demo:** file-backed ground truth with no extra services. The demo (re)creates **`examples/demo.db`**; verification still uses read-only SQL.
 
-Runs build, Vitest, SQLite Node tests, first-run demo, minimal CI enforcement example, and TTFV validation. No Postgres required.
+Runs build, Vitest, SQLite Node tests, first-run demo, `assurance run`, the commercial enforce test harness (minimal CI enforcement + enforce integration tests), and TTFV validation. No Postgres required.
 
 **Full CI parity** (Postgres + Debug Console UI tests): set **`POSTGRES_ADMIN_URL`** and **`POSTGRES_VERIFICATION_URL`**, then **`npm run test:ci`**—see [`.github/workflows/ci.yml`](.github/workflows/ci.yml). Example Postgres: `docker run -d --name etl-pg -p 5432:5432 -e POSTGRES_PASSWORD=postgres postgres:16`.
 
 ## Commercial CLI (npm) vs OSS (this repo)
 
-- **Default `npm run build` in this repository** uses **`WF_BUILD_PROFILE=oss`**: contract verification does **not** call a license server and does **not** require **`WORKFLOW_VERIFIER_API_KEY`**. Use this path for **local development, forks, and air-gapped** builds—not as the default story for **production CI** that should be metered and entitled.
-- **Published npm package (commercial profile)** is built with **`npm run build:commercial`** and **`COMMERCIAL_LICENSE_API_BASE_URL`** set to your deployed app origin; that build **requires** an API key for **contract batch**, **quick verify**, and **`enforce`** (license preflight with `intent=verify` or `intent=enforce`). **Entitlement matrix:** **[`docs/commercial-entitlement-matrix.md`](docs/commercial-entitlement-matrix.md)** (generated). **Policy (why verify vs enforce):** **[`docs/commercial-entitlement-policy.md`](docs/commercial-entitlement-policy.md)**.
-- **Production CI** should install **`workflow-verifier@latest`** from npm, set **`WORKFLOW_VERIFIER_API_KEY`**, and point at a reachable license API. Copy-paste example: **[`examples/github-actions/workflow-verifier-commercial.yml`](examples/github-actions/workflow-verifier-commercial.yml)**.
-- **Website + billing** live under [`website/`](website/) (Next.js, Stripe, Resend, Postgres). Plan limits narrative: **[`docs/commercial-ssot.md`](docs/commercial-ssot.md)**. First-run integration (your DB): **[`docs/first-run-integration.md`](docs/first-run-integration.md)** and **`/integrate`** on the deployed site.
-- **Validation:** `npm run validate-commercial` requires **`DATABASE_URL`**, runs **`drizzle-kit migrate`** for the website schema, runs website Vitest (including funnel persistence tests), and writes [`artifacts/commercial-validation-verdict.json`](artifacts/commercial-validation-verdict.json). Set **`COMMERCIAL_VALIDATE_PLAYWRIGHT=1`** (and start the app) for Playwright; see **`scripts/run-commercial-e2e.mjs`** for Docker + migrate bootstrap.
+- **Default `npm run build`** uses **`WF_BUILD_PROFILE=oss`**: contract **`verify`** does **not** call a license server or require **`WORKFLOW_VERIFIER_API_KEY`**. **`enforce` (CI lock gating) is unavailable** in this profile — see **[`docs/commercial-enforce-gate-normative.md`](docs/commercial-enforce-gate-normative.md)**. Use OSS builds for local development, forks, and air-gapped **`verify`**.
+- **Published npm (commercial profile)** is built with **`npm run build:commercial`** and **`COMMERCIAL_LICENSE_API_BASE_URL`**; it **requires** an API key and preflight for **contract batch**, **quick verify**, and **`enforce`**. **Entitlement matrix:** **[`docs/commercial-entitlement-matrix.md`](docs/commercial-entitlement-matrix.md)** (generated). **Policy:** **[`docs/commercial-entitlement-policy.md`](docs/commercial-entitlement-policy.md)**.
+- **Production CI** should install **`workflow-verifier@latest`** from npm, set **`WORKFLOW_VERIFIER_API_KEY`**, and use a reachable license API. Example: **[`examples/github-actions/workflow-verifier-commercial.yml`](examples/github-actions/workflow-verifier-commercial.yml)**.
+- **Website + billing:** [`website/`](website/), **[`docs/commercial-ssot.md`](docs/commercial-ssot.md)**. First-run on your DB: **[`docs/first-run-integration.md`](docs/first-run-integration.md)** and **`/integrate`**.
+- **Validation:** `npm run validate-commercial` requires **`DATABASE_URL`**, runs **`drizzle-kit migrate`**, runs website Vitest, and writes [`artifacts/commercial-validation-verdict.json`](artifacts/commercial-validation-verdict.json). Set **`COMMERCIAL_VALIDATE_PLAYWRIGHT=1`** for Playwright; see **`scripts/run-commercial-e2e.mjs`**.
 
 ## Status, contributing, security
 

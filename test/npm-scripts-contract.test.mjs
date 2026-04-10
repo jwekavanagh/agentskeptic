@@ -34,8 +34,8 @@ describe("npm scripts contract (test / test:ci)", () => {
     assert.equal(pkg.scripts["test:ci"].includes("quick-verify-sql-allowlist"), false);
   });
 
-  it("test:ci must not run first-run demo", () => {
-    assert.equal(pkg.scripts["test:ci"].includes("first-run"), false);
+  it("test:ci must run first-run for CI parity with local onboarding smoke", () => {
+    assert.equal(pkg.scripts["test:ci"].includes("first-run"), true);
   });
 
   it("test must still run first-run for local onboarding smoke", () => {

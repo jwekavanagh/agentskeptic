@@ -2,6 +2,8 @@
 
 This document is the **hand-authored** source for **why** the product gates certain capabilities. Machine-readable entitlement rows live in [`config/commercial-entitlement-matrix.v1.json`](../config/commercial-entitlement-matrix.v1.json). The generated table is [`commercial-entitlement-matrix.md`](commercial-entitlement-matrix.md).
 
+The **OSS** default build does not expose **`enforce`** (exit **`ENFORCE_REQUIRES_COMMERCIAL_BUILD`**); entitlement rows below apply to **commercial** CLI builds. See **[`docs/commercial-enforce-gate-normative.md`](commercial-enforce-gate-normative.md)**.
+
 ## Why `verify` is never subscription-gated
 
 Batch and quick **verification** (`intent=verify` on the license reserve API) only consumes **monthly quota**. Users can **understand and debug** workflows after churn or before subscribing, as long as they stay within plan limits. Subscription status (`none`, `inactive`, `active`) does **not** block verification.

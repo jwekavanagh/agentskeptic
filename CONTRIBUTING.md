@@ -12,7 +12,7 @@ Thanks for helping improve **workflow-verifier**.
 - **Node.js ≥ 22.13** (see `package.json` `engines`).
 - `npm install`
 - `npm run build` — TypeScript compile and asset copy.
-- `npm test` — default validation before a PR.
+- `npm test` — default validation before a PR (OSS `npm run build` + Vitest + SQLite `node:test`, then `scripts/commercial-enforce-test-harness.mjs` rebuilds **commercial** `dist/` and runs **`enforce`** integration tests plus **`assurance` CLI regression tests`, then `npm run build` restores OSS `dist/`, then `npm run validate-ttfv`). Policy: **[`docs/commercial-enforce-gate-normative.md`](docs/commercial-enforce-gate-normative.md)**.
 
 ## Pull requests
 

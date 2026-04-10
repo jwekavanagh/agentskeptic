@@ -15,7 +15,7 @@ This document defines how the repository proves the **adoption golden path**: de
 | DOC_BOUNDARY | `adoption-docs-boundary.test.mjs` |
 | GOLDEN_PATH_POINTERS | `docs-golden-path-pointer-only.test.mjs` |
 | ARTIFACT_REGISTRY | `adoption_validation_spec_registry_matches_plan` |
-| VERDICT | `npm test` runs `npm run build`, Vitest, pinned SQLite `node:test`, `node scripts/first-run.mjs`, `node examples/minimal-ci-enforcement/run.mjs`, `node dist/cli.js assurance run --manifest examples/assurance/manifest.json`, and `npm run validate-ttfv` — **no** Postgres |
+| VERDICT | `npm test` runs `npm run build`, Vitest, pinned SQLite `node:test`, `node scripts/first-run.mjs`, `node dist/cli.js assurance run --manifest examples/assurance/manifest.json`, `node scripts/commercial-enforce-test-harness.mjs`, then `npm run build` again (restore OSS `dist/` after the commercial harness), then `npm run validate-ttfv` — **no** Postgres |
 | REGISTRY_NO_STEPS | `src/registryValidation.test.ts` |
 
 ## ADOPTION_ARTIFACT_PROOF (registry TSV)
@@ -56,4 +56,4 @@ test/npm-scripts-contract.test.mjs	modify
 test/pipeline.sqlite.test.mjs	modify
 ```
 
-After a successful `npm test`, that chain (see VERDICT row) has exercised the onboarding smoke (`scripts/first-run.mjs`), the minimal CI enforcement example, `assurance run` against `examples/assurance/manifest.json`, and TTFV validation. Optional legacy scripts `scripts/record-adoption-verdict.mjs` and `scripts/verify-adoption-verdict.mjs` can still record `artifacts/adoption-validation-verdict.json` manually; they are **not** invoked by the default `npm test` script.
+After a successful `npm test`, that chain (see VERDICT row) has exercised the onboarding smoke (`scripts/first-run.mjs`), `assurance run` against `examples/assurance/manifest.json`, the commercial enforce harness (rebuilds commercial `dist/`; minimal CI enforcement, `enforce` tests, and `assurance` CLI regression tests), a final **`npm run build`** to restore the default OSS `dist/` (commercial **`quick`**/`verify` requires a license server, so TTFV must run on OSS), then TTFV validation. Optional legacy scripts `scripts/record-adoption-verdict.mjs` and `scripts/verify-adoption-verdict.mjs` can still record `artifacts/adoption-validation-verdict.json` manually; they are **not** invoked by the default `npm test` script.

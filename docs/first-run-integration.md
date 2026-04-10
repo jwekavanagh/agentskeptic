@@ -2,7 +2,7 @@
 
 This is the **single integrator path** for running Workflow Verifier against **your own** database and workflow shape. It replaces scattered copies of the same steps elsewhere in the repo.
 
-**Why one path:** One document reduces drift between the website, README, and ad-hoc partner notes. **Production and CI** should use the **published npm package** `workflow-verifier` with a **`WORKFLOW_VERIFIER_API_KEY`** and your deployed license server so quotas and entitlements apply. **Building from this repository** with the default **`WF_BUILD_PROFILE=oss`** is for **local development, forks, and air-gapped** use—see [README.md](../README.md) (Commercial CLI vs OSS).
+**Why one path:** One document reduces drift between the website, README, and ad-hoc partner notes. **Production and CI** should use the **published npm package** `workflow-verifier` with a **`WORKFLOW_VERIFIER_API_KEY`** and your deployed license server so quotas and entitlements apply. **Building from this repository** with the default **`WF_BUILD_PROFILE=oss`** is for **local development, forks, and air-gapped** **`verify`**; **`enforce`** requires a commercial build — [README.md](../README.md), **[`docs/commercial-enforce-gate-normative.md`](commercial-enforce-gate-normative.md)**.
 
 Send this to someone who should **try it in one sitting**. Everything below is copy-pasteable; no other reading required.
 

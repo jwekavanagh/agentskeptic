@@ -30,10 +30,10 @@ This document is the **narrative SSOT** for the thin commercial layer (website, 
 
 | Artifact              | `WF_BUILD_PROFILE` | Behavior |
 |-----------------------|--------------------|----------|
-| OSS / this repo CI    | `oss` (default)    | No license preflight; contract mode works without API key |
-| Published npm tarball | `commercial`       | Requires `WORKFLOW_VERIFIER_API_KEY` + successful preflight for contract batch and `enforce batch` |
+| OSS / this repo CI    | `oss` (default)    | No license preflight; contract **`verify`** without API key; **`enforce` unavailable** — **[`docs/commercial-enforce-gate-normative.md`](commercial-enforce-gate-normative.md)** |
+| Published npm tarball | `commercial`       | Requires `WORKFLOW_VERIFIER_API_KEY` + successful preflight for contract batch, quick verify, and **`enforce`** |
 
-Codegen: **`node scripts/write-commercial-build-flags.mjs`** writes **`src/generated/commercialBuildFlags.ts`** (gitignored) before `tsc`. Commercial builds require **`COMMERCIAL_LICENSE_API_BASE_URL`**.
+Codegen: **`node scripts/write-commercial-build-flags.mjs`** writes **`src/generated/commercialBuildFlags.ts`** (gitignored) before `tsc`. **`npm run build`** passes **`--oss`** so the default artifact stays OSS even if **`WF_BUILD_PROFILE`** is set in the shell; **`npm run build:commercial`** invokes the script with **`--commercial`** and requires **`COMMERCIAL_LICENSE_API_BASE_URL`**.
 
 Forks: build with `oss` to omit the gate.
 

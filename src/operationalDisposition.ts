@@ -486,4 +486,13 @@ export const OPERATIONAL_DISPOSITION = {
     recommendedAction: "manual_review",
     automationSafe: false,
   },
+  [CLI_OPERATIONAL_CODES.ENFORCE_REQUIRES_COMMERCIAL_BUILD]: {
+    origin: "workflow_flow",
+    summary:
+      "CI enforcement (enforce) is not available in the OSS build; use the published workflow-verifier npm package or a commercial local build with a license API.",
+    actionableCategory: "control_flow_problem",
+    actionableSeverity: "high",
+    recommendedAction: "manual_review",
+    automationSafe: false,
+  },
 } as const satisfies Record<OperationalCode, OperationalDispositionRow>;

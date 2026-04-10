@@ -2,6 +2,7 @@
 /**
  * Sole codegen step for CLI commercial vs OSS profile.
  * Writes src/generated/commercialBuildFlags.ts (gitignored) before tsc.
+ * Profile: argv `--oss` or `--commercial` wins; else `WF_BUILD_PROFILE=commercial` selects commercial, otherwise oss.
  */
 import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
@@ -12,7 +13,16 @@ const root = path.resolve(__dirname, "..");
 const outDir = path.join(root, "src", "generated");
 const outFile = path.join(outDir, "commercialBuildFlags.ts");
 
-const profile = process.env.WF_BUILD_PROFILE ?? "oss";
+const argv = process.argv.slice(2);
+/** @type {"oss" | "commercial"} */
+let profile;
+if (argv.includes("--oss")) {
+  profile = "oss";
+} else if (argv.includes("--commercial")) {
+  profile = "commercial";
+} else {
+  profile = process.env.WF_BUILD_PROFILE === "commercial" ? "commercial" : "oss";
+}
 const baseUrl =
   profile === "commercial"
     ? (process.env.COMMERCIAL_LICENSE_API_BASE_URL ?? "").trim()

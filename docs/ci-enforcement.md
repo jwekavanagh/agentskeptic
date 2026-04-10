@@ -1,5 +1,7 @@
 # CI enforcement (`enforce`)
 
+**Policy:** CI lock gating requires a **commercial** CLI build and license API; the OSS repo default build does not run **`enforce`** — see **[`docs/commercial-enforce-gate-normative.md`](commercial-enforce-gate-normative.md)**.
+
 This document is the **integrator SSOT** for pinning verification outcomes in CI. Lock **shape** is defined only in [`schemas/ci-lock-v1.schema.json`](../schemas/ci-lock-v1.schema.json). **Exit codes and stdout/stderr** for `enforce` are defined only in [workflow-verifier.md — Enforce stream contract (normative)](workflow-verifier.md#enforce-stream-contract-normative).
 
 ## Prerequisites (commercial CLI)

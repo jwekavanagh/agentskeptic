@@ -14,7 +14,6 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, "..");
 const cliJs = join(root, "dist", "cli.js");
 const committedManifest = join(root, "examples", "assurance", "manifest.json");
-const minimalCi = join(root, "examples", "minimal-ci-enforcement");
 const mismatchPrior = join(root, "test", "fixtures", "assurance", "compare-mismatch-prior.json");
 const mismatchCurrent = join(root, "test", "fixtures", "assurance", "compare-mismatch-current.json");
 
@@ -35,7 +34,7 @@ describe("assurance CLI", () => {
     const v = loadSchemaValidator("assurance-run-report-v1");
     assert.equal(v(rep), true, JSON.stringify(v.errors ?? []));
     assert.equal(rep.schemaVersion, 1);
-    assert.equal(rep.scenarios.length, 2);
+    assert.equal(rep.scenarios.length, 1);
     assert.ok(rep.scenarios.every((s) => s.exitCode === 0));
   });
 
@@ -108,54 +107,6 @@ describe("assurance CLI", () => {
       assert.equal(r.status, 3);
       const err = JSON.parse(r.stderr.trim());
       assert.equal(err.code, "ASSURANCE_MANIFEST_PATH_MISSING");
-    } finally {
-      rmSync(dir, { recursive: true, force: true });
-    }
-  });
-
-  it("assurance run exits 1 when enforce expect-lock does not match", () => {
-    const dir = mkdtempSync(join(tmpdir(), "etl-as-lock-"));
-    try {
-      const badLock = join(dir, "bad.ci-lock-v1.json");
-      const goodLock = join(minimalCi, "wf_complete.ci-lock-v1.json");
-      let lockText = readFileSync(goodLock, "utf8");
-      lockText = lockText.replace('"workflowId":"wf_complete"', '"workflowId":"wf_other"');
-      writeFileSync(badLock, lockText, "utf8");
-      const mpath = join(dir, "manifest.json");
-      writeFileSync(
-        mpath,
-        JSON.stringify({
-          schemaVersion: 1,
-          scenarios: [
-            {
-              id: "broken_enforce",
-              kind: "spawn_argv",
-              argv: [
-                "enforce",
-                "batch",
-                "--workflow-id",
-                "wf_complete",
-                "--events",
-                join(minimalCi, "events.ndjson"),
-                "--registry",
-                join(minimalCi, "tools.json"),
-                "--db",
-                join(minimalCi, "ci-check.sqlite"),
-                "--no-truth-report",
-                "--expect-lock",
-                badLock,
-              ],
-            },
-          ],
-        }),
-        "utf8",
-      );
-      const r = runAssurance(["run", "--manifest", mpath]);
-      assert.equal(r.status, 1);
-      const line = r.stdout.trim().split(/\r?\n/).filter((l) => l.length > 0).pop();
-      const rep = JSON.parse(line);
-      assert.equal(rep.scenarios.length, 1);
-      assert.notEqual(rep.scenarios[0].exitCode, 0);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

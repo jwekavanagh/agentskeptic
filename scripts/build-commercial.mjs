@@ -11,7 +11,7 @@ function run(cmd, args) {
   if (r.status !== 0) process.exit(r.status ?? 1);
 }
 
-run(process.execPath, ["scripts/write-commercial-build-flags.mjs"]);
+run(process.execPath, ["scripts/write-commercial-build-flags.mjs", "--commercial"]);
 run(process.execPath, ["scripts/sync-failure-origin-from-schema.mjs"]);
 const tscJs = path.join(root, "node_modules", "typescript", "lib", "tsc.js");
 run(process.execPath, [tscJs]);

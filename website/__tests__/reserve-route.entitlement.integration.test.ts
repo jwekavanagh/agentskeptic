@@ -1,3 +1,4 @@
+/** Server-side counterpart to OSS CLI enforce gate — see docs/commercial-enforce-gate-normative.md */
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
