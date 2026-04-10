@@ -46,7 +46,7 @@
     "partner-quickstart": "node scripts/partner-quickstart-verify.mjs"
   },
   "engines": {
-    "node": ">=22.13.0"
+    "node": "22.x"
   },
   "devDependencies": {
     "@playwright/test": "^1.51.0",
