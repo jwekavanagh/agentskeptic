@@ -4,6 +4,9 @@ export const productCopy = {
   links: {
     cliQuickstart:
       "https://github.com/jwekavanagh/workflow-verifier#try-it-about-one-minute",
+    /** Relative to site origin — pair with NEXT_PUBLIC_APP_URL in prose docs. */
+    openapiCommercial: "/openapi-commercial-v1.yaml",
+    commercialPlansApi: "/api/v1/commercial/plans",
   },
 
   uiTestIds: {
@@ -83,7 +86,7 @@ export const productCopy = {
   commercialSurface: {
     title: "Commercial surface (what the product charges for)",
     body:
-      "Building from this repository with the default OSS profile gives you contract verify without an API key. The published npm package with an API key adds metered reservation against your account, and Team or Business with an active subscription unlocks enforcement (enforce) in CI—those are the explicit in-product reasons to choose a paid tier, alongside higher monthly verification limits.",
+      "The default OSS build from this repository gives you full contract verify without an API key. The published npm package uses license preflight: licensed verify, quick verify, and CI locks require an active Team, Business, or Enterprise subscription (Stripe trial counts), then consume monthly quota. Higher tiers add headroom. Machine contracts: OpenAPI and plans JSON are linked from docs and the account page.",
   },
 
   nextSteps: {
@@ -95,7 +98,7 @@ export const productCopy = {
   },
 
   pricingRecap:
-    "You pay when you need higher verification volume and commercial CLI features—not to understand the product. Each tier below states who it is for and what it unlocks.",
+    "You subscribe for licensed npm verification and higher monthly quota; OSS/source remains free for verify. Each tier states who it is for and what it unlocks.",
 
   pricingSignInCta: "Sign in to subscribe",
 
@@ -104,8 +107,8 @@ export const productCopy = {
     intro:
       "Use your email for a magic link. Signing in lets you subscribe to paid plans, manage your account, and generate API keys—not required for the homepage demo.",
     benefits: [
-      "Subscribe to Team or Business (Stripe Checkout).",
-      "Create and view API keys on the account page.",
+      "Subscribe to Team or Business (Stripe Checkout; trial available)—required before licensed npm verify.",
+      "Create and view API keys on the account page after sign-in.",
     ],
   },
 } as const;

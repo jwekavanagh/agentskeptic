@@ -6,8 +6,8 @@
       "monthlyUsdCents": 0,
       "displayPrice": "Free",
       "marketingHeadline": "Starter",
-      "audience": "Individuals and early prototypes validating the CLI on real workflows.",
-      "valueUnlock": "Monthly verify quota at no cost; API key for the commercial CLI. Enforcement (enforce) requires a paid plan.",
+      "audience": "Individuals exploring the product; use OSS/source verify for free, or subscribe for licensed npm.",
+      "valueUnlock": "Account and API key; licensed npm verify requires an active Team+ subscription (trial ok). Use the default OSS build from source for free verify without a subscription.",
       "stripePriceEnvKey": null
     },
     "team": {
@@ -16,7 +16,7 @@
       "displayPrice": "$100/mo",
       "marketingHeadline": "Team",
       "audience": "Small teams running verification in CI or staging with steady volume.",
-      "valueUnlock": "Higher monthly verify quota; active subscription unlocks enforcement (enforce) in CI.",
+      "valueUnlock": "Licensed contract and quick verify with monthly quota; CI locks and enforce use the same active subscription.",
       "stripePriceEnvKey": "STRIPE_PRICE_TEAM"
     },
     "business": {
@@ -25,7 +25,7 @@
       "displayPrice": "$300/mo",
       "marketingHeadline": "Business",
       "audience": "Larger pipelines or multiple services needing headroom and predictable billing.",
-      "valueUnlock": "Highest standard verify limits; active subscription unlocks enforcement (enforce).",
+      "valueUnlock": "Highest licensed verify limits; CI locks and enforce included under the same subscription.",
       "stripePriceEnvKey": "STRIPE_PRICE_BUSINESS"
     },
     "enterprise": {

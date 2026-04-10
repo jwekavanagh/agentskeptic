@@ -5,7 +5,8 @@ Single source of truth for **who may run `workflow-verifier enforce`** and how i
 ## OSS build (`WF_BUILD_PROFILE=oss`, default `npm run build`)
 
 - **`workflow-verifier enforce`** is **not supported**. Any invocation **except** help (`--help` or `-h` anywhere in the args after `enforce`) **exits 3** with operational code **`ENFORCE_REQUIRES_COMMERCIAL_BUILD`** and the message constant **`ENFORCE_OSS_GATE_MESSAGE`** in `src/enforceCli.ts` (emitted via `cliErrorEnvelope`).
-- **`ENFORCE_USAGE`** is **never** emitted on the OSS build for `enforce`; the commercial-build gate is the only non-help failure mode.
+- **Batch or `quick` with `--output-lock` or `--expect-lock`** is **not supported** on the OSS build: **exits 3** with **`ENFORCE_REQUIRES_COMMERCIAL_BUILD`** (see `src/cli.ts`).
+- **`ENFORCE_USAGE`** is **never** emitted on the OSS build for `enforce`; the commercial-build gate is the only non-help failure mode for bare `enforce` invocations.
 
 ## Help
 
@@ -17,8 +18,8 @@ After the OSS gate (skipped when `LICENSE_PREFLIGHT_ENABLED` is true), **`runEnf
 
 1. `mode = args[0]`.
 2. If `mode` is neither `batch` nor `quick` → **`ENFORCE_USAGE`**, exit 3 — **no** license preflight.
-3. If `mode === "batch"` → **`runEnforceBatch`**, which **first** calls **`runLicensePreflightIfNeeded("enforce")`**, then verification and lock logic.
-4. If `mode === "quick"` → **`runEnforceQuick`**, which **first** calls **`runLicensePreflightIfNeeded("enforce")`**, then quick verification and lock logic.
+3. If `mode === "batch"` → **`runEnforceBatch`**, which **first** calls **`runLicensePreflightIfNeeded("enforce")`**, then **`runBatchCiLockFromRestArgs`** in `src/ciLockWorkflow.ts` (shared with batch verify + lock flags).
+4. If `mode === "quick"` → **`runEnforceQuick`**, which **first** calls **`runLicensePreflightIfNeeded("enforce")`**, then **`runQuickCiLockFromRestArgs`** in `src/ciLockWorkflow.ts` (shared with `quick` + lock flags).
 
 ## License reserve (production)
 

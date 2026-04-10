@@ -6,7 +6,7 @@ This document is the **integrator SSOT** for pinning verification outcomes in CI
 
 ## Prerequisites (commercial CLI)
 
-**`enforce` in the commercial build** requires a **Team** or **Business** plan with an **active** subscription and a valid API key; see the generated matrix [`commercial-entitlement-matrix.md`](commercial-entitlement-matrix.md) and policy rationale [`commercial-entitlement-policy.md`](commercial-entitlement-policy.md). **Verification** (`batch` / `quick`) without **`enforce`** uses monthly quota and is **not** gated on subscription status.
+**Licensed** contract **`verify`**, **`quick`**, **CI lock flags**, and **`enforce`** all require a **Team**, **Business**, or **Enterprise** plan with an **active** subscription (Stripe **trialing** counts) and a valid API key on **`POST /api/v1/usage/reserve`**; see [`commercial-entitlement-matrix.md`](commercial-entitlement-matrix.md) and [`commercial-entitlement-policy.md`](commercial-entitlement-policy.md).
 
 ## What the lock pins (semantics)
 
@@ -19,12 +19,14 @@ It does **not** replace full **`WorkflowResult`** / **`QuickVerifyReport`** on s
 
 ## Automation recipe
 
-1. **Bootstrap (once per scenario):** run  
-   `workflow-verifier enforce batch … --output-lock path/to/scenario.ci-lock-v1.json`  
+**Canonical (same flags as plain verify / quick):** append exactly one of **`--output-lock`** or **`--expect-lock`** to your batch or **`quick`** command. **`workflow-verifier enforce batch|quick …`** remains a **compatibility alias** with identical lock semantics.
+
+1. **Bootstrap (once per scenario):** run, for example,  
+   `workflow-verifier --workflow-id … --events … --registry … --db … --output-lock path/to/scenario.ci-lock-v1.json`  
    or  
-   `workflow-verifier enforce quick … --output-lock path/to/scenario.ci-lock-v1.json`  
+   `workflow-verifier quick --input … --db … --export-registry … --output-lock path/to/scenario.ci-lock-v1.json`  
    Commit the file.
-2. **CI gate:** run the same command line with **`--expect-lock`** pointing at the committed file instead of **`--output-lock`**. Exactly one of the two flags is required.
+2. **CI gate:** run the **same** command with **`--expect-lock`** pointing at the committed file instead of **`--output-lock`**. Exactly one of the two flags is required.
 3. **Review:** when intentional product changes alter pinned semantics, update the lock in the same change.
 
 Programmatic helpers: **`toCiLockV1`**, **`workflowResultToCiLockV1`**, **`quickReportToCiLockV1`**, **`ciLocksEqualStable`** (package exports).

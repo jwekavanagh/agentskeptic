@@ -6,16 +6,16 @@
       "subscriptionStatus": "none",
       "intent": "verify",
       "emergencyAllow": false,
-      "expectProceedToQuota": true,
-      "expectedDenyCode": null
+      "expectProceedToQuota": false,
+      "expectedDenyCode": "VERIFICATION_REQUIRES_SUBSCRIPTION"
     },
     {
       "plan": "starter",
       "subscriptionStatus": "none",
       "intent": "verify",
       "emergencyAllow": true,
-      "expectProceedToQuota": true,
-      "expectedDenyCode": null
+      "expectProceedToQuota": false,
+      "expectedDenyCode": "VERIFICATION_REQUIRES_SUBSCRIPTION"
     },
     {
       "plan": "starter",
@@ -38,16 +38,16 @@
       "subscriptionStatus": "active",
       "intent": "verify",
       "emergencyAllow": false,
-      "expectProceedToQuota": true,
-      "expectedDenyCode": null
+      "expectProceedToQuota": false,
+      "expectedDenyCode": "VERIFICATION_REQUIRES_SUBSCRIPTION"
     },
     {
       "plan": "starter",
       "subscriptionStatus": "active",
       "intent": "verify",
       "emergencyAllow": true,
-      "expectProceedToQuota": true,
-      "expectedDenyCode": null
+      "expectProceedToQuota": false,
+      "expectedDenyCode": "VERIFICATION_REQUIRES_SUBSCRIPTION"
     },
     {
       "plan": "starter",
@@ -70,16 +70,16 @@
       "subscriptionStatus": "inactive",
       "intent": "verify",
       "emergencyAllow": false,
-      "expectProceedToQuota": true,
-      "expectedDenyCode": null
+      "expectProceedToQuota": false,
+      "expectedDenyCode": "VERIFICATION_REQUIRES_SUBSCRIPTION"
     },
     {
       "plan": "starter",
       "subscriptionStatus": "inactive",
       "intent": "verify",
       "emergencyAllow": true,
-      "expectProceedToQuota": true,
-      "expectedDenyCode": null
+      "expectProceedToQuota": false,
+      "expectedDenyCode": "VERIFICATION_REQUIRES_SUBSCRIPTION"
     },
     {
       "plan": "starter",
@@ -102,8 +102,8 @@
       "subscriptionStatus": "none",
       "intent": "verify",
       "emergencyAllow": false,
-      "expectProceedToQuota": true,
-      "expectedDenyCode": null
+      "expectProceedToQuota": false,
+      "expectedDenyCode": "SUBSCRIPTION_INACTIVE"
     },
     {
       "plan": "team",
@@ -166,28 +166,28 @@
       "subscriptionStatus": "inactive",
       "intent": "verify",
       "emergencyAllow": false,
-      "expectProceedToQuota": true,
-      "expectedDenyCode": null
-    },
-    {
-      "plan": "team",
-      "subscriptionStatus": "inactive",
-      "intent": "verify",
-      "emergencyAllow": true,
-      "expectProceedToQuota": true,
-      "expectedDenyCode": null
-    },
-    {
-      "plan": "team",
-      "subscriptionStatus": "inactive",
-      "intent": "enforce",
-      "emergencyAllow": false,
       "expectProceedToQuota": false,
       "expectedDenyCode": "SUBSCRIPTION_INACTIVE"
     },
     {
       "plan": "team",
       "subscriptionStatus": "inactive",
+      "intent": "verify",
+      "emergencyAllow": true,
+      "expectProceedToQuota": true,
+      "expectedDenyCode": null
+    },
+    {
+      "plan": "team",
+      "subscriptionStatus": "inactive",
+      "intent": "enforce",
+      "emergencyAllow": false,
+      "expectProceedToQuota": false,
+      "expectedDenyCode": "SUBSCRIPTION_INACTIVE"
+    },
+    {
+      "plan": "team",
+      "subscriptionStatus": "inactive",
       "intent": "enforce",
       "emergencyAllow": true,
       "expectProceedToQuota": true,
@@ -198,8 +198,8 @@
       "subscriptionStatus": "none",
       "intent": "verify",
       "emergencyAllow": false,
-      "expectProceedToQuota": true,
-      "expectedDenyCode": null
+      "expectProceedToQuota": false,
+      "expectedDenyCode": "SUBSCRIPTION_INACTIVE"
     },
     {
       "plan": "business",
@@ -262,8 +262,8 @@
       "subscriptionStatus": "inactive",
       "intent": "verify",
       "emergencyAllow": false,
-      "expectProceedToQuota": true,
-      "expectedDenyCode": null
+      "expectProceedToQuota": false,
+      "expectedDenyCode": "SUBSCRIPTION_INACTIVE"
     },
     {
       "plan": "business",
@@ -294,8 +294,8 @@
       "subscriptionStatus": "none",
       "intent": "verify",
       "emergencyAllow": false,
-      "expectProceedToQuota": true,
-      "expectedDenyCode": null
+      "expectProceedToQuota": false,
+      "expectedDenyCode": "SUBSCRIPTION_INACTIVE"
     },
     {
       "plan": "enterprise",
@@ -358,8 +358,8 @@
       "subscriptionStatus": "inactive",
       "intent": "verify",
       "emergencyAllow": false,
-      "expectProceedToQuota": true,
-      "expectedDenyCode": null
+      "expectProceedToQuota": false,
+      "expectedDenyCode": "SUBSCRIPTION_INACTIVE"
     },
     {
       "plan": "enterprise",

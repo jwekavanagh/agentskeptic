@@ -19,11 +19,23 @@ function resolve({ plan, subscriptionStatus, intent, emergencyAllow }) {
       expectedDenyCode: "ENFORCEMENT_REQUIRES_PAID_PLAN",
     };
   }
+  if (intent === "verify" && plan === "starter") {
+    return {
+      expectProceedToQuota: false,
+      expectedDenyCode: "VERIFICATION_REQUIRES_SUBSCRIPTION",
+    };
+  }
   let effectiveActive = subscriptionStatus === "active";
-  if (intent === "enforce" && paid.includes(plan) && emergencyAllow) {
+  if (paid.includes(plan) && emergencyAllow) {
     effectiveActive = true;
   }
   if (intent === "enforce" && paid.includes(plan) && !effectiveActive) {
+    return {
+      expectProceedToQuota: false,
+      expectedDenyCode: "SUBSCRIPTION_INACTIVE",
+    };
+  }
+  if (intent === "verify" && paid.includes(plan) && !effectiveActive) {
     return {
       expectProceedToQuota: false,
       expectedDenyCode: "SUBSCRIPTION_INACTIVE",

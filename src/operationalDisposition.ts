@@ -480,7 +480,16 @@ export const OPERATIONAL_DISPOSITION = {
   [CLI_OPERATIONAL_CODES.ENFORCEMENT_REQUIRES_PAID_PLAN]: {
     origin: "workflow_flow",
     summary:
-      "Enforcement (CI gate) requires a paid plan; verification without enforcement remains available within quota.",
+      "Enforcement (CI gate) requires a paid plan with an active subscription.",
+    actionableCategory: "control_flow_problem",
+    actionableSeverity: "high",
+    recommendedAction: "manual_review",
+    automationSafe: false,
+  },
+  [CLI_OPERATIONAL_CODES.VERIFICATION_REQUIRES_SUBSCRIPTION]: {
+    origin: "workflow_flow",
+    summary:
+      "Licensed verification with the commercial CLI requires an active subscription; subscribe or use an OSS build for local verify.",
     actionableCategory: "control_flow_problem",
     actionableSeverity: "high",
     recommendedAction: "manual_review",
@@ -489,7 +498,7 @@ export const OPERATIONAL_DISPOSITION = {
   [CLI_OPERATIONAL_CODES.ENFORCE_REQUIRES_COMMERCIAL_BUILD]: {
     origin: "workflow_flow",
     summary:
-      "CI enforcement (enforce) is not available in the OSS build; use the published workflow-verifier npm package or a commercial local build with a license API.",
+      "CI enforcement (enforce) and CI lock flags are not available in the OSS build; use the published workflow-verifier npm package or a commercial local build with a license API.",
     actionableCategory: "control_flow_problem",
     actionableSeverity: "high",
     recommendedAction: "manual_review",

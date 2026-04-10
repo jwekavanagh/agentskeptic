@@ -6,12 +6,13 @@
     "node": ">=22.13.0"
   },
   "scripts": {
+    "prebuild": "node ../scripts/sync-integrator-docs-embedded.mjs && node ../scripts/copy-openapi-to-website.mjs",
     "dev": "next dev --webpack",
     "build": "next build --webpack",
     "start": "next start",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "test:vitest": "vitest run"
+    "test:vitest": "node ../scripts/sync-integrator-docs-embedded.mjs && vitest run"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.7.4",

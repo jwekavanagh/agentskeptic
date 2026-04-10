@@ -8,3 +8,10 @@ describe("productCopy.links.cliQuickstart", () => {
     );
   });
 });
+
+describe("productCopy machine contract paths", () => {
+  it("uses stable relative URLs for OpenAPI and plans", () => {
+    expect(productCopy.links.openapiCommercial).toBe("/openapi-commercial-v1.yaml");
+    expect(productCopy.links.commercialPlansApi).toBe("/api/v1/commercial/plans");
+  });
+});

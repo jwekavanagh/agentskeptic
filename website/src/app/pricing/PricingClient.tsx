@@ -54,10 +54,8 @@ export function PricingClient({
         style={{ marginTop: "1rem", maxWidth: "42rem" }}
         aria-label="Commercial terms"
       >
-        <p>Verification uses your monthly API quota and is not blocked by subscription status.</p>
-        <p>
-          CI and deployment enforcement (the enforce command) requires Team or Business with an active paid subscription.
-        </p>
+        <p>Licensed verification with the published npm CLI requires an active Team, Business, or Enterprise subscription (trial counts); monthly quota applies after subscribe.</p>
+        <p>CI locks, the enforce command, and quick verify with lock flags use the same subscription requirement.</p>
       </section>
       <div className="pricing-grid" style={{ marginTop: "1.5rem" }}>
         {plans.map((p) => (

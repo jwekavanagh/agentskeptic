@@ -2,7 +2,9 @@
 
 This is the **single integrator path** for running Workflow Verifier against **your own** database and workflow shape. It replaces scattered copies of the same steps elsewhere in the repo.
 
-**Why one path:** One document reduces drift between the website, README, and ad-hoc partner notes. **Production and CI** should use the **published npm package** `workflow-verifier` with a **`WORKFLOW_VERIFIER_API_KEY`** and your deployed license server so quotas and entitlements apply. **Building from this repository** with the default **`WF_BUILD_PROFILE=oss`** is for **local development, forks, and air-gapped** **`verify`**; **`enforce`** requires a commercial build — [README.md](../README.md), **[`docs/commercial-enforce-gate-normative.md`](commercial-enforce-gate-normative.md)**.
+**Why one path:** One document reduces drift between the website, README, and ad-hoc partner notes. **Production and CI** with the **published npm** `workflow-verifier`: complete **Stripe checkout** (trial is fine) so your account has an **active subscription**, then create a **`WORKFLOW_VERIFIER_API_KEY`** and use your deployed license server—**licensed `verify` / `quick` require that subscription** before each run (see [`commercial-entitlement-policy.md`](commercial-entitlement-policy.md)). **Building from this repository** with the default **`WF_BUILD_PROFILE=oss`** is for **local development, forks, and air-gapped** **`verify`** without a key; **CI locks** (`--output-lock` / `--expect-lock`) and **`enforce`** require a **commercial** build — [README.md](../README.md), **[`docs/commercial-enforce-gate-normative.md`](commercial-enforce-gate-normative.md)**.
+
+**Machine-readable contracts** (plans + reserve API): see [`commercial-ssot.md`](commercial-ssot.md) — **`GET /api/v1/commercial/plans`** and **`/openapi-commercial-v1.yaml`** on your deployed site origin.
 
 Send this to someone who should **try it in one sitting**. **All shell commands** for the bundled partner quickstart live in **[partner-quickstart-commands.md](partner-quickstart-commands.md)** (generated; do not duplicate here). This file is **prose, semantics, and guarantees** only.
 

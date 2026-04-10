@@ -112,9 +112,28 @@ describe("POST /api/v1/usage/reserve entitlement", () => {
     expect(j.upgrade_url).toBe("http://127.0.0.1:3000/pricing");
   });
 
-  it("team + inactive + verify → 200 allowed", async () => {
+  it("starter + verify → 403 VERIFICATION_REQUIRES_SUBSCRIPTION + upgrade_url", async () => {
+    const res = await postReserve({ intent: "verify" });
+    expect(res.status).toBe(403);
+    const j = (await res.json()) as Record<string, unknown>;
+    expect(j.allowed).toBe(false);
+    expect(j.code).toBe("VERIFICATION_REQUIRES_SUBSCRIPTION");
+    expect(j.upgrade_url).toBe("http://127.0.0.1:3000/pricing");
+  });
+
+  it("team + inactive + verify → 403 SUBSCRIPTION_INACTIVE", async () => {
     entState.plan = "team";
     entState.subscriptionStatus = "inactive";
+    const res = await postReserve({ intent: "verify" });
+    expect(res.status).toBe(403);
+    const j = (await res.json()) as Record<string, unknown>;
+    expect(j.code).toBe("SUBSCRIPTION_INACTIVE");
+    expect(j.upgrade_url).toBe("http://127.0.0.1:3000/pricing");
+  });
+
+  it("team + active + verify → 200 allowed", async () => {
+    entState.plan = "team";
+    entState.subscriptionStatus = "active";
     const res = await postReserve({ intent: "verify" });
     expect(res.status).toBe(200);
     const j = (await res.json()) as Record<string, unknown>;

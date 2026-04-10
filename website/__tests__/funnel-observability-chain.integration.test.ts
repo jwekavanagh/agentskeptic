@@ -52,6 +52,10 @@ describe.skipIf(!hasDatabaseUrl)("funnel observability chain", () => {
       .insert(users)
       .values({ email: "obs-chain-1@example.com", emailVerified: new Date() })
       .returning();
+    await db
+      .update(users)
+      .set({ plan: "team", subscriptionStatus: "active" })
+      .where(eq(users.id, u!.id));
     authMock.mockResolvedValue({
       user: { id: u!.id, email: "obs-chain-1@example.com", name: null },
     });
@@ -157,6 +161,10 @@ describe("funnel observability — checkout post_activation", () => {
       .insert(users)
       .values({ email: "obs-checkout-warm@example.com", emailVerified: new Date() })
       .returning();
+    await db
+      .update(users)
+      .set({ plan: "team", subscriptionStatus: "active" })
+      .where(eq(users.id, u!.id));
     authMock.mockResolvedValue({
       user: { id: u!.id, email: "obs-checkout-warm@example.com", name: null },
     });

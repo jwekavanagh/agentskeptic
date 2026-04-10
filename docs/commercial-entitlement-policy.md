@@ -4,27 +4,29 @@ This document is the **hand-authored** source for **why** the product gates cert
 
 The **OSS** default build does not expose **`enforce`** (exit **`ENFORCE_REQUIRES_COMMERCIAL_BUILD`**); entitlement rows below apply to **commercial** CLI builds. See **[`docs/commercial-enforce-gate-normative.md`](commercial-enforce-gate-normative.md)**.
 
-## Why `verify` is never subscription-gated
+## Why licensed `verify` requires an active subscription
 
-Batch and quick **verification** (`intent=verify` on the license reserve API) only consumes **monthly quota**. Users can **understand and debug** workflows after churn or before subscribing, as long as they stay within plan limits. Subscription status (`none`, `inactive`, `active`) does **not** block verification.
+Batch and quick **verification** with the **published npm** package (`intent=verify` on `POST /api/v1/usage/reserve`) is the **primary product outcome**. It requires an **active** Stripe-backed subscription on **Team, Business, or Enterprise** (including **trialing**). **Starter** accounts may sign in and obtain an API key but **cannot** pass license preflight for `verify` until they subscribe (`VERIFICATION_REQUIRES_SUBSCRIPTION`). **Monthly quota** still applies after entitlement allows the run.
 
-## Why `enforce` is the paid gate
+**OSS builds** from source (`WF_BUILD_PROFILE=oss`) do not call the license server and are not subscription-gated—see README and [`commercial-enforce-gate-normative.md`](commercial-enforce-gate-normative.md).
 
-**Enforcement** (`workflow-verifier enforce …`, `intent=enforce`) is how verification becomes a **CI/CD or deployment gate**. That “depend on correctness” use is the qualitative upgrade: it requires a **paid plan** (`team`, `business`, or `enterprise`) with an **active** Stripe-backed subscription (or emergency override—see below).
+## Why `enforce` and CI locks share the same paid gate
 
-## Why `starter` cannot `enforce`
+**Enforcement** (`workflow-verifier enforce …`, `intent=enforce`) and **CI lock** flags on batch/quick verify (`--output-lock` / `--expect-lock`) use **`intent=enforce`** on reserve. Both require the same **active subscription** on a paid-capable plan as licensed `verify`.
 
-The **starter** plan is for evaluation and debugging. It never includes **enforce** entitlement; attempts return `ENFORCEMENT_REQUIRES_PAID_PLAN` with an upgrade URL.
+## Why `starter` cannot `verify` or `enforce` on commercial npm
+
+The **starter** plan is an **account + upgrade path** only on the commercial surface. **`verify`** returns `VERIFICATION_REQUIRES_SUBSCRIPTION`; **`enforce`** returns `ENFORCEMENT_REQUIRES_PAID_PLAN`, each with an upgrade URL.
 
 ## `RESERVE_EMERGENCY_ALLOW`
 
-When `RESERVE_EMERGENCY_ALLOW=1` on the server, the **subscription check for paid-plan `enforce` only** is waived (operations break-glass). **Starter `enforce` remains denied.** **Quota and idempotency still apply**—emergency does not bypass monthly limits.
+When `RESERVE_EMERGENCY_ALLOW=1` on the server, the **subscription check for paid-plan `verify` and `enforce`** is waived (operations break-glass). **Starter `verify` and `enforce` remain denied.** **Quota and idempotency still apply**—emergency does not bypass monthly limits.
 
 ## Pricing surface (normative user-visible lines)
 
 The `/pricing` page must show the following two lines **verbatim** (drift is caught by `test/commercial-pricing-policy-parity.test.mjs` and Playwright).
 
 <!-- commercial-pricing-lines-begin -->
-Verification uses your monthly API quota and is not blocked by subscription status.
-CI and deployment enforcement (the enforce command) requires Team or Business with an active paid subscription.
+Licensed verification with the published npm CLI requires an active Team, Business, or Enterprise subscription (trial counts); monthly quota applies after subscribe.
+CI locks, the enforce command, and quick verify with lock flags use the same subscription requirement.
 <!-- commercial-pricing-lines-end -->

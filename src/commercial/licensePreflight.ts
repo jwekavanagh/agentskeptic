@@ -87,6 +87,15 @@ export async function runLicensePreflightIfNeeded(
               `${body.message || "Enforcement requires a paid plan."}${suffix}`,
             );
           }
+          if (body.code === "VERIFICATION_REQUIRES_SUBSCRIPTION") {
+            const suffix = body.upgrade_url
+              ? ` ${body.upgrade_url}`
+              : "";
+            throw new TruthLayerError(
+              CLI_OPERATIONAL_CODES.VERIFICATION_REQUIRES_SUBSCRIPTION,
+              `${body.message || "Licensed verification requires an active subscription."}${suffix}`,
+            );
+          }
           throw new TruthLayerError(
             CLI_OPERATIONAL_CODES.LICENSE_DENIED,
             body.message || `License check failed (${body.code}).`,

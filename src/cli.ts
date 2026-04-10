@@ -15,7 +15,7 @@ import { buildExecutionTraceView, formatExecutionTraceText } from "./executionTr
 import { loadEventsForWorkflow } from "./loadEvents.js";
 import { verifyWorkflow } from "./pipeline.js";
 import { argValue, argValues, parseBatchVerifyCliArgs, parseQuickCliArgs } from "./cliArgv.js";
-import { runEnforce } from "./enforceCli.js";
+import { ENFORCE_OSS_GATE_MESSAGE, runEnforce } from "./enforceCli.js";
 import { runStandardVerifyWorkflowCliFlow } from "./standardVerifyWorkflowCli.js";
 import {
   formatRegistryValidationHumanReport,
@@ -56,6 +56,8 @@ import type { QuickContractExport } from "./quickVerify/buildQuickContractEvents
 import { checkAssuranceReportStale } from "./assurance/checkStale.js";
 import { runAssuranceFromManifest } from "./assurance/runAssurance.js";
 import { runLicensePreflightIfNeeded } from "./commercial/licensePreflight.js";
+import { LICENSE_PREFLIGHT_ENABLED } from "./generated/commercialBuildFlags.js";
+import { runBatchCiLockFromRestArgs, runQuickCiLockFromRestArgs } from "./ciLockWorkflow.js";
 
 function usageQuick(): string {
   return `Usage:
@@ -83,6 +85,9 @@ function usageVerify(): string {
   workflow-verifier --workflow-id <id> --events <path> --registry <path> --db <sqlitePath>
   workflow-verifier --workflow-id <id> --events <path> --registry <path> --postgres-url <url>
 
+  Optional CI lock (commercial build; same as enforce batch): append exactly one of
+  --output-lock <path> or --expect-lock <path> (requires active subscription; see docs/ci-enforcement.md).
+
 Optional consistency (default strong):
   --consistency strong|eventual
   With eventual, required:
@@ -101,7 +106,7 @@ Exit codes:
   1  workflow status inconsistent
   2  workflow status incomplete
   3  operational failure (see stderr JSON)
-  4  enforce subcommand only: CI lock mismatch (stdout: WorkflowResult line; stderr: envelope after human report if any)
+  4  CI lock mismatch with --expect-lock (stdout: WorkflowResult line; stderr: envelope after human report if any)
 
   workflow-verifier compare --prior <path> [--prior <path> ...] --current <path>
   Compare saved WorkflowResult JSON files (local only; see docs).
@@ -428,6 +433,39 @@ async function runQuickSubcommand(args: string[]): Promise<void> {
   if (args.includes("--help") || args.includes("-h")) {
     console.log(usageQuick());
     process.exit(0);
+  }
+  const expectLockQ = argValue(args, "--expect-lock");
+  const outputLockQ = argValue(args, "--output-lock");
+  const hasExpectQ = expectLockQ !== undefined;
+  const hasOutputQ = outputLockQ !== undefined;
+  if (hasExpectQ && hasOutputQ) {
+    writeCliError(
+      CLI_OPERATIONAL_CODES.ENFORCE_USAGE,
+      "quick requires exactly one of --expect-lock <path> or --output-lock <path>.",
+    );
+    process.exit(3);
+  }
+  if (hasExpectQ !== hasOutputQ) {
+    if (!LICENSE_PREFLIGHT_ENABLED) {
+      writeCliError(
+        CLI_OPERATIONAL_CODES.ENFORCE_REQUIRES_COMMERCIAL_BUILD,
+        `${ENFORCE_OSS_GATE_MESSAGE} --output-lock/--expect-lock on quick requires the commercial build.`,
+      );
+      process.exit(3);
+    }
+    try {
+      await runLicensePreflightIfNeeded("enforce");
+    } catch (e) {
+      if (e instanceof TruthLayerError) {
+        writeCliError(e.code, e.message);
+        process.exit(3);
+      }
+      const msg = e instanceof Error ? e.message : String(e);
+      writeCliError(CLI_OPERATIONAL_CODES.INTERNAL_ERROR, formatOperationalMessage(msg));
+      process.exit(3);
+    }
+    await runQuickCiLockFromRestArgs(args);
+    return;
   }
   let pq;
   try {
@@ -984,6 +1022,38 @@ async function main(): Promise<void> {
   if (args.includes("--help") || args.includes("-h")) {
     console.log(usageVerify());
     process.exit(0);
+  }
+
+  const expectLockB = argValue(args, "--expect-lock");
+  const outputLockB = argValue(args, "--output-lock");
+  const hasExpectB = expectLockB !== undefined;
+  const hasOutputB = outputLockB !== undefined;
+  if (hasExpectB && hasOutputB) {
+    writeCliError(
+      CLI_OPERATIONAL_CODES.ENFORCE_USAGE,
+      "batch verify requires exactly one of --expect-lock <path> or --output-lock <path>.",
+    );
+    process.exit(3);
+  }
+  if (hasExpectB !== hasOutputB) {
+    if (!LICENSE_PREFLIGHT_ENABLED) {
+      writeCliError(
+        CLI_OPERATIONAL_CODES.ENFORCE_REQUIRES_COMMERCIAL_BUILD,
+        `${ENFORCE_OSS_GATE_MESSAGE} --output-lock/--expect-lock on batch verify requires the commercial build.`,
+      );
+      process.exit(3);
+    }
+    try {
+      await runLicensePreflightIfNeeded("enforce");
+    } catch (e) {
+      if (e instanceof TruthLayerError) {
+        writeCliError(e.code, e.message);
+        process.exit(3);
+      }
+      throw e;
+    }
+    await runBatchCiLockFromRestArgs(args);
+    return;
   }
 
   let parsedBatch;

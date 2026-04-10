@@ -153,7 +153,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     const message =
       ent.denyCode === "ENFORCEMENT_REQUIRES_PAID_PLAN"
         ? "Enforcing correctness in workflows requires a paid plan."
-        : "Subscription is not active for enforcement.";
+        : ent.denyCode === "VERIFICATION_REQUIRES_SUBSCRIPTION"
+          ? "Licensed contract verification requires an active subscription. Subscribe (trial available) from pricing, then use your API key with the commercial CLI."
+          : "Subscription is not active for licensed verification or CI enforcement.";
     console.error(
       JSON.stringify({
         kind: "reserve_entitlement_deny",

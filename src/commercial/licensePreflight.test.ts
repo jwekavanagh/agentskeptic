@@ -56,6 +56,27 @@ describe("runLicensePreflightIfNeeded", () => {
     expect(JSON.parse(init.body as string)).toMatchObject({ intent: "enforce" });
   });
 
+  it("throws VERIFICATION_REQUIRES_SUBSCRIPTION when server returns that code", async () => {
+    process.env.WORKFLOW_VERIFIER_API_KEY = "wf_sk_live_test";
+    vi.mocked(fetch).mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          allowed: false,
+          code: "VERIFICATION_REQUIRES_SUBSCRIPTION",
+          message: "Subscribe first.",
+          upgrade_url: "https://example.com/pricing",
+        }),
+        { status: 403, headers: { "Content-Type": "application/json" } },
+      ),
+    );
+    await expect(runLicensePreflightIfNeeded("verify")).rejects.toSatisfy(
+      (e: unknown) =>
+        e instanceof TruthLayerError &&
+        e.code === CLI_OPERATIONAL_CODES.VERIFICATION_REQUIRES_SUBSCRIPTION &&
+        e.message.includes("https://example.com/pricing"),
+    );
+  });
+
   it("throws ENFORCEMENT_REQUIRES_PAID_PLAN when server returns that code", async () => {
     process.env.WORKFLOW_VERIFIER_API_KEY = "wf_sk_live_test";
     vi.mocked(fetch).mockResolvedValue(
