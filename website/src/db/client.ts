@@ -10,6 +10,8 @@ import * as schema from "./schema";
  * is still a valid `PgDatabase`. `postgres` connects lazily on first query; static pages that skip DB
  * still build. Set `DATABASE_URL` for any route that runs SQL.
  */
+console.error("[db] DATABASE_URL present:", !!process.env.DATABASE_URL);
+
 const connectionString =
   process.env.DATABASE_URL ??
   "postgresql://127.0.0.1:5432/workflow_verifier_build_placeholder";
