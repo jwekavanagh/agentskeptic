@@ -60,6 +60,8 @@ The homepage **Try it** flow calls `POST /api/demo/verify`, which runs the same 
 
 Architecture, contracts, and operator checklist: **[`docs/website-product-experience.md`](../docs/website-product-experience.md)**.
 
+**Partner quickstart (repo root):** `npm run partner-quickstart` (see root `package.json`). **`/integrate`** renders generated **[`docs/partner-quickstart-commands.md`](../docs/partner-quickstart-commands.md)** then **[`docs/first-run-integration.md`](../docs/first-run-integration.md)**.
+
 ## Stripe webhooks and env (commercial)
 
 Configure Stripe to send at least:

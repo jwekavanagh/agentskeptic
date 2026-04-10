@@ -1,0 +1,1 @@
+{"schemaVersion":1,"workflowId":"wf_partner","seq":0,"type":"tool_observed","toolId":"crm.upsert_contact","params":{"recordId":"partner_1","fields":{"name":"You","status":"active"}}}

@@ -4,6 +4,7 @@ import remarkGfm from "remark-gfm";
 import { siteMetadata } from "@/content/siteMetadata";
 import { resolveFirstRunIntegrationMd } from "@/lib/resolveRepoDoc";
 import type { Metadata } from "next";
+import { FirstRunActivationGuide } from "./FirstRunActivationGuide";
 
 export const metadata: Metadata = {
   title: siteMetadata.integrate.title,
@@ -27,6 +28,8 @@ export default function IntegratePage() {
   const md = readFileSync(resolved, "utf8");
   return (
     <main className="integrate-main">
+      <FirstRunActivationGuide />
+      <h2 className="integrate-full-doc-heading">Full integration guide (prose SSOT)</h2>
       <article className="integrate-prose">
         <ReactMarkdown remarkPlugins={[remarkGfm]}>{md}</ReactMarkdown>
       </article>

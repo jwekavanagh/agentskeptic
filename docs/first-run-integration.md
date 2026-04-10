@@ -4,7 +4,7 @@ This is the **single integrator path** for running Workflow Verifier against **y
 
 **Why one path:** One document reduces drift between the website, README, and ad-hoc partner notes. **Production and CI** should use the **published npm package** `workflow-verifier` with a **`WORKFLOW_VERIFIER_API_KEY`** and your deployed license server so quotas and entitlements apply. **Building from this repository** with the default **`WF_BUILD_PROFILE=oss`** is for **local development, forks, and air-gapped** **`verify`**; **`enforce`** requires a commercial build — [README.md](../README.md), **[`docs/commercial-enforce-gate-normative.md`](commercial-enforce-gate-normative.md)**.
 
-Send this to someone who should **try it in one sitting**. Everything below is copy-pasteable; no other reading required.
+Send this to someone who should **try it in one sitting**. **All shell commands** for the bundled partner quickstart live in **[partner-quickstart-commands.md](partner-quickstart-commands.md)** (generated; do not duplicate here). This file is **prose, semantics, and guarantees** only.
 
 ## 1. What this does
 
@@ -32,81 +32,17 @@ This builds, seeds **`examples/demo.db`**, runs two workflows from the bundled f
 
 ## 4. Step 2: Try on your system (minimal)
 
-### A. Save this NDJSON as `partner-events.ndjson`
+Canonical partner files (do not duplicate their contents in this doc):
 
-One line = one observed tool call. Use your own `workflowId`; it must match the CLI flag.
+| File | Role |
+|------|------|
+| **`examples/partner-quickstart/partner.events.ndjson`** | One NDJSON line per observed tool call; **`workflowId`** is **`wf_partner`**. |
+| **`examples/partner-quickstart/partner.tools.json`** | Registry for **`crm.upsert_contact`**. |
+| **`examples/partner-quickstart/partner.seed.sql`** | `CREATE TABLE contacts` + row for **`partner_1`**. |
 
-```
-{"schemaVersion":1,"workflowId":"wf_partner","seq":0,"type":"tool_observed","toolId":"crm.upsert_contact","params":{"recordId":"partner_1","fields":{"name":"You","status":"active"}}}
-```
+**Fast path:** from the repository root, use the linked commands document above — start with **`npm run partner-quickstart`** (SQLite) or set **`PARTNER_POSTGRES_URL`** for Postgres.
 
-### B. Save this registry as `partner-tools.json`
-
-```json
-[
-  {
-    "toolId": "crm.upsert_contact",
-    "effectDescriptionTemplate": "Upsert contact {/recordId} with fields {/fields}",
-    "verification": {
-      "kind": "sql_row",
-      "table": { "const": "contacts" },
-      "identityEq": [
-        {
-          "column": { "const": "id" },
-          "value": { "pointer": "/recordId" }
-        }
-      ],
-      "requiredFields": { "pointer": "/fields" }
-    }
-  }
-]
-```
-
-### C. Create a tiny database that matches the log
-
-**SQLite — Node only** (same stack as the demo; works on macOS, Linux, and Windows). Save this as **`partner-seed.sql`** next to where you will run the command:
-
-```sql
-CREATE TABLE contacts (id TEXT PRIMARY KEY, name TEXT, status TEXT);
-INSERT INTO contacts (id, name, status) VALUES ('partner_1', 'You', 'active');
-```
-
-Then:
-
-```bash
-node --input-type=module -e "import { readFileSync } from 'node:fs'; import { DatabaseSync } from 'node:sqlite'; const d=new DatabaseSync('partner.db'); d.exec(readFileSync('partner-seed.sql','utf8')); d.close();"
-```
-
-**SQLite — if you have the `sqlite3` CLI:**
-
-```bash
-sqlite3 partner.db < partner-seed.sql
-```
-
-**Postgres** (example—use your URL, user, and DB):
-
-```sql
-CREATE TABLE contacts (id TEXT PRIMARY KEY, name TEXT, status TEXT);
-INSERT INTO contacts (id, name, status) VALUES ('partner_1', 'You', 'active');
-```
-
-### D. Run verification
-
-**SQLite:**
-
-```bash
-npm run build
-node dist/cli.js --workflow-id wf_partner --events partner-events.ndjson --registry partner-tools.json --db partner.db
-```
-
-**Postgres** (exactly one of `--db` or `--postgres-url`):
-
-```bash
-npm run build
-node dist/cli.js --workflow-id wf_partner --events partner-events.ndjson --registry partner-tools.json --postgres-url "postgresql://USER:PASS@HOST:5432/DBNAME"
-```
-
-To force a mismatch, delete that row or change `name`/`status` in the DB and run again—you should get **`inconsistent`** with **`ROW_ABSENT`** or a field mismatch in the report.
+To force a mismatch after a successful run, delete that row or change `name`/`status` in the DB and run verification again—you should get **`inconsistent`** with **`ROW_ABSENT`** or a field mismatch in the report.
 
 ## 5. What success looks like
 
@@ -140,7 +76,7 @@ The human report on stderr will state that the workflow **matched the database**
 - **`--workflow-id` mismatch** — must match `workflowId` in the NDJSON lines you want verified.
 - **Missing registry entry** — every `toolId` in the log needs a matching object in **`tools.json`**.
 - **Params vs registry** — JSON pointers like **`/recordId`** and **`/fields`** must exist on `params` for that tool line.
-- **SQLite seed command** — run it from the directory where **`partner-seed.sql`** lives (or fix the path inside **`readFileSync(...)`**).
+- **Commands out of date** — regenerate `docs/partner-quickstart-commands.md` with **`node scripts/generate-partner-quickstart-commands.mjs`** after changing quickstart wiring (CI checks this).
 - **Node SQLite warning** — `ExperimentalWarning: SQLite is...` on stderr is from Node; it does not mean verification failed.
 
 ---

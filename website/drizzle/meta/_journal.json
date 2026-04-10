@@ -15,6 +15,13 @@
       "when": 1775695065000,
       "tag": "0001_funnel_event",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1775695066000,
+      "tag": "0002_funnel_reserve_allowed",
+      "breakpoints": true
     }
   ]
 }

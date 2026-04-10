@@ -17,3 +17,19 @@ export function resolveFirstRunIntegrationMd(): string | null {
   }
   return null;
 }
+
+const PARTNER_COMMANDS_NAME = "partner-quickstart-commands.md";
+
+/**
+ * Resolve `docs/partner-quickstart-commands.md` (generated command SSOT).
+ */
+export function resolvePartnerQuickstartCommandsMd(): string | null {
+  const candidates = [
+    path.join(process.cwd(), "docs", PARTNER_COMMANDS_NAME),
+    path.join(process.cwd(), "..", "docs", PARTNER_COMMANDS_NAME),
+  ];
+  for (const p of candidates) {
+    if (existsSync(p)) return p;
+  }
+  return null;
+}

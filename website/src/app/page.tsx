@@ -156,6 +156,17 @@ export default function HomePage() {
       </section>
     ),
     tryIt: <TryItSection key="tryIt" />,
+    commercialSurface: (
+      <section
+        key="commercialSurface"
+        className="home-section"
+        data-testid={productCopy.uiTestIds.commercialSurface}
+        aria-labelledby="commercial-surface-heading"
+      >
+        <h2 id="commercial-surface-heading">{productCopy.commercialSurface.title}</h2>
+        <p>{productCopy.commercialSurface.body}</p>
+      </section>
+    ),
     nextSteps: (
       <section
         key="nextSteps"

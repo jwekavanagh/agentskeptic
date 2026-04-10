@@ -7,6 +7,7 @@ export const HOME_SECTION_ORDER = [
   "guarantees",
   "example",
   "tryIt",
+  "commercialSurface",
   "nextSteps",
 ] as const;
 

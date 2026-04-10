@@ -1,10 +1,11 @@
 import { existsSync } from "node:fs";
 import path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { resolveFirstRunIntegrationMd } from "@/lib/resolveRepoDoc";
+import { resolveFirstRunIntegrationMd, resolvePartnerQuickstartCommandsMd } from "@/lib/resolveRepoDoc";
 
 const repoRoot = path.resolve(__dirname, "..", "..");
 const docPath = path.join(repoRoot, "docs", "first-run-integration.md");
+const commandsPath = path.join(repoRoot, "docs", "partner-quickstart-commands.md");
 
 describe("resolveFirstRunIntegrationMd", () => {
   afterEach(() => {
@@ -22,6 +23,26 @@ describe("resolveFirstRunIntegrationMd", () => {
     vi.spyOn(process, "cwd").mockReturnValue(path.join(repoRoot, "website"));
     const p = resolveFirstRunIntegrationMd();
     expect(p).toBe(docPath);
+    expect(existsSync(p!)).toBe(true);
+  });
+});
+
+describe("resolvePartnerQuickstartCommandsMd", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("returns path from monorepo root cwd", () => {
+    vi.spyOn(process, "cwd").mockReturnValue(repoRoot);
+    const p = resolvePartnerQuickstartCommandsMd();
+    expect(p).toBe(commandsPath);
+    expect(existsSync(p!)).toBe(true);
+  });
+
+  it("returns path from website/ cwd", () => {
+    vi.spyOn(process, "cwd").mockReturnValue(path.join(repoRoot, "website"));
+    const p = resolvePartnerQuickstartCommandsMd();
+    expect(p).toBe(commandsPath);
     expect(existsSync(p!)).toBe(true);
   });
 });

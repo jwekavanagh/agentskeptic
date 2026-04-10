@@ -13,8 +13,16 @@ This document explains how the commercial Next.js site works and points to **nor
 
 ## Integrator
 
-- **First run on your database (SSOT):** [`docs/first-run-integration.md`](first-run-integration.md) — same content as site route **`/integrate`** ([`website/src/app/integrate/page.tsx`](../website/src/app/integrate/page.tsx), resolves `docs/` via [`website/src/lib/resolveRepoDoc.ts`](../website/src/lib/resolveRepoDoc.ts)).
+- **Dual SSOT:** [`docs/partner-quickstart-commands.md`](partner-quickstart-commands.md) (generated) is the **sole** source for copy-paste shell commands. [`docs/first-run-integration.md`](first-run-integration.md) is the **sole** prose SSOT (semantics, guarantees, mistakes). Regenerate commands with **`node scripts/generate-partner-quickstart-commands.mjs`**; CI checks via **`npm run check-partner-quickstart-ssot`**.
+- **`/integrate`:** [`website/src/app/integrate/page.tsx`](../website/src/app/integrate/page.tsx) renders [`FirstRunActivationGuide`](../website/src/app/integrate/FirstRunActivationGuide.tsx) (reads `docs/partner-quickstart-commands.md` via [`resolvePartnerQuickstartCommandsMd`](../website/src/lib/resolveRepoDoc.ts)) **above** the full markdown of `first-run-integration.md` (same resolver family as [`resolveFirstRunIntegrationMd`](../website/src/lib/resolveRepoDoc.ts)).
 - **Bundled demo scenarios** on the homepage map to the same three `workflowId` values as the CLI examples; allowlist and contracts remain in [`website/src/lib/demoScenarioIds.ts`](../website/src/lib/demoScenarioIds.ts) and [`website/src/lib/demoVerify.contract.ts`](../website/src/lib/demoVerify.contract.ts).
+
+## Funnel / observability (code normative)
+
+- **Commercial funnel metadata (Zod):** [`website/src/lib/funnelCommercialMetadata.ts`](../website/src/lib/funnelCommercialMetadata.ts) — `reserve_allowed` and `checkout_started` jsonb shapes; used only from reserve and checkout routes.
+- **Repeat-day analytics:** [`website/src/lib/funnelObservabilityQueries.ts`](../website/src/lib/funnelObservabilityQueries.ts) — `countDistinctReserveDaysForUser`; do not copy SQL elsewhere.
+- **E2E proof:** [`website/__tests__/funnel-observability-chain.integration.test.ts`](../website/__tests__/funnel-observability-chain.integration.test.ts) runs under **`npm run validate-commercial`** (full `vitest run` from `website/`).
+- **Migrations:** extending `funnel_event.event` CHECK requires a new `website/drizzle/0002_*.sql` **and** a matching entry in [`website/drizzle/meta/_journal.json`](../website/drizzle/meta/_journal.json).
 
 ## Operator
 

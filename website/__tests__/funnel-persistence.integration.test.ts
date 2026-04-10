@@ -8,7 +8,7 @@ import { recordSignInFunnel } from "@/lib/recordSignInFunnel";
 import { sql, eq } from "drizzle-orm";
 import { NextRequest } from "next/server";
 import type Stripe from "stripe";
-import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/auth", () => ({
   auth: vi.fn(),
@@ -21,25 +21,33 @@ vi.mock("@/lib/stripeServer", () => ({
 import { auth } from "@/auth";
 import { getStripe } from "@/lib/stripeServer";
 
-beforeAll(() => {
-  if (!process.env.DATABASE_URL?.trim()) {
-    throw new Error("DATABASE_URL is required for funnel-persistence.integration.test.ts");
-  }
-});
+type AuthSessionValue =
+  | {
+      user: { id: string; email: string; name: string | null };
+    }
+  | null;
+type AuthMock = {
+  mockReset(): void;
+  mockResolvedValue(value: AuthSessionValue): void;
+};
+const authMock = auth as unknown as AuthMock;
 
-async function truncateAll(): Promise<void> {
-  await db.execute(sql`
+const hasDatabaseUrl = Boolean(process.env.DATABASE_URL?.trim());
+
+describe.skipIf(!hasDatabaseUrl)("funnel persistence integration", () => {
+  async function truncateAll(): Promise<void> {
+    await db.execute(sql`
     TRUNCATE funnel_event, stripe_event, usage_reservation, usage_counter, api_key, session, account, "verificationToken", "user" RESTART IDENTITY CASCADE
   `);
-}
+  }
 
-beforeEach(async () => {
-  await truncateAll();
-  vi.mocked(auth).mockReset();
-  vi.mocked(getStripe).mockReset();
-});
+  beforeEach(async () => {
+    await truncateAll();
+    authMock.mockReset();
+    vi.mocked(getStripe).mockReset();
+  });
 
-describe("CHECK constraint on funnel_event.event", () => {
+  describe("CHECK constraint on funnel_event.event", () => {
   it("rejects invalid event with 23514", async () => {
     await expect(
       db.execute(sql`INSERT INTO funnel_event (event) VALUES ('invalid_event_literal')`),
@@ -103,9 +111,9 @@ describe("checkout_started", () => {
       .insert(users)
       .values({ email: "checkout-1@example.com", emailVerified: new Date() })
       .returning();
-    vi.mocked(auth).mockResolvedValue({
+    authMock.mockResolvedValue({
       user: { id: u!.id, email: "checkout-1@example.com", name: null },
-    } as Awaited<ReturnType<typeof auth>>);
+    });
     vi.mocked(getStripe).mockReturnValue({
       checkout: {
         sessions: {
@@ -124,12 +132,17 @@ describe("checkout_started", () => {
     const rows = await db.select().from(funnelEvents).where(eq(funnelEvents.event, "checkout_started"));
     expect(rows).toHaveLength(1);
     expect(rows[0]?.userId).toBe(u!.id);
+    expect(rows[0]?.metadata).toEqual({
+      schema_version: 1,
+      plan: "team",
+      post_activation: false,
+    });
   });
 });
 
 describe("unauthenticated checkout", () => {
   it("returns 401 and does not insert checkout_started", async () => {
-    vi.mocked(auth).mockResolvedValue(null);
+    authMock.mockResolvedValue(null);
     const req = new NextRequest("http://localhost/api/checkout", {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -183,9 +196,9 @@ describe("api_key_created", () => {
       .insert(users)
       .values({ email: "key-1@example.com", emailVerified: new Date() })
       .returning();
-    vi.mocked(auth).mockResolvedValue({
+    authMock.mockResolvedValue({
       user: { id: u!.id, email: "key-1@example.com", name: null },
-    } as Awaited<ReturnType<typeof auth>>);
+    });
 
     const res = await postCreateKey();
     expect(res.status).toBe(200);
@@ -193,4 +206,6 @@ describe("api_key_created", () => {
     expect(rows).toHaveLength(1);
     expect(rows[0]?.userId).toBe(u!.id);
   });
+});
+
 });

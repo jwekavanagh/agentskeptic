@@ -9,6 +9,8 @@ import {
   type SubscriptionStatusForEntitlement,
 } from "@/lib/commercialEntitlement";
 import type { PlanId } from "@/lib/plans";
+import { buildReserveAllowedMetadata } from "@/lib/funnelCommercialMetadata";
+import { logFunnelEvent } from "@/lib/funnelEvent";
 import { loadCommercialPlans } from "@/lib/plans";
 
 function ymNow(): string {
@@ -292,6 +294,12 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         { status: 403 },
       );
     }
+
+    await logFunnelEvent({
+      event: "reserve_allowed",
+      userId: row.user.id,
+      metadata: buildReserveAllowedMetadata(intent),
+    });
 
     return NextResponse.json(result);
   } catch (e) {

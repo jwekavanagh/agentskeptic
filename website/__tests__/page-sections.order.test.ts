@@ -11,16 +11,19 @@ describe("HOME_SECTION_ORDER", () => {
       "guarantees",
       "example",
       "tryIt",
+      "commercialSurface",
       "nextSteps",
     ]);
   });
 
-  it("places tryIt before nextSteps and example before tryIt", () => {
+  it("places tryIt before commercialSurface and nextSteps; example before tryIt", () => {
     const ex = HOME_SECTION_ORDER.indexOf("example");
     const tr = HOME_SECTION_ORDER.indexOf("tryIt");
+    const cs = HOME_SECTION_ORDER.indexOf("commercialSurface");
     const nx = HOME_SECTION_ORDER.indexOf("nextSteps");
     expect(ex).toBeLessThan(tr);
-    expect(tr).toBeLessThan(nx);
+    expect(tr).toBeLessThan(cs);
+    expect(cs).toBeLessThan(nx);
   });
 
   it("excludes pricing", () => {

@@ -14,6 +14,7 @@ export const productCopy = {
     guarantees: "home-guarantees",
     example: "home-example",
     tryIt: "home-try-it",
+    commercialSurface: "home-commercial-surface",
     nextSteps: "home-next-steps",
     tryTruthReport: "try-truth-report",
     tryWorkflowJson: "try-workflow-json",
@@ -77,6 +78,12 @@ export const productCopy = {
     runButton: "Run verification",
     running: "Running…",
     scenarioLabel: "Scenario",
+  },
+
+  commercialSurface: {
+    title: "Commercial surface (what the product charges for)",
+    body:
+      "Building from this repository with the default OSS profile gives you contract verify without an API key. The published npm package with an API key adds metered reservation against your account, and Team or Business with an active subscription unlocks enforcement (enforce) in CI—those are the explicit in-product reasons to choose a paid tier, alongside higher monthly verification limits.",
   },
 
   nextSteps: {
