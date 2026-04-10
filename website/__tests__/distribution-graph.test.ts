@@ -1,8 +1,7 @@
 import { spawn, execSync, execFileSync, type ChildProcess } from "node:child_process";
-import { readFileSync, readdirSync, mkdtempSync, rmSync } from "node:fs";
-import { join } from "node:path";
+import { readFileSync, readdirSync, mkdtempSync, rmSync, existsSync } from "node:fs";
+import { dirname, join } from "node:path";
 import { tmpdir } from "node:os";
-import { once } from "node:events";
 import { createRequire } from "node:module";
 import { describe, expect, beforeAll, afterAll, it } from "vitest";
 import { extract as extractTar } from "tar";
@@ -84,10 +83,23 @@ describe(
       rmSync(packDest, { recursive: true, force: true });
       rmSync(extractDir, { recursive: true, force: true });
 
-      child = spawn("npm", ["run", "start", "--", "-H", "127.0.0.1", "-p", "34100"], {
-        cwd: join(repoRoot, "website"),
+      const websiteDir = join(repoRoot, "website");
+      const requireWebsite = createRequire(join(websiteDir, "package.json"));
+      const nextBin = join(
+        dirname(requireWebsite.resolve("next/package.json")),
+        "dist",
+        "bin",
+        "next",
+      );
+      if (!existsSync(nextBin)) {
+        throw new Error(
+          `distribution-graph: Next.js CLI missing at ${nextBin} (install website dependencies)`,
+        );
+      }
+      child = spawn(process.execPath, [nextBin, "start", "-H", "127.0.0.1", "-p", "34100"], {
+        cwd: websiteDir,
         env: process.env,
-        stdio: "pipe",
+        stdio: "ignore",
         detached: false,
       });
 
@@ -165,13 +177,39 @@ describe(
 
     afterAll(async () => {
       if (!child) return;
-      child.kill("SIGTERM");
-      await Promise.race([
-        once(child, "close"),
-        new Promise((_, rej) =>
-          setTimeout(() => rej(new Error("distribution-graph: next start did not exit")), 5000),
-        ),
-      ]);
+      const proc = child;
+
+      async function waitClose(ms: number): Promise<void> {
+        if (proc.exitCode !== null || proc.signalCode !== null) return;
+        await new Promise<void>((resolve, reject) => {
+          const t = setTimeout(() => {
+            proc.off("close", onClose);
+            reject(new Error("distribution-graph: wait for process close timed out"));
+          }, ms);
+          const onClose = () => {
+            clearTimeout(t);
+            resolve();
+          };
+          proc.once("close", onClose);
+        });
+      }
+
+      proc.kill("SIGTERM");
+      try {
+        await waitClose(20_000);
+        return;
+      } catch {
+        /* Next may ignore or delay SIGTERM; escalate */
+      }
+
+      if (proc.exitCode === null && proc.signalCode === null) {
+        proc.kill("SIGKILL");
+        try {
+          await waitClose(10_000);
+        } catch {
+          throw new Error("distribution-graph: next start did not exit");
+        }
+      }
     });
 
     it("suite setup completed in beforeAll", () => {
