@@ -84,7 +84,7 @@ async function runEnforceBatch(restArgs: string[]): Promise<void> {
 
   let result: WorkflowResult;
   try {
-    await runLicensePreflightIfNeeded();
+    await runLicensePreflightIfNeeded("enforce");
     result = await runBatchVerifyToValidatedResult(runVerify);
   } catch (e) {
     if (e instanceof TruthLayerError) {
@@ -188,6 +188,18 @@ async function runEnforceQuick(restArgs: string[]): Promise<void> {
       process.exit(3);
     }
     throw e;
+  }
+
+  try {
+    await runLicensePreflightIfNeeded("enforce");
+  } catch (e) {
+    if (e instanceof TruthLayerError) {
+      writeCliError(e.code, e.message);
+      process.exit(3);
+    }
+    const msg = e instanceof Error ? e.message : String(e);
+    writeCliError(CLI_OPERATIONAL_CODES.INTERNAL_ERROR, formatOperationalMessage(msg));
+    process.exit(3);
   }
 
   let inputUtf8: string;

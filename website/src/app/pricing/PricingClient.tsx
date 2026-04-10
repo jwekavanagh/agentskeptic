@@ -43,6 +43,16 @@ export function PricingClient({ plans }: { plans: PlanRow[] }) {
   return (
     <>
       {err && <p className="error-text">{err}</p>}
+      <section
+        className="muted"
+        style={{ marginTop: "1rem", maxWidth: "42rem" }}
+        aria-label="Commercial terms"
+      >
+        <p>Verification uses your monthly API quota and is not blocked by subscription status.</p>
+        <p>
+          CI and deployment enforcement (the enforce command) requires Team or Business with an active paid subscription.
+        </p>
+      </section>
       <div className="pricing-grid" style={{ marginTop: "1.5rem" }}>
         {plans.map((p) => (
           <div key={p.id} className="card" data-plan={p.id}>

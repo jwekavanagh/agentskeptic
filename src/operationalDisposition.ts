@@ -477,4 +477,13 @@ export const OPERATIONAL_DISPOSITION = {
     recommendedAction: "manual_review",
     automationSafe: false,
   },
+  [CLI_OPERATIONAL_CODES.ENFORCEMENT_REQUIRES_PAID_PLAN]: {
+    origin: "workflow_flow",
+    summary:
+      "Enforcement (CI gate) requires a paid plan; verification without enforcement remains available within quota.",
+    actionableCategory: "control_flow_problem",
+    actionableSeverity: "high",
+    recommendedAction: "manual_review",
+    automationSafe: false,
+  },
 } as const satisfies Record<OperationalCode, OperationalDispositionRow>;

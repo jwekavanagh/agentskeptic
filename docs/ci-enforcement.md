@@ -2,6 +2,10 @@
 
 This document is the **integrator SSOT** for pinning verification outcomes in CI. Lock **shape** is defined only in [`schemas/ci-lock-v1.schema.json`](../schemas/ci-lock-v1.schema.json). **Exit codes and stdout/stderr** for `enforce` are defined only in [workflow-verifier.md — Enforce stream contract (normative)](workflow-verifier.md#enforce-stream-contract-normative).
 
+## Prerequisites (commercial CLI)
+
+**`enforce` in the commercial build** requires a **Team** or **Business** plan with an **active** subscription and a valid API key; see the generated matrix [`commercial-entitlement-matrix.md`](commercial-entitlement-matrix.md) and policy rationale [`commercial-entitlement-policy.md`](commercial-entitlement-policy.md). **Verification** (`batch` / `quick`) without **`enforce`** uses monthly quota and is **not** gated on subscription status.
+
 ## What the lock pins (semantics)
 
 The **`ci-lock-v1`** object is a deterministic projection of the verification result:

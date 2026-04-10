@@ -22,6 +22,13 @@ function resolveConfigDir(): string {
 
 export type PlanId = "starter" | "team" | "business" | "enterprise";
 
+/** Plans that may use `enforce` when `subscriptionStatus === "active"`. */
+export const paidEnforcementPlanIds: readonly PlanId[] = [
+  "team",
+  "business",
+  "enterprise",
+];
+
 export type CommercialPlansFile = {
   schemaVersion: number;
   plans: Record<

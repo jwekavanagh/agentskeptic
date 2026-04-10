@@ -37,8 +37,44 @@ describe("runLicensePreflightIfNeeded", () => {
         headers: { "Content-Type": "application/json" },
       }),
     );
-    await runLicensePreflightIfNeeded();
+    await runLicensePreflightIfNeeded("verify");
     expect(fetch).toHaveBeenCalled();
+    const init = vi.mocked(fetch).mock.calls[0]![1] as RequestInit;
+    expect(JSON.parse(init.body as string)).toMatchObject({ intent: "verify" });
+  });
+
+  it("sends intent enforce when requested", async () => {
+    process.env.WORKFLOW_VERIFIER_API_KEY = "wf_sk_live_test";
+    vi.mocked(fetch).mockResolvedValue(
+      new Response(JSON.stringify({ allowed: true, plan: "team", limit: 100, used: 1 }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+    await runLicensePreflightIfNeeded("enforce");
+    const init = vi.mocked(fetch).mock.calls[0]![1] as RequestInit;
+    expect(JSON.parse(init.body as string)).toMatchObject({ intent: "enforce" });
+  });
+
+  it("throws ENFORCEMENT_REQUIRES_PAID_PLAN when server returns that code", async () => {
+    process.env.WORKFLOW_VERIFIER_API_KEY = "wf_sk_live_test";
+    vi.mocked(fetch).mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          allowed: false,
+          code: "ENFORCEMENT_REQUIRES_PAID_PLAN",
+          message: "Enforcing correctness in workflows requires a paid plan.",
+          upgrade_url: "https://example.com/pricing",
+        }),
+        { status: 403, headers: { "Content-Type": "application/json" } },
+      ),
+    );
+    await expect(runLicensePreflightIfNeeded("enforce")).rejects.toSatisfy(
+      (e: unknown) =>
+        e instanceof TruthLayerError &&
+        e.code === CLI_OPERATIONAL_CODES.ENFORCEMENT_REQUIRES_PAID_PLAN &&
+        e.message.includes("https://example.com/pricing"),
+    );
   });
 
   it("throws LICENSE_DENIED on 403 body", async () => {
@@ -49,7 +85,7 @@ describe("runLicensePreflightIfNeeded", () => {
         { status: 403, headers: { "Content-Type": "application/json" } },
       ),
     );
-    await expect(runLicensePreflightIfNeeded()).rejects.toSatisfy(
+    await expect(runLicensePreflightIfNeeded("verify")).rejects.toSatisfy(
       (e: unknown) =>
         e instanceof TruthLayerError &&
         e.code === CLI_OPERATIONAL_CODES.LICENSE_DENIED &&

@@ -3,11 +3,37 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db/client";
 import { apiKeys, usageCounters, usageReservations, users } from "@/db/schema";
 import { sha256Hex, verifyApiKey } from "@/lib/apiKeyCrypto";
+import {
+  resolveCommercialEntitlement,
+  type ReserveIntent,
+  type SubscriptionStatusForEntitlement,
+} from "@/lib/commercialEntitlement";
 import type { PlanId } from "@/lib/plans";
 import { loadCommercialPlans } from "@/lib/plans";
 
 function ymNow(): string {
   return new Date().toISOString().slice(0, 7);
+}
+
+function publicUpgradeUrl(): string {
+  const base = (process.env.NEXT_PUBLIC_APP_URL ?? "http://127.0.0.1:3000").replace(
+    /\/$/,
+    "",
+  );
+  return `${base}/pricing`;
+}
+
+function parseIntent(raw: unknown): ReserveIntent | null {
+  if (raw === undefined || raw === null) return "verify";
+  if (raw === "verify" || raw === "enforce") return raw;
+  return null;
+}
+
+function normalizeSubscriptionStatus(
+  raw: string,
+): SubscriptionStatusForEntitlement | null {
+  if (raw === "none" || raw === "active" || raw === "inactive") return raw;
+  return null;
 }
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
@@ -19,12 +45,19 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     );
   }
   const rawKey = auth.slice(7).trim();
-  let body: { run_id?: string; issued_at?: string };
+  let body: { run_id?: string; issued_at?: string; intent?: unknown };
   try {
-    body = (await req.json()) as { run_id?: string; issued_at?: string };
+    body = (await req.json()) as { run_id?: string; issued_at?: string; intent?: unknown };
   } catch {
     return NextResponse.json(
       { allowed: false, code: "BAD_REQUEST", message: "Invalid JSON body." },
+      { status: 400 },
+    );
+  }
+  const intent = parseIntent(body.intent);
+  if (intent === null) {
+    return NextResponse.json(
+      { allowed: false, code: "BAD_REQUEST", message: "Invalid intent." },
       { status: 400 },
     );
   }
@@ -93,23 +126,54 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     );
   }
 
-  const limit =
-    planDef.includedMonthly === null ? Number.MAX_SAFE_INTEGER : planDef.includedMonthly;
-  const emergency = process.env.RESERVE_EMERGENCY_ALLOW === "1";
-
-  const needsActiveSub =
-    planId === "team" || planId === "business" || planId === "enterprise";
-
-  if (!emergency && needsActiveSub && row.user.subscriptionStatus !== "active") {
+  const subNorm = normalizeSubscriptionStatus(row.user.subscriptionStatus);
+  if (subNorm === null) {
     return NextResponse.json(
       {
         allowed: false,
-        code: "SUBSCRIPTION_INACTIVE",
-        message: "Subscription is not active for this plan.",
+        code: "SERVER_ERROR",
+        message: "Invalid subscription_status in database.",
+      },
+      { status: 500 },
+    );
+  }
+
+  const emergencyAllow = process.env.RESERVE_EMERGENCY_ALLOW === "1";
+  const ent = resolveCommercialEntitlement({
+    planId,
+    subscriptionStatus: subNorm,
+    intent,
+    emergencyAllow,
+  });
+
+  if (!ent.proceedToQuota) {
+    const upgrade_url = publicUpgradeUrl();
+    const message =
+      ent.denyCode === "ENFORCEMENT_REQUIRES_PAID_PLAN"
+        ? "Enforcing correctness in workflows requires a paid plan."
+        : "Subscription is not active for enforcement.";
+    console.error(
+      JSON.stringify({
+        kind: "reserve_entitlement_deny",
+        intent,
+        plan: planId,
+        subscriptionStatus: subNorm,
+        code: ent.denyCode,
+      }),
+    );
+    return NextResponse.json(
+      {
+        allowed: false,
+        code: ent.denyCode,
+        message,
+        upgrade_url,
       },
       { status: 403 },
     );
   }
+
+  const limit =
+    planDef.includedMonthly === null ? Number.MAX_SAFE_INTEGER : planDef.includedMonthly;
 
   const yearMonth = ymNow();
 
@@ -190,7 +254,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
       const used = locked[0]!.count;
 
-      if (!emergency && used >= limit) {
+      if (used >= limit) {
         return {
           denied: true as const,
           code: "QUOTA_EXCEEDED" as const,

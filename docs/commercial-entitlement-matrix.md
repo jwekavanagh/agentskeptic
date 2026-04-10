@@ -1,0 +1,55 @@
+# Commercial entitlement matrix (generated)
+
+Do not edit by hand. Source: `config/commercial-entitlement-matrix.v1.json`.
+Regenerate with `node scripts/sync-commercial-entitlement-doc.mjs`.
+
+| plan | subscriptionStatus | intent | emergencyAllow | expectProceedToQuota | expectedDenyCode |
+|------|------------------|--------|----------------|----------------------|------------------|
+| starter | none | verify | false | true | null |
+| starter | none | verify | true | true | null |
+| starter | none | enforce | false | false | ENFORCEMENT_REQUIRES_PAID_PLAN |
+| starter | none | enforce | true | false | ENFORCEMENT_REQUIRES_PAID_PLAN |
+| starter | active | verify | false | true | null |
+| starter | active | verify | true | true | null |
+| starter | active | enforce | false | false | ENFORCEMENT_REQUIRES_PAID_PLAN |
+| starter | active | enforce | true | false | ENFORCEMENT_REQUIRES_PAID_PLAN |
+| starter | inactive | verify | false | true | null |
+| starter | inactive | verify | true | true | null |
+| starter | inactive | enforce | false | false | ENFORCEMENT_REQUIRES_PAID_PLAN |
+| starter | inactive | enforce | true | false | ENFORCEMENT_REQUIRES_PAID_PLAN |
+| team | none | verify | false | true | null |
+| team | none | verify | true | true | null |
+| team | none | enforce | false | false | SUBSCRIPTION_INACTIVE |
+| team | none | enforce | true | true | null |
+| team | active | verify | false | true | null |
+| team | active | verify | true | true | null |
+| team | active | enforce | false | true | null |
+| team | active | enforce | true | true | null |
+| team | inactive | verify | false | true | null |
+| team | inactive | verify | true | true | null |
+| team | inactive | enforce | false | false | SUBSCRIPTION_INACTIVE |
+| team | inactive | enforce | true | true | null |
+| business | none | verify | false | true | null |
+| business | none | verify | true | true | null |
+| business | none | enforce | false | false | SUBSCRIPTION_INACTIVE |
+| business | none | enforce | true | true | null |
+| business | active | verify | false | true | null |
+| business | active | verify | true | true | null |
+| business | active | enforce | false | true | null |
+| business | active | enforce | true | true | null |
+| business | inactive | verify | false | true | null |
+| business | inactive | verify | true | true | null |
+| business | inactive | enforce | false | false | SUBSCRIPTION_INACTIVE |
+| business | inactive | enforce | true | true | null |
+| enterprise | none | verify | false | true | null |
+| enterprise | none | verify | true | true | null |
+| enterprise | none | enforce | false | false | SUBSCRIPTION_INACTIVE |
+| enterprise | none | enforce | true | true | null |
+| enterprise | active | verify | false | true | null |
+| enterprise | active | verify | true | true | null |
+| enterprise | active | enforce | false | true | null |
+| enterprise | active | enforce | true | true | null |
+| enterprise | inactive | verify | false | true | null |
+| enterprise | inactive | verify | true | true | null |
+| enterprise | inactive | enforce | false | false | SUBSCRIPTION_INACTIVE |
+| enterprise | inactive | enforce | true | true | null |

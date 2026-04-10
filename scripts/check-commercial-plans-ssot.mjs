@@ -5,6 +5,7 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { spawnSync } from "node:child_process";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const jsonPath = path.join(root, "config", "commercial-plans.json");
@@ -27,3 +28,10 @@ for (const n of required) {
 }
 
 console.log("check-commercial-plans-ssot: ok");
+
+const sync = spawnSync(
+  process.execPath,
+  ["scripts/sync-commercial-entitlement-doc.mjs", "--check"],
+  { cwd: root, stdio: "inherit" },
+);
+if (sync.status !== 0) process.exit(sync.status ?? 1);

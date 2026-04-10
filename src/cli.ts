@@ -440,6 +440,17 @@ async function runQuickSubcommand(args: string[]): Promise<void> {
     throw e;
   }
   const { inputPath, exportPath, emitEventsPath, workflowIdQuick, dbPath, postgresUrl } = pq;
+  try {
+    await runLicensePreflightIfNeeded("verify");
+  } catch (e) {
+    if (e instanceof TruthLayerError) {
+      writeCliError(e.code, e.message);
+      process.exit(3);
+    }
+    const msg = e instanceof Error ? e.message : String(e);
+    writeCliError(CLI_OPERATIONAL_CODES.INTERNAL_ERROR, formatOperationalMessage(msg));
+    process.exit(3);
+  }
   let inputUtf8: string;
   try {
     inputUtf8 = inputPath === "-" ? readFileSync(0, "utf8") : readFileSync(path.resolve(inputPath), "utf8");
@@ -987,7 +998,7 @@ async function main(): Promise<void> {
   }
 
   try {
-    await runLicensePreflightIfNeeded();
+    await runLicensePreflightIfNeeded("verify");
   } catch (e) {
     if (e instanceof TruthLayerError) {
       writeCliError(e.code, e.message);

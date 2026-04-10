@@ -6,6 +6,7 @@ import { db } from "@/db/client";
 import { stripeEvents, users } from "@/db/schema";
 import type { PlanId } from "@/lib/plans";
 import { getStripe } from "@/lib/stripeServer";
+import { subscriptionStatusFromStripe } from "@/lib/stripeSubscriptionStatus";
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   const body = await req.text();
@@ -55,6 +56,20 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
           })
           .where(eq(users.id, userId));
       }
+    }
+
+    /*
+     * Stripe subscription.status → DB subscription_status (see subscriptionStatusFromStripe):
+     * active, trialing → active; canceled, unpaid, past_due, incomplete_expired, incomplete, paused → inactive.
+     */
+    if (event.type === "customer.subscription.updated") {
+      const sub = event.data.object as Stripe.Subscription;
+      const customerId = typeof sub.customer === "string" ? sub.customer : sub.customer.id;
+      const nextStatus = subscriptionStatusFromStripe(sub.status);
+      await db
+        .update(users)
+        .set({ subscriptionStatus: nextStatus })
+        .where(eq(users.stripeCustomerId, customerId));
     }
 
     if (event.type === "customer.subscription.deleted") {

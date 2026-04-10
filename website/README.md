@@ -59,3 +59,19 @@ The homepage **Try it** flow calls `POST /api/demo/verify`, which runs the same 
   ```
 
 Architecture, contracts, and operator checklist: **[`docs/website-product-experience.md`](../docs/website-product-experience.md)**.
+
+## Stripe webhooks and env (commercial)
+
+Configure Stripe to send at least:
+
+- **`checkout.session.completed`** — checkout success; user plan / subscription updates.
+- **`customer.subscription.updated`** — keeps **`subscription_status`** in sync (**`active`** vs **`inactive`**).
+- **`customer.subscription.deleted`** — subscription ended.
+
+Set **`STRIPE_WEBHOOK_SECRET`** from `stripe listen --forward-to …/api/webhooks/stripe`. Use a Postgres **`DATABASE_URL`** with migrations applied.
+
+Optional: **`RESERVE_EMERGENCY_ALLOW=1`** waives the **paid-plan + active subscription** check for **`intent=enforce`** only (never for starter). Quota still applies.
+
+## Root package `prepublishOnly` (commercial CLI)
+
+The repo root **`package.json`** runs **`prepublishOnly` → `node scripts/build-commercial.mjs`**. That commercial TypeScript build **requires** **`COMMERCIAL_LICENSE_API_BASE_URL`** set to your deployed site origin (the base URL for **`/api/v1/usage/reserve`**) so **`scripts/write-commercial-build-flags.mjs`** can embed the license API base in the published binary.

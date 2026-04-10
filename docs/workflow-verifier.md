@@ -462,6 +462,17 @@ When the CLI exits **3**, **stderr** is exactly **one** UTF-8 line: a JSON objec
 
 **stdout** must be empty on exit **3**. Automation should key on **`code`**, not exact **`message`**, for driver-dependent errors.
 
+### Commercial license preflight (commercial CLI build)
+
+When **`LICENSE_PREFLIGHT_ENABLED`** is true (commercial npm profile), the CLI may call the hosted **`POST /api/v1/usage/reserve`** before batch verify, quick verify, or **`enforce`**. Operational **`code`** values on exit **3** include:
+
+- **`LICENSE_KEY_MISSING`** — no **`WORKFLOW_VERIFIER_API_KEY`**
+- **`LICENSE_DENIED`** — reserve denied (quota, generic 403, etc.)
+- **`LICENSE_USAGE_UNAVAILABLE`** — reserve unreachable after retries
+- **`ENFORCEMENT_REQUIRES_PAID_PLAN`** — **`enforce`** on a starter-tier API key (upgrade path; message may include **`upgrade_url`**)
+
+**Why verify vs enforce differ:** see **[`docs/commercial-entitlement-policy.md`](commercial-entitlement-policy.md)** (rationale and normative entitlement matrix links).
+
 **`COMPARE_INPUT_RUN_LEVEL_INCONSISTENT`:** Emitted when **`workflow-verifier compare`** loads a saved workflow result that validates as **frozen v9** (`schemas/workflow-result-v9.schema.json`) but fails the v9 consistency rule: `runLevelCodes.length === runLevelReasons.length` and `runLevelCodes[i] === runLevelReasons[i].code` for every index **`i`**. **`message`** is exactly: **`Compare input workflow result: runLevelCodes and runLevelReasons are inconsistent.`**
 
 ### Human truth report

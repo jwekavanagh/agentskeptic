@@ -11,11 +11,14 @@ function sleep(ms: number): Promise<void> {
   return new Promise((r) => setTimeout(r, ms));
 }
 
+export type LicensePreflightIntent = "verify" | "enforce";
+
 type ReserveOk = { allowed: true; plan: string; limit: number; used: number };
 type ReserveDeny = {
   allowed: false;
   code: string;
   message: string;
+  upgrade_url?: string;
 };
 
 type ReserveBody = ReserveOk | ReserveDeny;
@@ -24,7 +27,9 @@ type ReserveBody = ReserveOk | ReserveDeny;
  * Before contract-mode verification (commercial npm build), contact license API.
  * No-op when LICENSE_PREFLIGHT_ENABLED is false (OSS profile).
  */
-export async function runLicensePreflightIfNeeded(): Promise<void> {
+export async function runLicensePreflightIfNeeded(
+  intent: LicensePreflightIntent = "verify",
+): Promise<void> {
   if (!LICENSE_PREFLIGHT_ENABLED) return;
 
   const apiKey = process.env.WORKFLOW_VERIFIER_API_KEY?.trim();
@@ -49,7 +54,7 @@ export async function runLicensePreflightIfNeeded(): Promise<void> {
           Authorization: `Bearer ${apiKey}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ run_id: runId, issued_at: issuedAt }),
+        body: JSON.stringify({ run_id: runId, issued_at: issuedAt, intent }),
       });
 
       const text = await res.text();
@@ -73,6 +78,15 @@ export async function runLicensePreflightIfNeeded(): Promise<void> {
 
       if (!res.ok) {
         if (body && body.allowed === false) {
+          if (body.code === "ENFORCEMENT_REQUIRES_PAID_PLAN") {
+            const suffix = body.upgrade_url
+              ? ` ${body.upgrade_url}`
+              : "";
+            throw new TruthLayerError(
+              CLI_OPERATIONAL_CODES.ENFORCEMENT_REQUIRES_PAID_PLAN,
+              `${body.message || "Enforcement requires a paid plan."}${suffix}`,
+            );
+          }
           throw new TruthLayerError(
             CLI_OPERATIONAL_CODES.LICENSE_DENIED,
             body.message || `License check failed (${body.code}).`,
