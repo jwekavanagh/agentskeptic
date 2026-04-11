@@ -76,7 +76,7 @@ describe.skipIf(!hasDatabaseUrl)("GET /api/account/commercial-state", () => {
     expect(j.checkoutActivationReady).toBe(true);
     expect(j.plan).toBe("team");
     expect(j.priceMapping).toBe("mapped");
-    expect(j.entitlementSummary).toContain("is available on this account");
+    expect(j.entitlementSummary).toContain("is enabled");
   });
 
   it("returns checkoutActivationReady false without expectedPlan query", async () => {

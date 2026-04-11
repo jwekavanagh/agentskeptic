@@ -20,35 +20,35 @@ export type AccountEntitlementSummaryInput = {
  */
 const MAPPED_SUMMARY: Record<`${PlanId}|${SubscriptionStatusForEntitlement}`, string> = {
   "starter|none":
-    "Licensed contract verify (npm) requires a paid Individual, Team, Business, or Enterprise subscription—see Pricing. Enforce and CI lock flows require the same; Starter cannot use these features.",
+    "Licensed verification (npm) needs a paid Individual, Team, Business, or Enterprise plan—see Pricing. Enforcement and CI locks need the same (not available on Starter).",
   "starter|active":
-    "Licensed contract verify (npm) requires a paid Individual, Team, Business, or Enterprise subscription—see Pricing. Enforce and CI lock flows require the same; Starter cannot use these features.",
+    "Licensed verification (npm) needs a paid Individual, Team, Business, or Enterprise plan—see Pricing. Enforcement and CI locks need the same (not available on Starter).",
   "starter|inactive":
-    "Licensed contract verify (npm) requires a paid Individual, Team, Business, or Enterprise subscription—see Pricing. Enforce and CI lock flows require the same; Starter cannot use these features.",
+    "Licensed verification (npm) needs a paid Individual, Team, Business, or Enterprise plan—see Pricing. Enforcement and CI locks need the same (not available on Starter).",
   "individual|none":
-    "Licensed contract verify (npm) requires an active subscription. Enforce and CI lock flows require an active subscription.",
+    "Licensed verification (npm) needs an active subscription. Enforcement and CI locks need an active subscription.",
   "individual|active":
-    "Licensed contract verify (npm) is available on this account. Enforce and CI lock flows are available on this account.",
+    "Licensed verification (npm) is enabled. Enforcement and CI locks are enabled.",
   "individual|inactive":
-    "Licensed contract verify (npm) requires an active subscription. Enforce and CI lock flows require an active subscription.",
+    "Licensed verification (npm) needs an active subscription. Enforcement and CI locks need an active subscription.",
   "team|none":
-    "Licensed contract verify (npm) requires an active subscription. Enforce and CI lock flows require an active subscription.",
+    "Licensed verification (npm) needs an active subscription. Enforcement and CI locks need an active subscription.",
   "team|active":
-    "Licensed contract verify (npm) is available on this account. Enforce and CI lock flows are available on this account.",
+    "Licensed verification (npm) is enabled. Enforcement and CI locks are enabled.",
   "team|inactive":
-    "Licensed contract verify (npm) requires an active subscription. Enforce and CI lock flows require an active subscription.",
+    "Licensed verification (npm) needs an active subscription. Enforcement and CI locks need an active subscription.",
   "business|none":
-    "Licensed contract verify (npm) requires an active subscription. Enforce and CI lock flows require an active subscription.",
+    "Licensed verification (npm) needs an active subscription. Enforcement and CI locks need an active subscription.",
   "business|active":
-    "Licensed contract verify (npm) is available on this account. Enforce and CI lock flows are available on this account.",
+    "Licensed verification (npm) is enabled. Enforcement and CI locks are enabled.",
   "business|inactive":
-    "Licensed contract verify (npm) requires an active subscription. Enforce and CI lock flows require an active subscription.",
+    "Licensed verification (npm) needs an active subscription. Enforcement and CI locks need an active subscription.",
   "enterprise|none":
-    "Licensed contract verify (npm) requires an active subscription. Enforce and CI lock flows require an active subscription.",
+    "Licensed verification (npm) needs an active subscription. Enforcement and CI locks need an active subscription.",
   "enterprise|active":
-    "Licensed contract verify (npm) is available on this account. Enforce and CI lock flows are available on this account.",
+    "Licensed verification (npm) is enabled. Enforcement and CI locks are enabled.",
   "enterprise|inactive":
-    "Licensed contract verify (npm) requires an active subscription. Enforce and CI lock flows require an active subscription.",
+    "Licensed verification (npm) needs an active subscription. Enforcement and CI locks need an active subscription.",
 };
 
 function assertMatchesResolver(
@@ -72,10 +72,11 @@ function assertMatchesResolver(
   const eOk = enforce.proceedToQuota;
   const expectBoth = vOk && eOk;
   const expectNeither = !vOk && !eOk;
-  if (expectBoth && !(MAPPED_SUMMARY[key]?.includes("is available"))) {
-    throw new Error(`accountEntitlementSummary drift: ${key} expected available copy`);
+  const summary = MAPPED_SUMMARY[key] ?? "";
+  if (expectBoth && !summary.includes("is enabled")) {
+    throw new Error(`accountEntitlementSummary drift: ${key} expected enabled copy`);
   }
-  if (expectNeither && MAPPED_SUMMARY[key]?.includes("is available")) {
+  if (expectNeither && summary.includes("is enabled")) {
     throw new Error(`accountEntitlementSummary drift: ${key} expected unavailable copy`);
   }
   if (vOk !== eOk) {
@@ -84,7 +85,7 @@ function assertMatchesResolver(
 }
 
 const UNMAPPED_SUFFIX_INTRO =
-  " Stripe billing is active but this deployment cannot map your price to a product plan.";
+  " This deployment could not match your Stripe price to a product plan.";
 
 function unmappedSuffix(operatorContactEmail: string | null | undefined): string {
   const trimmed = operatorContactEmail?.trim();

@@ -1,3 +1,5 @@
+import "@testing-library/jest-dom/vitest";
+
 /**
  * Defaults so `npx vitest run` works without a full .env when tests do not need real secrets.
  * Funnel persistence tests still require DATABASE_URL and throw in beforeAll if unset.

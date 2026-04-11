@@ -2,10 +2,26 @@
 
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { publicProductAnchors } from "@/lib/publicProductAnchors";
 import type { CommercialAccountStatePayload } from "@/lib/commercialAccountState";
+import type { PriceMapping } from "@/lib/accountEntitlementSummary";
 
 const ghMain = `${publicProductAnchors.gitRepositoryUrl}/blob/main`;
+
+function billingSyncDisplay(mapping: PriceMapping): { label: string; title: string } {
+  if (mapping === "mapped") {
+    return {
+      label: "Billing sync: OK",
+      title: "Stripe price is mapped to your plan for quota and entitlements.",
+    };
+  }
+  return {
+    label: "Billing sync: needs attention",
+    title:
+      "Stripe reported a price this deployment does not recognize. Entitlements may be wrong until an operator fixes configuration.",
+  };
+}
 
 export function AccountClient({
   hasKey,
@@ -22,6 +38,8 @@ export function AccountClient({
   const [err, setErr] = useState<string | null>(null);
   const [commercial, setCommercial] = useState<CommercialAccountStatePayload>(initialCommercial);
   const [activationUi, setActivationUi] = useState<"idle" | "pending" | "ready" | "timeout">("idle");
+
+  const billing = billingSyncDisplay(commercial.priceMapping);
 
   useEffect(() => {
     setCommercial(initialCommercial);
@@ -78,6 +96,8 @@ export function AccountClient({
     if (j.apiKey) setKey(j.apiKey);
   }
 
+  const showInactiveBillingCta = commercial.subscriptionStatus === "inactive";
+
   return (
     <div className="card" style={{ marginTop: "1rem" }}>
       <h2>Subscription and entitlements</h2>
@@ -87,9 +107,29 @@ export function AccountClient({
       <p>
         <strong>Subscription status:</strong> {commercial.subscriptionStatus}
       </p>
-      <p>
-        <strong>Stripe price mapping:</strong> {commercial.priceMapping}
+      <p title={billing.title}>
+        <strong>Billing:</strong> {billing.label}
       </p>
+      {showInactiveBillingCta && (
+        <div
+          className="muted"
+          style={{
+            marginTop: "0.75rem",
+            padding: "0.75rem 1rem",
+            border: "1px solid var(--muted)",
+            borderRadius: "6px",
+          }}
+          data-testid="inactive-subscription-notice"
+        >
+          <p style={{ margin: 0 }}>
+            Your subscription is not active, so licensed verification and enforcement are paused. Update
+            payment in your billing provider or choose a plan again.
+          </p>
+          <p style={{ margin: "0.5rem 0 0" }}>
+            <Link href="/pricing">View pricing and subscribe</Link>
+          </p>
+        </div>
+      )}
       {checkout === "success" && expectedPlanRaw && (
         <div style={{ marginTop: "0.75rem" }}>
           {activationUi === "pending" && (
@@ -128,8 +168,7 @@ export function AccountClient({
         Use <code>WORKFLOW_VERIFIER_API_KEY</code> with the commercial CLI after you have an active paid
         subscription. Machine contracts:{" "}
         <a href="/openapi-commercial-v1.yaml">OpenAPI</a>,{" "}
-        <a href="/api/v1/commercial/plans">plans JSON</a>. Start from <a href="/integrate">Integrate</a> for a
-        copy-paste first run on your database. Entitlements:{" "}
+        <a href="/api/v1/commercial/plans">plans JSON</a>. Entitlements:{" "}
         <a href={`${ghMain}/docs/commercial-entitlement-matrix.md`} rel="noreferrer">
           commercial-entitlement-matrix.md
         </a>
@@ -138,6 +177,17 @@ export function AccountClient({
           commercial-entitlement-policy.md
         </a>
         . <a href="/pricing">Pricing</a>.
+      </p>
+
+      <h2 style={{ marginTop: "1.5rem" }}>Next steps</h2>
+      <p style={{ marginTop: "0.35rem" }}>
+        <Link href="/integrate">Run your first verification</Link> — step-by-step commands you can paste
+        for your database.
+      </p>
+      <p className="muted" style={{ marginTop: "0.5rem", fontSize: "0.95rem" }}>
+        Commercial CLI: set <code>WORKFLOW_VERIFIER_API_KEY</code>, then run{" "}
+        <code style={{ wordBreak: "break-all" }}>npx workflow-verifier verify …</code> from your repo (see
+        Integrate for the full command).
       </p>
     </div>
   );
