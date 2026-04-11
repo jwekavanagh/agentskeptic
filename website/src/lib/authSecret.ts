@@ -3,7 +3,7 @@
  * production and `next build` must set AUTH_SECRET (or NEXTAUTH_SECRET).
  */
 const DEV_FALLBACK =
-  "workflow-verifier-dev-only-never-use-in-production-32chars";
+  "agentskeptic-dev-only-never-use-in-production-thirty-two-chars";
 
 let devWarned = false;
 

@@ -4,7 +4,7 @@ This document explains how the commercial Next.js site works and points to **nor
 
 ## Engineer
 
-- **Demo runner:** [`website/src/lib/demoVerify.ts`](../website/src/lib/demoVerify.ts) — `runDemoVerifyScenario` calls `verifyWorkflow` from the `workflow-verifier` package against repo `examples/` fixtures, captures truth report text, validates emitted JSON with `loadSchemaValidator("workflow-result")`.
+- **Demo runner:** [`website/src/lib/demoVerify.ts`](../website/src/lib/demoVerify.ts) — `runDemoVerifyScenario` calls `verifyWorkflow` from the `agentskeptic` package against repo `examples/` fixtures, captures truth report text, validates emitted JSON with `loadSchemaValidator("workflow-result")`.
 - **Fixture resolution:** [`website/src/lib/resolveRepoExamples.ts`](../website/src/lib/resolveRepoExamples.ts) — probes `examples/` under `process.cwd()` and parent (supports dev from `website/` or repo root).
 - **HTTP API:** [`website/src/app/api/demo/verify/route.ts`](../website/src/app/api/demo/verify/route.ts) — `POST` only for verification; `GET` returns `405` + `DEMO_METHOD_NOT_ALLOWED`.
 - **Wire contract (Zod):** [`website/src/lib/demoVerify.contract.ts`](../website/src/lib/demoVerify.contract.ts) — success and error body shapes; error codes are stable strings.

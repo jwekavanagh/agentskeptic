@@ -3,7 +3,7 @@
 ## Engineer
 
 - [README](../README.md)
-- [Examples in workflow-verifier SSOT](agentskeptic.md#examples)
+- [Examples in AgentSkeptic SSOT](agentskeptic.md#examples)
 
 ## Integrator
 

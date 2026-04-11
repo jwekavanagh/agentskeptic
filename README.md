@@ -17,14 +17,14 @@ Teams ship agent and automation workflows where traces, tool responses, and succ
 <!-- public-product-anchors:start -->
 State verification engine: read-only SQL checks that database state matches expectations from structured tool activity (not arbitrary logs)—not proof of execution
 
-- **Repository:** https://github.com/jwekavanagh/workflow-verifier
+- **Repository:** https://github.com/jwekavanagh/agentskeptic
 - **npm package:** https://www.npmjs.com/package/agentskeptic
 - **Canonical site:** https://agentskeptic.com
 - **Integrate:** https://agentskeptic.com/integrate
 - **OpenAPI (canonical):** https://agentskeptic.com/openapi-commercial-v1.yaml
 - **llms.txt (agents, site):** https://agentskeptic.com/llms.txt
-- **llms.txt (repo, raw):** https://raw.githubusercontent.com/jwekavanagh/workflow-verifier/refs/heads/main/llms.txt
-- **llms.txt (repo, blob):** https://github.com/jwekavanagh/workflow-verifier/blob/main/llms.txt
+- **llms.txt (repo, raw):** https://raw.githubusercontent.com/jwekavanagh/agentskeptic/refs/heads/main/llms.txt
+- **llms.txt (repo, blob):** https://github.com/jwekavanagh/agentskeptic/blob/main/llms.txt
 
 <!-- public-product-anchors:end -->
 

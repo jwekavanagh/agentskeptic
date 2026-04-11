@@ -7,7 +7,7 @@ State verification engine: read-only SQL checks that database state matches expe
 - Canonical site: https://agentskeptic.com/
 - First-run integration: https://agentskeptic.com/integrate
 - OpenAPI (canonical): https://agentskeptic.com/openapi-commercial-v1.yaml
-- Source repository: https://github.com/jwekavanagh/workflow-verifier
+- Source repository: https://github.com/jwekavanagh/agentskeptic
 - npm package: https://www.npmjs.com/package/agentskeptic
 
 ## Intent phrases

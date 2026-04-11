@@ -85,7 +85,7 @@ jobs:
     needs: [test, commercial]
     # `secrets` cannot be used in job- or step-level `if` (workflow parse error). Probe the PAT via env in a run step, then gate later steps on outputs.
     # Without DISTRIBUTION_GITHUB_TOKEN the default GITHUB_TOKEN cannot reach distributionConsumerRepository (see scripts/distribution-consumer-pipeline.mjs).
-    if: github.repository == 'jwekavanagh/workflow-verifier' && github.ref == 'refs/heads/main'
+    if: github.repository == 'jwekavanagh/agentskeptic' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
       contents: read

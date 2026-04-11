@@ -160,7 +160,7 @@ export function buildForeignSmokeWorkflowYaml(primary) {
     "          db.exec(readFileSync('examples/seed.sql','utf8'));",
     "          db.close();",
     "          \"",
-    "          npx --yes workflow-verifier@latest --workflow-id wf_complete \\",
+    "          npx --yes agentskeptic@latest --workflow-id wf_complete \\",
     "            --events examples/events.ndjson \\",
     "            --registry examples/tools.json \\",
     "            --db examples/demo.db \\",

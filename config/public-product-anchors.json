@@ -2,10 +2,10 @@
   "identityOneLiner": "State verification engine: read-only SQL checks that database state matches expectations from structured tool activity (not arbitrary logs)—not proof of execution",
   "distributionConsumerRepository": "jwekavanagh/workflow-verifier-distribution-consumer",
   "productionCanonicalOrigin": "https://agentskeptic.com",
-  "gitRepositoryUrl": "https://github.com/jwekavanagh/workflow-verifier",
-  "gitRepositoryGitUrl": "git+https://github.com/jwekavanagh/workflow-verifier.git",
+  "gitRepositoryUrl": "https://github.com/jwekavanagh/agentskeptic",
+  "gitRepositoryGitUrl": "git+https://github.com/jwekavanagh/agentskeptic.git",
   "npmPackageUrl": "https://www.npmjs.com/package/agentskeptic",
-  "bugsUrl": "https://github.com/jwekavanagh/workflow-verifier/issues",
+  "bugsUrl": "https://github.com/jwekavanagh/agentskeptic/issues",
   "keywords": [
     "agentskeptic",
     "agent-skeptic",

@@ -6,10 +6,10 @@
     "site": "https://agentskeptic.com/",
     "integrate": "https://agentskeptic.com/integrate",
     "openapiCanonical": "https://agentskeptic.com/openapi-commercial-v1.yaml",
-    "repo": "https://github.com/jwekavanagh/workflow-verifier",
+    "repo": "https://github.com/jwekavanagh/agentskeptic",
     "npm": "https://www.npmjs.com/package/agentskeptic",
-    "llmsRaw": "https://raw.githubusercontent.com/jwekavanagh/workflow-verifier/refs/heads/main/llms.txt",
-    "llmsBlob": "https://github.com/jwekavanagh/workflow-verifier/blob/main/llms.txt"
+    "llmsRaw": "https://raw.githubusercontent.com/jwekavanagh/agentskeptic/refs/heads/main/llms.txt",
+    "llmsBlob": "https://github.com/jwekavanagh/agentskeptic/blob/main/llms.txt"
   },
   "appendix": {
     "slug": "/database-truth-vs-traces",

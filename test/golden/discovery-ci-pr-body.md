@@ -9,6 +9,6 @@ _(no stderr)_
 
 - https://agentskeptic.com/
 - https://agentskeptic.com/integrate
-- https://github.com/jwekavanagh/workflow-verifier
+- https://github.com/jwekavanagh/agentskeptic
 
 <!-- agentskeptic-discovery:v1 -->

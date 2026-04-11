@@ -56,7 +56,7 @@ export default function LangGraphVerificationGuidePage() {
       </section>
       <p className="lede">
         Normative contracts:{" "}
-        <Link href="https://github.com/jwekavanagh/workflow-verifier/blob/main/docs/shareable-verification-reports.md">
+        <Link href="https://github.com/jwekavanagh/agentskeptic/blob/main/docs/shareable-verification-reports.md">
           docs/shareable-verification-reports.md
         </Link>
         .

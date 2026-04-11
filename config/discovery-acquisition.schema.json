@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://workflow-verifier.local/discovery-acquisition.schema.json",
+  "$id": "https://agentskeptic.local/discovery-acquisition.schema.json",
   "title": "Discovery acquisition SSOT",
   "type": "object",
   "additionalProperties": false,

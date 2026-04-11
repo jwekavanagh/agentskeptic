@@ -69,11 +69,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/jwekavanagh/workflow-verifier.git"
+    "url": "git+https://github.com/jwekavanagh/agentskeptic.git"
   },
   "homepage": "https://agentskeptic.com",
   "bugs": {
-    "url": "https://github.com/jwekavanagh/workflow-verifier/issues"
+    "url": "https://github.com/jwekavanagh/agentskeptic/issues"
   },
   "files": [
     "dist/",
