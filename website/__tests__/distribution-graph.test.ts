@@ -21,6 +21,15 @@ function escapeRegExp(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+/** React escapes `"` in text nodes as `&quot;`; match discovery copy against fetch() HTML after decoding common entities. */
+function htmlForTextNeedleMatch(html: string): string {
+  return html
+    .replace(/&quot;/g, '"')
+    .replace(/&#34;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&#39;/g, "'");
+}
+
 describe(
   "distribution graph",
   { timeout: 180_000 },
@@ -177,10 +186,11 @@ describe(
       expect(acqHtml).toContain(disc.visitorProblemAnswer);
 
       const homeAgain = await (await fetch("http://127.0.0.1:34100/")).text();
-      expect(homeAgain).toContain(disc.heroTitle);
-      expect(homeAgain).toContain(disc.homepageHero.what);
-      expect(homeAgain).toContain(disc.homepageHero.why);
-      expect(homeAgain).toContain(disc.homepageHero.when);
+      const homeAgainText = htmlForTextNeedleMatch(homeAgain);
+      expect(homeAgainText).toContain(disc.heroTitle);
+      expect(homeAgainText).toContain(disc.homepageHero.what);
+      expect(homeAgainText).toContain(disc.homepageHero.why);
+      expect(homeAgainText).toContain(disc.homepageHero.when);
       const ctaNeedle = 'data-testid="homepage-acquisition-cta"';
       const ctaIdx = homeAgain.indexOf(ctaNeedle);
       expect(ctaIdx).toBeGreaterThanOrEqual(0);
