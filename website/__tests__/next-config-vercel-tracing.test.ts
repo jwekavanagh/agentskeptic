@@ -23,7 +23,7 @@ describe("next.config outputFileTracingRoot", () => {
     process.env.VERCEL = "1";
     const mod = await import("../next.config");
     const cfg = mod.default as { outputFileTracingRoot?: string };
-    expect(cfg.outputFileTracingRoot).toBe(path.resolve(path.join(__dirname, "..")));
+    expect(cfg.outputFileTracingRoot).toBe(path.resolve(path.join(__dirname, "..", "..")));
   });
 
   it("omits outputFileTracingRoot when VERCEL unset and NEXT_CONFIG_TRACE_ROOT unset", async () => {

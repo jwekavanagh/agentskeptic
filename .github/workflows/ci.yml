@@ -23,8 +23,8 @@ jobs:
       POSTGRES_ADMIN_URL: postgresql://postgres:postgres@localhost:5432/postgres
       POSTGRES_VERIFICATION_URL: postgresql://verifier_ro:verifier@localhost:5432/postgres
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: "22"
           cache: npm
@@ -57,8 +57,8 @@ jobs:
       STRIPE_PRICE_TEAM: price_ci_team
       STRIPE_PRICE_BUSINESS: price_ci_business
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: "22"
           cache: npm
@@ -103,9 +103,9 @@ jobs:
       - name: Skip distribution consumer (no token)
         if: steps.distro-token.outputs.has == 'false'
         run: echo "DISTRIBUTION_GITHUB_TOKEN is not set; skipping distribution consumer pipeline."
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         if: steps.distro-token.outputs.has == 'true'
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         if: steps.distro-token.outputs.has == 'true'
         with:
           node-version: "22"
