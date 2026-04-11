@@ -83,19 +83,19 @@ test("invalid pageMetadata.description fails schema (negative)", () => {
     schemaVersion: 1,
     slug: "/database-truth-vs-traces",
     visitorProblemAnswer:
-      "Teams ship agent workflows where traces look green while the database row is wrong. Workflow Verifier compares structured tool activity to read-only SQL against SQLite at verification time: it tells you whether observed state matched expectations—not proof of execution.",
+      "Teams ship agent workflows where traces look green while the database row is wrong. AgentSkeptic compares structured tool activity to read-only SQL against SQLite at verification time: it tells you whether observed state matched expectations—not proof of execution.",
     heroTitle: "Your workflow said it worked. Did the database actually change?",
     heroSubtitle:
-      "Workflow Verifier answers with read-only SQL at verification time—not with trace success flags or chat narratives.",
+      "AgentSkeptic answers with read-only SQL at verification time—not with trace success flags or chat narratives.",
     homepageAcquisitionCtaLabel: "Why traces are not database truth",
-    readmeTitle: "Workflow Verifier — when traces say success but your database does not match",
+    readmeTitle: "AgentSkeptic — when traces say success but your database does not match",
     homepageHero: {
       what: "You shipped an agent run and the trace says success. This product runs read-only SQL to check rows.",
       why: "Traces do not prove the row exists with the right values. That gap ships silent failures.",
       when: "Use it after a workflow when you need ground truth before customer-facing actions or a CI gate.",
     },
     pageMetadata: {
-      title: "Database truth vs traces — Workflow Verifier",
+      title: "Database truth vs traces — AgentSkeptic",
       description: "Too short, missing required length and product-law patterns for registry metadata.",
     },
     sections: [

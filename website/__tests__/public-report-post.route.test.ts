@@ -55,12 +55,12 @@ describe("POST /api/public/verification-reports", () => {
       join(root, "website", "src", "content", "embeddedReports", "langgraph-guide.v1.json"),
       "utf8",
     );
-    const req = new NextRequest("http://workflow-verifier.vercel.app/api/public/verification-reports", {
+    const req = new NextRequest("http://agentskeptic.com/api/public/verification-reports", {
       method: "POST",
       headers: {
         "content-type": "application/json",
         "x-forwarded-proto": "https",
-        "host": "workflow-verifier.vercel.app",
+        "host": "agentskeptic.com",
       },
       body: raw,
     });
@@ -70,7 +70,7 @@ describe("POST /api/public/verification-reports", () => {
     expect(json.schemaVersion).toBe(1);
     expect(json.id).toBe("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
     expect(json.url).toBe(
-      "https://workflow-verifier.vercel.app/r/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+      "https://agentskeptic.com/r/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
     );
     expect(insert).toHaveBeenCalled();
   });

@@ -8,7 +8,7 @@ describe("next.config headers for /r/*", () => {
     saved.VERCEL = process.env.VERCEL;
     saved.NEXT_PUBLIC_APP_URL = process.env.NEXT_PUBLIC_APP_URL;
     process.env.VERCEL = "1";
-    process.env.NEXT_PUBLIC_APP_URL = "https://workflow-verifier.vercel.app";
+    process.env.NEXT_PUBLIC_APP_URL = "https://agentskeptic.com";
   });
 
   afterEach(() => {

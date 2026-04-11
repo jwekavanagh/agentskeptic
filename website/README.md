@@ -1,4 +1,4 @@
-# Workflow Verifier — website
+# AgentSkeptic — website
 
 ## Run locally (recommended)
 

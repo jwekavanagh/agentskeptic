@@ -11,7 +11,7 @@ import { SiteHeader } from "./SiteHeader";
 const productJsonLd = {
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
-  name: "Workflow Verifier",
+  name: "AgentSkeptic",
   description: discoveryAcquisition.pageMetadata.description,
   url: publicProductAnchors.productionCanonicalOrigin,
   sameAs: [publicProductAnchors.gitRepositoryUrl, publicProductAnchors.npmPackageUrl],

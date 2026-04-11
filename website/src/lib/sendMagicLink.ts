@@ -12,7 +12,7 @@ export async function sendMagicLink(identifier: string, url: string): Promise<vo
     await transport.sendMail({
       to: identifier,
       from: resolvedMagicLinkFrom(),
-      subject: "Sign in to Workflow Verifier",
+      subject: "Sign in to AgentSkeptic",
       text: `Sign in: ${url}`,
       html: `<p><a href="${url}">Sign in</a></p>`,
     });
@@ -27,7 +27,7 @@ export async function sendMagicLink(identifier: string, url: string): Promise<vo
   const { error } = await resend.emails.send({
     from: resolvedMagicLinkFrom(),
     to: identifier,
-    subject: "Sign in to Workflow Verifier",
+    subject: "Sign in to AgentSkeptic",
     text: `Sign in: ${url}`,
     html: `<p><a href="${url}">Sign in</a></p>`,
   });

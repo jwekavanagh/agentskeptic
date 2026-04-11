@@ -13,7 +13,7 @@ if (!key) {
 
 const stripe = new Stripe(key);
 
-const productName = "Workflow Verifier";
+const productName = "AgentSkeptic";
 
 async function ensurePrice(nickname, unitAmountCents) {
   const products = await stripe.products.list({ limit: 20, active: true });

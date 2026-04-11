@@ -1,15 +1,15 @@
 <!-- discovery-readme-title:start -->
-# Workflow Verifier — when traces say success but your database does not match
+# AgentSkeptic — when traces say success but your database does not match
 <!-- discovery-readme-title:end -->
 
 <!-- discovery-acquisition-fold:start -->
 ## Your workflow said it worked. Did the database actually change?
 
-Workflow Verifier answers with read-only SQL at verification time—not with trace success flags or chat narratives.
+AgentSkeptic answers with read-only SQL at verification time—not with trace success flags or chat narratives.
 
-Teams ship agent and automation workflows where traces, tool responses, and success flags look green while the database row is missing, stale, or wrong. Workflow Verifier closes that gap by comparing structured tool activity to read-only SQL against your SQLite or Postgres at verification time: it tells you whether observed state matched expectations derived from what the workflow claimed—not whether a step narrative sounded successful. It is a snapshot check, not proof of causality or execution.
+Teams ship agent and automation workflows where traces, tool responses, and success flags look green while the database row is missing, stale, or wrong. AgentSkeptic closes that gap by comparing structured tool activity to read-only SQL against your SQLite or Postgres at verification time: it tells you whether observed state matched expectations derived from what the workflow claimed—not whether a step narrative sounded successful. It is a snapshot check, not proof of causality or execution.
 
-[Why traces are not database truth](https://workflow-verifier.vercel.app/database-truth-vs-traces)
+[Why traces are not database truth](https://agentskeptic.com/database-truth-vs-traces)
 <!-- discovery-acquisition-fold:end -->
 
 **One-sentence value:** Read-only SQL checks that your database **at verification time** matches **expectations derived from structured tool activity**—not whether a trace step “succeeded.”
@@ -19,10 +19,10 @@ State verification engine: read-only SQL checks that database state matches expe
 
 - **Repository:** https://github.com/jwekavanagh/workflow-verifier
 - **npm package:** https://www.npmjs.com/package/workflow-verifier
-- **Canonical site:** https://workflow-verifier.vercel.app
-- **Integrate:** https://workflow-verifier.vercel.app/integrate
-- **OpenAPI (canonical):** https://workflow-verifier.vercel.app/openapi-commercial-v1.yaml
-- **llms.txt (agents, site):** https://workflow-verifier.vercel.app/llms.txt
+- **Canonical site:** https://agentskeptic.com
+- **Integrate:** https://agentskeptic.com/integrate
+- **OpenAPI (canonical):** https://agentskeptic.com/openapi-commercial-v1.yaml
+- **llms.txt (agents, site):** https://agentskeptic.com/llms.txt
 - **llms.txt (repo, raw):** https://raw.githubusercontent.com/jwekavanagh/workflow-verifier/refs/heads/main/llms.txt
 - **llms.txt (repo, blob):** https://github.com/jwekavanagh/workflow-verifier/blob/main/llms.txt
 

@@ -51,7 +51,7 @@ DELETE FROM shared_verification_report WHERE id = '<uuid>';
 
 - Server-rendered page using **`VerificationReportView`**: human block + pretty-printed machine JSON from **`payload`**.
 - **`metadata.robots`:** `{ index: false, follow: false }`.
-- **`metadata.title`:** `Workflow Verifier report — ${report_workflow_id} — ${report_status_token}`.
+- **`metadata.title`:** `AgentSkeptic report — ${report_workflow_id} — ${report_status_token}`.
 - **`metadata.description`:** first **240** characters of **`human_text`** with whitespace collapsed to a single line.
 - **`X-Robots-Tag: noindex, nofollow`** is also applied via [`website/next.config.ts`](../website/next.config.ts) **`headers`** for **`/r/:path*`**.
 

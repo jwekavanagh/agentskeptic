@@ -8,7 +8,7 @@
 # Copy to .github/workflows/ in a repo that vendors the same examples/ layout, or run from this monorepo.
 #
 # Ambient discovery (job summary + failure PR comment): normative contract in docs/ambient-ci-distribution.md
-name: Workflow Verifier (commercial CLI)
+name: AgentSkeptic (commercial CLI)
 
 on:
   workflow_dispatch:
@@ -60,7 +60,7 @@ jobs:
             --db examples/demo.db \
             > verify.stdout 2> verify.stderr
 
-      - name: Append Workflow Verifier discovery summary
+      - name: Append AgentSkeptic discovery summary
         if: always()
         run: |
           node "${WFV_REPO_ROOT}/scripts/render-discovery-ci.mjs" summary >> "$GITHUB_STEP_SUMMARY"

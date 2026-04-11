@@ -9,7 +9,7 @@ export async function SiteHeader() {
     <header className="site-header">
       <div className="site-header-inner">
         <Link href="/" className="site-logo">
-          Workflow Verifier
+          AgentSkeptic
         </Link>
         <nav className="site-nav" aria-label="Primary">
           <Link href="/#try-it">Try</Link>

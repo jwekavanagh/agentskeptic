@@ -1,6 +1,6 @@
 # First-run integration (SSOT)
 
-This is the **single integrator path** for running Workflow Verifier against **your own** database and workflow shape. It replaces scattered copies of the same steps elsewhere in the repo.
+This is the **single integrator path** for running AgentSkeptic against **your own** database and workflow shape. It replaces scattered copies of the same steps elsewhere in the repo.
 
 **Why one path:** One document reduces drift between the website, README, and ad-hoc partner notes. **Production and CI** with the **published npm** `workflow-verifier`: complete **Stripe checkout** for a self-serve paid plan (**Individual**, **Team**, or **Business**; trial is fine) or an **Enterprise** arrangement so your account has an **active subscription**, then create a **`WORKFLOW_VERIFIER_API_KEY`** and use your deployed license server—**licensed `verify` / `quick` require that subscription** before each run (see [`commercial-entitlement-policy.md`](commercial-entitlement-policy.md)). **Building from this repository** with the default **`WF_BUILD_PROFILE=oss`** is for **local development, forks, and air-gapped** **`verify`** without a key; **CI locks** (`--output-lock` / `--expect-lock`) and **`enforce`** require a **commercial** build — [README.md](../README.md), **[`docs/commercial-enforce-gate-normative.md`](commercial-enforce-gate-normative.md)**.
 

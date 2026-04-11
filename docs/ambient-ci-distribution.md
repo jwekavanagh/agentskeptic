@@ -1,6 +1,6 @@
 # Ambient CI distribution (GitHub Actions)
 
-Normative contract for **active discovery**: branded Workflow Verifier output appears inside **another repository’s** GitHub Actions run (job summary on every run; pull-request comment on verification failure only).
+Normative contract for **active discovery**: branded AgentSkeptic output appears inside **another repository’s** GitHub Actions run (job summary on every run; pull-request comment on verification failure only).
 
 **Licensing** for the published CLI is unchanged — see [`commercial-ssot.md`](commercial-ssot.md).
 
@@ -77,7 +77,7 @@ permissions:
 
 Run the example workflow on a disposable repo:
 
-1. Open the Actions run → **Job summary** shows the Workflow Verifier discovery block.
+1. Open the Actions run → **Job summary** shows the AgentSkeptic discovery block.
 2. Force a verify failure on a **pull_request** → exactly **one** PR comment appears with the marker.
 3. Push a second failing commit → the **same** comment is **updated** (same comment id in GitHub UI), not a second thread comment.
 

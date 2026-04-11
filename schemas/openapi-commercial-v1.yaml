@@ -1,19 +1,19 @@
 openapi: "3.0.3"
 info:
-  title: Workflow Verifier commercial license API
+  title: AgentSkeptic commercial license API
   version: "1.0.0"
   contact:
-    url: https://workflow-verifier.vercel.app
+    url: https://agentskeptic.com
   x-workflow-verifier-distribution:
     repository: https://github.com/jwekavanagh/workflow-verifier
     npmPackage: https://www.npmjs.com/package/workflow-verifier
-    openApi: https://workflow-verifier.vercel.app/openapi-commercial-v1.yaml
+    openApi: https://agentskeptic.com/openapi-commercial-v1.yaml
   description: "State verification engine: read-only SQL checks that database state matches expectations from structured tool activity (not arbitrary logs)—not proof of execution\n\nMachine-readable contract for license preflight used by the published npm CLI.\nBase URL is your deployed app origin (same as NEXT_PUBLIC_APP_URL).\n"
 externalDocs:
   description: "First-run integration guide"
-  url: https://workflow-verifier.vercel.app/integrate
+  url: https://agentskeptic.com/integrate
 servers:
-  - url: https://workflow-verifier.vercel.app
+  - url: https://agentskeptic.com
     description: Replace with your deployment origin
 paths:
   /api/v1/usage/reserve:

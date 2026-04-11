@@ -5,7 +5,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Verify LangGraph workflows against your database — Workflow Verifier",
+  title: "Verify LangGraph workflows against your database — AgentSkeptic",
   description:
     "Map LangGraph-style structured tool activity to NDJSON events, run read-only SQL verification, and share a public report link.",
   robots: { index: true, follow: true },
@@ -19,7 +19,7 @@ export default function LangGraphVerificationGuidePage() {
     <main className="integrate-main">
       <h1>Verify LangGraph workflows against your database</h1>
       <p className="lede">
-        LangGraph runs produce tool calls with parameters. Workflow Verifier compares that <strong>declared</strong>{" "}
+        LangGraph runs produce tool calls with parameters. AgentSkeptic compares that <strong>declared</strong>{" "}
         activity to <strong>observed</strong> SQLite or Postgres rows using read-only <code>SELECT</code>s—not trace
         success flags.
       </p>
@@ -37,7 +37,7 @@ export default function LangGraphVerificationGuidePage() {
           Run <code>workflow-verifier verify</code> or <code>workflow-verifier quick</code> locally. To publish a
           shareable HTML report on the canonical site, pass{" "}
           <code>
-            --share-report-origin https://workflow-verifier.vercel.app
+            --share-report-origin https://agentskeptic.com
           </code>{" "}
           (replace with your deployment origin when self-hosting).
         </li>

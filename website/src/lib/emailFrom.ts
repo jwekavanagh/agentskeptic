@@ -3,7 +3,7 @@
  * Use `onboarding@resend.dev` only until a domain is verified; production should set EMAIL_FROM.
  */
 export const DEFAULT_MAGIC_LINK_FROM =
-  "Workflow Verifier <onboarding@resend.dev>";
+  "AgentSkeptic <onboarding@resend.dev>";
 
 export function resolvedMagicLinkFrom(): string {
   const v = process.env.EMAIL_FROM?.trim();

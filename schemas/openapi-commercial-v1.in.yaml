@@ -1,6 +1,6 @@
 openapi: "3.0.3"
 info:
-  title: Workflow Verifier commercial license API
+  title: AgentSkeptic commercial license API
   version: "1.0.0"
   contact:
     url: __DISTRIBUTION_CONTACT_URL__

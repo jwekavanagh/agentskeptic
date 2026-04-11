@@ -29,7 +29,7 @@ export async function generateMetadata({
   if (!row) {
     return { title: "Not found", robots: { index: false, follow: false } };
   }
-  const title = `Workflow Verifier report — ${row.reportWorkflowId} — ${row.reportStatusToken}`;
+  const title = `AgentSkeptic report — ${row.reportWorkflowId} — ${row.reportStatusToken}`;
   const description = collapseWhitespace(row.humanText, 240);
   return {
     title,

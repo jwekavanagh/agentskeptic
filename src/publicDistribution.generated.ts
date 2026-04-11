@@ -3,8 +3,8 @@
 export const PUBLIC_DISTRIBUTION_SSOT_BLOB_URL = "https://github.com/jwekavanagh/workflow-verifier/blob/main/docs/public-distribution-ssot.md";
 
 export function formatDistributionFooter(): string {
-  return "More context (green trace vs database): https://workflow-verifier.vercel.app/database-truth-vs-traces\n"
-    + "First-run on your database: https://workflow-verifier.vercel.app/integrate\n"
-    + "Canonical site: https://workflow-verifier.vercel.app/\n"
+  return "More context (green trace vs database): https://agentskeptic.com/database-truth-vs-traces\n"
+    + "First-run on your database: https://agentskeptic.com/integrate\n"
+    + "Canonical site: https://agentskeptic.com/\n"
     + "Distribution contract (SSOT): https://github.com/jwekavanagh/workflow-verifier/blob/main/docs/public-distribution-ssot.md\n";
 }

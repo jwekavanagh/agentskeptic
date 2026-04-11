@@ -156,7 +156,7 @@ function renderLlmsTextFromPayload(payload) {
   const integrateUrl = links.integrate;
   const openapiSelfCanonical = links.openapiCanonical;
   const lines = [
-    "# Workflow Verifier",
+    "# AgentSkeptic",
     "",
     "## Summary",
     String(payload.identityOneLiner),
@@ -183,7 +183,7 @@ function renderCiSummaryMarkdownFromPayload(payload) {
   if (payload.schemaVersion !== 1) throw new Error("discovery-payload: unsupported schemaVersion");
   const L = /** @type {Record<string, string>} */ (payload.links);
   const lines = [
-    "## Workflow Verifier",
+    "## AgentSkeptic",
     "",
     String(payload.identityOneLiner),
     "",
@@ -227,7 +227,7 @@ function renderCiPrBodyFromPayload(payload, capture) {
   const stderrText = capture.stderrText ?? "";
   const workflowStdoutText = capture.workflowStdoutText ?? "";
 
-  const header = `## Workflow Verifier — verification failed
+  const header = `## AgentSkeptic — verification failed
 
 ${String(payload.identityOneLiner)}
 
