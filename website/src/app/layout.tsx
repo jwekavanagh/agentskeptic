@@ -1,5 +1,6 @@
 import { siteMetadata } from "@/content/siteMetadata";
 import { publicProductAnchors } from "@/lib/publicProductAnchors";
+import { Analytics } from "@vercel/analytics/react";
 import type { Metadata } from "next";
 import "./globals.css";
 import { Providers } from "./providers";
@@ -61,6 +62,7 @@ export default function RootLayout({
           <div className="site-main">{children}</div>
         </Providers>
         <SiteFooter />
+        <Analytics />
       </body>
     </html>
   );
