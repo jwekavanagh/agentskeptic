@@ -1,5 +1,6 @@
 import { drizzle, type PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
+import { ensureSslModeRequire } from "./ensureSslModeRequire";
 import * as schema from "./schema";
 
 /**
@@ -29,7 +30,7 @@ function resolveConnectionString(): string {
         "[db] DATABASE_URL points at localhost in production; use a hosted Postgres URL on Vercel.",
       );
     }
-    return raw;
+    return ensureSslModeRequire(raw);
   }
   if (process.env.NODE_ENV === "production") {
     console.error(

@@ -138,7 +138,7 @@ Migrations are generated in [`website/drizzle/`](../website/drizzle/) (e.g. `000
 
 Services (see [`docker-compose.commercial-e2e.yml`](../docker-compose.commercial-e2e.yml)):
 
-- **Postgres 16** — app `DATABASE_URL`
+- **Postgres 16** — app `DATABASE_URL`. For **Supabase** on **Vercel** (and other hosted TLS Postgres), use **`sslmode=require`** in the URL, or rely on the website’s `ensureSslModeRequire()` helper (used by **`drizzle-kit`** and the **`postgres.js`** client) which appends it for non-localhost URLs—see [`website/src/db/ensureSslModeRequire.ts`](../website/src/db/ensureSslModeRequire.ts).
 - **Mailpit** — SMTP `127.0.0.1:1025`, UI/API `8025`
 
 **Stripe CLI:** `stripe listen --forward-to <BASE_URL>/api/webhooks/stripe` — use the printed **`whsec_…`** as `STRIPE_WEBHOOK_SECRET` for that process.
