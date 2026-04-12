@@ -33,6 +33,10 @@ describe.skipIf(!hasDatabaseUrl)("GET /api/account/commercial-state", () => {
     `);
   });
 
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
   it("returns 401 when unauthenticated", async () => {
     authMock.mockResolvedValue(null);
     const res = await getCommercialState(new NextRequest("http://localhost/api/account/commercial-state"));
@@ -103,6 +107,7 @@ describe.skipIf(!hasDatabaseUrl)("GET /api/account/commercial-state", () => {
   });
 
   it("returns billingPriceSyncHint when subscription price is not in env mapping", async () => {
+    vi.stubEnv("CONTACT_SALES_EMAIL", "billing-hint-ci@example.com");
     const [u] = await db
       .insert(users)
       .values({
@@ -122,8 +127,7 @@ describe.skipIf(!hasDatabaseUrl)("GET /api/account/commercial-state", () => {
     const j = (await res.json()) as CommercialAccountStatePayload;
     expect(j.priceMapping).toBe("unmapped");
     expect(j.billingPriceSyncHint).toEqual({
-      subscriptionStripePriceId: "price_from_stripe_only",
-      planStripePriceEnvKey: "STRIPE_PRICE_INDIVIDUAL",
+      supportEmail: "billing-hint-ci@example.com",
     });
   });
 });

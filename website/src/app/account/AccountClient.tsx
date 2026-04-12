@@ -17,13 +17,12 @@ function billingSyncDisplay(mapping: PriceMapping): { label: string; title: stri
   if (mapping === "mapped") {
     return {
       label: "Billing sync: OK",
-      title: "Stripe price is mapped to your plan for quota and entitlements.",
+      title: "Your subscription is linked to your plan for quota and licensed features.",
     };
   }
   return {
     label: "Billing sync: needs attention",
-    title:
-      "Stripe reported a price this deployment does not recognize. Entitlements may be wrong until an operator fixes configuration.",
+    title: "We have not finished linking your subscription to your plan yet.",
   };
 }
 
@@ -165,27 +164,19 @@ export function AccountClient({
           data-testid="billing-price-sync-hint"
         >
           <p style={{ margin: 0 }}>
-            <strong>Fix billing sync (no CLI command fixes this):</strong> Stripe reports subscription price id{" "}
-            <code style={{ wordBreak: "break-all" }}>{commercial.billingPriceSyncHint.subscriptionStripePriceId}</code>
-            . This deployment must list that exact id in a{" "}
-            <code style={{ whiteSpace: "nowrap" }}>STRIPE_PRICE_*</code> environment variable (Production on
-            Vercel, then redeploy).{" "}
-            {commercial.billingPriceSyncHint.planStripePriceEnvKey ? (
+            <strong>Billing setup is still finishing.</strong> Your payment looks active, but we have not fully
+            connected it to your plan yet. If this message stays after refreshing in a few minutes,{" "}
+            {commercial.billingPriceSyncHint.supportEmail ? (
               <>
-                For your current plan, start with{" "}
-                <code style={{ wordBreak: "break-all" }}>
-                  {commercial.billingPriceSyncHint.planStripePriceEnvKey}
-                </code>{" "}
-                (comma-separated ids are supported).
+                email{" "}
+                <a href={`mailto:${commercial.billingPriceSyncHint.supportEmail}`}>
+                  {commercial.billingPriceSyncHint.supportEmail}
+                </a>{" "}
+                and include the address you use to sign in.
               </>
             ) : (
-              <>Match it to the correct paid plan variable from your operator checklist.</>
+              <>use the contact options in the site footer.</>
             )}
-          </p>
-          <p style={{ margin: "0.5rem 0 0", fontSize: "0.95rem" }}>
-            Confirm the same id under Stripe → Customers → your subscription → Pricing. If it already matches
-            Production env, ensure you redeployed after saving variables (Preview env does not affect the live
-            site).
           </p>
         </div>
       )}
@@ -203,7 +194,7 @@ export function AccountClient({
           <p style={{ margin: 0 }}>
             Your subscription is not active, so licensed verification and enforcement are paused.
             {commercial.hasStripeCustomer
-              ? " Use Manage billing above to update payment or your subscription in Stripe, or choose a plan again from Pricing."
+              ? " Use Manage billing above to update payment or your subscription, or choose a plan again from Pricing."
               : " Subscribe from Pricing to restore access."}
           </p>
           <p style={{ margin: "0.5rem 0 0" }}>

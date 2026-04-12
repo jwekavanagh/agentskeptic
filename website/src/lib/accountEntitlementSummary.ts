@@ -85,7 +85,7 @@ function assertMatchesResolver(
 }
 
 const UNMAPPED_SUFFIX_INTRO =
-  " This deployment could not match your Stripe price to a product plan.";
+  " We could not confirm your subscription with your current plan in our billing records.";
 
 function unmappedSuffix(operatorContactEmail: string | null | undefined): string {
   const trimmed = operatorContactEmail?.trim();

@@ -13,34 +13,48 @@ describe("buildCommercialAccountStatePayload billingPriceSyncHint", () => {
       subscriptionStatus: "active",
       stripePriceId: "price_ok",
       expectedPlan: null,
+      operatorContactEmail: "ops@example.com",
     });
     expect(p.priceMapping).toBe("mapped");
     expect(p.billingPriceSyncHint).toBeNull();
   });
 
-  it("includes subscription price id and plan env key when unmapped", () => {
+  it("returns support email when unmapped and operator email is valid", () => {
     vi.stubEnv("STRIPE_PRICE_INDIVIDUAL", "price_other");
     const p = buildCommercialAccountStatePayload({
       plan: "individual",
       subscriptionStatus: "active",
       stripePriceId: "price_on_subscription",
       expectedPlan: null,
+      operatorContactEmail: "billing@example.com",
     });
     expect(p.priceMapping).toBe("unmapped");
     expect(p.billingPriceSyncHint).toEqual({
-      subscriptionStripePriceId: "price_on_subscription",
-      planStripePriceEnvKey: "STRIPE_PRICE_INDIVIDUAL",
+      supportEmail: "billing@example.com",
     });
   });
 
-  it("uses null planStripePriceEnvKey for starter", () => {
+  it("returns null supportEmail when operator contact is invalid", () => {
+    const p = buildCommercialAccountStatePayload({
+      plan: "individual",
+      subscriptionStatus: "active",
+      stripePriceId: "price_orphan",
+      expectedPlan: null,
+      operatorContactEmail: "not-an-email",
+    });
+    expect(p.priceMapping).toBe("unmapped");
+    expect(p.billingPriceSyncHint).toEqual({ supportEmail: null });
+  });
+
+  it("includes hint for starter when price is unmapped", () => {
     const p = buildCommercialAccountStatePayload({
       plan: "starter",
       subscriptionStatus: "active",
       stripePriceId: "price_orphan",
       expectedPlan: null,
+      operatorContactEmail: "ops@example.com",
     });
     expect(p.priceMapping).toBe("unmapped");
-    expect(p.billingPriceSyncHint?.planStripePriceEnvKey).toBeNull();
+    expect(p.billingPriceSyncHint).toEqual({ supportEmail: "ops@example.com" });
   });
 });

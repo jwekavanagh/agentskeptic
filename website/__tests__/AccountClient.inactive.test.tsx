@@ -100,14 +100,29 @@ describe("AccountClient inactive subscription", () => {
           subscriptionStatus: "active",
           priceMapping: "unmapped",
           billingPriceSyncHint: {
-            subscriptionStripePriceId: "price_test_hint",
-            planStripePriceEnvKey: "STRIPE_PRICE_INDIVIDUAL",
+            supportEmail: "billing-support@example.com",
           },
         })}
       />,
     );
     const hint = screen.getByTestId("billing-price-sync-hint");
-    expect(hint).toHaveTextContent("price_test_hint");
-    expect(hint).toHaveTextContent("STRIPE_PRICE_INDIVIDUAL");
+    expect(hint).toHaveTextContent("Billing setup is still finishing");
+    const link = hint.querySelector("a[href='mailto:billing-support@example.com']");
+    expect(link).toBeTruthy();
+    expect(link?.textContent).toBe("billing-support@example.com");
+  });
+
+  it("shows footer fallback when unmapped and no support email", () => {
+    render(
+      <AccountClient
+        hasKey={false}
+        initialCommercial={baseCommercial({
+          subscriptionStatus: "active",
+          priceMapping: "unmapped",
+          billingPriceSyncHint: { supportEmail: null },
+        })}
+      />,
+    );
+    expect(screen.getByTestId("billing-price-sync-hint")).toHaveTextContent("site footer");
   });
 });

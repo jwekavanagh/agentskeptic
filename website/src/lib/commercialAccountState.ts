@@ -6,8 +6,14 @@ import {
   resolveCommercialEntitlement,
   type SubscriptionStatusForEntitlement,
 } from "@/lib/commercialEntitlement";
-import { loadCommercialPlans, type PlanId } from "@/lib/plans";
+import type { PlanId } from "@/lib/plans";
 import { priceIdToPlanId } from "@/lib/priceIdToPlanId";
+
+function bareSupportEmail(raw: string | null | undefined): string | null {
+  const trimmed = raw?.trim();
+  if (!trimmed || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) return null;
+  return trimmed;
+}
 
 export function normalizeSubscriptionStatusForAccount(
   raw: string | null | undefined,
@@ -55,11 +61,9 @@ export function computeCheckoutActivationReady(input: {
   return verify.proceedToQuota === true;
 }
 
-/** Shown when `priceMapping` is `unmapped` so the account holder can align hosting env with Stripe. */
+/** Shown when `priceMapping` is `unmapped` (customer-facing support only; no deployment internals). */
 export type BillingPriceSyncHint = {
-  subscriptionStripePriceId: string;
-  /** Self-serve env var for the plan row in `commercial-plans.json`; null for starter/enterprise. */
-  planStripePriceEnvKey: string | null;
+  supportEmail: string | null;
 };
 
 export type CommercialAccountStatePayload = {
@@ -70,7 +74,7 @@ export type CommercialAccountStatePayload = {
   checkoutActivationReady: boolean;
   /** True when `user.stripe_customer_id` is set; drives Billing Portal entry control. */
   hasStripeCustomer: boolean;
-  /** Present only when Stripe price id is set but not recognized by this deployment's `STRIPE_PRICE_*` env. */
+  /** Present only when the subscription price is not recognized for plan mapping (customer support CTA). */
   billingPriceSyncHint: BillingPriceSyncHint | null;
 };
 
@@ -109,14 +113,10 @@ export function buildCommercialAccountStatePayload(input: {
     priceMapping,
   });
 
-  const trimmedPriceId = typeof stripePriceId === "string" ? stripePriceId.trim() : "";
   let billingPriceSyncHint: BillingPriceSyncHint | null = null;
-  if (priceMapping === "unmapped" && trimmedPriceId.length > 0) {
-    const plans = loadCommercialPlans();
-    const planStripePriceEnvKey = plans.plans[plan]?.stripePriceEnvKey ?? null;
+  if (priceMapping === "unmapped") {
     billingPriceSyncHint = {
-      subscriptionStripePriceId: trimmedPriceId,
-      planStripePriceEnvKey,
+      supportEmail: bareSupportEmail(operatorContactEmail),
     };
   }
 
