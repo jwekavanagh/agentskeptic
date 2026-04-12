@@ -31,3 +31,5 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           WF_BUILD_PROFILE: commercial
           COMMERCIAL_LICENSE_API_BASE_URL: ${{ github.event.inputs.commercial_license_api_base_url }}
+      - name: Verify package on npm registry
+        run: npm view agentskeptic version --registry=https://registry.npmjs.org
