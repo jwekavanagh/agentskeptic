@@ -29,3 +29,5 @@ jobs:
       - run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          WF_BUILD_PROFILE: commercial
+          COMMERCIAL_LICENSE_API_BASE_URL: ${{ github.event.inputs.commercial_license_api_base_url }}
