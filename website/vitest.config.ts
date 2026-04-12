@@ -6,6 +6,8 @@ export default defineConfig({
     environment: "node",
     include: ["__tests__/**/*.test.ts", "__tests__/**/*.test.tsx"],
     setupFiles: ["./vitest.setup.ts"],
+    // Integration suites TRUNCATE shared tables; parallel files race and drop each other's rows (flaky 404 vs 500).
+    fileParallelism: false,
   },
   resolve: {
     alias: {
