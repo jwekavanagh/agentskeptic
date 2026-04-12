@@ -19,6 +19,14 @@ jobs:
           cache: npm
           registry-url: https://registry.npmjs.org
       - run: npm ci
+      - name: Registry auth and target (diagnostics)
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          set -e
+          echo "node $(node -v) npm $(npm -v)"
+          npm config get registry
+          npm whoami --registry https://registry.npmjs.org
       - name: Build commercial CLI
         env:
           WF_BUILD_PROFILE: commercial
@@ -26,10 +34,16 @@ jobs:
         run: node scripts/build-commercial.mjs
       - name: Assert embedded license URL
         run: grep -Fq "${{ github.event.inputs.commercial_license_api_base_url }}" dist/generated/commercialBuildFlags.js
-      - run: npm publish --access public
+      - name: Publish root package to npmjs
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           WF_BUILD_PROFILE: commercial
           COMMERCIAL_LICENSE_API_BASE_URL: ${{ github.event.inputs.commercial_license_api_base_url }}
-      - name: Verify package on npm registry
-        run: npm view agentskeptic version --registry=https://registry.npmjs.org
+        run: |
+          set -e
+          npm publish . --access public --registry https://registry.npmjs.org --workspaces=false
+      - name: Verify tarball reached registry (HTTP)
+        run: |
+          set -e
+          curl -fsS -o /dev/null "https://registry.npmjs.org/agentskeptic/latest"
+          npm view agentskeptic@0.1.1 version --registry=https://registry.npmjs.org
