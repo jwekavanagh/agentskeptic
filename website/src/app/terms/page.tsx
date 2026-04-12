@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { readFileSync } from "node:fs";
 import path from "node:path";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { loadLegalMetadata } from "@/lib/plans";
 
 export default function TermsPage() {
@@ -11,11 +13,13 @@ export default function TermsPage() {
     .replace(/\{\{EFFECTIVE_DATE\}\}/g, meta.effectiveDate)
     .replace(/\{\{TERMS_VERSION\}\}/g, meta.termsVersion);
   return (
-    <main>
+    <main className="integrate-main">
       <p>
         <Link href="/">Home</Link>
       </p>
-      <article style={{ whiteSpace: "pre-wrap" }}>{body}</article>
+      <article className="integrate-prose">
+        <ReactMarkdown remarkPlugins={[remarkGfm]}>{body}</ReactMarkdown>
+      </article>
     </main>
   );
 }
