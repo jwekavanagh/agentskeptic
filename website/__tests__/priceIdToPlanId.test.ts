@@ -1,5 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { priceIdToPlanId, primarySubscriptionPriceId } from "@/lib/priceIdToPlanId";
+import {
+  checkoutStripePriceFromEnvKey,
+  priceIdToPlanId,
+  primarySubscriptionPriceId,
+  stripePriceEnvCandidates,
+} from "@/lib/priceIdToPlanId";
 
 describe("priceIdToPlanId", () => {
   afterEach(() => {
@@ -10,6 +15,11 @@ describe("priceIdToPlanId", () => {
     expect(priceIdToPlanId(null)).toBeNull();
     expect(priceIdToPlanId(undefined)).toBeNull();
     expect(priceIdToPlanId("")).toBeNull();
+  });
+
+  it("trims the subscription price id before matching", () => {
+    vi.stubEnv("STRIPE_PRICE_INDIVIDUAL", "price_ind_x");
+    expect(priceIdToPlanId("  price_ind_x  ")).toBe("individual");
   });
 
   it("maps env-configured price ids to plan", () => {
@@ -24,6 +34,29 @@ describe("priceIdToPlanId", () => {
   it("returns null for unknown price id", () => {
     vi.stubEnv("STRIPE_PRICE_INDIVIDUAL", "price_ind_x");
     expect(priceIdToPlanId("price_unknown")).toBeNull();
+  });
+
+  it("maps any comma- or whitespace-separated env price id to the plan", () => {
+    vi.stubEnv("STRIPE_PRICE_INDIVIDUAL", "price_new, price_legacy");
+    expect(priceIdToPlanId("price_new")).toBe("individual");
+    expect(priceIdToPlanId("price_legacy")).toBe("individual");
+  });
+
+  it("checkoutStripePriceFromEnvKey uses the first listed id", () => {
+    vi.stubEnv("STRIPE_PRICE_INDIVIDUAL", "price_primary, price_alt");
+    expect(checkoutStripePriceFromEnvKey("STRIPE_PRICE_INDIVIDUAL")).toBe("price_primary");
+  });
+});
+
+describe("stripePriceEnvCandidates", () => {
+  it("parses comma and whitespace lists", () => {
+    expect(stripePriceEnvCandidates(" a , b  c ")).toEqual(["a", "b", "c"]);
+  });
+
+  it("returns empty for blank", () => {
+    expect(stripePriceEnvCandidates("")).toEqual([]);
+    expect(stripePriceEnvCandidates("  \t  ")).toEqual([]);
+    expect(stripePriceEnvCandidates(null)).toEqual([]);
   });
 });
 

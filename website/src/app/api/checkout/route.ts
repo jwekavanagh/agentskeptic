@@ -8,6 +8,7 @@ import {
 import { logFunnelEvent } from "@/lib/funnelEvent";
 import { loadCommercialPlans } from "@/lib/plans";
 import type { PlanId } from "@/lib/plans";
+import { checkoutStripePriceFromEnvKey } from "@/lib/priceIdToPlanId";
 import { buildStripeCheckoutSessionCreateParams } from "@/lib/stripeCheckoutSessionParams";
 import { getStripe } from "@/lib/stripeServer";
 import { and, eq } from "drizzle-orm";
@@ -42,7 +43,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const priceId = process.env[envKey];
+  const priceId = checkoutStripePriceFromEnvKey(envKey);
   if (!priceId) {
     return NextResponse.json({ error: "Missing Stripe price env" }, { status: 500 });
   }
