@@ -53,7 +53,7 @@
     "node": "22.x"
   },
   "devDependencies": {
-    "@lhci/cli": "^0.14.0",
+    "@lhci/cli": "^0.15.1",
     "@playwright/test": "^1.51.0",
     "@types/node": "^22.10.2",
     "@types/pg": "^8.20.0",
