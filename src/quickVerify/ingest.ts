@@ -22,7 +22,42 @@ function getToolNameKey(obj: Record<string, unknown>): string | undefined {
   return undefined;
 }
 
+function tryParseFunctionArgumentsField(fnObj: Record<string, unknown>): Record<string, unknown> | undefined {
+  const inner = fnObj.arguments;
+  if (inner && typeof inner === "object" && !Array.isArray(inner)) {
+    return inner as Record<string, unknown>;
+  }
+  if (typeof inner === "string") {
+    const u = inner.trim();
+    if (u.length > 0 && (u.startsWith("{") || u.startsWith("["))) {
+      try {
+        const parsed = JSON.parse(u) as unknown;
+        if (parsed !== null && typeof parsed === "object" && !Array.isArray(parsed)) {
+          return parsed as Record<string, unknown>;
+        }
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+  return undefined;
+}
+
+/** OpenAI `tool_calls[]` items: nested `function.arguments` wins over stray top-level `arguments` / empty objects. */
+function tryOpenAiToolCallParamBag(obj: Record<string, unknown>): Record<string, unknown> | undefined {
+  const fn = obj.function;
+  if (!fn || typeof fn !== "object" || fn === null || Array.isArray(fn)) return undefined;
+  const fnObj = fn as Record<string, unknown>;
+  const fnName = fnObj.name;
+  if (typeof fnName !== "string" || fnName.length === 0) return undefined;
+  if (!Object.prototype.hasOwnProperty.call(fnObj, "arguments")) return undefined;
+  return tryParseFunctionArgumentsField(fnObj);
+}
+
 function getParamsObject(obj: Record<string, unknown>): Record<string, unknown> {
+  const openAiBag = tryOpenAiToolCallParamBag(obj);
+  if (openAiBag !== undefined) return openAiBag;
+
   for (const k of ["params", "arguments", "input"] as const) {
     const v = obj[k];
     if (v && typeof v === "object" && !Array.isArray(v)) return v as Record<string, unknown>;
@@ -43,24 +78,8 @@ function getParamsObject(obj: Record<string, unknown>): Record<string, unknown> 
   }
   const fn = obj.function;
   if (fn && typeof fn === "object" && !Array.isArray(fn)) {
-    const fnObj = fn as Record<string, unknown>;
-    const inner = fnObj.arguments;
-    if (inner && typeof inner === "object" && !Array.isArray(inner)) {
-      return inner as Record<string, unknown>;
-    }
-    if (typeof inner === "string") {
-      const u = inner.trim();
-      if (u.length > 0 && (u.startsWith("{") || u.startsWith("["))) {
-        try {
-          const parsed = JSON.parse(u) as unknown;
-          if (parsed !== null && typeof parsed === "object" && !Array.isArray(parsed)) {
-            return parsed as Record<string, unknown>;
-          }
-        } catch {
-          /* ignore */
-        }
-      }
-    }
+    const parsed = tryParseFunctionArgumentsField(fn as Record<string, unknown>);
+    if (parsed !== undefined) return parsed;
   }
   const out: Record<string, unknown> = {};
   const skip = new Set<string>(["tool_calls", "toolId", "tool", "name", "action", "function"]);

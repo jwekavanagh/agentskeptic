@@ -111,7 +111,7 @@ L5: If zero actions after L2–L4: phase B, `verdict=uncertain`, append **`MALFO
 ## A.6 extractActions(value)
 
 - If `value` is object with `tool_calls` array: for each element `c` of `tool_calls` (max `MAX_ACTIONS` total across entire run), recursively `extractActions(c)`.
-- If `value` is object: if it has tool name key (first hit in order `toolId`, `tool`, `name`, `function.name`, `action`), build one action: `toolName` = string at that key; `params` = **param bag** from the first of `params`|`arguments`|`input` in order: if value is a non-array object use it; if value is a string whose trim starts with `{` or `[`, `JSON.parse` in try/catch and if the result is a plain non-null object use it; otherwise shallow copy of own keys excluding tool-name keys and `tool_calls`; emit **one** action.
+- If `value` is object: if it has tool name key (first hit in order `toolId`, `tool`, `name`, `function.name`, `action`), build one action: `toolName` = string at that key; `params` = **param bag**: when `function` is a non-array object with non-empty string `function.name` and that object has own property `arguments`, use nested `function.arguments` first (non-array object as-is; else if string trim starts with `{` or `[`, `JSON.parse` in try/catch and if the result is a plain non-null object use it); otherwise take the first of top-level `params`|`arguments`|`input` in order the same way; if neither applies, shallow copy of own keys excluding tool-name keys and `tool_calls`; emit **one** action.
 - If `value` is array: run `extractActions` on each element until `MAX_ACTIONS` reached; if exceeded, phase B `uncertain`, append `INGEST_ACTION_CAP` once to `ingest.reasonCodes` and **stop** adding.
 
 ## A.7 Flatten (per action)

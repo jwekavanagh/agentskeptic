@@ -72,7 +72,10 @@
   "overrides": {
     "esbuild": "0.25.12",
     "tmp": "0.2.4",
-    "cookie": "0.7.2"
+    "cookie": "0.7.2",
+    "agentskeptic-web": {
+      "agentskeptic": "file:."
+    }
   },
   "repository": {
     "type": "git",

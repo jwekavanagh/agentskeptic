@@ -63,6 +63,8 @@ describe("ingestActivityUtf8", () => {
         {
           id: "call_fixture_1",
           type: "function",
+          // Non-canonical duplicate bag; ingest must ignore in favor of function.arguments.
+          arguments: { recordId: "wrong", fields: { name: "Eve", status: "stale" } },
           function: {
             name: "crm.upsert_contact",
             arguments: JSON.stringify({
