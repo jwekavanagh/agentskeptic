@@ -132,7 +132,11 @@ export function columnScore(paramKey: string, colName: string): number {
   if (paramKey.toLowerCase() === colName.toLowerCase()) return 0.95;
   if (normalizeSnakeCamel(paramKey, colName)) return 0.9;
   if (stripIdSuffix(paramKey, colName)) return 0.85;
-  const r = levenshteinRatio(paramKey.toLowerCase(), colName.toLowerCase());
+  const kl = paramKey.toLowerCase();
+  const cl = colName.toLowerCase();
+  // CRM-style upserts: registry pointers use /recordId for PK column `id` (see README examples).
+  if (cl === "id" && (kl === "recordid" || kl === "record_id")) return 0.9;
+  const r = levenshteinRatio(kl, cl);
   return r >= 0.8 ? r : 0;
 }
 

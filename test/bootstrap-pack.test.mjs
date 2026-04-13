@@ -19,6 +19,19 @@ const inputJson = join(root, "test", "fixtures", "bootstrap-pack", "input.json")
 const inputEmptyTools = join(root, "test", "fixtures", "bootstrap-pack", "input-empty-tool-calls.json");
 const inputBadArgs = join(root, "test", "fixtures", "bootstrap-pack", "input-bad-arguments.json");
 
+/** Node may print `ExperimentalWarning: SQLite...` on stderr; normative bootstrap success still requires empty app stderr. */
+function spawnCli(args) {
+  const prev = process.env.NODE_OPTIONS ?? "";
+  const flag = "--disable-warning=ExperimentalWarning";
+  const nodeOptions = prev.includes("disable-warning") ? prev : `${prev} ${flag}`.trim();
+  return spawnSync(process.execPath, [cliJs, ...args], {
+    encoding: "utf8",
+    cwd: root,
+    maxBuffer: 10_000_000,
+    env: { ...process.env, NODE_OPTIONS: nodeOptions },
+  });
+}
+
 describe("bootstrap pack CLI", () => {
   let tmp;
   let dbPath;
@@ -33,11 +46,7 @@ describe("bootstrap pack CLI", () => {
 
   it("exits 0 with envelope stdout and empty stderr; pack files exist", () => {
     const outDir = join(tmp, "pack-out");
-    const r = spawnSync(
-      process.execPath,
-      [cliJs, "bootstrap", "--input", inputJson, "--db", dbPath, "--out", outDir],
-      { encoding: "utf8", cwd: root, maxBuffer: 10_000_000 },
-    );
+    const r = spawnCli(["bootstrap", "--input", inputJson, "--db", dbPath, "--out", outDir]);
     assert.equal(r.status, 0, r.stderr + r.stdout);
     assert.equal(r.stderr, "");
     const env = JSON.parse(r.stdout.trim());
@@ -57,11 +66,7 @@ describe("bootstrap pack CLI", () => {
   it("exits 3 when --out already exists", () => {
     const outDir = join(tmp, "pack-out-exists");
     mkdirSync(outDir, { recursive: true });
-    const r = spawnSync(
-      process.execPath,
-      [cliJs, "bootstrap", "--input", inputJson, "--db", dbPath, "--out", outDir],
-      { encoding: "utf8", cwd: root, maxBuffer: 10_000_000 },
-    );
+    const r = spawnCli(["bootstrap", "--input", inputJson, "--db", dbPath, "--out", outDir]);
     assert.equal(r.status, 3);
     assert.equal(r.stdout, "");
     assert.ok(r.stderr.includes("BOOTSTRAP_OUT_EXISTS"));
@@ -69,11 +74,7 @@ describe("bootstrap pack CLI", () => {
 
   it("exits 3 on empty tool_calls", () => {
     const outDir = join(tmp, "pack-empty");
-    const r = spawnSync(
-      process.execPath,
-      [cliJs, "bootstrap", "--input", inputEmptyTools, "--db", dbPath, "--out", outDir],
-      { encoding: "utf8", cwd: root, maxBuffer: 10_000_000 },
-    );
+    const r = spawnCli(["bootstrap", "--input", inputEmptyTools, "--db", dbPath, "--out", outDir]);
     assert.equal(r.status, 3);
     assert.equal(r.stdout, "");
     assert.ok(r.stderr.includes("BOOTSTRAP_NO_TOOL_CALLS"));
@@ -82,11 +83,7 @@ describe("bootstrap pack CLI", () => {
 
   it("exits 3 on invalid function.arguments JSON", () => {
     const outDir = join(tmp, "pack-badargs");
-    const r = spawnSync(
-      process.execPath,
-      [cliJs, "bootstrap", "--input", inputBadArgs, "--db", dbPath, "--out", outDir],
-      { encoding: "utf8", cwd: root, maxBuffer: 10_000_000 },
-    );
+    const r = spawnCli(["bootstrap", "--input", inputBadArgs, "--db", dbPath, "--out", outDir]);
     assert.equal(r.status, 3);
     assert.equal(r.stdout, "");
     assert.ok(r.stderr.includes("BOOTSTRAP_TOOL_CALL_ARGUMENTS_INVALID"));
