@@ -41,8 +41,11 @@ jobs:
           languages: javascript-typescript
           queries: security-and-quality
       - uses: github/codeql-action/autobuild@v4
+      # Avoid uploading SARIF when repo default CodeQL setup is enabled (GitHub rejects mixed submissions).
       - uses: github/codeql-action/analyze@v4
         id: codeql_analyze
+        with:
+          upload: never
       - name: Assert SARIF has no results for remediation rule IDs
         run: node scripts/assert-codeql-remediation-sarif.mjs "${{ steps.codeql_analyze.outputs['sarif-output'] }}"
 

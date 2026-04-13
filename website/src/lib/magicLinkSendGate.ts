@@ -7,7 +7,12 @@ import { magicLinkSendCounters } from "@/db/schema";
 export const MAGIC_LINK_EMAIL_CAP = 5;
 export const MAGIC_LINK_IP_CAP = 30;
 
-const SERIALIZATION_BACKOFF_MS = [5, 10, 25, 40] as const;
+/** Backoff for Postgres SERIALIZABLE retries (same-IP bursts need many attempts under contention). */
+const SERIALIZATION_MAX_ATTEMPTS = 64;
+
+function serializationBackoffMs(attempt: number): number {
+  return Math.min(220, 5 * 2 ** Math.min(attempt, 8));
+}
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -195,7 +200,7 @@ export async function reserveMagicLinkSendSlot(request: Request, identifier: str
   const emailKey = identifier;
   const ipKey = extractClientIpKey(request);
 
-  for (let attempt = 0; attempt < 5; attempt++) {
+  for (let attempt = 0; attempt < SERIALIZATION_MAX_ATTEMPTS; attempt++) {
     try {
       await runReservationTxn(emailKey, ipKey);
       return;
@@ -203,8 +208,8 @@ export async function reserveMagicLinkSendSlot(request: Request, identifier: str
       if (e instanceof CredentialsSignin) {
         throw e;
       }
-      if (isSerializationFailure(e) && attempt < 4) {
-        await sleep(SERIALIZATION_BACKOFF_MS[attempt]!);
+      if (isSerializationFailure(e) && attempt < SERIALIZATION_MAX_ATTEMPTS - 1) {
+        await sleep(serializationBackoffMs(attempt));
         continue;
       }
       if (isSerializationFailure(e)) {

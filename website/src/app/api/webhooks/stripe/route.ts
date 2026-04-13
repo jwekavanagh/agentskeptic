@@ -1,4 +1,3 @@
-import { headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { db } from "@/db/client";
@@ -11,7 +10,7 @@ import { getStripe } from "@/lib/stripeServer";
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   const body = await req.text();
-  const sig = (await headers()).get("stripe-signature");
+  const sig = req.headers.get("stripe-signature");
   const whSecret = process.env.STRIPE_WEBHOOK_SECRET;
   if (!whSecret || !sig) {
     return new NextResponse("Missing webhook configuration", { status: 400 });

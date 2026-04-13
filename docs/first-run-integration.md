@@ -10,6 +10,16 @@ When the license server denies a run because the subscription is inactive (`SUBS
 
 Send this to someone who should **try it in one sitting**. **All shell commands** for the bundled partner quickstart live in **[partner-quickstart-commands.md](partner-quickstart-commands.md)** (generated; do not duplicate here). This file is **prose, semantics, and guarantees** only.
 
+## 0. Bootstrap pack (optional shortcut)
+
+If you already have **OpenAI-style `tool_calls`** JSON (see **`BootstrapPackInput` v1** in [`bootstrap-pack-normative.md`](bootstrap-pack-normative.md)) and a read-only **SQLite** or **Postgres** URL, you can generate **`events.ndjson`**, **`tools.json`**, **`quick-report.json`**, and a short **`README.bootstrap.md`** in one step:
+
+```bash
+agentskeptic bootstrap --input path/to/bootstrap-input.json --db path/to/your.db --out path/to/new-pack-dir
+```
+
+Normative flags, stdout/stderr, exit codes, and trust inheritance are **only** in [`bootstrap-pack-normative.md`](bootstrap-pack-normative.md). After a successful run (exit `0`), use the generated files as the starting contract for production NDJSON emission, or continue with the demo and partner steps below.
+
 ## 1. What this does
 
 - Takes an **append-only NDJSON log** of tool observations (what the agent claims it did).

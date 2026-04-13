@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "workflowId": "wf_bootstrap_fixture",
+  "openaiChatCompletion": {
+    "choices": [
+      {
+        "message": {
+          "tool_calls": []
+        }
+      }
+    ]
+  }
+}

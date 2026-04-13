@@ -175,8 +175,10 @@ describe.skipIf(!hasDatabaseUrl)("stripe webhook integration", () => {
       },
     } as unknown as ReturnType<typeof getStripe>);
 
-    const req = webhookRequest();
-    const [resA, resB] = await Promise.all([postStripeWebhook(req), postStripeWebhook(req)]);
+    const [resA, resB] = await Promise.all([
+      postStripeWebhook(webhookRequest()),
+      postStripeWebhook(webhookRequest()),
+    ]);
     expect(resA.status).toBe(200);
     expect(resB.status).toBe(200);
     const bodies = await Promise.all([resA.json(), resB.json()]);

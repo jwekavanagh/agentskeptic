@@ -35,6 +35,20 @@ export type StandardVerifyWorkflowCliIo = {
   exit: (code: number) => void;
 };
 
+/**
+ * After `verifyWorkflow` has emitted the human truth report to stderr (unless suppressed),
+ * print WorkflowResult JSON to stdout and exit with the same codes as batch `verify`.
+ */
+export function emitVerifyWorkflowCliJsonAndExitByStatus(
+  result: WorkflowResult,
+  io: Pick<StandardVerifyWorkflowCliIo, "consoleLog" | "exit">,
+): void {
+  io.consoleLog(JSON.stringify(result));
+  if (result.status === "complete") io.exit(0);
+  else if (result.status === "inconsistent") io.exit(1);
+  else io.exit(2);
+}
+
 const defaultIo: StandardVerifyWorkflowCliIo = {
   consoleLog: (line) => {
     console.log(line);
@@ -116,8 +130,5 @@ export async function runStandardVerifyWorkflowCliFlow(options: {
     io.stderrLine(`${truthReportText}\n${formatDistributionFooter()}`);
   }
 
-  io.consoleLog(JSON.stringify(result));
-  if (result.status === "complete") io.exit(0);
-  else if (result.status === "inconsistent") io.exit(1);
-  else io.exit(2);
+  emitVerifyWorkflowCliJsonAndExitByStatus(result, io);
 }

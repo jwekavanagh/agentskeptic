@@ -60,6 +60,7 @@ import { LICENSE_PREFLIGHT_ENABLED } from "./generated/commercialBuildFlags.js";
 import { runBatchCiLockFromRestArgs, runQuickCiLockFromRestArgs } from "./ciLockWorkflow.js";
 import { formatDistributionFooter } from "./distributionFooter.js";
 import { postPublicVerificationReport } from "./shareReport/postPublicVerificationReport.js";
+import { runBootstrapSubcommand } from "./bootstrap/runBootstrapSubcommand.js";
 
 function usageQuick(): string {
   return `Usage:
@@ -84,6 +85,9 @@ function usageVerify(): string {
   return `Usage:
   agentskeptic quick --input <path> (--postgres-url <url> | --db <sqlitePath>) --export-registry <path> [--emit-events <path>] [--workflow-id <id>]
     (zero-config path; structured tool activity + read-only SQL; see docs/quick-verify-normative.md)
+
+  agentskeptic bootstrap --input <path> (--db <sqlitePath> | --postgres-url <url>) --out <path>
+    (BootstrapPackInput v1 JSON → contract pack + in-process verify; see docs/bootstrap-pack-normative.md)
 
   agentskeptic --workflow-id <id> --events <path> --registry <path> --db <sqlitePath>
   agentskeptic --workflow-id <id> --events <path> --registry <path> --postgres-url <url>
@@ -1007,6 +1011,10 @@ async function main(): Promise<void> {
   }
   if (args[0] === "quick") {
     await runQuickSubcommand(args.slice(1));
+    return;
+  }
+  if (args[0] === "bootstrap") {
+    await runBootstrapSubcommand(args.slice(1));
     return;
   }
   if (args[0] === "verify-bundle-signature") {
