@@ -29,6 +29,9 @@ import { buildWorkflowVerdictSurface } from "./workflowTruthReport.js";
 const validateTrace = loadSchemaValidator("execution-trace-view");
 const validateCompareReport = loadSchemaValidator("run-comparison-report");
 
+export const DEBUG_SERVER_OPAQUE_500_MESSAGE = "Internal server error.";
+export const DEBUG_SERVER_INTERNAL_STDERR_PREFIX = "[debug-internal]";
+
 function json(res: ServerResponse, status: number, body: unknown): void {
   const s = JSON.stringify(body);
   res.writeHead(status, {
@@ -36,6 +39,15 @@ function json(res: ServerResponse, status: number, body: unknown): void {
     "Cache-Control": "no-store",
   });
   res.end(s);
+}
+
+function logDebugServerInternalError(code: string, err: unknown): void {
+  console.error(DEBUG_SERVER_INTERNAL_STDERR_PREFIX, code, err);
+}
+
+function jsonDebugServer500(res: ServerResponse, code: string, err: unknown): void {
+  logDebugServerInternalError(code, err);
+  json(res, 500, { code, message: DEBUG_SERVER_OPAQUE_500_MESSAGE });
 }
 
 function readBody(req: IncomingMessage): Promise<string> {
@@ -179,8 +191,7 @@ async function handleRequest(
       try {
         load = loadEventsForWorkflow(o.paths.events, o.workflowResult.workflowId);
       } catch (e) {
-        const msg = e instanceof Error ? e.message : String(e);
-        json(res, 500, { code: "EVENTS_RELOAD_FAILED", message: msg });
+        jsonDebugServer500(res, "EVENTS_RELOAD_FAILED", e);
         return;
       }
       const trace = buildExecutionTraceView({
@@ -190,10 +201,7 @@ async function handleRequest(
         workflowResult: o.workflowResult,
       });
       if (!validateTrace(trace)) {
-        json(res, 500, {
-          code: "TRACE_SCHEMA_INVALID",
-          details: validateTrace.errors ?? [],
-        });
+        jsonDebugServer500(res, "TRACE_SCHEMA_INVALID", validateTrace.errors ?? validateTrace);
         return;
       }
       const runTrustPanelHtml = renderRunTrustPanelHtml(o.workflowResult);
@@ -311,10 +319,11 @@ async function handleRequest(
       }
       const report = buildRunComparisonReport(results, labels);
       if (!validateCompareReport(report)) {
-        json(res, 500, {
-          code: "COMPARE_REPORT_INVALID",
-          details: validateCompareReport.errors ?? [],
-        });
+        jsonDebugServer500(
+          res,
+          "COMPARE_REPORT_INVALID",
+          validateCompareReport.errors ?? validateCompareReport,
+        );
         return;
       }
       const humanSummary = formatRunComparisonReport(report);
@@ -340,8 +349,7 @@ async function handleRequest(
 
     res.writeHead(405).end();
   } catch (e) {
-    const msg = e instanceof Error ? e.message : String(e);
-    json(res, 500, { code: "INTERNAL", message: msg });
+    jsonDebugServer500(res, "INTERNAL", e);
   }
 }
 

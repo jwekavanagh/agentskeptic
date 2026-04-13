@@ -12,6 +12,40 @@ concurrency:
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
+  codeql:
+    name: CodeQL (javascript-typescript)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: CodeQL remediation grep invariants
+        shell: bash
+        run: |
+          set -euo pipefail
+          if rg -q 'includes\("https://' src/commercial/licensePreflight.test.ts test/redaction-rules.test.mjs; then echo "Invariant fail: https includes"; exit 1; fi
+          if rg -q 'includes\("example\.com' test/redaction-rules.test.mjs; then echo "Invariant fail: example.com includes"; exit 1; fi
+          lines=$(rg 'json\(res, 500' src/debugServer.ts | wc -l)
+          if [ "$lines" -ne 1 ]; then echo "Invariant fail: json(res,500 line count=$lines expected 1"; exit 1; fi
+          if rg -q '\bdetails\b' src/debugServer.ts; then echo "Invariant fail: details in debugServer"; exit 1; fi
+      - uses: github/codeql-action/init@v4
+        with:
+          languages: javascript-typescript
+          queries: security-and-quality
+      - uses: github/codeql-action/autobuild@v4
+      - uses: github/codeql-action/analyze@v4
+        id: codeql_analyze
+      - name: Assert SARIF has no results for remediation rule IDs
+        run: node scripts/assert-codeql-remediation-sarif.mjs "${{ steps.codeql_analyze.outputs['sarif-output'] }}"
+
   test:
     runs-on: ubuntu-latest
     services:

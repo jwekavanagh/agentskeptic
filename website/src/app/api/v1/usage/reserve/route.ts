@@ -2,7 +2,7 @@ import { and, eq, isNull } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db/client";
 import { apiKeys, usageCounters, usageReservations, users } from "@/db/schema";
-import { sha256Hex, verifyApiKey } from "@/lib/apiKeyCrypto";
+import { sha256HexApiKeyLookupFingerprint, verifyApiKey } from "@/lib/apiKeyCrypto";
 import {
   resolveCommercialEntitlement,
   type ReserveIntent,
@@ -91,7 +91,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     );
   }
 
-  const lookup = sha256Hex(rawKey);
+  const lookup = sha256HexApiKeyLookupFingerprint(rawKey);
   const keyRows = await db
     .select({
       key: apiKeys,

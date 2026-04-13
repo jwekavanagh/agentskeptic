@@ -8,7 +8,14 @@ import {
 const PREFIX = "wf_sk_live_";
 const SCRYPT_PARAMS = { N: 16384, r: 8, p: 1, keylen: 64 } as const;
 
-export function sha256Hex(s: string): string {
+/**
+ * Deterministic SHA-256 hex digest for **database lookup only** (`keyLookupSha256`).
+ * Input must be high-entropy API key plaintext from this module (`generateApiKeyPlaintext`) or the
+ * same format from an `Authorization: Bearer` header. **Authorization** is `verifyApiKey` against
+ * `hashApiKey` (scrypt). Do not use for human passwords or as the sole stored verifier.
+ */
+// codeql[js/insufficient-password-hash]: SHA-256 is a deterministic lookup fingerprint only; verifyApiKey uses scrypt on the same secret; plaintext is PREFIX + randomBytes(32) hex.
+export function sha256HexApiKeyLookupFingerprint(s: string): string {
   return createHash("sha256").update(s, "utf8").digest("hex");
 }
 

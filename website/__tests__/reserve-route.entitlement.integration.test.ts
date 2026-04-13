@@ -12,7 +12,7 @@ const entState = vi.hoisted(() => ({
 }));
 
 vi.mock("@/lib/apiKeyCrypto", () => ({
-  sha256Hex: () => LOOKUP,
+  sha256HexApiKeyLookupFingerprint: () => LOOKUP,
   verifyApiKey: () => true,
 }));
 

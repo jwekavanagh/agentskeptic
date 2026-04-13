@@ -4,7 +4,11 @@ import { auth } from "@/auth";
 import { db } from "@/db/client";
 import { apiKeys } from "@/db/schema";
 import { logFunnelEvent } from "@/lib/funnelEvent";
-import { generateApiKeyPlaintext, hashApiKey, sha256Hex } from "@/lib/apiKeyCrypto";
+import {
+  generateApiKeyPlaintext,
+  hashApiKey,
+  sha256HexApiKeyLookupFingerprint,
+} from "@/lib/apiKeyCrypto";
 
 export async function POST(): Promise<NextResponse> {
   const session = await auth();
@@ -27,7 +31,7 @@ export async function POST(): Promise<NextResponse> {
 
   const plain = generateApiKeyPlaintext();
   const keyHash = hashApiKey(plain);
-  const keyLookupSha256 = sha256Hex(plain);
+  const keyLookupSha256 = sha256HexApiKeyLookupFingerprint(plain);
 
   await db.insert(apiKeys).values({
     userId: session.user.id,

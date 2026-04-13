@@ -27,6 +27,7 @@ function escapeRegExp(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+// codeql[js/double-escaping]: Test-only HTML entity decoding for substring assertions against fetched HTML; return value is never written to an HTML sink.
 /** Decode common HTML entities so discovery copy (with `&`, quotes) matches fetch() HTML from React/Next. */
 function htmlForTextNeedleMatch(html: string): string {
   return html

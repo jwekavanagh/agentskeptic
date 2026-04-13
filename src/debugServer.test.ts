@@ -2,8 +2,14 @@ import { readFileSync, mkdirSync, writeFileSync, rmSync, mkdtempSync, copyFileSy
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
-import { describe, expect, it } from "vitest";
-import { startDebugServerOnPort, loadCorpusBundle } from "./debugServer.js";
+import { describe, expect, it, vi } from "vitest";
+import * as loadEvents from "./loadEvents.js";
+import {
+  DEBUG_SERVER_INTERNAL_STDERR_PREFIX,
+  DEBUG_SERVER_OPAQUE_500_MESSAGE,
+  loadCorpusBundle,
+  startDebugServerOnPort,
+} from "./debugServer.js";
 import { buildAgentRunRecordForBundle } from "./agentRunRecord.js";
 import { buildWorkflowVerdictSurface } from "./workflowTruthReport.js";
 import type { WorkflowResult } from "./types.js";
@@ -65,6 +71,30 @@ describe("debugServer HTTP", () => {
       const res = await fetch(`http://127.0.0.1:${srv.port}/api/runs/run_bad_json/focus`);
       expect(res.status).toBe(409);
     } finally {
+      await srv.close();
+    }
+  });
+
+  it("GET /api/runs/run_ok returns opaque 500 when loadEventsForWorkflow throws", async () => {
+    const spy = vi.spyOn(loadEvents, "loadEventsForWorkflow").mockImplementation(() => {
+      throw new Error("INJECTED_SECRET_MARKER");
+    });
+    const errSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const srv = await startDebugServerOnPort(exampleCorpus, 0);
+    try {
+      const res = await fetch(`http://127.0.0.1:${srv.port}/api/runs/run_ok`);
+      expect(res.status).toBe(500);
+      await expect(res.json()).resolves.toEqual({
+        code: "EVENTS_RELOAD_FAILED",
+        message: DEBUG_SERVER_OPAQUE_500_MESSAGE,
+      });
+      expect(errSpy.mock.calls[0]![0]).toBe(DEBUG_SERVER_INTERNAL_STDERR_PREFIX);
+      expect(errSpy.mock.calls[0]![1]).toBe("EVENTS_RELOAD_FAILED");
+      expect(errSpy.mock.calls[0]![2]).toBeInstanceOf(Error);
+      expect((errSpy.mock.calls[0]![2] as Error).message).toBe("INJECTED_SECRET_MARKER");
+    } finally {
+      spy.mockRestore();
+      errSpy.mockRestore();
       await srv.close();
     }
   });

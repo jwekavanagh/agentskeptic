@@ -24,9 +24,11 @@ test("redactString removes Bearer, sk-, email, and long strings", () => {
 test("applyRedactionWalk on fixture", () => {
   const raw = JSON.parse(readFileSync(join(root, "test", "fixtures", "redaction-before.json"), "utf8"));
   const out = applyRedactionWalk(raw);
-  const s = JSON.stringify(out);
-  assert.ok(!s.includes("Bearer"));
-  assert.ok(!s.includes("sk-test"));
-  assert.ok(!s.includes("example.com"));
-  assert.equal(out.short, "ok");
+  const EXPECTED_REDACTED_FIXTURE = {
+    note: "[REDACTED_BEARER] and email for redaction-rules tests",
+    auth: "[REDACTED_BEARER]",
+    contact: "[REDACTED_EMAIL]",
+    short: "ok",
+  };
+  assert.deepStrictEqual(out, EXPECTED_REDACTED_FIXTURE);
 });
