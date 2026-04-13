@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentskeptic.com/schema/dependency-security-pins.schema.json",
+  "title": "dependency-security-pins",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "packageJsonExact", "lockfileAssertions", "drizzleMachineChecks"],
+  "properties": {
+    "schemaVersion": { "type": "integer", "const": 1 },
+    "packageJsonExact": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["file", "path", "value"],
+        "properties": {
+          "file": {
+            "type": "string",
+            "enum": [
+              "website/package.json",
+              "package.json",
+              "examples/langgraph-reference/package.json"
+            ]
+          },
+          "path": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "type": "string", "pattern": "^[A-Za-z0-9@._/-]+$" }
+          },
+          "value": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "lockfileAssertions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["lockfile", "package", "match", "exactVersion"],
+        "properties": {
+          "lockfile": { "type": "string", "enum": ["root", "example"] },
+          "package": { "type": "string", "minLength": 1 },
+          "match": { "type": "string", "enum": ["everyInstanceExact", "websiteWorkspaceExact"] },
+          "exactVersion": { "type": "string", "minLength": 1 },
+          "allowAbsent": { "type": "boolean" }
+        }
+      }
+    },
+    "drizzleMachineChecks": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "regex", "flags"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z0-9_]+$" },
+          "regex": { "type": "string", "minLength": 1 },
+          "flags": { "type": "string", "enum": ["", "g", "i", "m", "gi", "gm", "im", "gim"] }
+        }
+      }
+    }
+  }
+}

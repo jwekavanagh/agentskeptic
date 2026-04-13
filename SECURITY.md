@@ -24,3 +24,5 @@ We will work with you to understand and address the report before public disclos
 ## Scope notes
 
 This tool runs **read-only SQL** against databases you configure and processes **local files** (events, registry, etc.). Threat models should account for **untrusted input files**, **database connectivity**, and **supply chain** (dependencies) like any Node.js CLI.
+
+For how enforced dependency pins and merge-gated Drizzle static checks are defined, see **CONTRIBUTING** under **Dependency security (merge gate vs policy)**.

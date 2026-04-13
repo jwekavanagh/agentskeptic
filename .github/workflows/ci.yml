@@ -37,6 +37,8 @@ jobs:
           cache: npm
       - name: Install dependencies
         run: npm ci
+      - name: Install langgraph-reference example dependencies
+        run: npm ci --prefix examples/langgraph-reference
       - name: Build, tests, and adoption chain (CI / Postgres)
         run: npm run test:ci
 

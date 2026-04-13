@@ -22,6 +22,14 @@ Thanks for helping improve **agentskeptic**.
 - If you change user-visible CLI behavior, stdout/stderr, or schemas, update the relevant **docs** and **tests** (many behaviors are guarded by doc-contract and golden tests).
 - Do not duplicate normative numbers or stream contracts in the README when they belong in `docs/quick-verify-normative.md` or `docs/agentskeptic.md`.
 
+## Dependency security (merge gate vs policy)
+
+**Machine-readable pins and checks** live in [`docs/dependency-security-pins.json`](docs/dependency-security-pins.json); the JSON shape is defined by [`docs/dependency-security-pins.schema.json`](docs/dependency-security-pins.schema.json). CI runs `scripts/assert-dependency-security-pins.mjs` and contract tests that read that manifest—do not describe alternate numeric floors in prose here; change the manifest and matching `package.json` / lockfiles in the same change.
+
+**Merge-gated (proven in CI):** Under `website/src/`, the repository forbids any source text that matches an entry in the manifest’s **`drizzleMachineChecks`** list (each entry is a regular expression plus flags). That list is the **only** Drizzle-related static surface area this repo treats as automatically enforced in CI for this workstream.
+
+**Policy-only (human review):** Any stricter Drizzle or SQL style rules that are **not** listed in **`drizzleMachineChecks`** are documentation and review policy only; they are **not** merge-gated by those checks until someone extends the manifest and tests accordingly.
+
 ### Marketing copy and discovery sync
 
 - **Discovery:** edit **`config/discovery-acquisition.json`** (must validate against **`config/discovery-acquisition.schema.json`**).

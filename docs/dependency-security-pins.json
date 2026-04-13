@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "packageJsonExact": [
+    { "file": "website/package.json", "path": ["dependencies", "drizzle-orm"], "value": "0.45.2" },
+    { "file": "website/package.json", "path": ["devDependencies", "drizzle-kit"], "value": "0.31.10" },
+    { "file": "website/package.json", "path": ["dependencies", "@auth/drizzle-adapter"], "value": "1.11.1" },
+    { "file": "website/package.json", "path": ["dependencies", "@auth/core"], "value": "0.41.1" },
+    { "file": "website/package.json", "path": ["dependencies", "nodemailer"], "value": "8.0.5" },
+    { "file": "website/package.json", "path": ["devDependencies", "@types/nodemailer"], "value": "6.4.17" },
+    { "file": "package.json", "path": ["devDependencies", "@lhci/cli"], "value": "0.15.1" },
+    { "file": "package.json", "path": ["overrides", "esbuild"], "value": "0.25.0" },
+    { "file": "package.json", "path": ["overrides", "tmp"], "value": "0.2.4" },
+    { "file": "package.json", "path": ["overrides", "cookie"], "value": "0.7.2" },
+    { "file": "examples/langgraph-reference/package.json", "path": ["dependencies", "@langchain/core"], "value": "0.3.80" },
+    { "file": "examples/langgraph-reference/package.json", "path": ["dependencies", "@langchain/langgraph"], "value": "0.2.74" },
+    { "file": "examples/langgraph-reference/package.json", "path": ["overrides", "langsmith"], "value": "0.5.18" }
+  ],
+  "lockfileAssertions": [
+    { "lockfile": "root", "package": "drizzle-orm", "match": "websiteWorkspaceExact", "exactVersion": "0.45.2" },
+    { "lockfile": "root", "package": "nodemailer", "match": "websiteWorkspaceExact", "exactVersion": "8.0.5" },
+    { "lockfile": "root", "package": "esbuild", "match": "everyInstanceExact", "exactVersion": "0.25.0" },
+    { "lockfile": "root", "package": "tmp", "match": "everyInstanceExact", "exactVersion": "0.2.4" },
+    { "lockfile": "root", "package": "cookie", "match": "everyInstanceExact", "exactVersion": "0.7.2" },
+    { "lockfile": "example", "package": "langsmith", "match": "everyInstanceExact", "exactVersion": "0.5.18" }
+  ],
+  "drizzleMachineChecks": [
+    { "id": "sql_identifier", "regex": "sql\\.identifier\\s*\\(", "flags": "m" },
+    { "id": "drizzle_sql_subpath_import", "regex": "from\\s+[\"']drizzle-orm/sql[\"']", "flags": "m" }
+  ]
+}

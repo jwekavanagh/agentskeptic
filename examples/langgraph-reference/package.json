@@ -3,7 +3,10 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "@langchain/core": "^0.3.78",
-    "@langchain/langgraph": "^0.2.74"
+    "@langchain/core": "0.3.80",
+    "@langchain/langgraph": "0.2.74"
+  },
+  "overrides": {
+    "langsmith": "0.5.18"
   }
 }
