@@ -30,13 +30,19 @@ export function loadDiscoveryAcquisitionPageDescription(): string {
   return raw.pageMetadata.description;
 }
 
+export function loadDiscoveryAcquisitionSlug(): string {
+  const p = join(getRepoRoot(), "config", "discovery-acquisition.json");
+  const raw = JSON.parse(readFileSync(p, "utf8")) as { slug: string };
+  return raw.slug;
+}
+
 export function expectedNpmPackageJsonFields(anchors: PublicProductAnchors) {
   const { normalize } = require("../../../scripts/public-product-anchors.cjs") as {
     normalize: (s: string) => string;
   };
   return {
     description: loadDiscoveryAcquisitionPageDescription(),
-    homepage: normalize(anchors.productionCanonicalOrigin),
+    homepage: normalize(anchors.productionCanonicalOrigin) + loadDiscoveryAcquisitionSlug(),
     repository: { type: "git", url: anchors.gitRepositoryGitUrl },
     bugs: { url: anchors.bugsUrl },
     keywords: anchors.keywords,

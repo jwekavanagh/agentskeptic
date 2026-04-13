@@ -260,7 +260,7 @@ function syncPublicProductAnchors() {
   const pkg = JSON.parse(pkgRaw);
   pkg.description = String(discovery.pageMetadata.description);
   pkg.repository = { type: "git", url: anchors.gitRepositoryGitUrl };
-  pkg.homepage = canonicalOrigin;
+  pkg.homepage = `${canonicalOrigin}${String(discovery.slug)}`;
   pkg.bugs = { url: anchors.bugsUrl };
   pkg.keywords = anchors.keywords;
   writeFileSync(PKG_PATH, JSON.stringify(pkg, null, 2) + "\n", "utf8");

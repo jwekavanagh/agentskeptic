@@ -41,7 +41,7 @@ Single place for **public identity**, **anchor sync**, **CI / Vitest public orig
 | `docs/discovery-guides.md` | SSOT for **indexable** `/guides/*` (from **`indexableGuides`**), hub **`/guides`** (noindex), sitemap/`llms.txt` policy, redaction reference, GitHub templates | Yes |
 | `docs/discovery-surfaces.md` | Indexable vs private discovery IA: `/guides/*`, `/examples/*`, `/r/*`, sync commands | Yes |
 | `website/public/openapi-commercial-v1.yaml` | Derived (gitignored); `servers[0].url` and self-URL use effective public origin | No |
-| Root `package.json` | **`description`** from **`config/discovery-acquisition.json` → `pageMetadata.description`**; **`repository`**, **`homepage`**, **`bugs`**, **`keywords`** from anchors via sync | No (those fields) |
+| Root `package.json` | **`description`** from **`config/discovery-acquisition.json` → `pageMetadata.description`**; **`repository`**, **`bugs`**, **`keywords`** from [`config/public-product-anchors.json`](../config/public-product-anchors.json) via sync; **`homepage`** from sync as **`normalize(productionCanonicalOrigin)` + `discovery.slug`** (canonical acquisition URL on the site, same path as the SSOT acquisition page) | No (those fields) |
 | `README.md` | Regions between `<!-- discovery-readme-title:start/end -->`, `<!-- discovery-acquisition-fold:start/end -->`, and `<!-- public-product-anchors:start/end -->` | No inside markers (all are sync-written) |
 
 ### Maintainer sync (normative)

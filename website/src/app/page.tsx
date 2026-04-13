@@ -33,19 +33,16 @@ export default function HomePage() {
             <p className="lede">{productCopy.homepageDecisionFraming}</p>
             <p className="lede">{productCopy.hero.subtitle}</p>
             <p className="home-cta-row" data-testid="home-hero-cta-row">
-              <Link className="btn" href="/pricing">
-                {productCopy.homeHeroCtaLabels.pricing}
-              </Link>
-              <a className="btn secondary" href="#try-it">
-                {productCopy.homeHeroCtaLabels.verify}
-              </a>
               <Link
-                className="link-secondary"
+                className="btn"
                 href={productCopy.homepageAcquisitionCta.href}
                 data-testid={productCopy.homepageAcquisitionCta.testId}
               >
                 {productCopy.homepageAcquisitionCta.label}
               </Link>
+              <a className="btn secondary" href="#try-it">
+                {productCopy.homeHeroCtaLabels.verify}
+              </a>
             </p>
           </div>
         </div>

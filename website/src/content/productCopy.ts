@@ -53,7 +53,7 @@ export type CompanyPageMetadata = { title: string; description: string };
 
 export type ExamplesHubLedes = { primary: string; secondaryMuted: string };
 
-export type HomeHeroCtaLabels = { pricing: string; verify: string };
+export type HomeHeroCtaLabels = { verify: string };
 
 export const companyPageMetadata = {
   title: "Company and support — AgentSkeptic",
@@ -136,7 +136,6 @@ export const securityQuickFacts = {
 } as const satisfies SecurityQuickFacts;
 
 export const homeHeroCtaLabels = {
-  pricing: "View plans and quota",
   verify: "Run verification",
 } as const satisfies HomeHeroCtaLabels;
 

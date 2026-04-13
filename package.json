@@ -81,7 +81,7 @@
     "type": "git",
     "url": "git+https://github.com/jwekavanagh/agentskeptic.git"
   },
-  "homepage": "https://agentskeptic.com",
+  "homepage": "https://agentskeptic.com/database-truth-vs-traces",
   "bugs": {
     "url": "https://github.com/jwekavanagh/agentskeptic/issues"
   },

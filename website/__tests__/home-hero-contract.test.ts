@@ -5,20 +5,30 @@ import { describe, expect, it } from "vitest";
 describe("home hero contract (page.tsx source)", () => {
   const src = readFileSync(path.join(__dirname, "..", "src", "app", "page.tsx"), "utf8");
 
-  it("hero section has exactly three link targets and required CTAs", () => {
+  it("hero section has exactly two CTA link targets; acquisition before try-it; no pricing in hero row", () => {
     const sliceStart = src.indexOf("data-testid={productCopy.uiTestIds.hero}");
     expect(sliceStart).toBeGreaterThanOrEqual(0);
     const end = src.indexOf("</section>", sliceStart);
     expect(end).toBeGreaterThan(sliceStart);
     const heroSlice = src.slice(sliceStart, end);
 
-    const linkOpens = (heroSlice.match(/<a\b/g) ?? []).length + (heroSlice.match(/<Link\b/g) ?? []).length;
-    expect(linkOpens).toBe(3);
+    const ctaRowStart = heroSlice.indexOf('data-testid="home-hero-cta-row"');
+    expect(ctaRowStart).toBeGreaterThanOrEqual(0);
+    const ctaRowEnd = heroSlice.indexOf("</p>", ctaRowStart);
+    expect(ctaRowEnd).toBeGreaterThan(ctaRowStart);
+    const ctaRowSlice = heroSlice.slice(ctaRowStart, ctaRowEnd);
 
-    expect(heroSlice.split('href="/pricing"').length - 1).toBe(1);
-    expect(heroSlice.split('href="#try-it"').length - 1).toBe(1);
+    const linkOpens = (ctaRowSlice.match(/<a\b/g) ?? []).length + (ctaRowSlice.match(/<Link\b/g) ?? []).length;
+    expect(linkOpens).toBe(2);
+
+    expect(ctaRowSlice).not.toContain('href="/pricing"');
+    expect(ctaRowSlice.split('href="#try-it"').length - 1).toBe(1);
     expect(heroSlice).toContain('data-testid="home-hero-cta-row"');
     expect(heroSlice).toContain("data-testid={productCopy.homepageAcquisitionCta.testId}");
+    const acqIdx = ctaRowSlice.indexOf("data-testid={productCopy.homepageAcquisitionCta.testId}");
+    const tryIdx = ctaRowSlice.indexOf('href="#try-it"');
+    expect(acqIdx).toBeGreaterThanOrEqual(0);
+    expect(tryIdx).toBeGreaterThan(acqIdx);
     expect(heroSlice).toContain("home-hero-grid");
     expect(heroSlice).not.toContain("<strong>What:</strong>");
     expect(heroSlice).not.toContain("<strong>Why:</strong>");
