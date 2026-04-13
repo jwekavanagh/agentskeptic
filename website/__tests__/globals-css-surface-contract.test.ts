@@ -9,6 +9,8 @@ const ROOT_BLOCK = `:root {
   --fg: #e7e9ee;
   --muted: #98a1ad;
   --accent: #5c6cfa;
+  /* Readable on \`var(--card)\` at small sizes (WCAG AA); primary \`--accent\` is for fills/large UI. */
+  --accent-on-card: #aab4ff;
   --accent-contrast: #ffffff;
   --card: #151922;
   --border: #2a3140;
