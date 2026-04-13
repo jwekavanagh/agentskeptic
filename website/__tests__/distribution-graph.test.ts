@@ -4,6 +4,7 @@ import { dirname, join } from "node:path";
 import { tmpdir } from "node:os";
 import { createRequire } from "node:module";
 import { describe, expect, beforeAll, it } from "vitest";
+import { JSDOM } from "jsdom";
 import { extract as extractTar } from "tar";
 import { parse } from "yaml";
 import { productCopy } from "@/content/productCopy";
@@ -27,15 +28,32 @@ function escapeRegExp(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-/** Decode common HTML entities so discovery copy (with `&`, quotes) matches fetch() HTML from React/Next. */
+/**
+ * Flatten HTML into decoded text and attribute values in tree order so JSON discovery
+ * needles (plain `&`, quotes, etc.) match what the browser exposes without manual
+ * entity replacement (avoids CodeQL js/double-escaping on test-only normalization).
+ */
 function htmlForTextNeedleMatch(html: string): string {
-  return html
-    // codeql[js/double-escaping]: Test-only HTML entity decoding for substring assertions against fetched HTML; return value is never written to an HTML sink.
-    .replace(/&amp;/g, "&")
-    .replace(/&quot;/g, '"')
-    .replace(/&#34;/g, '"')
-    .replace(/&apos;/g, "'")
-    .replace(/&#39;/g, "'");
+  const { window } = new JSDOM(html);
+  const root = window.document.documentElement;
+  if (!root) return "";
+
+  const parts: string[] = [];
+  function visit(el: Element): void {
+    const { attributes } = el;
+    for (let i = 0; i < attributes.length; i++) {
+      parts.push(attributes[i]!.value);
+    }
+    for (const child of Array.from(el.childNodes)) {
+      if (child.nodeType === Node.TEXT_NODE) {
+        parts.push(child.textContent ?? "");
+      } else if (child.nodeType === Node.ELEMENT_NODE) {
+        visit(child as Element);
+      }
+    }
+  }
+  visit(root);
+  return parts.join("");
 }
 
 registerMarketingSiteTeardown();
