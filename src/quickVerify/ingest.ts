@@ -41,6 +41,27 @@ function getParamsObject(obj: Record<string, unknown>): Record<string, unknown> 
       }
     }
   }
+  const fn = obj.function;
+  if (fn && typeof fn === "object" && !Array.isArray(fn)) {
+    const fnObj = fn as Record<string, unknown>;
+    const inner = fnObj.arguments;
+    if (inner && typeof inner === "object" && !Array.isArray(inner)) {
+      return inner as Record<string, unknown>;
+    }
+    if (typeof inner === "string") {
+      const u = inner.trim();
+      if (u.length > 0 && (u.startsWith("{") || u.startsWith("["))) {
+        try {
+          const parsed = JSON.parse(u) as unknown;
+          if (parsed !== null && typeof parsed === "object" && !Array.isArray(parsed)) {
+            return parsed as Record<string, unknown>;
+          }
+        } catch {
+          /* ignore */
+        }
+      }
+    }
+  }
   const out: Record<string, unknown> = {};
   const skip = new Set<string>(["tool_calls", "toolId", "tool", "name", "action", "function"]);
   for (const k of Object.keys(obj)) {

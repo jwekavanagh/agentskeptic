@@ -219,7 +219,8 @@ describe(
       const idxTitle = homeAgainText.indexOf(disc.heroTitle);
       const idxFrame = homeAgainText.indexOf(disc.homepageDecisionFraming);
       const idxSub = homeAgainText.indexOf(disc.heroSubtitle);
-      const idxHow = homeAgainText.indexOf('data-testid="home-how-it-works"');
+      // htmlForTextNeedleMatch is attribute values + text only (no literal `data-testid="…"` substrings).
+      const idxHow = homeAgainText.indexOf("home-how-it-works");
       expect(idxTitle).toBeGreaterThanOrEqual(0);
       expect(idxFrame).toBeGreaterThan(idxTitle);
       expect(idxSub).toBeGreaterThan(idxFrame);

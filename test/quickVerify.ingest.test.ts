@@ -57,6 +57,31 @@ describe("ingestActivityUtf8", () => {
     expect(r.actions[0]?.toolName).toBe("x");
   });
 
+  it("OpenAI tool_calls entry: params from nested function.arguments JSON only", () => {
+    const line = JSON.stringify({
+      tool_calls: [
+        {
+          id: "call_fixture_1",
+          type: "function",
+          function: {
+            name: "crm.upsert_contact",
+            arguments: JSON.stringify({
+              recordId: "c_ok",
+              fields: { name: "Alice", status: "active" },
+            }),
+          },
+        },
+      ],
+    });
+    const r = ingestActivityUtf8(line);
+    expect(r.actions.length).toBe(1);
+    expect(r.actions[0]?.toolName).toBe("crm.upsert_contact");
+    expect(r.actions[0]?.params).toEqual({
+      recordId: "c_ok",
+      fields: { name: "Alice", status: "active" },
+    });
+  });
+
   it("non-empty JSON with no tools yields INGEST_NO_STRUCTURED_TOOL_ACTIVITY", () => {
     const r = ingestActivityUtf8("{}");
     expect(r.actions).toEqual([]);
