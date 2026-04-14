@@ -2,6 +2,7 @@ import {
   LICENSE_API_BASE_URL,
   LICENSE_PREFLIGHT_ENABLED,
 } from "../generated/commercialBuildFlags.js";
+import { fetchWithTimeout } from "../telemetry/fetchWithTimeout.js";
 
 export type VerifyOutcomeSubcommand = "batch_verify" | "quick_verify";
 export type VerifyOutcomeTerminalStatus = "complete" | "inconsistent" | "incomplete";
@@ -25,20 +26,23 @@ export async function postVerifyOutcomeBeacon(input: {
 
   const url = `${LICENSE_API_BASE_URL.replace(/\/$/, "")}/api/v1/funnel/verify-outcome`;
   try {
-    await fetch(url, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
+    await fetchWithTimeout(
+      url,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          run_id: input.runId,
+          terminal_status: input.terminal_status,
+          workload_class: input.workload_class,
+          subcommand: input.subcommand,
+        }),
       },
-      body: JSON.stringify({
-        run_id: input.runId,
-        terminal_status: input.terminal_status,
-        workload_class: input.workload_class,
-        subcommand: input.subcommand,
-      }),
-      signal: AbortSignal.timeout(400),
-    });
+      400,
+    );
   } catch {
     /* ignore */
   }

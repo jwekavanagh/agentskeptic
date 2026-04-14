@@ -49,7 +49,7 @@ This document is the **SSOT** for **North Star funnel metrics**: measurable prog
 
 **CLI origin override:** **`AGENTSKEPTIC_TELEMETRY_ORIGIN`** (optional) overrides the POST base URL (trailing slash stripped). When unset, the CLI uses **`COMMERCIAL_LICENSE_API_BASE_URL`** on commercial builds and otherwise **`PUBLIC_CANONICAL_SITE_ORIGIN`** from anchor sync (same canonical site origin as the distribution footer).
 
-**Transport:** best-effort `fetch` with **~400ms** timeout; failures never change verification exit codes.
+**Transport:** best-effort `fetch` with **~400ms** wall-clock bound (abort controller + `clearTimeout` in `finally`, not `AbortSignal.timeout`, so short-lived CLI exits stay clean on Windows); failures never change verification exit codes.
 
 **`POST /api/v1/funnel/verify-outcome`**
 

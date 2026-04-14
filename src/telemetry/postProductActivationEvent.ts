@@ -6,6 +6,7 @@ import {
   AGENTSKEPTIC_CLI_SEMVER,
   PUBLIC_CANONICAL_SITE_ORIGIN,
 } from "../publicDistribution.generated.js";
+import { fetchWithTimeout } from "./fetchWithTimeout.js";
 import {
   PRODUCT_ACTIVATION_CLI_PRODUCT_HEADER,
   PRODUCT_ACTIVATION_CLI_PRODUCT_VALUE,
@@ -80,16 +81,19 @@ export async function postProductActivationEvent(input: PostProductActivationEve
         };
 
   try {
-    await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        [PRODUCT_ACTIVATION_CLI_PRODUCT_HEADER]: PRODUCT_ACTIVATION_CLI_PRODUCT_VALUE,
-        [PRODUCT_ACTIVATION_CLI_VERSION_HEADER]: AGENTSKEPTIC_CLI_SEMVER,
+    await fetchWithTimeout(
+      url,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          [PRODUCT_ACTIVATION_CLI_PRODUCT_HEADER]: PRODUCT_ACTIVATION_CLI_PRODUCT_VALUE,
+          [PRODUCT_ACTIVATION_CLI_VERSION_HEADER]: AGENTSKEPTIC_CLI_SEMVER,
+        },
+        body: JSON.stringify(body),
       },
-      body: JSON.stringify(body),
-      signal: AbortSignal.timeout(TELEMETRY_FETCH_TIMEOUT_MS),
-    });
+      TELEMETRY_FETCH_TIMEOUT_MS,
+    );
   } catch {
     /* ignore */
   }
