@@ -1234,13 +1234,15 @@ async function main(): Promise<void> {
       build_profile: batchBuildProfile,
       terminal_status: result.status,
     });
-    await maybeEmitOssClaimTicketUrlToStderr({
-      run_id: batchActivationRunId,
-      terminal_status: result.status,
-      workload_class: batchWorkloadClass,
-      subcommand: "batch_verify",
-      build_profile: batchBuildProfile,
-    });
+    if (!parsedBatch.noTruthReport) {
+      await maybeEmitOssClaimTicketUrlToStderr({
+        run_id: batchActivationRunId,
+        terminal_status: result.status,
+        workload_class: batchWorkloadClass,
+        subcommand: "batch_verify",
+        build_profile: batchBuildProfile,
+      });
+    }
     await postVerifyOutcomeBeacon({
       runId: batchPreflight.runId,
       terminal_status: result.status,
