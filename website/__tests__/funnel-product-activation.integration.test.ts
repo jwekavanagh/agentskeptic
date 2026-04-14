@@ -144,6 +144,71 @@ describe.skipIf(!hasDatabaseUrl)("funnel product-activation", () => {
     expect((rows[0]!.metadata as { funnel_anon_id?: string }).funnel_anon_id).toBe(fid);
   });
 
+  it("returns 204 with install_id null when install_id is omitted (old CLI)", async () => {
+    const res = await postProductActivation(activationReq(startedBody));
+    expect(res.status).toBe(204);
+    const rows = await db.select().from(funnelEvents).where(eq(funnelEvents.event, "verify_started"));
+    expect(rows).toHaveLength(1);
+    expect(rows[0]!.installId).toBeNull();
+  });
+
+  it("returns 400 when install_id is not a valid UUID", async () => {
+    const res = await postProductActivation(
+      activationReq({
+        ...startedBody,
+        run_id: "run-bad-install-id",
+        install_id: "not-a-uuid",
+      }),
+    );
+    expect(res.status).toBe(400);
+    const rows = await db.select().from(funnelEvents).where(eq(funnelEvents.event, "verify_started"));
+    expect(rows).toHaveLength(0);
+  });
+
+  it("persists same install_id on verify_started and verify_outcome for one run", async () => {
+    const iid = "b0000000-0000-4000-8000-000000000088";
+    const rid = "run-install-column-1";
+    const issued = new Date().toISOString();
+    expect(
+      (
+        await postProductActivation(
+          activationReq({
+            ...startedBody,
+            run_id: rid,
+            install_id: iid,
+          }),
+        )
+      ).status,
+    ).toBe(204);
+    expect(
+      (
+        await postProductActivation(
+          activationReq({
+            event: "verify_outcome" as const,
+            schema_version: 1 as const,
+            run_id: rid,
+            issued_at: issued,
+            workload_class: "non_bundled" as const,
+            subcommand: "batch_verify" as const,
+            build_profile: "oss" as const,
+            terminal_status: "complete" as const,
+            install_id: iid,
+          }),
+        )
+      ).status,
+    ).toBe(204);
+    const started = await db
+      .select()
+      .from(funnelEvents)
+      .where(eq(funnelEvents.event, "verify_started"));
+    const outcomes = await db
+      .select()
+      .from(funnelEvents)
+      .where(eq(funnelEvents.event, "verify_outcome"));
+    expect(started[0]!.installId).toBe(iid);
+    expect(outcomes[0]!.installId).toBe(iid);
+  });
+
   it("returns 413 when Content-Length exceeds cap", async () => {
     const h = new Headers({ "content-type": "application/json" });
     h.set(PRODUCT_ACTIVATION_CLI_PRODUCT_HEADER, "cli");

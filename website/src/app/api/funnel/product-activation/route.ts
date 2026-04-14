@@ -124,6 +124,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
           {
             event: "verify_started",
             userId: null,
+            installId: body.install_id ?? null,
             metadata: rowMetadataVerifyStarted(body),
           },
           tx,
@@ -145,6 +146,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
           {
             event: "verify_outcome",
             userId: null,
+            installId: body.install_id ?? null,
             metadata: rowMetadataVerifyOutcome(body),
           },
           tx,

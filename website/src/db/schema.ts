@@ -135,6 +135,7 @@ export const funnelEvents = pgTable("funnel_event", {
   id: uuid("id").primaryKey().defaultRandom(),
   event: text("event").notNull(),
   userId: text("user_id").references(() => users.id, { onDelete: "set null" }),
+  installId: text("install_id"),
   metadata: jsonb("metadata"),
   createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
     .notNull()

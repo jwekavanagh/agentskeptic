@@ -34,8 +34,9 @@ The signed-in **`/account`** page lists recent **licensed verify outcomes** per 
 - **Not in** [`schemas/openapi-commercial-v1.yaml`](../schemas/openapi-commercial-v1.yaml) — operator-only; integrators must not depend on it.
 - **Auth:** none (anonymous). **Required headers:** `X-AgentSkeptic-Product: cli` and `X-AgentSkeptic-Cli-Version: <semver>` (semver core validated server-side; emitted from root `package.json` at anchor sync into [`src/publicDistribution.generated.ts`](../src/publicDistribution.generated.ts) as `AGENTSKEPTIC_CLI_SEMVER`).
 - **Body:** discriminated union on `event`:
-  - `verify_started`: `{ "event": "verify_started", "schema_version": 1, "run_id": string, "issued_at": ISO8601, "workload_class": "bundled_examples"|"non_bundled", "subcommand": "batch_verify"|"quick_verify", "build_profile": "oss"|"commercial", "funnel_anon_id"?: UUIDv4 }`
-  - `verify_outcome`: same fields plus `"terminal_status": "complete"|"inconsistent"|"incomplete"` and optional **`funnel_anon_id`** (UUIDv4). When present, invalid UUID → **`400`**. Optional env **`AGENTSKEPTIC_FUNNEL_ANON_ID`** on the CLI populates this field on commercial/OSS telemetry posts.
+  - `verify_started`: `{ "event": "verify_started", "schema_version": 1, "run_id": string, "issued_at": ISO8601, "workload_class": "bundled_examples"|"non_bundled", "subcommand": "batch_verify"|"quick_verify", "build_profile": "oss"|"commercial", "funnel_anon_id"?: UUIDv4, "install_id"?: UUID }`
+  - `verify_outcome`: same fields plus `"terminal_status": "complete"|"inconsistent"|"incomplete"` and optional **`funnel_anon_id`** and optional **`install_id`** (UUID). When **`funnel_anon_id`** or **`install_id`** is present, invalid UUID → **`400`**. Optional env **`AGENTSKEPTIC_FUNNEL_ANON_ID`** on the CLI populates **`funnel_anon_id`** on commercial/OSS telemetry posts. **`install_id`** is populated by the CLI by default from a pseudonymous id persisted under **`~/.agentskeptic/config.json`** (see below); omitting **`install_id`** remains valid for older clients and stores **`funnel_event.install_id` = NULL**.
+- **Persistence (server):** On first successful insert for a phase, `funnel_event` rows include nullable column **`install_id`** (canonical; not duplicated inside `metadata` JSON). Value is taken from the request body when valid; otherwise SQL `NULL`.
 - **Skew:** `issued_at` must be within **±300 seconds** of server time (same budget as `issued_at` on `POST /api/v1/usage/reserve`).
 - **Body size:** UTF-8 body must be **≤ 4096 bytes**; `Content-Length` larger than the cap yields **`413`** without reading beyond the limit when the header is present.
 - **Idempotency:** `product_activation_started_beacon.run_id` and `product_activation_outcome_beacon.run_id` (each primary key `run_id`). First successful request for a phase inserts the beacon row and **one** corresponding `funnel_event` row (`verify_started` or `verify_outcome`). Duplicates return **`204`** with **no** additional funnel rows for that phase.
@@ -45,12 +46,15 @@ The signed-in **`/account`** page lists recent **licensed verify outcomes** per 
 | Condition | Status | `funnel_event` |
 |-----------|--------|----------------|
 | Missing/invalid JSON or body fails validation | `400` | No |
+| Invalid **`install_id`** or **`funnel_anon_id`** (when present) | `400` | No |
 | `issued_at` skew too large | `400` | No |
 | Missing/invalid CLI marker headers | **`403`** | No |
 | Body larger than cap | **`413`** | No |
-| First success for `run_id` + phase | **`204`** | Yes, exactly one row for that phase |
+| First success for `run_id` + phase | **`204`** | Yes, exactly one row for that phase (with **`install_id`** set from body or `NULL` if omitted) |
 | Duplicate `run_id` for same phase | **`204`** | No additional row |
 | Database error inside transaction | **`503`** | No |
+
+**CLI default `install_id`:** The Node CLI mints or reads a stable pseudonymous UUID, persists it locally at **`~/.agentskeptic/config.json`** (`{ "install_id": "<uuid>" }`), and sends it as **`install_id`** on every **`verify_started`** and **`verify_outcome`** activation POST when telemetry is enabled. If the file is missing, malformed, or not writable, the CLI uses a **process-lifetime** fallback id so both phases in one run still share the same value. **`AGENTSKEPTIC_TELEMETRY=0`** disables activation posts **and** skips reading or writing this file.
 
 **CLI opt-out:** set **`AGENTSKEPTIC_TELEMETRY=0`** to disable **only** `POST /api/funnel/product-activation` from the CLI (no `verify_started` / `verify_outcome` posts). Licensed completion (`POST /api/v1/funnel/verify-outcome`) is unchanged so monetization metrics stay comparable.
 
@@ -96,6 +100,8 @@ These funnel surfaces are **telemetry only**. They do **not** affect whether ver
 | **`verify_outcome`** | Anonymous **activation** telemetry (`POST /api/funnel/product-activation`). | “Did a run reach a terminal verdict?” (OSS + commercial builds that POST successfully.) |
 | **`licensed_verify_outcome`** | **Licensed completion** (`POST /api/v1/funnel/verify-outcome`; requires reservation + API key). | Monetization / entitlement-adjacent reporting: “Did a keyed customer complete on the license server?” |
 
+**Identity roles (do not conflate):** **`funnel_anon_id`** in request/`metadata` is an optional **browser–CLI** join when the operator sets **`AGENTSKEPTIC_FUNNEL_ANON_ID`** from the site beacon. **`install_id`** on **`funnel_event`** is the default **CLI machine cohort** (not a human); operator SQL for distinct installs on **`verify_started`** is in [`growth-metrics-ssot.md`](growth-metrics-ssot.md) (`ActiveInstalls_DistinctInstallId_VerifyStarted_Rolling7dUtc`).
+
 **`build_profile` in activation metadata (`oss` \| `commercial`):** reflects the **CLI build** (`LICENSE_PREFLIGHT_ENABLED` at compile time), **not** a live subscription check. Do not treat **`commercial`** as proof of an active paid plan.
 
 **When to set `AGENTSKEPTIC_TELEMETRY_ORIGIN`:** (1) **`COMMERCIAL_LICENSE_API_BASE_URL`** points at a deployment that **does not** serve **`POST /api/funnel/product-activation`** (license-only vs full site). (2) You want activation rows written to **your** origin (fork, staging, dedicated analytics host) instead of the defaults below.
@@ -122,7 +128,7 @@ These funnel surfaces are **telemetry only**. They do **not** affect whether ver
 
 **Quick rollup → `terminal_status`:** [`src/commercial/quickVerifyFunnelTerminalStatus.ts`](../src/commercial/quickVerifyFunnelTerminalStatus.ts): `pass` → `complete`, `fail` → `inconsistent`, `uncertain` → `incomplete`.
 
-**Privacy:** No file contents or connection strings are logged—only enums, `run_id` for activation rows (in `metadata` and dedupe receipts), `funnel_anon_id` for anonymous correlation, `run_id` correlation via `usage_reservation` for licensed completion, classified path buckets, and bounded attribution strings from the surface beacon.
+**Privacy:** No file contents or connection strings are logged—only enums, `run_id` for activation rows (in `metadata` and dedupe receipts), **`install_id`** as a nullable column on **`funnel_event`** (pseudonymous CLI install), `funnel_anon_id` for optional browser correlation, `run_id` correlation via `usage_reservation` for licensed completion, classified path buckets, and bounded attribution strings from the surface beacon.
 
 ---
 

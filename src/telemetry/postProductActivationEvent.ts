@@ -6,6 +6,7 @@ import {
   AGENTSKEPTIC_CLI_SEMVER,
   PUBLIC_CANONICAL_SITE_ORIGIN,
 } from "../publicDistribution.generated.js";
+import { getOrCreateInstallId } from "./cliInstallId.js";
 import { fetchWithTimeout } from "./fetchWithTimeout.js";
 import {
   PRODUCT_ACTIVATION_CLI_PRODUCT_HEADER,
@@ -60,6 +61,8 @@ export async function postProductActivationEvent(input: PostProductActivationEve
   const funnelAnonPayload =
     funnelAnonId && funnelAnonId.length > 0 ? { funnel_anon_id: funnelAnonId } : {};
 
+  const install_id = getOrCreateInstallId();
+
   const base = resolveTelemetryBaseUrl();
   const url = `${base}/api/funnel/product-activation`;
   const body =
@@ -72,6 +75,7 @@ export async function postProductActivationEvent(input: PostProductActivationEve
           workload_class: input.workload_class,
           subcommand: input.subcommand,
           build_profile: input.build_profile,
+          install_id,
           ...funnelAnonPayload,
         }
       : {
@@ -83,6 +87,7 @@ export async function postProductActivationEvent(input: PostProductActivationEve
           subcommand: input.subcommand,
           build_profile: input.build_profile,
           terminal_status: input.terminal_status,
+          install_id,
           ...funnelAnonPayload,
         };
 

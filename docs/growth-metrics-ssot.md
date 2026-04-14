@@ -4,7 +4,7 @@ This document is the **normative semantics SSOT** for **operator growth metrics*
 
 **Executable SQL mirrors** live under `website/src/lib/growthMetrics*.ts` and **must match** the fenced `sql` blocks below after whitespace normalization — enforced by `website/__tests__/growthMetricsSqlParity.test.ts`.
 
-**HTTP ingestion, attribution field shapes, max lengths, and `schema_version` for beacons** are defined only in [`docs/funnel-observability-ssot.md`](funnel-observability-ssot.md). This document references **`funnel_anon_id`** as a join key only; it does **not** redefine attribution schema.
+**HTTP ingestion, attribution field shapes, max lengths, and `schema_version` for beacons** are defined only in [`docs/funnel-observability-ssot.md`](funnel-observability-ssot.md). This document references **`funnel_anon_id`** as a join key only; it does **not** redefine attribution schema. **`install_id`** (CLI pseudonymous machine cohort on `funnel_event`) is defined only in that SSOT.
 
 **Metric roles:**
 
@@ -12,12 +12,37 @@ This document is the **normative semantics SSOT** for **operator growth metrics*
 |----|----------|---------|
 | `Retention_ActiveReserveDays_ge2_Rolling28dUtc` | Operator | Rolling 28-day retention on `reserve_allowed` |
 | `AccountGauge_DistinctReserveUtcDays_CurrentMonth` | Account UX | Current UTC calendar month activity (see Account API); **not** labeled “retention” in UI |
+| `ActiveInstalls_DistinctInstallId_VerifyStarted_Rolling7dUtc` | Operator | Distinct CLI `install_id` values with ≥1 `verify_started` in rolling 7 UTC days (install cohort, not humans) |
 
 ---
 
 ## Funnel metadata reference (read-only)
 
 - **`funnel_anon_id`:** pseudonymous correlation id on anonymous `funnel_event` rows (surface + product-activation). Semantics: [`docs/funnel-observability-ssot.md`](funnel-observability-ssot.md).
+- **`install_id`:** nullable column on `funnel_event` for CLI activation telemetry (default pseudonymous install). Semantics: [`docs/funnel-observability-ssot.md`](funnel-observability-ssot.md).
+
+---
+
+### ActiveInstalls_DistinctInstallId_VerifyStarted_Rolling7dUtc
+
+**Window:** rolling **7** UTC days from `now() AT TIME ZONE 'UTC'`.
+
+**Value:** count of **distinct** non-null `install_id` on rows where `event = 'verify_started'` in the window.
+
+**Note:** This is **install / machine cohort** signal, not weekly active humans.
+
+```sql
+WITH w AS (
+  SELECT (now() AT TIME ZONE 'UTC') AS now_utc
+)
+SELECT COUNT(DISTINCT fe.install_id)::int AS distinct_installs
+FROM funnel_event fe
+CROSS JOIN w
+WHERE fe.event = 'verify_started'
+  AND fe.install_id IS NOT NULL
+  AND fe.install_id <> ''
+  AND fe.created_at >= w.now_utc - interval '7 days'
+```
 
 ---
 

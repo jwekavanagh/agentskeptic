@@ -9,6 +9,8 @@ export type AppDbClient = PostgresJsDatabase<typeof schema>;
 export type LogFunnelEventInput = {
   event: FunnelEventName;
   userId?: string | null;
+  /** Pseudonymous CLI machine id for activation telemetry only; null for other events. */
+  installId?: string | null;
   metadata?: unknown;
 };
 
@@ -25,6 +27,7 @@ export async function logFunnelEvent(
     client.insert(funnelEvents).values({
       event: input.event,
       userId: input.userId ?? null,
+      installId: input.installId ?? null,
       metadata: input.metadata ?? null,
     });
 
