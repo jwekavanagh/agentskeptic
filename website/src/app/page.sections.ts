@@ -5,6 +5,7 @@ export const HOME_SECTION_ORDER = [
   "homeStakes",
   "howItWorks",
   "fitAndLimits",
+  "homeClosing",
   "commercialSurface",
 ] as const;
 

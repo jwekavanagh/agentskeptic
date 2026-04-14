@@ -55,6 +55,9 @@ export type ExamplesHubLedes = { primary: string; secondaryMuted: string };
 
 export type HomeHeroCtaLabels = { demo: string };
 
+/** Single label for every primary homepage demo CTA (hero, repeats, Try it button). */
+export const HOME_DEMO_PRIMARY_CTA_LABEL = "Run a real verification (~30s)" as const;
+
 export const companyPageMetadata = {
   title: "Company and support — AgentSkeptic",
   description:
@@ -167,7 +170,7 @@ export const integrateActivation = {
 } as const;
 
 export const homeHeroCtaLabels = {
-  demo: "Run a real verification (~30s)",
+  demo: HOME_DEMO_PRIMARY_CTA_LABEL,
 } as const satisfies HomeHeroCtaLabels;
 
 export const productCopy = {
@@ -184,6 +187,7 @@ export const productCopy = {
     homeStakes: "home-stakes",
     howItWorks: "home-how-it-works",
     fitAndLimits: "home-fit-and-limits",
+    homeClosing: "home-closing",
     tryIt: "home-try-it",
     commercialSurface: "home-commercial-surface",
     tryTruthReport: "try-truth-report",
@@ -262,11 +266,17 @@ export const productCopy = {
       "Wrong values versus what structured tool activity claimed.",
       "Workflows that look finished in traces but are incomplete in the database.",
     ],
-    linksCaption: "First-run and contracts",
+  },
+
+  homeClosing: {
+    sectionTitle: "Stop trusting traces alone",
+    subtitle: "Verify your database state before you ship.",
+    integratorLinksCaption: "Docs & integration",
   },
 
   homeStakes: {
     sectionTitle: "When traces lie",
+    stakesTagline: "This is how bugs pass CI, billing breaks, and compliance fails.",
     tensionBullets: [
       "Trace says success.",
       "Database is wrong.",
@@ -337,11 +347,7 @@ export const productCopy = {
   mechanism: {
     title: "Three steps",
     intro: "Capture activity once, declare what the database should show, then verify with read-only SQL.",
-    items: [
-      "Capture tool activity (for example NDJSON your pipeline emits).",
-      "Define expected database state in your registry.",
-      "Verify with read-only SQL at verification time.",
-    ],
+    items: ["Capture tool activity", "Define expected DB state", "Verify with read-only SQL"],
     notObservability:
       "This is not generic observability or log search. It compares expected database state to read-only query results at verification time.",
   },
@@ -373,7 +379,10 @@ export const productCopy = {
     title: "Try it (no account)",
     intro: "Pick a bundled scenario. The server runs the same verification engine as the open-source CLI against demo fixtures.",
     introHeroEmbed: "Pick a scenario and run—the same verification engine as the open-source CLI, on bundled fixtures.",
-    runButton: "Run the demo",
+    /** Shown above the run control so failures feel intentional, not random. */
+    preButtonFraming:
+      "Tip: choose the missing-row scenario (wf_missing)—verification fails with ROW_ABSENT when the log implies a write read-only SQL does not find.",
+    runButton: HOME_DEMO_PRIMARY_CTA_LABEL,
     running: "Running…",
     scenarioLabel: "Scenario",
     /** Live region (polite) after a successful demo verification run. */

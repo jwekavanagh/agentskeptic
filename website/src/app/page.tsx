@@ -64,7 +64,13 @@ export default function HomePage() {
           </div>
           <div className="home-hero-terminal" data-testid="home-hero-terminal">
             <p className="home-hero-terminal-label muted">Bundled demo output (failure)</p>
-            <pre className="home-hero-terminal-pre" aria-label="Example verification failure transcript">
+            <p className="home-hero-verdict" aria-hidden="true">
+              VERDICT: <span className="home-hero-verdict-failed">FAILED</span>
+            </p>
+            <pre
+              className="home-hero-terminal-pre"
+              aria-label="Example verification failure transcript; verdict failed"
+            >
               <HeroTerminalHighlighted text={heroTerminalExcerpt} />
             </pre>
           </div>
@@ -86,20 +92,6 @@ export default function HomePage() {
           ))}
         </ul>
         {demoRepeatCta("home-repeat-cta-what-catches")}
-        <p className="muted home-what-catches-links-caption">{productCopy.homeWhatCatches.linksCaption}</p>
-        <ul className="home-trust-strip-list">
-          {trustLinks.map((item) => (
-            <li key={item.key} data-testid={`home-trust-strip-${item.key}`}>
-              {item.external ? (
-                <a href={item.href} rel="noreferrer" target="_blank">
-                  {item.label}
-                </a>
-              ) : (
-                <a href={item.href}>{item.label}</a>
-              )}
-            </li>
-          ))}
-        </ul>
       </section>
     ),
     homeStakes: (
@@ -110,6 +102,7 @@ export default function HomePage() {
         aria-labelledby="home-stakes-heading"
       >
         <h2 id="home-stakes-heading">{productCopy.homeStakes.sectionTitle}</h2>
+        <p className="lede home-stakes-tagline">{productCopy.homeStakes.stakesTagline}</p>
         <ul className="home-stakes-tension">
           {productCopy.homeStakes.tensionBullets.map((t) => (
             <li key={t}>{t}</li>
@@ -138,8 +131,6 @@ export default function HomePage() {
         </ol>
         <p className="muted">
           <Link href="/examples/wf-missing">{productCopy.howItWorks.exampleWfMissingLabel}</Link>
-          {" · "}
-          <Link href="/integrate">First-run on your database</Link>
           {" · "}
           <Link href={discoveryAcquisition.slug}>{productCopy.howItWorks.acquisitionDepthLinkLabel}</Link>
           {" · "}
@@ -183,6 +174,32 @@ export default function HomePage() {
         <p className="muted">{productCopy.mechanism.notObservability}</p>
       </section>
     ),
+    homeClosing: (
+      <section
+        key="homeClosing"
+        className="home-section home-closing"
+        data-testid={productCopy.uiTestIds.homeClosing}
+        aria-labelledby="home-closing-heading"
+      >
+        <h2 id="home-closing-heading">{productCopy.homeClosing.sectionTitle}</h2>
+        <p className="lede">{productCopy.homeClosing.subtitle}</p>
+        {demoRepeatCta("home-repeat-cta-closing")}
+        <p className="muted home-closing-links-caption">{productCopy.homeClosing.integratorLinksCaption}</p>
+        <ul className="home-trust-strip-list">
+          {trustLinks.map((item) => (
+            <li key={item.key} data-testid={`home-trust-strip-${item.key}`}>
+              {item.external ? (
+                <a href={item.href} rel="noreferrer" target="_blank">
+                  {item.label}
+                </a>
+              ) : (
+                <a href={item.href}>{item.label}</a>
+              )}
+            </li>
+          ))}
+        </ul>
+      </section>
+    ),
     commercialSurface: (
       <section
         key="commercialSurface"
@@ -190,7 +207,6 @@ export default function HomePage() {
         data-testid={productCopy.uiTestIds.commercialSurface}
         aria-labelledby="commercial-surface-heading"
       >
-        {demoRepeatCta("home-repeat-cta-commercial")}
         <h2 id="commercial-surface-heading">{productCopy.commercialSurface.title}</h2>
         <p>{productCopy.commercialSurface.lead}</p>
         <p className="commercial-links">

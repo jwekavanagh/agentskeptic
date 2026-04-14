@@ -74,6 +74,9 @@ export function TryItSection({ variant = "page" }: TryItSectionProps) {
     <>
       <h2 id="try-it-heading">{productCopy.tryIt.title}</h2>
       <p className="muted">{embedded ? productCopy.tryIt.introHeroEmbed : productCopy.tryIt.intro}</p>
+      <p className="muted try-it-pre-frame" data-testid="try-it-pre-button-framing">
+        {productCopy.tryIt.preButtonFraming}
+      </p>
       <div className="try-it-controls">
         <label className="try-it-label" htmlFor="scenario-select">
           {productCopy.tryIt.scenarioLabel}

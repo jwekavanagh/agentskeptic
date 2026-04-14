@@ -530,6 +530,34 @@ main {
   font-size: 0.85rem;
   margin: 0 0 0.5rem;
 }
+.home-hero-verdict {
+  margin: 0 0 0.65rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--fg);
+}
+.home-hero-verdict-failed {
+  color: color-mix(in srgb, #f87171 95%, var(--fg));
+  text-shadow: 0 0 14px color-mix(in srgb, #f87171 40%, transparent);
+}
+.home-stakes-tagline {
+  font-weight: 600;
+  color: var(--accent-on-card);
+  margin-top: 0;
+}
+.home-closing {
+  border-top: 1px solid var(--border);
+  padding-top: 1.5rem;
+}
+.home-closing-links-caption {
+  margin: 1.25rem 0 0.35rem;
+  font-size: 0.9rem;
+}
+.try-it-pre-frame {
+  margin: 0.75rem 0 0.5rem;
+  max-width: 44rem;
+}
 .home-hero-terminal-pre {
   max-height: min(24rem, 56vh);
   margin: 0;
