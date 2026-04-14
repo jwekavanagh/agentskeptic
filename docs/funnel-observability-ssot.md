@@ -47,7 +47,7 @@ This document is the **SSOT** for **North Star funnel metrics**: measurable prog
 
 **CLI opt-out:** set **`AGENTSKEPTIC_TELEMETRY=0`** to disable **only** `POST /api/funnel/product-activation` from the CLI (no `verify_started` / `verify_outcome` posts). Licensed completion (`POST /api/v1/funnel/verify-outcome`) is unchanged so monetization metrics stay comparable.
 
-**CLI origin override:** **`AGENTSKEPTIC_TELEMETRY_ORIGIN`** (optional) overrides the POST base URL (trailing slash stripped). When unset, the CLI uses **`COMMERCIAL_LICENSE_API_BASE_URL`** on commercial builds and otherwise **`PUBLIC_CANONICAL_SITE_ORIGIN`** from anchor sync (same canonical site origin as the distribution footer).
+**CLI origin override:** **`AGENTSKEPTIC_TELEMETRY_ORIGIN`** (optional) overrides the POST base URL (trailing slash stripped). When unset, the CLI uses **`COMMERCIAL_LICENSE_API_BASE_URL`** on commercial builds and otherwise **`PUBLIC_CANONICAL_SITE_ORIGIN`** from anchor sync (same canonical site origin as the distribution footer). **Split deployments:** if the license API origin does **not** host the Next.js **`/api/funnel/product-activation`** route, activation rows will never land unless you set **`AGENTSKEPTIC_TELEMETRY_ORIGIN`** to the site origin that does — see [Operator reading metrics](#operator-reading-metrics-do-not-double-count).
 
 **Transport:** best-effort `fetch` with **~400ms** wall-clock bound (abort controller + `clearTimeout` in `finally`, not `AbortSignal.timeout`, so short-lived CLI exits stay clean on Windows); failures never change verification exit codes.
 
@@ -79,6 +79,38 @@ This document is the **SSOT** for **North Star funnel metrics**: measurable prog
 These funnel surfaces are **telemetry only**. They do **not** affect whether verification is correct, whether `reserve` succeeds, or CLI exit codes. Failures on the beacon path are ignored by the CLI (best-effort). **`verify_started` / `verify_outcome` rows may be absent** (offline runs, opt-out, timeouts); product behavior must never depend on them.
 
 ### Operator
+
+#### Operator reading metrics (do not double-count)
+
+**Two outcome signals for commercial `quick` / batch `verify`:** the CLI may persist **both** of the following for the same successful run. They answer different questions; **do not add them into one “total completions” number.**
+
+| `funnel_event.event` | Role | Typical use |
+|----------------------|------|-------------|
+| **`verify_outcome`** | Anonymous **activation** telemetry (`POST /api/funnel/product-activation`). | “Did a run reach a terminal verdict?” (OSS + commercial builds that POST successfully.) |
+| **`licensed_verify_outcome`** | **Licensed completion** (`POST /api/v1/funnel/verify-outcome`; requires reservation + API key). | Monetization / entitlement-adjacent reporting: “Did a keyed customer complete on the license server?” |
+
+**`build_profile` in activation metadata (`oss` \| `commercial`):** reflects the **CLI build** (`LICENSE_PREFLIGHT_ENABLED` at compile time), **not** a live subscription check. Do not treat **`commercial`** as proof of an active paid plan.
+
+**When to set `AGENTSKEPTIC_TELEMETRY_ORIGIN`:** (1) **`COMMERCIAL_LICENSE_API_BASE_URL`** points at a deployment that **does not** serve **`POST /api/funnel/product-activation`** (license-only vs full site). (2) You want activation rows written to **your** origin (fork, staging, dedicated analytics host) instead of the defaults below.
+
+**Default POST base when `AGENTSKEPTIC_TELEMETRY_ORIGIN` is unset:** **Commercial CLI:** same origin as **`COMMERCIAL_LICENSE_API_BASE_URL`** (that deployment must expose **`/api/funnel/product-activation`**). **OSS CLI:** **`PUBLIC_CANONICAL_SITE_ORIGIN`** from anchor sync ([`src/publicDistribution.generated.ts`](../src/publicDistribution.generated.ts)) — forks and local OSS builds send best-effort activation posts there unless overridden.
+
+**`verify_started` without `verify_outcome` (same `run_id` in metadata):** means **no terminal activation outcome row was accepted** by the server (or never sent). Causes include: **`AGENTSKEPTIC_TELEMETRY=0`** before the outcome POST, network or timeout, **`issued_at`** skew **`400`**, missing route on the POST origin, CLI **exit 3** before the outcome POST, or engine failure before a terminal result. **Do not** read this pattern as “user abandoned” by itself — it is only “no persisted activation outcome for that run.”
+
+```sql
+-- Pair activation start vs outcome by run_id (7-day window; adjust as needed)
+SELECT
+  s.metadata->>'run_id' AS run_id,
+  max(s.created_at) FILTER (WHERE s.event = 'verify_started') AS started_at,
+  max(o.created_at) FILTER (WHERE o.event = 'verify_outcome') AS outcome_at
+FROM funnel_event s
+LEFT JOIN funnel_event o
+  ON o.metadata->>'run_id' = s.metadata->>'run_id'
+ AND o.event = 'verify_outcome'
+WHERE s.event = 'verify_started'
+  AND s.created_at >= now() - interval '7 days'
+GROUP BY 1;
+```
 
 **Why not Vercel-only page views:** Page views do not correlate `run_id` to a completed licensed run. This design stores **queryable rows** in Postgres.
 
