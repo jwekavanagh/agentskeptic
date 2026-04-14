@@ -1,3 +1,4 @@
+import { rewriteMagicLinkUrlForProductionEmail } from "./canonicalSiteOrigin";
 import { sendMagicLink } from "./sendMagicLink";
 import { reserveMagicLinkSendSlot } from "./magicLinkSendGate";
 
@@ -27,6 +28,7 @@ export async function runMagicLinkVerificationRequest(params: MagicLinkVerificat
       : new Request("https://internal.invalid");
 
   const emailForSend = params.identifier.trim().toLowerCase();
+  const urlForSend = rewriteMagicLinkUrlForProductionEmail(params.url);
   await reserveMagicLinkSendSlot(req, emailForSend);
-  await sendMagicLink(emailForSend, params.url);
+  await sendMagicLink(emailForSend, urlForSend);
 }

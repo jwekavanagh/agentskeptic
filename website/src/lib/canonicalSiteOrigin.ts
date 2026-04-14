@@ -34,3 +34,22 @@ export function getCanonicalSiteOrigin(): string {
 
   return publicProductAnchors.productionCanonicalOrigin.replace(/\/$/, "");
 }
+
+/**
+ * In Vercel production, force magic-link URLs to {@link getCanonicalSiteOrigin} so emailed links never
+ * use a deployment hostname (for example `*.vercel.app`). Those hosts are higher-risk in phishing
+ * classifiers and confuse users; the canonical domain should match `NEXT_PUBLIC_APP_URL`.
+ */
+export function rewriteMagicLinkUrlForProductionEmail(url: string): string {
+  if (!isProductionLike()) return url;
+  const canonicalOrigin = getCanonicalSiteOrigin();
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return url;
+  }
+  const target = new URL(canonicalOrigin);
+  if (parsed.origin === target.origin) return url;
+  return new URL(`${parsed.pathname}${parsed.search}${parsed.hash}`, canonicalOrigin).toString();
+}
