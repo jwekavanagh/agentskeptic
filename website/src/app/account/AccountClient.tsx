@@ -184,6 +184,31 @@ export function AccountClient({
       <p title={billing.title}>
         <strong>Billing:</strong> {billing.label}
       </p>
+      <div style={{ marginTop: "1rem" }} data-testid="account-monthly-quota">
+        <h3 style={{ marginTop: 0 }}>{productCopy.account.monthlyQuotaHeading}</h3>
+        <p className="muted">{productCopy.account.monthlyQuotaYearMonth(commercial.monthlyQuota.yearMonth)}</p>
+        {commercial.monthlyQuota.keys.length === 0 ? (
+          <p className="muted">No active API key. Create a key below to use licensed verification quota.</p>
+        ) : (
+          commercial.monthlyQuota.keys.map((k) => (
+            <p key={k.apiKeyId}>
+              <strong>{k.label}:</strong>{" "}
+              {productCopy.account.monthlyQuotaKeyLine(
+                k.used,
+                k.limit === null ? productCopy.account.monthlyQuotaUnlimited : String(k.limit),
+              )}
+            </p>
+          ))
+        )}
+        <p className="muted">
+          {productCopy.account.monthlyQuotaDistinctDays(
+            commercial.monthlyQuota.distinctReserveUtcDaysThisMonth,
+          )}
+        </p>
+        <p data-testid="quota-urgency-line">
+          {productCopy.account.quotaUrgencyCopy[commercial.monthlyQuota.worstUrgency]}
+        </p>
+      </div>
       {commercial.hasStripeCustomer && (
         <p style={{ marginTop: "0.5rem" }}>
           <button

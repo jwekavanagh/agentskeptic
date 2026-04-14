@@ -1,3 +1,4 @@
+import { FunnelAnonIdExport } from "@/components/FunnelAnonIdExport";
 import { FunnelSurfaceBeacon } from "@/components/FunnelSurfaceBeacon";
 import { integrateActivation } from "@/content/productCopy";
 import { siteMetadata } from "@/content/siteMetadata";
@@ -34,6 +35,7 @@ export default function IntegratePage() {
 
       <h2>{a.runHeading}</h2>
       <p className="muted">{a.runCaption}</p>
+      <FunnelAnonIdExport />
       <div data-testid="integrator-activation-commands">
         <pre>
           <code>{a.command}</code>

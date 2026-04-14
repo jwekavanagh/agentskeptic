@@ -27,8 +27,11 @@ test("README discovery fold body matches buildDiscoveryFoldBody", () => {
   const i0 = readme.indexOf(start);
   const i1 = readme.indexOf(end);
   assert.ok(i0 >= 0 && i1 > i0);
-  const inner = readme.slice(i0 + start.length, i1).trim();
-  assert.equal(inner, expected.trim());
+  const inner = readme
+    .slice(i0 + start.length, i1)
+    .trim()
+    .replaceAll("\r\n", "\n");
+  assert.equal(inner, expected.trim().replaceAll("\r\n", "\n"));
 });
 
 test("README discovery-readme-title matches readmeTitle", () => {

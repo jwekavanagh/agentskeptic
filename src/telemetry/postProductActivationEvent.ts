@@ -56,6 +56,10 @@ export type PostProductActivationEventInput =
 export async function postProductActivationEvent(input: PostProductActivationEventInput): Promise<void> {
   if (process.env.AGENTSKEPTIC_TELEMETRY?.trim() === "0") return;
 
+  const funnelAnonId = process.env.AGENTSKEPTIC_FUNNEL_ANON_ID?.trim();
+  const funnelAnonPayload =
+    funnelAnonId && funnelAnonId.length > 0 ? { funnel_anon_id: funnelAnonId } : {};
+
   const base = resolveTelemetryBaseUrl();
   const url = `${base}/api/funnel/product-activation`;
   const body =
@@ -68,6 +72,7 @@ export async function postProductActivationEvent(input: PostProductActivationEve
           workload_class: input.workload_class,
           subcommand: input.subcommand,
           build_profile: input.build_profile,
+          ...funnelAnonPayload,
         }
       : {
           event: "verify_outcome" as const,
@@ -78,6 +83,7 @@ export async function postProductActivationEvent(input: PostProductActivationEve
           subcommand: input.subcommand,
           build_profile: input.build_profile,
           terminal_status: input.terminal_status,
+          ...funnelAnonPayload,
         };
 
   try {

@@ -120,6 +120,30 @@ describe.skipIf(!hasDatabaseUrl)("funnel product-activation", () => {
     expect(res.status).toBe(403);
   });
 
+  it("returns 400 when funnel_anon_id is not a valid UUIDv4", async () => {
+    const res = await postProductActivation(
+      activationReq({
+        ...startedBody,
+        funnel_anon_id: "not-a-uuid",
+      }),
+    );
+    expect(res.status).toBe(400);
+  });
+
+  it("returns 204 and persists funnel_anon_id in metadata when valid", async () => {
+    const fid = "a0000000-0000-4000-8000-000000000099";
+    const res = await postProductActivation(
+      activationReq({
+        ...startedBody,
+        run_id: "run-with-fid",
+        funnel_anon_id: fid,
+      }),
+    );
+    expect(res.status).toBe(204);
+    const rows = await db.select().from(funnelEvents).where(eq(funnelEvents.event, "verify_started"));
+    expect((rows[0]!.metadata as { funnel_anon_id?: string }).funnel_anon_id).toBe(fid);
+  });
+
   it("returns 413 when Content-Length exceeds cap", async () => {
     const h = new Headers({ "content-type": "application/json" });
     h.set(PRODUCT_ACTIVATION_CLI_PRODUCT_HEADER, "cli");

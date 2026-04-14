@@ -1,5 +1,8 @@
+import {
+  buildCommercialAccountStatePayload,
+  emptyMonthlyQuotaForTests,
+} from "@/lib/commercialAccountState";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { buildCommercialAccountStatePayload } from "@/lib/commercialAccountState";
 
 describe("buildCommercialAccountStatePayload billingPriceSyncHint", () => {
   afterEach(() => {
@@ -14,6 +17,7 @@ describe("buildCommercialAccountStatePayload billingPriceSyncHint", () => {
       stripePriceId: "price_ok",
       expectedPlan: null,
       operatorContactEmail: "ops@example.com",
+      monthlyQuota: emptyMonthlyQuotaForTests(),
     });
     expect(p.priceMapping).toBe("mapped");
     expect(p.billingPriceSyncHint).toBeNull();
@@ -27,6 +31,7 @@ describe("buildCommercialAccountStatePayload billingPriceSyncHint", () => {
       stripePriceId: "price_on_subscription",
       expectedPlan: null,
       operatorContactEmail: "billing@example.com",
+      monthlyQuota: emptyMonthlyQuotaForTests(),
     });
     expect(p.priceMapping).toBe("unmapped");
     expect(p.billingPriceSyncHint).toEqual({
@@ -41,6 +46,7 @@ describe("buildCommercialAccountStatePayload billingPriceSyncHint", () => {
       stripePriceId: "price_orphan",
       expectedPlan: null,
       operatorContactEmail: "not-an-email",
+      monthlyQuota: emptyMonthlyQuotaForTests(),
     });
     expect(p.priceMapping).toBe("unmapped");
     expect(p.billingPriceSyncHint).toEqual({ supportEmail: null });
@@ -53,6 +59,7 @@ describe("buildCommercialAccountStatePayload billingPriceSyncHint", () => {
       stripePriceId: "price_orphan",
       expectedPlan: null,
       operatorContactEmail: "ops@example.com",
+      monthlyQuota: emptyMonthlyQuotaForTests(),
     });
     expect(p.priceMapping).toBe("unmapped");
     expect(p.billingPriceSyncHint).toEqual({ supportEmail: "ops@example.com" });

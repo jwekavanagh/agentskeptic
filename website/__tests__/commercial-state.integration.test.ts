@@ -83,6 +83,9 @@ describe.skipIf(!hasDatabaseUrl)("GET /api/account/commercial-state", () => {
     expect(j.priceMapping).toBe("mapped");
     expect(j.hasStripeCustomer).toBe(true);
     expect(j.entitlementSummary).toContain("is enabled");
+    expect(j.monthlyQuota).toBeDefined();
+    expect(j.monthlyQuota.worstUrgency).toBe("ok");
+    expect(Array.isArray(j.monthlyQuota.keys)).toBe(true);
   });
 
   it("returns checkoutActivationReady false without expectedPlan query", async () => {
@@ -101,9 +104,10 @@ describe.skipIf(!hasDatabaseUrl)("GET /api/account/commercial-state", () => {
     });
     const res = await getCommercialState(new NextRequest("http://localhost/api/account/commercial-state"));
     expect(res.status).toBe(200);
-    const j = (await res.json()) as { checkoutActivationReady: boolean; hasStripeCustomer: boolean };
+    const j = (await res.json()) as CommercialAccountStatePayload;
     expect(j.checkoutActivationReady).toBe(false);
     expect(j.hasStripeCustomer).toBe(false);
+    expect(j.monthlyQuota.keys.length).toBe(0);
   });
 
   it("returns billingPriceSyncHint when subscription price is not in env mapping", async () => {

@@ -4,7 +4,10 @@ import type { ReactNode } from "react";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { AccountClient } from "@/app/account/AccountClient";
-import type { CommercialAccountStatePayload } from "@/lib/commercialAccountState";
+import {
+  emptyMonthlyQuotaForTests,
+  type CommercialAccountStatePayload,
+} from "@/lib/commercialAccountState";
 
 vi.mock("next/navigation", () => ({
   useSearchParams: () => new URLSearchParams(),
@@ -36,6 +39,7 @@ function baseCommercial(overrides: Partial<CommercialAccountStatePayload> = {}):
     checkoutActivationReady: false,
     hasStripeCustomer: false,
     billingPriceSyncHint: null,
+    monthlyQuota: emptyMonthlyQuotaForTests(),
     ...overrides,
   };
 }

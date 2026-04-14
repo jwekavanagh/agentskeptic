@@ -468,6 +468,19 @@ export const productCopy = {
 
   /** Account client: activation copy and a11y announcements (keep in sync with AccountClient UI). */
   account: {
+    monthlyQuotaHeading: "Licensed verification usage (this month)",
+    monthlyQuotaYearMonth: (ym: string) => `Billing month: ${ym} (UTC).`,
+    monthlyQuotaKeyLine: (used: number, limitLabel: string) =>
+      `${used} used · limit: ${limitLabel}`,
+    monthlyQuotaUnlimited: "Unlimited",
+    monthlyQuotaDistinctDays: (n: number) =>
+      `Active verification days (UTC dates with a successful reserve) this month: ${n}. This is an activity gauge, not the rolling 28-day retention KPI in operator docs.`,
+    quotaUrgencyCopy: {
+      ok: "Usage is comfortably below your plan limit.",
+      notice: "You have used at least 75% of your included verifications for this month.",
+      warning: "You have used at least 90% of your included verifications for this month.",
+      at_cap: "You have reached your included verifications for this month. Upgrade or wait for the next billing month.",
+    } as const,
     a11yApiKeyReady: "API key generated. Copy it from the page and store it safely.",
     checkoutActivationPending:
       "Finishing subscription setup… This usually takes a few seconds. You can refresh the page if it does not update.",

@@ -13,6 +13,11 @@ const cliVersionSchema = z
   .max(64)
   .regex(/^[0-9]+\.[0-9]+\.[0-9]+(?:[-+._a-zA-Z0-9]*)?$/);
 
+const optionalFunnelAnonIdSchema = z.preprocess(
+  (v) => (typeof v === "string" && v.trim() === "" ? undefined : v),
+  z.string().uuid().optional(),
+);
+
 export const productActivationVerifyStartedSchema = z.object({
   event: z.literal("verify_started"),
   schema_version: z.literal(1),
@@ -21,6 +26,7 @@ export const productActivationVerifyStartedSchema = z.object({
   workload_class: workloadClassSchema,
   subcommand: subcommandSchema,
   build_profile: buildProfileSchema,
+  funnel_anon_id: optionalFunnelAnonIdSchema,
 });
 
 export const productActivationVerifyOutcomeSchema = z.object({
@@ -32,6 +38,7 @@ export const productActivationVerifyOutcomeSchema = z.object({
   subcommand: subcommandSchema,
   build_profile: buildProfileSchema,
   terminal_status: terminalStatusSchema,
+  funnel_anon_id: optionalFunnelAnonIdSchema,
 });
 
 export const productActivationRequestSchema = z.discriminatedUnion("event", [

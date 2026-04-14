@@ -12,23 +12,26 @@ This document is the **SSOT** for **North Star funnel metrics**: measurable prog
 
 | Surface | Method | Path | Response |
 |---------|--------|------|----------|
-| Anonymous page beacon | `POST` | `/api/funnel/surface-impression` | `204` success; `400` bad JSON/body; `403` failed origin guard |
+| Anonymous page beacon | `POST` | `/api/funnel/surface-impression` | **`200`** JSON success; `400` bad JSON/body/attribution; `403` failed origin guard |
 | CLI product activation (OSS + commercial) | `POST` | `/api/funnel/product-activation` | See [HTTP table](#post-apifunnelproduct-activation-http-semantics) |
 | Licensed completion beacon | `POST` | `/api/v1/funnel/verify-outcome` | See [HTTP table](#post-apiv1funnelverify-outcome-http-semantics) |
 
 **`POST /api/funnel/surface-impression`**
 
-- **Body:** `{ "surface": "acquisition" | "integrate" }` (JSON).
+- **Body (JSON, strict keys):** `{ "surface": "acquisition" | "integrate", "funnel_anon_id"?: UUIDv4, "attribution"?: { … } }`.
+  - **`funnel_anon_id`:** optional. When omitted or invalid, server **mints** a new UUIDv4 and returns it in the response (clients should persist and resend).
+  - **`attribution`:** optional object with **only** these optional string keys (omit keys rather than send empty strings): `utm_source`, `utm_medium`, `utm_campaign`, `utm_content`, `utm_term`, `landing_path`, `referrer_path`. After trim: no control characters, no `://` substring, **`utm_*` max 128 Unicode code points**, **`landing_path` / `referrer_path` max 512 Unicode code points**; unknown keys or violations → **`400`** (no row).
 - **Origin guard:** `Origin` or `Referer` must parse to the **same origin** as `getCanonicalSiteOrigin()` in the website server (see [`website/src/lib/canonicalSiteOrigin.ts`](../website/src/lib/canonicalSiteOrigin.ts)).
-- **Persistence:** `funnel_event.event` is `acquisition_landed` or `integrate_landed`; `user_id` is null; `metadata` is `{ "schema_version": 1, "surface": "<same as body>" }`.
+- **Persistence:** `funnel_event.event` is `acquisition_landed` or `integrate_landed`; `user_id` is null; `metadata` is `{ "schema_version": 1, "surface", "funnel_anon_id", "attribution" }` (normalized `attribution` object, possibly `{}`).
+- **Success response:** **`200`** `Content-Type: application/json` body `{ "schema_version": 1, "funnel_anon_id": "<uuid>" }` (echoes minted or validated id).
 
 **`POST /api/funnel/product-activation`**
 
 - **Not in** [`schemas/openapi-commercial-v1.yaml`](../schemas/openapi-commercial-v1.yaml) — operator-only; integrators must not depend on it.
 - **Auth:** none (anonymous). **Required headers:** `X-AgentSkeptic-Product: cli` and `X-AgentSkeptic-Cli-Version: <semver>` (semver core validated server-side; emitted from root `package.json` at anchor sync into [`src/publicDistribution.generated.ts`](../src/publicDistribution.generated.ts) as `AGENTSKEPTIC_CLI_SEMVER`).
 - **Body:** discriminated union on `event`:
-  - `verify_started`: `{ "event": "verify_started", "schema_version": 1, "run_id": string, "issued_at": ISO8601, "workload_class": "bundled_examples"|"non_bundled", "subcommand": "batch_verify"|"quick_verify", "build_profile": "oss"|"commercial" }`
-  - `verify_outcome`: same fields plus `"terminal_status": "complete"|"inconsistent"|"incomplete"`
+  - `verify_started`: `{ "event": "verify_started", "schema_version": 1, "run_id": string, "issued_at": ISO8601, "workload_class": "bundled_examples"|"non_bundled", "subcommand": "batch_verify"|"quick_verify", "build_profile": "oss"|"commercial", "funnel_anon_id"?: UUIDv4 }`
+  - `verify_outcome`: same fields plus `"terminal_status": "complete"|"inconsistent"|"incomplete"` and optional **`funnel_anon_id`** (UUIDv4). When present, invalid UUID → **`400`**. Optional env **`AGENTSKEPTIC_FUNNEL_ANON_ID`** on the CLI populates this field on commercial/OSS telemetry posts.
 - **Skew:** `issued_at` must be within **±300 seconds** of server time (same budget as `issued_at` on `POST /api/v1/usage/reserve`).
 - **Body size:** UTF-8 body must be **≤ 4096 bytes**; `Content-Length` larger than the cap yields **`413`** without reading beyond the limit when the header is present.
 - **Idempotency:** `product_activation_started_beacon.run_id` and `product_activation_outcome_beacon.run_id` (each primary key `run_id`). First successful request for a phase inserts the beacon row and **one** corresponding `funnel_event` row (`verify_started` or `verify_outcome`). Duplicates return **`204`** with **no** additional funnel rows for that phase.
@@ -97,20 +100,7 @@ These funnel surfaces are **telemetry only**. They do **not** affect whether ver
 
 **`verify_started` without `verify_outcome` (same `run_id` in metadata):** means **no terminal activation outcome row was accepted** by the server (or never sent). Causes include: **`AGENTSKEPTIC_TELEMETRY=0`** before the outcome POST, network or timeout, **`issued_at`** skew **`400`**, missing route on the POST origin, CLI **exit 3** before the outcome POST, or engine failure before a terminal result. **Do not** read this pattern as “user abandoned” by itself — it is only “no persisted activation outcome for that run.”
 
-```sql
--- Pair activation start vs outcome by run_id (7-day window; adjust as needed)
-SELECT
-  s.metadata->>'run_id' AS run_id,
-  max(s.created_at) FILTER (WHERE s.event = 'verify_started') AS started_at,
-  max(o.created_at) FILTER (WHERE o.event = 'verify_outcome') AS outcome_at
-FROM funnel_event s
-LEFT JOIN funnel_event o
-  ON o.metadata->>'run_id' = s.metadata->>'run_id'
- AND o.event = 'verify_outcome'
-WHERE s.event = 'verify_started'
-  AND s.created_at >= now() - interval '7 days'
-GROUP BY 1;
-```
+**Operator SQL for KPIs (cross-surface, retention, conversion):** Do not duplicate metric SQL in this document — the normative definitions and fenced SQL live in [`docs/growth-metrics-ssot.md`](growth-metrics-ssot.md), with executable mirrors in `website/src/lib/growthMetrics*.ts` enforced by Vitest parity tests.
 
 **Why not Vercel-only page views:** Page views do not correlate `run_id` to a completed licensed run. This design stores **queryable rows** in Postgres.
 
@@ -128,53 +118,7 @@ GROUP BY 1;
 
 **Quick rollup → `terminal_status`:** [`src/commercial/quickVerifyFunnelTerminalStatus.ts`](../src/commercial/quickVerifyFunnelTerminalStatus.ts): `pass` → `complete`, `fail` → `inconsistent`, `uncertain` → `incomplete`.
 
-#### Example SQL (weekly counts)
-
-Replace date window as needed (`created_at` is timestamptz on `funnel_event`).
-
-```sql
--- (1) Acquisition impressions
-SELECT count(*) AS acquisition_landed
-FROM funnel_event
-WHERE event = 'acquisition_landed'
-  AND created_at >= now() - interval '7 days';
-
--- (2) Integrate impressions
-SELECT count(*) AS integrate_landed
-FROM funnel_event
-WHERE event = 'integrate_landed'
-  AND created_at >= now() - interval '7 days';
-
--- (3) Licensed verification completions (non-bundled workload in metadata)
-SELECT count(*) AS licensed_non_bundled
-FROM funnel_event
-WHERE event = 'licensed_verify_outcome'
-  AND created_at >= now() - interval '7 days'
-  AND metadata->>'workload_class' = 'non_bundled';
-```
-
-**Privacy:** No file contents or connection strings are logged—only enums, `run_id` for activation rows (in `metadata` and dedupe receipts), `run_id` correlation via `usage_reservation` for licensed completion, and classified path buckets.
-
-```sql
--- (4) CLI verification attempts (activation; OSS + commercial)
-SELECT count(*) AS verify_started
-FROM funnel_event
-WHERE event = 'verify_started'
-  AND created_at >= now() - interval '7 days';
-
--- (5) CLI verification outcomes reaching a terminal verdict
-SELECT count(*) AS verify_outcome
-FROM funnel_event
-WHERE event = 'verify_outcome'
-  AND created_at >= now() - interval '7 days';
-
--- (6) Non-bundled activation outcomes (real workload signal, still not proof of customer data)
-SELECT count(*) AS activation_non_bundled
-FROM funnel_event
-WHERE event = 'verify_outcome'
-  AND created_at >= now() - interval '7 days'
-  AND metadata->>'workload_class' = 'non_bundled';
-```
+**Privacy:** No file contents or connection strings are logged—only enums, `run_id` for activation rows (in `metadata` and dedupe receipts), `funnel_anon_id` for anonymous correlation, `run_id` correlation via `usage_reservation` for licensed completion, classified path buckets, and bounded attribution strings from the surface beacon.
 
 ---
 

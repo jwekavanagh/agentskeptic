@@ -1,15 +1,10 @@
-import { eq } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { db } from "@/db/client";
-import { users } from "@/db/schema";
 import {
-  buildCommercialAccountStatePayload,
+  assembleCommercialAccountState,
   isInvalidExpectedPlanQuery,
-  normalizeSubscriptionStatusForAccount,
   parseExpectedPlanQuery,
 } from "@/lib/commercialAccountState";
-import type { PlanId } from "@/lib/plans";
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
   const session = await auth();
@@ -23,19 +18,14 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   }
   const expectedPlan = parseExpectedPlanQuery(rawExpected);
 
-  const [row] = await db.select().from(users).where(eq(users.id, session.user.id)).limit(1);
-  if (!row) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  try {
+    const payload = await assembleCommercialAccountState({
+      userId: session.user.id,
+      expectedPlan,
+      operatorContactEmail: process.env.CONTACT_SALES_EMAIL,
+    });
+    return NextResponse.json(payload);
+  } catch {
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
-
-  const payload = buildCommercialAccountStatePayload({
-    plan: row.plan as PlanId,
-    subscriptionStatus: normalizeSubscriptionStatusForAccount(row.subscriptionStatus),
-    stripePriceId: row.stripePriceId,
-    stripeCustomerId: row.stripeCustomerId,
-    expectedPlan,
-    operatorContactEmail: process.env.CONTACT_SALES_EMAIL,
-  });
-
-  return NextResponse.json(payload);
 }

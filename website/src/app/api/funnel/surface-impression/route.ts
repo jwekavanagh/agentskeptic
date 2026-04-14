@@ -1,5 +1,9 @@
 import { funnelSurfaceImpressionSchema } from "@/lib/funnelSurfaceImpression.contract";
 import { isFunnelSurfaceRequestOriginAllowed } from "@/lib/funnelRequestOriginAllowed";
+import {
+  normalizeFunnelSurfaceAttribution,
+  resolveFunnelAnonId,
+} from "@/lib/funnelAttribution";
 import { logFunnelEvent } from "@/lib/funnelEvent";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -28,14 +32,34 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return new NextResponse(null, { status: 400 });
   }
 
+  let attribution: Record<string, string>;
+  try {
+    attribution = normalizeFunnelSurfaceAttribution(parsed.data.attribution) as Record<
+      string,
+      string
+    >;
+  } catch {
+    return new NextResponse(null, { status: 400 });
+  }
+
+  const funnelAnonId = parsed.data.funnel_anon_id ?? resolveFunnelAnonId(undefined);
+
   const event =
     parsed.data.surface === "acquisition" ? "acquisition_landed" : "integrate_landed";
 
   await logFunnelEvent({
     event,
     userId: null,
-    metadata: { schema_version: 1 as const, surface: parsed.data.surface },
+    metadata: {
+      schema_version: 1 as const,
+      surface: parsed.data.surface,
+      funnel_anon_id: funnelAnonId,
+      attribution,
+    },
   });
 
-  return new NextResponse(null, { status: 204 });
+  return NextResponse.json(
+    { schema_version: 1 as const, funnel_anon_id: funnelAnonId },
+    { status: 200 },
+  );
 }

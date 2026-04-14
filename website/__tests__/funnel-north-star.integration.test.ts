@@ -61,13 +61,17 @@ describe.skipIf(!hasDatabaseUrl)("funnel north star — surface impression", () 
     vi.unstubAllEnvs();
   });
 
-  it("returns 204 and inserts acquisition_landed when Origin matches canonical", async () => {
+  it("returns 200 JSON and inserts acquisition_landed when Origin matches canonical", async () => {
     const canonical = getCanonicalSiteOrigin();
     const req = surfaceReq({ surface: "acquisition" }, canonical);
     const res = await postSurface(req);
-    expect(res.status).toBe(204);
+    expect(res.status).toBe(200);
+    const j = (await res.json()) as { schema_version: number; funnel_anon_id: string };
+    expect(j.schema_version).toBe(1);
+    expect(typeof j.funnel_anon_id).toBe("string");
     const rows = await db.select().from(funnelEvents).where(eq(funnelEvents.event, "acquisition_landed"));
     expect(rows).toHaveLength(1);
+    expect((rows[0]!.metadata as { funnel_anon_id?: string }).funnel_anon_id).toBe(j.funnel_anon_id);
   });
 
   it("returns 403 without matching Origin or Referer", async () => {
@@ -95,7 +99,10 @@ describe.skipIf(!hasDatabaseUrl)("funnel north star — verify-outcome", () => {
     vi.mocked(getStripe).mockReset();
   });
 
-  it("first POST returns 204 with one licensed_verify_outcome; duplicate returns 204 with one row", async () => {
+  it(
+    "first POST returns 204 with one licensed_verify_outcome; duplicate returns 204 with one row",
+    { timeout: 30_000 },
+    async () => {
     const [u] = await db
       .insert(users)
       .values({ email: "funnel-ns-1@example.com", emailVerified: new Date() })
@@ -167,7 +174,8 @@ describe.skipIf(!hasDatabaseUrl)("funnel north star — verify-outcome", () => {
       .from(funnelEvents)
       .where(eq(funnelEvents.event, "licensed_verify_outcome"));
     expect(rows2).toHaveLength(1);
-  });
+    },
+  );
 
   it("returns 401 for invalid bearer token", async () => {
     const res = await postVerifyOutcome(

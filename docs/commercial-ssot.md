@@ -91,6 +91,8 @@ Forks: build with `oss` to omit the gate.
 
 **Account UI:** **`Manage billing`** is rendered **only** when **`GET /api/account/commercial-state`** (and server-rendered initial state) include **`hasStripeCustomer: true`** (non-empty trimmed **`stripe_customer_id`**).
 
+**`GET /api/account/commercial-state` (authenticated):** JSON includes existing plan and billing fields plus **`monthlyQuota`**: **`yearMonth`** (UTC `YYYY-MM`), **`keys[]`** with per–API-key **`used`** and **`limit`** (use `null` for unlimited enterprise included monthly), **`distinctReserveUtcDaysThisMonth`** (count of distinct UTC calendar dates with a **`reserve_allowed`** row this month — account activity gauge only), and **`worstUrgency`** (`ok` \| `notice` \| `warning` \| `at_cap`) from usage vs plan thresholds. Operator rolling retention KPIs live in [`docs/growth-metrics-ssot.md`](growth-metrics-ssot.md); do **not** label the month gauge as that retention KPI in UI copy.
+
 **Operator — Stripe Dashboard:** Enable the **Customer billing portal**; link the same **Products/Prices** used for self-serve Checkout so customers can switch plans without leaving Stripe’s UI. Misconfiguration surfaces as **500** on **`POST /api/account/billing-portal`** until fixed.
 
 ### `customer.subscription.deleted`

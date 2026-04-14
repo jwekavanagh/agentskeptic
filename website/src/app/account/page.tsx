@@ -4,13 +4,9 @@ import { auth } from "@/auth";
 import { AccountLicensedStepsList } from "@/components/account/AccountLicensedStepsList";
 import { AccountClient } from "./AccountClient";
 import { db } from "@/db/client";
-import { apiKeys, users } from "@/db/schema";
+import { apiKeys } from "@/db/schema";
 import { and, eq, isNull } from "drizzle-orm";
-import {
-  buildCommercialAccountStatePayload,
-  normalizeSubscriptionStatusForAccount,
-} from "@/lib/commercialAccountState";
-import type { PlanId } from "@/lib/plans";
+import { assembleCommercialAccountState } from "@/lib/commercialAccountState";
 
 export const dynamic = "force-dynamic";
 
@@ -25,13 +21,8 @@ export default async function AccountPage() {
     .from(apiKeys)
     .where(and(eq(apiKeys.userId, session.user.id), isNull(apiKeys.revokedAt)));
 
-  const [urow] = await db.select().from(users).where(eq(users.id, session.user.id)).limit(1);
-
-  const initialCommercial = buildCommercialAccountStatePayload({
-    plan: (urow?.plan ?? "starter") as PlanId,
-    subscriptionStatus: normalizeSubscriptionStatusForAccount(urow?.subscriptionStatus),
-    stripePriceId: urow?.stripePriceId,
-    stripeCustomerId: urow?.stripeCustomerId,
+  const initialCommercial = await assembleCommercialAccountState({
+    userId: session.user.id,
     expectedPlan: null,
     operatorContactEmail: process.env.CONTACT_SALES_EMAIL,
   });
