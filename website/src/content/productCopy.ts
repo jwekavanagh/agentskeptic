@@ -321,15 +321,9 @@ export const productCopy = {
 
   /** Server intro on `/account` (AccountServerAboveFold); links are composed in TSX. */
   accountPage: {
-    line1:
-      "This page is your verification control center: see recent outcomes your keys reported, confirm subscription and quota, and manage API keys.",
-    line2BeforePricing: "Subscribe or change plans from",
+    line1: "Recent verification runs, your plan and usage, and API keys—together in one place.",
     pricingLinkLabel: "Pricing",
-    line2BeforeIntegrate: "; run your first verification from",
     integrateLinkLabel: "Integrate",
-    line2AfterIntegrate: ". Machine-readable limits live in",
-    openapiLinkLabel: "OpenAPI",
-    line2End: " on this site.",
   } as const,
 
   howItWorks: {
@@ -479,7 +473,7 @@ export const productCopy = {
       `${used} used · limit: ${limitLabel}`,
     monthlyQuotaUnlimited: "Unlimited",
     monthlyQuotaDistinctDays: (n: number) =>
-      `Distinct UTC calendar days with a successful license reserve this month: ${n}. This is a simple activity gauge for your account, not an operator retention metric.`,
+      `Verification days this month (UTC calendar days you actually ran against quota): ${n}.`,
     quotaUrgencyCopy: {
       ok: "Usage is comfortably below your plan limit.",
       notice: "You have used at least 75% of your included verifications for this month.",
@@ -489,17 +483,35 @@ export const productCopy = {
     a11yApiKeyReady: "API key generated. Copy it from the page and store it safely.",
     checkoutActivationPending:
       "Finishing subscription setup… This usually takes a few seconds. You can refresh the page if it does not update.",
-    checkoutActivationReady: "Your subscription is active. You can use licensed verify with your API key.",
+    checkoutActivationReady: "Your subscription is active. You can run paid verification with your API key.",
     checkoutActivationTimeout:
       "Still processing—refresh in a minute or contact the operator if this persists.",
+    verificationHeadlineEmpty: "No verification activity yet",
+    verificationHeadlineHasRows: "Recent verification activity",
+    verificationHeadlineLoadFailed: "Activity did not load",
+    verificationMetricLine: (n: number) => `This billing month (UTC): ${n} outcome${n === 1 ? "" : "s"} on record.`,
+    verificationMonthNoRowsDetail:
+      "We see activity for this billing month, but detailed rows are not available here yet—try refreshing in a moment.",
     activityEmpty:
-      "No licensed verify outcomes were recorded for this billing month yet. Run a verification from Integrate when your subscription and API key are active.",
+      "You have not run a paid verification in this billing month yet. On a paid plan with an API key, follow Integrate to run your first check—then it will show up here.",
     activityLoadError:
       "We could not load verification activity right now. Refresh the page in a moment; if it keeps happening, contact support.",
     trustFootnoteLines: [
       "Billing and subscription details are managed through Stripe; use Manage billing when it appears above.",
       "How keys and data are handled is summarized on the Security & Trust page—this page does not add new guarantees beyond that page.",
     ] as const,
+    starterUpgradeBody:
+      "Starter is for trying the product. Paid plans unlock real verification runs, predictable monthly usage, and checks you can rely on in CI and production—not just demos.",
+    monthlyQuotaNoKeyLine:
+      "No active API key yet. Create one below, add it to your environment, then run a verification from Integrate.",
+    apiKeyFlowHeading: "Turn your key into a run",
+    apiKeyFlowSteps: [
+      "Generate an API key below (one-time reveal—copy it immediately).",
+      "Set AGENTSKEPTIC_API_KEY in your environment (WORKFLOW_VERIFIER_API_KEY still works).",
+      "Open Integrate and run npx agentskeptic verify … from your repo (full commands are on that page).",
+    ] as const,
+    primaryVerificationCtaFirstRun: "Run your first verification",
+    primaryVerificationCtaAgain: "Run another verification",
   },
 
   signInA11y: {

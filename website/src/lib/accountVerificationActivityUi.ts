@@ -1,7 +1,7 @@
 import type { LicensedVerifyOutcomeMetadata } from "@/lib/funnelCommercialMetadata";
 
 export const ACCOUNT_ACTIVITY_SCOPE_LINE =
-  "Recent licensed CLI outcomes reported by your keys (not database row verdicts).";
+  "Each line is a verification run your API key reported recently—not a live audit of your database.";
 
 const STATUS_LABEL: Record<LicensedVerifyOutcomeMetadata["terminal_status"], string> = {
   complete: "Reported: complete",

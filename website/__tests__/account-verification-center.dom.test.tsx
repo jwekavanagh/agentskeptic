@@ -27,14 +27,16 @@ vi.mock("next/link", () => ({
   default: function MockLink({
     children,
     href,
+    className,
     "data-testid": dataTestId,
   }: {
     children: ReactNode;
     href: string;
+    className?: string;
     "data-testid"?: string;
   }) {
     return (
-      <a href={href} data-testid={dataTestId}>
+      <a href={href} className={className} data-testid={dataTestId}>
         {children}
       </a>
     );
@@ -51,7 +53,7 @@ function baseCommercial(overrides: Partial<CommercialAccountStatePayload> = {}):
     plan: "individual",
     subscriptionStatus: "active",
     priceMapping: "mapped",
-    entitlementSummary: "Commercial CLI verification is enabled. Enforcement and CI locks are enabled.",
+    entitlementSummary: "Paid verification is enabled. Database checks in CI and deploys are enabled.",
     checkoutActivationReady: false,
     hasStripeCustomer: true,
     billingPriceSyncHint: null,
@@ -116,7 +118,17 @@ describe("Account verification center (DOM)", () => {
 
   it("shows exact activityEmpty when ok, zero rows, zero month count", () => {
     render(<AccountClient hasKey={false} initialCommercial={baseCommercial()} activity={idleActivity} />);
+    expect(
+      screen.getByText(productCopy.account.verificationHeadlineEmpty, { exact: true }),
+    ).toBeInTheDocument();
     expect(screen.getByText(productCopy.account.activityEmpty, { exact: true })).toBeInTheDocument();
+  });
+
+  it("styles primary verification CTA as a button", () => {
+    render(<AccountClient hasKey={false} initialCommercial={baseCommercial()} activity={idleActivity} />);
+    const cta = screen.getByTestId("account-primary-cta");
+    expect(cta.tagName).toBe("A");
+    expect(cta).toHaveClass("btn");
   });
 
   it("shows activityLoadError for ok false without LiveStatus wrapper", () => {

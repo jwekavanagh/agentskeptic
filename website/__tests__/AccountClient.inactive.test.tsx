@@ -18,11 +18,19 @@ vi.mock("next/link", () => ({
   default: function MockLink({
     children,
     href,
+    className,
+    "data-testid": dataTestId,
   }: {
     children: ReactNode;
     href: string;
+    className?: string;
+    "data-testid"?: string;
   }) {
-    return <a href={href}>{children}</a>;
+    return (
+      <a href={href} className={className} data-testid={dataTestId}>
+        {children}
+      </a>
+    );
   },
 }));
 
@@ -37,7 +45,8 @@ function baseCommercial(overrides: Partial<CommercialAccountStatePayload> = {}):
     plan: "individual",
     subscriptionStatus: "inactive",
     priceMapping: "mapped",
-    entitlementSummary: "Commercial CLI verification needs an active subscription. Enforcement and CI locks need an active subscription.",
+    entitlementSummary:
+      "Paid verification needs an active subscription. The same goes for database checks wired into CI or deploys.",
     checkoutActivationReady: false,
     hasStripeCustomer: false,
     billingPriceSyncHint: null,

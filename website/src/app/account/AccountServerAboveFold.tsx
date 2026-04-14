@@ -23,13 +23,9 @@ export function AccountServerAboveFold({
         <>
           <p>{intro.line1}</p>
           <p className="muted">
-            {intro.line2BeforePricing}{" "}
             <Link href="/pricing">{intro.pricingLinkLabel}</Link>
-            {intro.line2BeforeIntegrate}{" "}
+            {" · "}
             <Link href="/integrate">{intro.integrateLinkLabel}</Link>
-            {intro.line2AfterIntegrate}{" "}
-            <a href="/openapi-commercial-v1.yaml">{intro.openapiLinkLabel}</a>
-            {intro.line2End}
           </p>
         </>
       ) : null}

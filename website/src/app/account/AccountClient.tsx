@@ -43,13 +43,13 @@ function TrustFootnoteSecondLine({ text }: { text: string }) {
 function billingSyncDisplay(mapping: PriceMapping): { label: string; title: string } {
   if (mapping === "mapped") {
     return {
-      label: "Subscription linked to plan: OK",
-      title: "Your Stripe subscription maps to your plan for quota and paid verification features.",
+      label: "Plan and billing look correctly linked",
+      title: "Your subscription matches a known plan, so quota and paid verification line up as expected.",
     };
   }
   return {
-    label: "Subscription linked to plan: needs attention",
-    title: "We have not finished linking your subscription to your plan in billing records yet.",
+    label: "Plan and billing need attention",
+    title: "We have not finished matching your subscription to a plan in our billing records yet.",
   };
 }
 
@@ -229,6 +229,13 @@ export function AccountClient({
     activity.ok === true &&
     activity.rows.length === 0 &&
     activity.licensedOutcomesThisUtcMonth === 0;
+  const hasActivityRows = activity.ok === true && activity.rows.length > 0;
+  const showMonthCountNoRows =
+    activity.ok === true &&
+    activity.rows.length === 0 &&
+    activity.licensedOutcomesThisUtcMonth > 0;
+  const showMetricLine =
+    activity.ok === true && (hasActivityRows || (!showExactEmpty && monthCount > 0));
 
   return (
     <div className="card" style={{ marginTop: "1rem" }}>
@@ -238,28 +245,60 @@ export function AccountClient({
 
       <section data-testid="account-verification-region">
         <h2 style={{ marginTop: 0 }}>Verification</h2>
-        <p>
-          <strong>Outcomes this billing month (UTC):</strong> {monthCount}
-        </p>
-        {latestRow ? (
-          <p className="muted">
-            <strong>Most recent row:</strong> {statusLabelFromRow(latestRow)} ·{" "}
-            {accountActivityMetaLine(
-              latestRow.workloadClass as LicensedVerifyOutcomeMetadata["workload_class"],
-              latestRow.subcommand as LicensedVerifyOutcomeMetadata["subcommand"],
-            )}
+        {activity.ok === false ? (
+          <>
+            <p>
+              <strong>{productCopy.account.verificationHeadlineLoadFailed}</strong>
+            </p>
+            <p className="muted" data-testid="account-activity-error">
+              {productCopy.account.activityLoadError}
+            </p>
+          </>
+        ) : showExactEmpty ? (
+          <>
+            <p>
+              <strong>{productCopy.account.verificationHeadlineEmpty}</strong>
+            </p>
+            <p className="muted">{productCopy.account.activityEmpty}</p>
+          </>
+        ) : hasActivityRows ? (
+          <>
+            <p>
+              <strong>{productCopy.account.verificationHeadlineHasRows}</strong>
+            </p>
+            {latestRow ? (
+              <p className="muted">
+                <strong>Latest:</strong> {statusLabelFromRow(latestRow)} ·{" "}
+                {accountActivityMetaLine(
+                  latestRow.workloadClass as LicensedVerifyOutcomeMetadata["workload_class"],
+                  latestRow.subcommand as LicensedVerifyOutcomeMetadata["subcommand"],
+                )}
+              </p>
+            ) : null}
+          </>
+        ) : showMonthCountNoRows ? (
+          <>
+            <p>
+              <strong>{productCopy.account.verificationHeadlineHasRows}</strong>
+            </p>
+            <p className="muted">{productCopy.account.verificationMonthNoRowsDetail}</p>
+          </>
+        ) : (
+          <p>
+            <strong>{productCopy.account.verificationHeadlineEmpty}</strong>
+          </p>
+        )}
+        {showMetricLine ? (
+          <p className="muted" style={{ marginTop: "0.35rem" }}>
+            {productCopy.account.verificationMetricLine(monthCount)}
           </p>
         ) : null}
-        <p className="muted" data-testid="account-activity-scope">
-          {ACCOUNT_ACTIVITY_SCOPE_LINE}
-        </p>
-        {activity.ok === false ? (
-          <p className="muted" data-testid="account-activity-error">
-            {productCopy.account.activityLoadError}
+        {activity.ok === true ? (
+          <p className="muted" data-testid="account-activity-scope" style={{ marginTop: "0.5rem" }}>
+            {ACCOUNT_ACTIVITY_SCOPE_LINE}
           </p>
-        ) : showExactEmpty ? (
-          <p className="muted">{productCopy.account.activityEmpty}</p>
-        ) : (
+        ) : null}
+        {activity.ok === true && !showExactEmpty && hasActivityRows ? (
           <ul style={{ marginTop: "0.5rem", paddingLeft: "1.25rem" }}>
             {activity.rows.map((row) => (
               <li key={row.createdAtIso} style={{ marginBottom: "0.35rem" }}>
@@ -274,10 +313,12 @@ export function AccountClient({
               </li>
             ))}
           </ul>
-        )}
+        ) : null}
         <p style={{ marginTop: "1rem" }}>
-          <Link href="/integrate" data-testid="account-primary-cta">
-            Run verification (Integrate)
+          <Link href="/integrate" className="btn" data-testid="account-primary-cta">
+            {hasActivityRows || monthCount > 0
+              ? productCopy.account.primaryVerificationCtaAgain
+              : productCopy.account.primaryVerificationCtaFirstRun}
           </Link>
         </p>
       </section>
@@ -288,10 +329,7 @@ export function AccountClient({
         style={{ marginTop: "1.25rem" }}
       >
         <h2 style={{ marginTop: 0 }}>Upgrade from Starter</h2>
-        <p className="muted">
-          Starter does not include paid CLI verification. Move to Individual, Team, or Business for
-          quota-backed verification and CI features.
-        </p>
+        <p className="muted">{productCopy.account.starterUpgradeBody}</p>
         <p style={{ marginTop: "0.5rem" }}>
           <Link href="/pricing">View plans and upgrade</Link>
         </p>
@@ -320,7 +358,7 @@ export function AccountClient({
           <strong>Subscription status:</strong> {commercial.subscriptionStatus}
         </p>
         <p title={billing.title}>
-          <strong>Billing:</strong> {billing.label}
+          <strong>Plan in billing:</strong> {billing.label}
         </p>
         {commercial.hasStripeCustomer && (
           <p style={{ marginTop: "0.5rem" }}>
@@ -410,7 +448,7 @@ export function AccountClient({
           <h2 style={{ marginTop: 0 }}>{productCopy.account.monthlyQuotaHeading}</h2>
           <p className="muted">{productCopy.account.monthlyQuotaYearMonth(commercial.monthlyQuota.yearMonth)}</p>
           {commercial.monthlyQuota.keys.length === 0 ? (
-            <p className="muted">No active API key. Create a key below to draw on your monthly quota.</p>
+            <p className="muted">{productCopy.account.monthlyQuotaNoKeyLine}</p>
           ) : (
             commercial.monthlyQuota.keys.map((k) => (
               <p key={k.apiKeyId}>
@@ -433,6 +471,16 @@ export function AccountClient({
 
       <section data-testid="account-api-key-region" style={{ marginTop: "1.25rem" }}>
         <h2 style={{ marginTop: 0 }}>API key</h2>
+        <p className="muted" style={{ marginTop: "0.25rem" }}>
+          <strong>{productCopy.account.apiKeyFlowHeading}</strong>
+        </p>
+        <ol className="muted" style={{ marginTop: "0.35rem", paddingLeft: "1.25rem", fontSize: "0.95rem" }}>
+          {productCopy.account.apiKeyFlowSteps.map((step) => (
+            <li key={step} style={{ marginBottom: "0.25rem" }}>
+              {step}
+            </li>
+          ))}
+        </ol>
         {(hasActiveKey || key) && (
           <p style={{ marginTop: "0.5rem" }}>
             <button type="button" onClick={() => void revokeKey()}>
@@ -460,10 +508,6 @@ export function AccountClient({
             </p>
           </>
         ) : null}
-        <p className="muted" style={{ marginTop: "0.75rem", fontSize: "0.95rem" }}>
-          Set <code>AGENTSKEPTIC_API_KEY</code> (legacy <code>WORKFLOW_VERIFIER_API_KEY</code> still works), then run{" "}
-          <code style={{ wordBreak: "break-all" }}>npx agentskeptic verify …</code> from your repo.
-        </p>
       </section>
 
       <section data-testid="account-trust-footnote" style={{ marginTop: "1.25rem" }}>

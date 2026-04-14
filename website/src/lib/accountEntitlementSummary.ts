@@ -20,35 +20,35 @@ export type AccountEntitlementSummaryInput = {
  */
 const MAPPED_SUMMARY: Record<`${PlanId}|${SubscriptionStatusForEntitlement}`, string> = {
   "starter|none":
-    "Commercial CLI verification needs a paid Individual, Team, Business, or Enterprise plan—see Pricing. Enforcement and CI locks need the same (not available on Starter).",
+    "Paid verification and checks you rely on in CI need Individual, Team, Business, or Enterprise—Starter is for evaluation. See Pricing to upgrade.",
   "starter|active":
-    "Commercial CLI verification needs a paid Individual, Team, Business, or Enterprise plan—see Pricing. Enforcement and CI locks need the same (not available on Starter).",
+    "Paid verification and checks you rely on in CI need Individual, Team, Business, or Enterprise—Starter is for evaluation. See Pricing to upgrade.",
   "starter|inactive":
-    "Commercial CLI verification needs a paid Individual, Team, Business, or Enterprise plan—see Pricing. Enforcement and CI locks need the same (not available on Starter).",
+    "Paid verification and checks you rely on in CI need Individual, Team, Business, or Enterprise—Starter is for evaluation. See Pricing to upgrade.",
   "individual|none":
-    "Commercial CLI verification needs an active subscription. Enforcement and CI locks need an active subscription.",
+    "Paid verification needs an active subscription. The same goes for database checks wired into CI or deploys.",
   "individual|active":
-    "Commercial CLI verification is enabled. Enforcement and CI locks are enabled.",
+    "Paid verification is enabled. Database checks in CI and deploys are enabled.",
   "individual|inactive":
-    "Commercial CLI verification needs an active subscription. Enforcement and CI locks need an active subscription.",
+    "Paid verification needs an active subscription. The same goes for database checks wired into CI or deploys.",
   "team|none":
-    "Commercial CLI verification needs an active subscription. Enforcement and CI locks need an active subscription.",
+    "Paid verification needs an active subscription. The same goes for database checks wired into CI or deploys.",
   "team|active":
-    "Commercial CLI verification is enabled. Enforcement and CI locks are enabled.",
+    "Paid verification is enabled. Database checks in CI and deploys are enabled.",
   "team|inactive":
-    "Commercial CLI verification needs an active subscription. Enforcement and CI locks need an active subscription.",
+    "Paid verification needs an active subscription. The same goes for database checks wired into CI or deploys.",
   "business|none":
-    "Commercial CLI verification needs an active subscription. Enforcement and CI locks need an active subscription.",
+    "Paid verification needs an active subscription. The same goes for database checks wired into CI or deploys.",
   "business|active":
-    "Commercial CLI verification is enabled. Enforcement and CI locks are enabled.",
+    "Paid verification is enabled. Database checks in CI and deploys are enabled.",
   "business|inactive":
-    "Commercial CLI verification needs an active subscription. Enforcement and CI locks need an active subscription.",
+    "Paid verification needs an active subscription. The same goes for database checks wired into CI or deploys.",
   "enterprise|none":
-    "Commercial CLI verification needs an active subscription. Enforcement and CI locks need an active subscription.",
+    "Paid verification needs an active subscription. The same goes for database checks wired into CI or deploys.",
   "enterprise|active":
-    "Commercial CLI verification is enabled. Enforcement and CI locks are enabled.",
+    "Paid verification is enabled. Database checks in CI and deploys are enabled.",
   "enterprise|inactive":
-    "Commercial CLI verification needs an active subscription. Enforcement and CI locks need an active subscription.",
+    "Paid verification needs an active subscription. The same goes for database checks wired into CI or deploys.",
 };
 
 function assertMatchesResolver(
