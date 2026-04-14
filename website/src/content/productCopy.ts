@@ -53,7 +53,7 @@ export type CompanyPageMetadata = { title: string; description: string };
 
 export type ExamplesHubLedes = { primary: string; secondaryMuted: string };
 
-export type HomeHeroCtaLabels = { verify: string };
+export type HomeHeroCtaLabels = { demo: string };
 
 export const companyPageMetadata = {
   title: "Company and support — AgentSkeptic",
@@ -167,7 +167,7 @@ export const integrateActivation = {
 } as const;
 
 export const homeHeroCtaLabels = {
-  verify: "Run verification",
+  demo: "Run a real verification (~30s)",
 } as const satisfies HomeHeroCtaLabels;
 
 export const homeTrustStripSectionHeading = "OpenAPI, package, source, first-run (no signup)";
@@ -182,6 +182,7 @@ export const productCopy = {
 
   uiTestIds: {
     hero: "home-hero",
+    homeStakes: "home-stakes",
     howItWorks: "home-how-it-works",
     fitAndLimits: "home-fit-and-limits",
     tryIt: "home-try-it",
@@ -248,6 +249,23 @@ export const productCopy = {
 
   howItWorks: {
     sectionTitle: "How it works",
+    acquisitionDepthLinkLabel: "Traces vs database (full framing)",
+  },
+
+  homeStakes: {
+    sectionTitle: "When traces are the only signal",
+    intro:
+      "Teams ship bugs because they trust traces and success flags while the database tells a different story—before you ship, bill, or close compliance work.",
+    proofBullets: [
+      "Detects missing rows (for example ROW_ABSENT) from read-only SQL at verification time.",
+      "Detects mismatched values versus what structured tool activity claimed.",
+      "Returns deterministic, schema-versioned JSON alongside the human report.",
+    ],
+    stakesBullets: [
+      "Rows are missing while steps read green.",
+      "Values are wrong while automation reported success.",
+      "Money and compliance decisions assumed state that verification would not confirm.",
+    ],
   },
 
   fitAndLimits: {
@@ -310,13 +328,12 @@ export const productCopy = {
   },
 
   mechanism: {
-    title: "Declared → Expected → Observed",
-    intro:
-      "Read each layer in order: what the run recorded, what your registry expects in SQL, and what read-only queries returned at verification time.",
+    title: "Three steps",
+    intro: "Capture activity once, declare what the database should show, then verify with read-only SQL.",
     items: [
-      "Declared — what captured tool activity encodes (`toolId`, parameters).",
-      "Expected — what should hold in SQL under your registry rules.",
-      "Observed — what read-only queries returned at verification time.",
+      "Capture structured tool activity your pipeline can emit (for example NDJSON).",
+      "Define expected database state under your registry rules.",
+      "Verify with read-only SELECT results at verification time—verdict, not another narrative.",
     ],
     notObservability:
       "This is not generic observability or log search. It compares expected database state to read-only query results at verification time.",
@@ -348,7 +365,7 @@ export const productCopy = {
   tryIt: {
     title: "Try it (no account)",
     intro: "Pick a bundled scenario. The server runs the same verification engine as the open-source CLI against demo fixtures.",
-    runButton: "Run verification",
+    runButton: "Run the demo",
     running: "Running…",
     scenarioLabel: "Scenario",
     /** Live region (polite) after a successful demo verification run. */

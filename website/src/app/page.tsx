@@ -1,5 +1,7 @@
 import { productCopy } from "@/content/productCopy";
+import discoveryAcquisition from "@/lib/discoveryAcquisition";
 import { publicProductAnchors } from "@/lib/publicProductAnchors";
+import { shareableTerminalFailureExcerpt } from "@/lib/shareableTerminalFailureExcerpt";
 import { buildHomeTrustStripLinks, openapiHrefFromProcessEnv } from "@/lib/siteChrome";
 import Link from "next/link";
 import { Fragment } from "react";
@@ -18,6 +20,10 @@ export default function HomePage() {
     openapiHref: openapiHrefFromProcessEnv(),
   });
 
+  const heroTerminalExcerpt = shareableTerminalFailureExcerpt(
+    discoveryAcquisition.shareableTerminalDemo.transcript,
+  );
+
   const sectionRenderers: Record<HomeSectionId, React.ReactNode> = {
     hero: (
       <section
@@ -32,17 +38,23 @@ export default function HomePage() {
             <p className="lede">{productCopy.homepageDecisionFraming}</p>
             <p className="lede">{productCopy.hero.subtitle}</p>
             <p className="home-cta-row" data-testid="home-hero-cta-row">
+              <a className="btn" href="#try-it" data-testid="home-hero-demo-cta">
+                {productCopy.homeHeroCtaLabels.demo}
+              </a>
               <Link
-                className="btn"
+                className="btn secondary"
                 href={productCopy.homepageAcquisitionCta.href}
                 data-testid={productCopy.homepageAcquisitionCta.testId}
               >
                 {productCopy.homepageAcquisitionCta.label}
               </Link>
-              <a className="btn secondary" href="#try-it">
-                {productCopy.homeHeroCtaLabels.verify}
-              </a>
             </p>
+          </div>
+          <div className="home-hero-terminal" data-testid="home-hero-terminal">
+            <p className="home-hero-terminal-label muted">Bundled demo output (failure)</p>
+            <pre className="home-hero-terminal-pre" aria-label="Example verification failure transcript">
+              {heroTerminalExcerpt}
+            </pre>
           </div>
         </div>
       </section>
@@ -68,6 +80,29 @@ export default function HomePage() {
                 <a href={item.href}>{item.label}</a>
               )}
             </li>
+          ))}
+        </ul>
+      </section>
+    ),
+    homeStakes: (
+      <section
+        key="homeStakes"
+        className="home-section"
+        data-testid={productCopy.uiTestIds.homeStakes}
+        aria-labelledby="home-stakes-heading"
+      >
+        <h2 id="home-stakes-heading">{productCopy.homeStakes.sectionTitle}</h2>
+        <p className="lede">{productCopy.homeStakes.intro}</p>
+        <h3 className="home-proof-subheading">What verification catches</h3>
+        <ul>
+          {productCopy.homeStakes.proofBullets.map((t) => (
+            <li key={t}>{t}</li>
+          ))}
+        </ul>
+        <h3 className="home-proof-subheading">What is at stake</h3>
+        <ul>
+          {productCopy.homeStakes.stakesBullets.map((t) => (
+            <li key={t}>{t}</li>
           ))}
         </ul>
       </section>
@@ -100,7 +135,9 @@ export default function HomePage() {
         </ol>
         <p className="muted">{productCopy.mechanism.notObservability}</p>
         <p className="muted">
-          <Link href="/security">Security & Trust</Link> — trust boundary and what verification does not guarantee.
+          <Link href={discoveryAcquisition.slug}>{productCopy.howItWorks.acquisitionDepthLinkLabel}</Link>
+          {" · "}
+          <Link href="/security">Security & Trust</Link>
         </p>
       </section>
     ),

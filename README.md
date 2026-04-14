@@ -3,9 +3,9 @@
 <!-- discovery-readme-title:end -->
 
 <!-- discovery-acquisition-fold:start -->
-## Ship with database truth, not trace color.
+## Your traces say "success." Your database disagrees.
 
-AgentSkeptic gives you a verdict grounded in read-only SQL at verification time—not in trace success flags or chat narratives.
+AgentSkeptic verifies your database state with read-only SQL before you ship, bill, or close.
 
 Teams ship agent and automation workflows where traces, tool responses, and success flags look green while the database row is missing, stale, or wrong. AgentSkeptic compares structured tool activity to read-only SQL against your SQLite or Postgres at verification time and reports whether observed state matched expectations derived from what the workflow claimed—not whether the step narrative read as successful.
 
@@ -52,7 +52,7 @@ steps:
 }
 ```
 
-[Product brief (traces vs database)](https://agentskeptic.com/database-truth-vs-traces)
+[Read the product brief](https://agentskeptic.com/database-truth-vs-traces)
 <!-- discovery-acquisition-fold:end -->
 
 **One-sentence value:** Read-only SQL checks that your database **at verification time** matches **expectations derived from structured tool activity**—not whether a trace step “succeeded.”

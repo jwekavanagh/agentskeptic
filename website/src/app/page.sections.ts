@@ -2,9 +2,10 @@
 export const HOME_SECTION_ORDER = [
   "hero",
   "homeTrustStrip",
+  "tryIt",
+  "homeStakes",
   "howItWorks",
   "fitAndLimits",
-  "tryIt",
   "commercialSurface",
 ] as const;
 
