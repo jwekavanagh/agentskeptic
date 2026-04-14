@@ -202,9 +202,9 @@ describe(
       expect(acqWhat).toBeGreaterThan(acqWhy);
       expect(acqWhen).toBeGreaterThan(acqWhat);
       expect(acqHtml).toContain('data-testid="acquisition-hero-title"');
-      expect(acqHtml).toContain(disc.heroTitle);
+      expect(acqText).toContain(disc.heroTitle);
       expect(acqHtml).toContain('data-testid="visitor-problem-answer"');
-      expect(acqHtml).toContain(visitorFirst);
+      expect(acqText).toContain(visitorFirst);
       expect(acqHtml).toContain('data-testid="acquisition-terminal-demo"');
       expect(htmlForTextNeedleMatch(acqHtml)).toContain(
         disc.shareableTerminalDemo.transcript.slice(0, 80),
