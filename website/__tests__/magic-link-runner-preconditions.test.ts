@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const { reserveMock, sendMock } = vi.hoisted(() => ({
   reserveMock: vi.fn(),
@@ -16,11 +16,20 @@ vi.mock("@/lib/sendMagicLink", () => ({
 import { runMagicLinkVerificationRequest } from "@/lib/runMagicLinkVerificationRequest";
 
 describe("runMagicLinkVerificationRequest preconditions", () => {
+  const origVercelEnv = process.env.VERCEL_ENV;
+
   beforeEach(() => {
+    // CI sets VERCEL_ENV=production; this suite asserts passthrough URL + gate/send wiring.
+    delete process.env.VERCEL_ENV;
     reserveMock.mockReset();
     sendMock.mockReset();
     reserveMock.mockResolvedValue(undefined);
     sendMock.mockResolvedValue(undefined);
+  });
+
+  afterEach(() => {
+    if (origVercelEnv === undefined) delete process.env.VERCEL_ENV;
+    else process.env.VERCEL_ENV = origVercelEnv;
   });
 
   it("throws when identifier is not a string and does not call gate or send", async () => {
