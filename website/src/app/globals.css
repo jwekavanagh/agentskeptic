@@ -129,12 +129,6 @@ main {
   line-height: 1.45;
   color: var(--fg);
 }
-.pricing-page .pricing-hero-one-liner {
-  margin: 0;
-  max-width: 44rem;
-  font-size: 0.95rem;
-  line-height: 1.45;
-}
 .pricing-page .pricing-example {
   background: var(--card);
   border: 1px solid var(--border);
@@ -222,6 +216,32 @@ main {
 }
 .pricing-page .pricing-grid-after-hero {
   margin-top: 0.35rem;
+}
+.pricing-page .pricing-card-enterprise {
+  grid-column: 1 / -1;
+  width: 100%;
+  max-width: 26rem;
+  margin-inline: auto;
+}
+.pricing-page .pricing-cta-emphasized {
+  background: var(--accent);
+  color: var(--accent-contrast);
+  min-height: 48px;
+  font-size: 1.02rem;
+  font-weight: 700;
+  box-shadow: 0 4px 18px color-mix(in srgb, var(--accent) 42%, transparent);
+}
+.pricing-page a.pricing-cta-emphasized:hover {
+  filter: brightness(1.09);
+}
+.pricing-page button.pricing-cta-emphasized:hover:not(:disabled) {
+  filter: brightness(1.09);
+}
+.pricing-page .pricing-team-footnote {
+  margin: 0.65rem 0 0;
+  font-size: 0.82rem;
+  line-height: 1.35;
+  max-width: 18rem;
 }
 .pricing-page .pricing-card-starter {
   opacity: 0.92;
@@ -471,15 +491,6 @@ button.secondary, .btn.secondary {
   color: var(--accent-on-card);
 }
 
-.pricing-entry-paid-pill {
-  margin: 0 0 0.5rem;
-  font-size: 0.8rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--muted);
-}
-
 .try-it-scenario-hint {
   max-width: 42rem;
   margin-top: 0.5rem;
@@ -519,6 +530,7 @@ button.secondary, .btn.secondary {
 
 /* After `.btn-pricing-secondary` so layout wins; comfortable hit targets (axe / Lighthouse `target-size`). */
 .pricing-grid a.btn-pricing-secondary.pricing-card-cta,
+.pricing-grid a.pricing-card-cta.pricing-cta-emphasized,
 .pricing-grid button.pricing-card-cta,
 .pricing-grid a.btn.pricing-card-cta {
   margin-top: 0.75rem;
@@ -528,6 +540,10 @@ button.secondary, .btn.secondary {
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
+}
+.pricing-grid a.pricing-card-cta.pricing-cta-emphasized {
+  text-decoration: none;
+  border-radius: 9999px;
 }
 
 main {

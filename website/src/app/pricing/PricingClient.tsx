@@ -111,11 +111,6 @@ export function PricingClient({
                 {productCopy.pricingRecommendedPill}
               </p>
             )}
-            {p.id === "individual" && (
-              <p className="pricing-entry-paid-pill" data-testid="pricing-entry-paid-pill">
-                {productCopy.pricingIndividualEntryPill}
-              </p>
-            )}
             <h2>{p.headline}</h2>
             <p className="pricing-card-price">{p.displayPrice}</p>
             <p
@@ -146,7 +141,7 @@ export function PricingClient({
               (authed ? (
                 <button
                   type="button"
-                  className="pricing-card-cta"
+                  className={`pricing-card-cta${p.recommended ? " pricing-cta-emphasized" : ""}`}
                   disabled={loading !== null}
                   onClick={() => checkout(p.checkoutPlanId!)}
                 >
@@ -154,7 +149,7 @@ export function PricingClient({
                 </button>
               ) : (
                 <Link
-                  className="btn-pricing-secondary pricing-card-cta"
+                  className={`pricing-card-cta${p.recommended ? " pricing-cta-emphasized" : " btn-pricing-secondary"}`}
                   href={PRICING_SIGNIN_HREF}
                 >
                   {paidSignInCtaLabel(p.checkoutPlanId)}
@@ -164,6 +159,11 @@ export function PricingClient({
               <a className="btn pricing-card-cta" href={enterpriseMailto}>
                 {productCopy.pricingPlanCtas.enterprise.label}
               </a>
+            )}
+            {p.id === "team" && (
+              <p className="pricing-team-footnote muted" data-testid="pricing-team-footnote">
+                {productCopy.pricingTeamFootnote}
+              </p>
             )}
           </div>
         ))}

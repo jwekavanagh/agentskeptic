@@ -50,10 +50,6 @@ describe("PricingClient checkout — no silent failures on bad responses", () =>
       <PricingClient plans={[individualPlan]} enterpriseMailto="mailto:sales@example.com" />,
     );
 
-    expect(screen.getByTestId("pricing-entry-paid-pill")).toHaveTextContent(
-      productCopy.pricingIndividualEntryPill,
-    );
-
     fireEvent.click(
       screen.getByRole("button", { name: productCopy.pricingPlanCtas.individual.checkoutLabel }),
     );

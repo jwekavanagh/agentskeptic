@@ -76,7 +76,6 @@ export default function PricingPage() {
         <p className="pricing-hero-subtitle" data-testid="pricing-plan-choice-guide">
           {hero.subtitle}
         </p>
-        <p className="pricing-hero-one-liner muted">{hero.tierSummaryOneLine}</p>
       </section>
 
       <section className="pricing-example" data-testid="pricing-example" aria-labelledby="pricing-example-title">

@@ -9,7 +9,8 @@ describe("PricingClient sign-in CTA href", () => {
   );
 
   it("uses callbackUrl to /pricing", () => {
-    expect(src).toContain('href="/auth/signin?callbackUrl=%2Fpricing"');
+    expect(src).toContain('const PRICING_SIGNIN_HREF = "/auth/signin?callbackUrl=%2Fpricing"');
+    expect(src).toContain("href={PRICING_SIGNIN_HREF}");
   });
 
   it("uses enterpriseMailto prop for enterprise CTA", () => {

@@ -34,12 +34,14 @@ describe("pricing commercial terms HTML", { timeout: 180_000 }, () => {
     }
   });
 
-  it("exposes buyer-led recap, plan-choice guide, normative lines, and Individual entry pill", async () => {
+  it("exposes buyer-led recap, plan-choice guide, normative lines, and Team guidance", async () => {
     const html = await getSiteHtml("/pricing");
     expect(html).toContain('data-testid="pricing-hero-recap"');
     expect(html).toContain('data-testid="pricing-plan-choice-guide"');
-    expect(html).toContain('data-testid="pricing-entry-paid-pill"');
-    expect(html).toContain(productCopy.pricingIndividualEntryPill);
+    expect(html).toContain('data-testid="pricing-recommended-pill"');
+    expect(html).toContain(productCopy.pricingRecommendedPill);
+    expect(html).toContain('data-testid="pricing-team-footnote"');
+    expect(html).toContain(productCopy.pricingTeamFootnote);
     for (const row of productCopy.pricingCommercialTermsBullets) {
       expect(html).toContain(row.body);
     }

@@ -128,14 +128,11 @@ export const pricingTrustBandBeforeGrid = {
   ],
 } as const satisfies PricingTrustBandBeforeGrid;
 
-/** Above-the-fold `/pricing` hero (title, stakes, subhead, one-line tier hint). */
+/** Above-the-fold `/pricing` hero (title, stakes, subhead). */
 export const pricingHero = {
   title: "Pricing for database truth verification",
   positioning: "Stop shipping workflows that look successful but write incorrect data.",
   subtitle: "Start free. Pay when you need CI enforcement and production-scale verification.",
-  /** Replaces a longer bullet list: one scannable line before the example and cards. */
-  tierSummaryOneLine:
-    "Try locally on Starter, add CI for yourself on Individual, standardize enforcement for the team on Team, and grow usage on Business.",
 } as const;
 
 export const pricingHeroExample = {
@@ -148,7 +145,7 @@ export const pricingHeroExample = {
 } as const;
 
 export const pricingRiskReassurance =
-  "Cancel anytime. Local verification stays free as long as you need it.";
+  "Cancel anytime. Local verification stays free.";
 
 export const pricingFeatureComparison = {
   title: "Compare plans in detail",
@@ -163,7 +160,7 @@ export const pricingFeatureComparison = {
       enterprise: "Yes",
     },
     {
-      feature: "Fail the build when the database does not match",
+      feature: "Fail build on mismatch",
       starter: "No",
       individual: "Yes",
       team: "Yes",
@@ -191,6 +188,9 @@ export const pricingFeatureComparison = {
 
 /** Truthful guidance without implying existing customer mix. */
 export const pricingRecommendedPill = "For production CI";
+
+/** Microcopy under Team card (upgrade trigger for shared CI). */
+export const pricingTeamFootnote = "Upgrade when you enable CI enforcement.";
 
 /** Primary CTA labels on `/pricing` cards (sign-in still required before checkout). */
 export const pricingPlanCtas = {
@@ -307,7 +307,11 @@ export const productCopy = {
   pricingCommercialTermsBullets: [
     {
       lead: "Paid verification",
-      body: "The published npm CLI, API keys, and quota require an active paid plan (trials count). Open-source repo builds verify without a subscription.",
+      body: "Licensed verification with the published npm CLI requires an active Individual, Team, Business, or Enterprise subscription (trial counts); monthly quota applies after subscribe.",
+    },
+    {
+      lead: "Enforcement and CI",
+      body: "CI locks, the enforce command, and quick verify with lock flags use the same subscription requirement.",
     },
     {
       lead: "Contracts",
@@ -495,18 +499,16 @@ export const productCopy = {
   /** Retained for SSOT strings; `/pricing` renders `pricingHero` instead. */
   pricingRecap: pricingHero.subtitle,
 
-  /** Retained for SSOT strings; `/pricing` renders `pricingHero.tierSummaryOneLine` in plan-choice slot. */
-  pricingPlanChoiceGuide: pricingHero.tierSummaryOneLine,
+  /** Retained for SSOT strings; `/pricing` uses `pricingHero.subtitle` in plan-choice testid slot. */
+  pricingPlanChoiceGuide: pricingHero.subtitle,
 
   pricingHero,
   pricingHeroExample,
   pricingRiskReassurance,
   pricingFeatureComparison,
   pricingRecommendedPill,
+  pricingTeamFootnote,
   pricingPlanCtas,
-
-  /** Pill on the Individual pricing card (client). */
-  pricingIndividualEntryPill: "Solo CI entry",
 
   signInPurpose: {
     title: "Sign in",
