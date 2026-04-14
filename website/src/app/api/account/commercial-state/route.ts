@@ -24,7 +24,13 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       expectedPlan,
       operatorContactEmail: process.env.CONTACT_SALES_EMAIL,
     });
-    return NextResponse.json(payload);
+    const body = JSON.stringify(payload, (_key, value) =>
+      typeof value === "bigint" ? Number(value) : value,
+    );
+    return new NextResponse(body, {
+      status: 200,
+      headers: { "content-type": "application/json; charset=utf-8" },
+    });
   } catch {
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }

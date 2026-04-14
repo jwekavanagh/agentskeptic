@@ -1,20 +1,26 @@
 import { db } from "@/db/client";
-import { sql } from "drizzle-orm";
+import { funnelEvents } from "@/db/schema";
+import { and, eq, gte, lt, sql } from "drizzle-orm";
+
+function coerceCount(value: unknown): number {
+  if (value === undefined || value === null) return 0;
+  if (typeof value === "bigint") return Number(value);
+  const n = Number(value);
+  return Number.isFinite(n) ? n : 0;
+}
 
 /**
  * Normative repeat-day count for reserve_allowed funnel rows (UTC calendar dates).
  * SQL lives only in this module — do not duplicate in tests or docs.
  */
 export async function countDistinctReserveDaysForUser(userId: string): Promise<number> {
-  const result = await db.execute(
-    sql`SELECT count(DISTINCT ("created_at" AT TIME ZONE 'UTC')::date)::int AS n
-        FROM funnel_event
-        WHERE user_id = ${userId} AND event = ${"reserve_allowed"}`,
-  );
-  const row = result[0] as { n: number | string | bigint } | undefined;
-  const n = row?.n;
-  if (n === undefined || n === null) return 0;
-  return typeof n === "bigint" ? Number(n) : Number(n);
+  const [row] = await db
+    .select({
+      n: sql<number>`count(distinct (${funnelEvents.createdAt} AT TIME ZONE 'UTC')::date)::int`,
+    })
+    .from(funnelEvents)
+    .where(and(eq(funnelEvents.userId, userId), eq(funnelEvents.event, "reserve_allowed")));
+  return coerceCount(row?.n);
 }
 
 /** `yearMonth` format `YYYY-MM` (UTC month boundaries). */
@@ -30,16 +36,18 @@ export async function countDistinctReserveUtcDaysForUserInMonth(
   const start = new Date(Date.UTC(y, m - 1, 1, 0, 0, 0, 0));
   const end = new Date(Date.UTC(y, m, 1, 0, 0, 0, 0));
 
-  const result = await db.execute(sql`
-    SELECT count(DISTINCT (created_at AT TIME ZONE 'UTC')::date)::int AS n
-    FROM funnel_event
-    WHERE user_id = ${userId}
-      AND event = ${"reserve_allowed"}
-      AND created_at >= ${start}
-      AND created_at < ${end}
-  `);
-  const row = result[0] as { n: number | string | bigint } | undefined;
-  const n = row?.n;
-  if (n === undefined || n === null) return 0;
-  return typeof n === "bigint" ? Number(n) : Number(n);
+  const [row] = await db
+    .select({
+      n: sql<number>`count(distinct (${funnelEvents.createdAt} AT TIME ZONE 'UTC')::date)::int`,
+    })
+    .from(funnelEvents)
+    .where(
+      and(
+        eq(funnelEvents.userId, userId),
+        eq(funnelEvents.event, "reserve_allowed"),
+        gte(funnelEvents.createdAt, start),
+        lt(funnelEvents.createdAt, end),
+      ),
+    );
+  return coerceCount(row?.n);
 }
