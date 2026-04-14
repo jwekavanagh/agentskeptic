@@ -8,7 +8,7 @@
       "displayPrice": "Free",
       "marketingHeadline": "Starter",
       "audience": "Exploring the site: sign in, browse Account, and compare the commercial surface with a source build—no paid verification runs on this tier.",
-      "valueUnlock": "Account access only. Published-CLI verification, API keys, quota, and CI enforcement start on Individual or higher; use a repository build for free contract verification without a subscription.",
+      "valueUnlock": "Account access only. Published CLI verification, API keys, monthly quota, and CI enforcement start on Individual or higher; use a repository build for free contract verification without a subscription.",
       "stripePriceEnvKey": null
     },
     "individual": {
@@ -17,7 +17,7 @@
       "displayPrice": "$25/mo",
       "marketingHeadline": "Individual",
       "audience": "Solo engineers who want the published CLI, API keys, and monthly quota for verification and CI enforcement without team-scale volume.",
-      "valueUnlock": "First paid tier that unlocks published-package verification with reserve-backed quota, plus enforce and CI lock flows on the same subscription.",
+      "valueUnlock": "First paid tier that unlocks the published CLI for verification with monthly quota, plus enforce and CI lock flows on the same subscription.",
       "stripePriceEnvKey": "STRIPE_PRICE_INDIVIDUAL"
     },
     "team": {
@@ -35,7 +35,7 @@
       "displayPrice": "$300/mo",
       "marketingHeadline": "Business",
       "audience": "High-volume pipelines or many services that need headroom, predictable billing, and room to grow.",
-      "valueUnlock": "Highest self-serve quota on published-package verification; enforce and CI locks remain on the same subscription.",
+      "valueUnlock": "Highest self-serve monthly quota with the published CLI; enforce and CI locks remain on the same subscription.",
       "stripePriceEnvKey": "STRIPE_PRICE_BUSINESS"
     },
     "enterprise": {

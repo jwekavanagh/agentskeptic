@@ -229,7 +229,7 @@ export const productCopy = {
   /** Commercial terms above pricing grid — server-rendered from this list. */
   pricingCommercialTermsBullets: [
     {
-      lead: "Published package",
+      lead: "Published CLI",
       body: "Licensed verification with the published npm CLI requires an active Individual, Team, Business, or Enterprise subscription (trial counts); monthly quota applies after subscribe.",
     },
     {
@@ -388,7 +388,7 @@ export const productCopy = {
 
   /** Short plan-choice guide on `/pricing` (server-rendered, after hero recap). */
   pricingPlanChoiceGuide:
-    "Starter is for signing in and exploring the commercial surface without paid verification runs. Most solo buyers start on Individual for the published CLI and CI. Team is the default for engineering teams; Business adds headroom; Enterprise covers procurement and custom limits.",
+    "Starter: sign in and explore the commercial surface—no paid verification runs. Most solo buyers start on Individual for the published CLI and CI. Team is the default for engineering teams; Business adds headroom; Enterprise is for procurement and custom limits.",
 
   /** Pill on the Individual pricing card (client). */
   pricingIndividualEntryPill: "Default paid entry (solo)",
