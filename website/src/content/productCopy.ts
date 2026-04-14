@@ -472,8 +472,10 @@ export const productCopy = {
     monthlyQuotaKeyLine: (used: number, limitLabel: string) =>
       `${used} used · limit: ${limitLabel}`,
     monthlyQuotaUnlimited: "Unlimited",
-    monthlyQuotaDistinctDays: (n: number) =>
-      `Verification days this month (UTC calendar days you actually ran against quota): ${n}.`,
+    monthlyQuotaDistinctDays: (n: number) => `Verification days this month: ${n}.`,
+    /** Shown as `title` on the verification-days line (UTC / quota nuance). */
+    monthlyQuotaDistinctDaysTitle:
+      "Each count is a separate UTC calendar day this billing month when you ran paid verification against your allowance.",
     quotaUrgencyCopy: {
       ok: "Usage is comfortably below your plan limit.",
       notice: "You have used at least 75% of your included verifications for this month.",
@@ -493,7 +495,7 @@ export const productCopy = {
     verificationMonthNoRowsDetail:
       "We see activity for this billing month, but detailed rows are not available here yet—try refreshing in a moment.",
     activityEmpty:
-      "You have not run a paid verification in this billing month yet. On a paid plan with an API key, follow Integrate to run your first check—then it will show up here.",
+      "Nothing has been recorded for this billing month yet. Create an API key below if you need one, then use the button to open Integrate.",
     activityLoadError:
       "We could not load verification activity right now. Refresh the page in a moment; if it keeps happening, contact support.",
     trustFootnoteLines: [
@@ -511,6 +513,8 @@ export const productCopy = {
       "Open Integrate and run npx agentskeptic verify … from your repo (full commands are on that page).",
     ] as const,
     primaryVerificationCtaFirstRun: "Run your first verification",
+    /** When the user has no key yet; verification CTA stays visible but sets expectations. */
+    primaryVerificationCtaFirstRunNeedsKey: "Run your first verification (create a key below first)",
     primaryVerificationCtaAgain: "Run another verification",
   },
 

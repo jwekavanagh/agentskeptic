@@ -20,11 +20,11 @@ export type AccountEntitlementSummaryInput = {
  */
 const MAPPED_SUMMARY: Record<`${PlanId}|${SubscriptionStatusForEntitlement}`, string> = {
   "starter|none":
-    "Paid verification and checks you rely on in CI need Individual, Team, Business, or Enterprise—Starter is for evaluation. See Pricing to upgrade.",
+    "Starter is for evaluation. For paid runs and checks in CI or production, use Upgrade from Starter above.",
   "starter|active":
-    "Paid verification and checks you rely on in CI need Individual, Team, Business, or Enterprise—Starter is for evaluation. See Pricing to upgrade.",
+    "Starter is for evaluation. For paid runs and checks in CI or production, use Upgrade from Starter above.",
   "starter|inactive":
-    "Paid verification and checks you rely on in CI need Individual, Team, Business, or Enterprise—Starter is for evaluation. See Pricing to upgrade.",
+    "Starter is for evaluation. For paid runs and checks in CI or production, use Upgrade from Starter above.",
   "individual|none":
     "Paid verification needs an active subscription. The same goes for database checks wired into CI or deploys.",
   "individual|active":

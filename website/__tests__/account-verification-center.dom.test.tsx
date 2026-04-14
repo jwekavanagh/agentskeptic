@@ -131,6 +131,20 @@ describe("Account verification center (DOM)", () => {
     expect(cta).toHaveClass("btn");
   });
 
+  it("nudges verification CTA when no API key exists yet", () => {
+    render(<AccountClient hasKey={false} initialCommercial={baseCommercial()} activity={idleActivity} />);
+    expect(screen.getByTestId("account-primary-cta")).toHaveTextContent(
+      productCopy.account.primaryVerificationCtaFirstRunNeedsKey,
+    );
+  });
+
+  it("uses short first-run CTA when a key already exists", () => {
+    render(<AccountClient hasKey initialCommercial={baseCommercial()} activity={idleActivity} />);
+    expect(screen.getByTestId("account-primary-cta")).toHaveTextContent(
+      productCopy.account.primaryVerificationCtaFirstRun,
+    );
+  });
+
   it("shows activityLoadError for ok false without LiveStatus wrapper", () => {
     render(<AccountClient hasKey={false} initialCommercial={baseCommercial()} activity={{ ok: false }} />);
     const err = screen.getByTestId("account-activity-error");

@@ -5,7 +5,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import type { CommercialAccountStatePayload } from "@/lib/commercialAccountState";
 import type { AccountPageVerificationActivity } from "@/lib/funnelObservabilityQueries";
-import type { PriceMapping } from "@/lib/accountEntitlementSummary";
 import { LiveStatus } from "@/components/LiveStatus";
 import { productCopy } from "@/content/productCopy";
 import { accountAssertiveMessage } from "@/lib/accountAssertiveMessage";
@@ -40,16 +39,10 @@ function TrustFootnoteSecondLine({ text }: { text: string }) {
   );
 }
 
-function billingSyncDisplay(mapping: PriceMapping): { label: string; title: string } {
-  if (mapping === "mapped") {
-    return {
-      label: "Plan and billing look correctly linked",
-      title: "Your subscription matches a known plan, so quota and paid verification line up as expected.",
-    };
-  }
+function billingUnmappedNotice(): { label: string; title: string } {
   return {
-    label: "Plan and billing need attention",
-    title: "We have not finished matching your subscription to a plan in our billing records yet.",
+    label: "We're still connecting your subscription to the right plan in billing.",
+    title: "This is usually temporary after checkout or a plan change. If it persists, use Manage billing or contact support.",
   };
 }
 
@@ -90,7 +83,7 @@ export function AccountClient({
 
   const checkoutRefreshKeyRef = useRef<string | null>(null);
 
-  const billing = billingSyncDisplay(commercial.priceMapping);
+  const billingUnmapped = billingUnmappedNotice();
 
   const monthCount =
     activity.ok === true ? activity.licensedOutcomesThisUtcMonth : 0;
@@ -318,7 +311,9 @@ export function AccountClient({
           <Link href="/integrate" className="btn" data-testid="account-primary-cta">
             {hasActivityRows || monthCount > 0
               ? productCopy.account.primaryVerificationCtaAgain
-              : productCopy.account.primaryVerificationCtaFirstRun}
+              : !hasActiveKey && !key
+                ? productCopy.account.primaryVerificationCtaFirstRunNeedsKey
+                : productCopy.account.primaryVerificationCtaFirstRun}
           </Link>
         </p>
       </section>
@@ -357,9 +352,11 @@ export function AccountClient({
         <p>
           <strong>Subscription status:</strong> {commercial.subscriptionStatus}
         </p>
-        <p title={billing.title}>
-          <strong>Plan in billing:</strong> {billing.label}
-        </p>
+        {commercial.priceMapping === "unmapped" ? (
+          <p className="muted" title={billingUnmapped.title}>
+            <strong>Billing:</strong> {billingUnmapped.label}
+          </p>
+        ) : null}
         {commercial.hasStripeCustomer && (
           <p style={{ marginTop: "0.5rem" }}>
             <button
@@ -440,7 +437,9 @@ export function AccountClient({
             )}
           </div>
         )}
-        <p style={{ marginTop: "0.75rem" }}>{commercial.entitlementSummary}</p>
+        {commercial.plan !== "starter" ? (
+          <p style={{ marginTop: "0.75rem" }}>{commercial.entitlementSummary}</p>
+        ) : null}
       </section>
 
       <section data-testid="account-usage-region" style={{ marginTop: "1.25rem" }}>
@@ -460,7 +459,10 @@ export function AccountClient({
               </p>
             ))
           )}
-          <p className="muted">
+          <p
+            className="muted"
+            title={productCopy.account.monthlyQuotaDistinctDaysTitle}
+          >
             {productCopy.account.monthlyQuotaDistinctDays(commercial.monthlyQuota.distinctReserveUtcDaysThisMonth)}
           </p>
           <p data-testid="quota-urgency-line">
