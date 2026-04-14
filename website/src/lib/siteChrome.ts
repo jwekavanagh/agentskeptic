@@ -58,15 +58,13 @@ export function buildSiteFooterLegalLinks(): readonly SiteChromeLink[] {
 
 export function buildHomeTrustStripLinks(args: {
   anchors: SiteChromeAnchors;
-  acquisitionHref: string;
   openapiHref: string;
 }): readonly SiteChromeLink[] {
-  const { anchors, acquisitionHref, openapiHref } = args;
+  const { anchors, openapiHref } = args;
   return [
+    { key: "integrate", href: "/integrate", label: "First-run integration", external: false },
     { key: "openapi", href: openapiHref, label: "OpenAPI (commercial v1)", external: false },
     { key: "npm", href: anchors.npmPackageUrl, label: "npm package", external: true },
     { key: "github", href: anchors.gitRepositoryUrl, label: "Source repository", external: true },
-    { key: "acquisition", href: acquisitionHref, label: "Product brief (canonical)", external: false },
-    { key: "integrate", href: "/integrate", label: "First-run integration", external: false },
   ] as const;
 }

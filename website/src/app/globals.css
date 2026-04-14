@@ -244,6 +244,14 @@ button.secondary, .btn.secondary {
   margin: 0 0 0.5rem;
   color: var(--muted);
 }
+.home-mechanism-heading {
+  margin: 1.25rem 0 0.35rem;
+}
+.home-mechanism-intro {
+  margin: 0 0 0.65rem;
+  max-width: 40rem;
+  line-height: 1.45;
+}
 .mechanism-list {
   padding-left: 1.25rem;
   max-width: 40rem;

@@ -5,7 +5,7 @@
 <!-- discovery-acquisition-fold:start -->
 ## Ship with database truth, not trace color.
 
-AgentSkeptic answers with read-only SQL at verification time—not with trace success flags or chat narratives.
+AgentSkeptic gives you a verdict grounded in read-only SQL at verification time—not in trace success flags or chat narratives.
 
 Teams ship agent and automation workflows where traces, tool responses, and success flags look green while the database row is missing, stale, or wrong. AgentSkeptic compares structured tool activity to read-only SQL against your SQLite or Postgres at verification time and reports whether observed state matched expectations derived from what the workflow claimed—not whether the step narrative read as successful.
 

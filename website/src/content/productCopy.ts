@@ -170,7 +170,7 @@ export const homeHeroCtaLabels = {
   verify: "Run verification",
 } as const satisfies HomeHeroCtaLabels;
 
-export const homeTrustStripSectionHeading = "Proof and contracts (no signup)";
+export const homeTrustStripSectionHeading = "OpenAPI, package, source, first-run (no signup)";
 
 export const productCopy = {
   links: {
@@ -311,6 +311,8 @@ export const productCopy = {
 
   mechanism: {
     title: "Declared → Expected → Observed",
+    intro:
+      "Read each layer in order: what the run recorded, what your registry expects in SQL, and what read-only queries returned at verification time.",
     items: [
       "Declared — what captured tool activity encodes (`toolId`, parameters).",
       "Expected — what should hold in SQL under your registry rules.",
@@ -378,7 +380,7 @@ export const productCopy = {
   },
 
   commercialSurface: {
-    title: "Commercial surface (what the product charges for)",
+    title: "What paid plans unlock",
     lead:
       "Open-source lets you contract-verify from the repo without an API key; licensed npm usage, quota, and keys follow Pricing and Account. Machine-readable contracts stay on the site.",
   },

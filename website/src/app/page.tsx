@@ -15,7 +15,6 @@ const anchors = {
 export default function HomePage() {
   const trustLinks = buildHomeTrustStripLinks({
     anchors,
-    acquisitionHref: productCopy.homepageAcquisitionCta.href,
     openapiHref: openapiHrefFromProcessEnv(),
   });
 
@@ -92,7 +91,8 @@ export default function HomePage() {
             <p>{productCopy.scenario.after}</p>
           </div>
         </div>
-        <h3>{productCopy.mechanism.title}</h3>
+        <h3 className="home-mechanism-heading">{productCopy.mechanism.title}</h3>
+        <p className="home-mechanism-intro muted">{productCopy.mechanism.intro}</p>
         <ol className="mechanism-list">
           {productCopy.mechanism.items.map((item) => (
             <li key={item.slice(0, 48)}>{item}</li>
