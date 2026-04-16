@@ -121,6 +121,8 @@ These funnel surfaces are **telemetry only**. They do **not** affect whether ver
 
 **Operator SQL for KPIs (cross-surface, retention, conversion):** Do not duplicate metric SQL in this document — the normative definitions and fenced SQL live in [`docs/growth-metrics-ssot.md`](growth-metrics-ssot.md), with executable mirrors in `website/src/lib/growthMetrics*.ts` enforced by Vitest parity tests.
 
+- **Stage-separated conversion metric ids (definitions and interpretation contract only in growth SSOT):** `CrossSurface_ConversionRate_AcquisitionToIntegrate_Rolling7dUtc`, `CrossSurface_ConversionRate_IntegrateToVerifyOutcome_Rolling7dUtc`; the compressed cross-surface summary remains `CrossSurface_ConversionRate_AcquisitionToVerifyOutcome_Rolling7dUtc` — [`docs/growth-metrics-ssot.md`](growth-metrics-ssot.md).
+
 **Why not Vercel-only page views:** Page views do not correlate `run_id` to a completed licensed run. This design stores **queryable rows** in Postgres.
 
 **Why not `reserve_allowed` as completion:** `reserve` is **preflight** before the engine runs; completion requires a terminal workflow / quick rollup outcome.

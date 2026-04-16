@@ -4,7 +4,9 @@ import { dbTelemetry } from "@/db/telemetryClient";
 import { telemetryFunnelEvents } from "@/db/telemetrySchema";
 import { truncateCommercialFixtureDbs } from "./helpers/truncateCommercialFixture";
 import { getCanonicalSiteOrigin } from "@/lib/canonicalSiteOrigin";
+import { getAcquisitionToIntegrateRolling7d } from "@/lib/growthMetricsAcquisitionToIntegrateRolling7d";
 import { getCrossSurfaceConversionRolling7d } from "@/lib/growthMetricsCrossSurfaceConversionRolling7d";
+import { getIntegrateToVerifyOutcomeRolling7d } from "@/lib/growthMetricsIntegrateToVerifyOutcomeRolling7d";
 import { getTimeToFirstVerifyOutcomeSeconds } from "@/lib/growthMetricsTimeToFirstVerifyOutcome";
 import {
   PRODUCT_ACTIVATION_CLI_PRODUCT_HEADER,
@@ -191,5 +193,590 @@ describe.skipIf(!hasDatabaseUrl || !hasTelemetryUrl)("growth cross-surface metri
     expect(r.d).toBe(2);
     expect(r.n).toBe(1);
     expect(r.rate).toBeCloseTo(0.5, 5);
+  });
+
+  const dayMs = 24 * 60 * 60 * 1000;
+  const telemetryRowDefaults = {
+    serverVercelEnv: "unset" as const,
+    serverNodeEnv: "test" as const,
+  };
+
+  describe("CrossSurface_ConversionRate_AcquisitionToIntegrate_Rolling7dUtc contract", () => {
+    it("Happy path: one acquisition and one integrate same id in window → d=1 n=1 rate=1", async () => {
+      const fid = "f1a00001-0001-4001-8001-000000000001";
+      const now = new Date();
+      await dbTelemetry.insert(telemetryFunnelEvents).values([
+        {
+          event: "acquisition_landed",
+          userId: null,
+          metadata: {
+            schema_version: 1,
+            surface: "acquisition",
+            funnel_anon_id: fid,
+            attribution: {},
+          },
+          createdAt: now,
+          ...telemetryRowDefaults,
+        },
+        {
+          event: "integrate_landed",
+          userId: null,
+          metadata: {
+            schema_version: 1,
+            surface: "integrate",
+            funnel_anon_id: fid,
+            attribution: {},
+          },
+          createdAt: now,
+          ...telemetryRowDefaults,
+        },
+      ]);
+      const r = await getAcquisitionToIntegrateRolling7d();
+      expect(r.d).toBe(1);
+      expect(r.n).toBe(1);
+      expect(r.rate).toBe(1);
+    });
+
+    it("Duplicate events: three acquisition and two integrate same id → d=1 n=1 rate=1", async () => {
+      const fid = "f1a00002-0001-4001-8001-000000000002";
+      const now = new Date();
+      await dbTelemetry.insert(telemetryFunnelEvents).values([
+        {
+          event: "acquisition_landed",
+          userId: null,
+          metadata: {
+            schema_version: 1,
+            surface: "acquisition",
+            funnel_anon_id: fid,
+            attribution: {},
+          },
+          createdAt: now,
+          ...telemetryRowDefaults,
+        },
+        {
+          event: "acquisition_landed",
+          userId: null,
+          metadata: {
+            schema_version: 1,
+            surface: "acquisition",
+            funnel_anon_id: fid,
+            attribution: {},
+          },
+          createdAt: now,
+          ...telemetryRowDefaults,
+        },
+        {
+          event: "acquisition_landed",
+          userId: null,
+          metadata: {
+            schema_version: 1,
+            surface: "acquisition",
+            funnel_anon_id: fid,
+            attribution: {},
+          },
+          createdAt: now,
+          ...telemetryRowDefaults,
+        },
+        {
+          event: "integrate_landed",
+          userId: null,
+          metadata: {
+            schema_version: 1,
+            surface: "integrate",
+            funnel_anon_id: fid,
+            attribution: {},
+          },
+          createdAt: now,
+          ...telemetryRowDefaults,
+        },
+        {
+          event: "integrate_landed",
+          userId: null,
+          metadata: {
+            schema_version: 1,
+            surface: "integrate",
+            funnel_anon_id: fid,
+            attribution: {},
+          },
+          createdAt: now,
+          ...telemetryRowDefaults,
+        },
+      ]);
+      const r = await getAcquisitionToIntegrateRolling7d();
+      expect(r.d).toBe(1);
+      expect(r.n).toBe(1);
+      expect(r.rate).toBe(1);
+    });
+
+    it("Out-of-window: stale acquisition must not inflate d", async () => {
+      const fid = "f1a00003-0001-4001-8001-000000000003";
+      const now = new Date();
+      const stale = new Date(now.getTime() - 8 * dayMs);
+      await dbTelemetry.insert(telemetryFunnelEvents).values([
+        {
+          event: "acquisition_landed",
+          userId: null,
+          metadata: {
+            schema_version: 1,
+            surface: "acquisition",
+            funnel_anon_id: fid,
+            attribution: {},
+          },
+          createdAt: stale,
+          ...telemetryRowDefaults,
+        },
+        {
+          event: "acquisition_landed",
+          userId: null,
+          metadata: {
+            schema_version: 1,
+            surface: "acquisition",
+            funnel_anon_id: fid,
+            attribution: {},
+          },
+          createdAt: now,
+          ...telemetryRowDefaults,
+        },
+        {
+          event: "integrate_landed",
+          userId: null,
+          metadata: {
+            schema_version: 1,
+            surface: "integrate",
+            funnel_anon_id: fid,
+            attribution: {},
+          },
+          createdAt: now,
+          ...telemetryRowDefaults,
+        },
+      ]);
+      const r = await getAcquisitionToIntegrateRolling7d();
+      expect(r.d).toBe(1);
+      expect(r.n).toBe(1);
+      expect(r.rate).toBe(1);
+    });
+
+    it("Null or empty funnel_anon_id noise must not add a second distinct id to d", async () => {
+      const fid = "f1a00004-0001-4001-8001-000000000004";
+      const now = new Date();
+      await dbTelemetry.insert(telemetryFunnelEvents).values([
+        {
+          event: "acquisition_landed",
+          userId: null,
+          metadata: {
+            schema_version: 1,
+            surface: "acquisition",
+            funnel_anon_id: "",
+            attribution: {},
+          },
+          createdAt: now,
+          ...telemetryRowDefaults,
+        },
+        {
+          event: "acquisition_landed",
+          userId: null,
+          metadata: { schema_version: 1, surface: "acquisition", attribution: {} },
+          createdAt: now,
+          ...telemetryRowDefaults,
+        },
+        {
+          event: "acquisition_landed",
+          userId: null,
+          metadata: {
+            schema_version: 1,
+            surface: "acquisition",
+            funnel_anon_id: fid,
+            attribution: {},
+          },
+          createdAt: now,
+          ...telemetryRowDefaults,
+        },
+        {
+          event: "integrate_landed",
+          userId: null,
+          metadata: {
+            schema_version: 1,
+            surface: "integrate",
+            funnel_anon_id: fid,
+            attribution: {},
+          },
+          createdAt: now,
+          ...telemetryRowDefaults,
+        },
+      ]);
+      const r = await getAcquisitionToIntegrateRolling7d();
+      expect(r.d).toBe(1);
+      expect(r.n).toBe(1);
+      expect(r.rate).toBe(1);
+    });
+
+    it("Integrate without acquisition: id not in acquisition→integrate d", async () => {
+      const fid = "f1a00005-0001-4001-8001-000000000005";
+      const now = new Date();
+      await dbTelemetry.insert(telemetryFunnelEvents).values([
+        {
+          event: "integrate_landed",
+          userId: null,
+          metadata: {
+            schema_version: 1,
+            surface: "integrate",
+            funnel_anon_id: fid,
+            attribution: {},
+          },
+          createdAt: now,
+          ...telemetryRowDefaults,
+        },
+      ]);
+      const r = await getAcquisitionToIntegrateRolling7d();
+      expect(r.d).toBe(0);
+      expect(r.n).toBe(0);
+      expect(r.rate).toBeNull();
+    });
+
+    it("Acquisition without integrate: d=1 n=0 rate=0", async () => {
+      const fid = "f1a00006-0001-4001-8001-000000000006";
+      const now = new Date();
+      await dbTelemetry.insert(telemetryFunnelEvents).values([
+        {
+          event: "acquisition_landed",
+          userId: null,
+          metadata: {
+            schema_version: 1,
+            surface: "acquisition",
+            funnel_anon_id: fid,
+            attribution: {},
+          },
+          createdAt: now,
+          ...telemetryRowDefaults,
+        },
+      ]);
+      const r = await getAcquisitionToIntegrateRolling7d();
+      expect(r.d).toBe(1);
+      expect(r.n).toBe(0);
+      expect(r.rate).toBe(0);
+    });
+  });
+
+  describe("CrossSurface_ConversionRate_IntegrateToVerifyOutcome_Rolling7dUtc contract", () => {
+    it("Happy path: integrate and qualifying verify_outcome same id → d=1 n=1 rate=1", async () => {
+      const fid = "f2b00001-0002-4002-8002-000000000001";
+      const now = new Date();
+      await dbTelemetry.insert(telemetryFunnelEvents).values([
+        {
+          event: "integrate_landed",
+          userId: null,
+          metadata: {
+            schema_version: 1,
+            surface: "integrate",
+            funnel_anon_id: fid,
+            attribution: {},
+          },
+          createdAt: now,
+          ...telemetryRowDefaults,
+        },
+        {
+          event: "verify_outcome",
+          userId: null,
+          metadata: {
+            schema_version: 1,
+            run_id: "r-io-1",
+            issued_at: now.toISOString(),
+            workload_class: "non_bundled",
+            subcommand: "batch_verify",
+            build_profile: "oss",
+            terminal_status: "complete",
+            funnel_anon_id: fid,
+            telemetry_source: "unknown",
+          },
+          createdAt: now,
+          ...telemetryRowDefaults,
+        },
+      ]);
+      const r = await getIntegrateToVerifyOutcomeRolling7d();
+      expect(r.d).toBe(1);
+      expect(r.n).toBe(1);
+      expect(r.rate).toBe(1);
+    });
+
+    it("Duplicate events: multiple integrate and outcome same id → d=1 n=1 rate=1", async () => {
+      const fid = "f2b00002-0002-4002-8002-000000000002";
+      const now = new Date();
+      await dbTelemetry.insert(telemetryFunnelEvents).values([
+        {
+          event: "integrate_landed",
+          userId: null,
+          metadata: {
+            schema_version: 1,
+            surface: "integrate",
+            funnel_anon_id: fid,
+            attribution: {},
+          },
+          createdAt: now,
+          ...telemetryRowDefaults,
+        },
+        {
+          event: "integrate_landed",
+          userId: null,
+          metadata: {
+            schema_version: 1,
+            surface: "integrate",
+            funnel_anon_id: fid,
+            attribution: {},
+          },
+          createdAt: now,
+          ...telemetryRowDefaults,
+        },
+        {
+          event: "verify_outcome",
+          userId: null,
+          metadata: {
+            schema_version: 1,
+            run_id: "r-io-2a",
+            issued_at: now.toISOString(),
+            workload_class: "non_bundled",
+            subcommand: "batch_verify",
+            build_profile: "oss",
+            terminal_status: "complete",
+            funnel_anon_id: fid,
+            telemetry_source: "unknown",
+          },
+          createdAt: now,
+          ...telemetryRowDefaults,
+        },
+        {
+          event: "verify_outcome",
+          userId: null,
+          metadata: {
+            schema_version: 1,
+            run_id: "r-io-2b",
+            issued_at: now.toISOString(),
+            workload_class: "non_bundled",
+            subcommand: "batch_verify",
+            build_profile: "oss",
+            terminal_status: "complete",
+            funnel_anon_id: fid,
+            telemetry_source: "unknown",
+          },
+          createdAt: now,
+          ...telemetryRowDefaults,
+        },
+      ]);
+      const r = await getIntegrateToVerifyOutcomeRolling7d();
+      expect(r.d).toBe(1);
+      expect(r.n).toBe(1);
+      expect(r.rate).toBe(1);
+    });
+
+    it("Out-of-window: integrate in-window and outcome older than 7d → d=1 n=0", async () => {
+      const fid = "f2b00003-0002-4002-8002-000000000003";
+      const now = new Date();
+      const staleOutcome = new Date(now.getTime() - 8 * dayMs);
+      await dbTelemetry.insert(telemetryFunnelEvents).values([
+        {
+          event: "integrate_landed",
+          userId: null,
+          metadata: {
+            schema_version: 1,
+            surface: "integrate",
+            funnel_anon_id: fid,
+            attribution: {},
+          },
+          createdAt: now,
+          ...telemetryRowDefaults,
+        },
+        {
+          event: "verify_outcome",
+          userId: null,
+          metadata: {
+            schema_version: 1,
+            run_id: "r-io-3",
+            issued_at: staleOutcome.toISOString(),
+            workload_class: "non_bundled",
+            subcommand: "batch_verify",
+            build_profile: "oss",
+            terminal_status: "complete",
+            funnel_anon_id: fid,
+            telemetry_source: "unknown",
+          },
+          createdAt: staleOutcome,
+          ...telemetryRowDefaults,
+        },
+      ]);
+      const r = await getIntegrateToVerifyOutcomeRolling7d();
+      expect(r.d).toBe(1);
+      expect(r.n).toBe(0);
+      expect(r.rate).toBe(0);
+    });
+
+    it("Null or empty funnel_anon_id on integrate must not add a second distinct id to d", async () => {
+      const fid = "f2b00004-0002-4002-8002-000000000004";
+      const now = new Date();
+      await dbTelemetry.insert(telemetryFunnelEvents).values([
+        {
+          event: "integrate_landed",
+          userId: null,
+          metadata: {
+            schema_version: 1,
+            surface: "integrate",
+            funnel_anon_id: "",
+            attribution: {},
+          },
+          createdAt: now,
+          ...telemetryRowDefaults,
+        },
+        {
+          event: "integrate_landed",
+          userId: null,
+          metadata: { schema_version: 1, surface: "integrate", attribution: {} },
+          createdAt: now,
+          ...telemetryRowDefaults,
+        },
+        {
+          event: "integrate_landed",
+          userId: null,
+          metadata: {
+            schema_version: 1,
+            surface: "integrate",
+            funnel_anon_id: fid,
+            attribution: {},
+          },
+          createdAt: now,
+          ...telemetryRowDefaults,
+        },
+        {
+          event: "verify_outcome",
+          userId: null,
+          metadata: {
+            schema_version: 1,
+            run_id: "r-io-4",
+            issued_at: now.toISOString(),
+            workload_class: "non_bundled",
+            subcommand: "batch_verify",
+            build_profile: "oss",
+            terminal_status: "complete",
+            funnel_anon_id: fid,
+            telemetry_source: "unknown",
+          },
+          createdAt: now,
+          ...telemetryRowDefaults,
+        },
+      ]);
+      const r = await getIntegrateToVerifyOutcomeRolling7d();
+      expect(r.d).toBe(1);
+      expect(r.n).toBe(1);
+      expect(r.rate).toBe(1);
+    });
+
+    it("local_dev verify_outcome must not count as qualifying outcome", async () => {
+      const fid = "f2b00005-0002-4002-8002-000000000005";
+      const now = new Date();
+      await dbTelemetry.insert(telemetryFunnelEvents).values([
+        {
+          event: "integrate_landed",
+          userId: null,
+          metadata: {
+            schema_version: 1,
+            surface: "integrate",
+            funnel_anon_id: fid,
+            attribution: {},
+          },
+          createdAt: now,
+          ...telemetryRowDefaults,
+        },
+        {
+          event: "verify_outcome",
+          userId: null,
+          metadata: {
+            schema_version: 1,
+            run_id: "r-io-5",
+            issued_at: now.toISOString(),
+            workload_class: "non_bundled",
+            subcommand: "batch_verify",
+            build_profile: "oss",
+            terminal_status: "complete",
+            funnel_anon_id: fid,
+            telemetry_source: "local_dev",
+          },
+          createdAt: now,
+          ...telemetryRowDefaults,
+        },
+      ]);
+      const r = await getIntegrateToVerifyOutcomeRolling7d();
+      expect(r.d).toBe(1);
+      expect(r.n).toBe(0);
+      expect(r.rate).toBe(0);
+    });
+
+    it("verify_outcome without matching integrate_landed yields d=0 n=0", async () => {
+      const fid = "f2b00006-0002-4002-8002-000000000006";
+      const now = new Date();
+      await dbTelemetry.insert(telemetryFunnelEvents).values([
+        {
+          event: "verify_outcome",
+          userId: null,
+          metadata: {
+            schema_version: 1,
+            run_id: "r-io-6",
+            issued_at: now.toISOString(),
+            workload_class: "non_bundled",
+            subcommand: "batch_verify",
+            build_profile: "oss",
+            terminal_status: "complete",
+            funnel_anon_id: fid,
+            telemetry_source: "unknown",
+          },
+          createdAt: now,
+          ...telemetryRowDefaults,
+        },
+      ]);
+      const r = await getIntegrateToVerifyOutcomeRolling7d();
+      expect(r.d).toBe(0);
+      expect(r.n).toBe(0);
+      expect(r.rate).toBeNull();
+    });
+
+    it("Integrate-only cohort: I→O rate 1 while compressed acquisition→outcome has d=0", async () => {
+      const fid = "f2b00007-0002-4002-8002-000000000007";
+      const now = new Date();
+      await dbTelemetry.insert(telemetryFunnelEvents).values([
+        {
+          event: "integrate_landed",
+          userId: null,
+          metadata: {
+            schema_version: 1,
+            surface: "integrate",
+            funnel_anon_id: fid,
+            attribution: {},
+          },
+          createdAt: now,
+          ...telemetryRowDefaults,
+        },
+        {
+          event: "verify_outcome",
+          userId: null,
+          metadata: {
+            schema_version: 1,
+            run_id: "r-io-7",
+            issued_at: now.toISOString(),
+            workload_class: "non_bundled",
+            subcommand: "batch_verify",
+            build_profile: "oss",
+            terminal_status: "complete",
+            funnel_anon_id: fid,
+            telemetry_source: "unknown",
+          },
+          createdAt: now,
+          ...telemetryRowDefaults,
+        },
+      ]);
+      const io = await getIntegrateToVerifyOutcomeRolling7d();
+      expect(io.d).toBe(1);
+      expect(io.n).toBe(1);
+      expect(io.rate).toBe(1);
+      const compressed = await getCrossSurfaceConversionRolling7d();
+      expect(compressed.d).toBe(0);
+      expect(compressed.n).toBe(0);
+      expect(compressed.rate).toBeNull();
+    });
   });
 });

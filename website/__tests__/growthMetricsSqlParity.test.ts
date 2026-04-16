@@ -2,7 +2,9 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { ActiveInstalls_DistinctInstallId_VerifyStarted_Rolling7dUtc_SQL } from "@/lib/growthMetricsActiveInstallsRolling7d";
+import { CrossSurface_ConversionRate_AcquisitionToIntegrate_Rolling7dUtc_SQL } from "@/lib/growthMetricsAcquisitionToIntegrateRolling7d";
 import { CrossSurface_ConversionRate_AcquisitionToVerifyOutcome_Rolling7dUtc_SQL } from "@/lib/growthMetricsCrossSurfaceConversionRolling7d";
+import { CrossSurface_ConversionRate_IntegrateToVerifyOutcome_Rolling7dUtc_SQL } from "@/lib/growthMetricsIntegrateToVerifyOutcomeRolling7d";
 import { Retention_ActiveReserveDays_ge2_Rolling28dUtc_SQL } from "@/lib/growthMetricsRetentionRolling28d";
 import { TimeToFirstVerifyOutcome_Seconds_SQL } from "@/lib/growthMetricsTimeToFirstVerifyOutcome";
 import { describe, expect, it } from "vitest";
@@ -12,6 +14,14 @@ const docPath = join(__dirname, "..", "..", "docs", "growth-metrics-ssot.md");
 
 const METRICS = [
   ["TimeToFirstVerifyOutcome_Seconds", TimeToFirstVerifyOutcome_Seconds_SQL],
+  [
+    "CrossSurface_ConversionRate_AcquisitionToIntegrate_Rolling7dUtc",
+    CrossSurface_ConversionRate_AcquisitionToIntegrate_Rolling7dUtc_SQL,
+  ],
+  [
+    "CrossSurface_ConversionRate_IntegrateToVerifyOutcome_Rolling7dUtc",
+    CrossSurface_ConversionRate_IntegrateToVerifyOutcome_Rolling7dUtc_SQL,
+  ],
   [
     "CrossSurface_ConversionRate_AcquisitionToVerifyOutcome_Rolling7dUtc",
     CrossSurface_ConversionRate_AcquisitionToVerifyOutcome_Rolling7dUtc_SQL,

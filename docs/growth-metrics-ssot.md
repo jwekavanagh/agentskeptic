@@ -15,6 +15,8 @@ This document is the **normative semantics SSOT** for **operator growth metrics*
 | `Retention_ActiveReserveDays_ge2_Rolling28dUtc` | Operator | Rolling 28-day retention on `reserve_allowed` |
 | `AccountGauge_DistinctReserveUtcDays_CurrentMonth` | Account UX | Current UTC calendar month activity (see Account API); **not** labeled “retention” in UI |
 | `ActiveInstalls_DistinctInstallId_VerifyStarted_Rolling7dUtc` | Operator | Distinct CLI `install_id` values with ≥1 **non–`local_dev`** `verify_started` in rolling 7 UTC days (install cohort, not humans) |
+| `CrossSurface_ConversionRate_AcquisitionToIntegrate_Rolling7dUtc` | Operator | Among acquisition-landed ids in the window, what fraction also have `integrate_landed` in the window (motivation / next-step proxy) |
+| `CrossSurface_ConversionRate_IntegrateToVerifyOutcome_Rolling7dUtc` | Operator | Among integrate-landed ids in the window, what fraction also have a qualifying `verify_outcome` in the window (execution proxy) |
 
 ---
 
@@ -64,6 +66,119 @@ SELECT (
     (SELECT MIN(created_at) FROM funnel_event fe1 WHERE fe1.event = 'acquisition_landed' AND fe1.metadata->>'funnel_anon_id' = $1)
   ))
 )::int AS seconds
+```
+
+---
+
+### Operator interpretation contract (funnel decomposition)
+
+Normative rules for reading **stage-separated** cross-surface rates next to the **compressed** acquisition→`verify_outcome` rate. Ingestion HTTP contracts and beacon field shapes are **not** redefined here—only [`docs/funnel-observability-ssot.md`](docs/funnel-observability-ssot.md).
+
+**Allowed inferences**
+
+- **Motivation / “next step from acquisition”:** Use `CrossSurface_ConversionRate_AcquisitionToIntegrate_Rolling7dUtc` among ids that **actually** had `acquisition_landed` in the window. A drop here means acquisition-landed visitors (with a non-empty join id) disproportionately never recorded an integrate surface land in the same window.
+
+- **Execution / “outcome after integrate”:** Use `CrossSurface_ConversionRate_IntegrateToVerifyOutcome_Rolling7dUtc` among ids that **actually** had `integrate_landed` in the window. A drop here means integrate-landed visitors disproportionately never posted a qualifying activation `verify_outcome` in the same window.
+
+- **End-to-end join (compressed):** Use `CrossSurface_ConversionRate_AcquisitionToVerifyOutcome_Rolling7dUtc` for acquisition-landed ids that also show a qualifying `verify_outcome` with the same join id in the window—**without** requiring an explicit integrate row in SQL.
+
+**Explicit prohibitions (must not)**
+
+- **Integrate-only ids:** If the only in-window surface rows for an id are `integrate_landed` (no in-window `acquisition_landed` for that id), that id **does not** enter the **acquisition→integrate** denominator and **does** enter the **integrate→verify outcome** denominator when integrate fired. Operators **must not** read integrate-only traffic as a failure of the acquisition→integrate rate (that rate’s denominator excludes those ids by definition).
+
+- **Missing join key on activation:** `verify_outcome` rows where `metadata->>'funnel_anon_id'` is null or empty **cannot** increase any cross-surface numerator that joins on that key. Operators **must not** treat a low rate as proof that verification did not run if the CLI did not propagate the browser id (see optional env in [`docs/funnel-observability-ssot.md`](docs/funnel-observability-ssot.md)).
+
+- **Outcome without integrate:** `verify_outcome` **without** an in-window `integrate_landed` for the same id **does not** count toward the **integrate→verify outcome** numerator.
+
+- **Compressed vs decomposed equality:** Operators **must not** assume numeric identity between the compressed rate and any product of the two decomposed rates; cohorts differ (integrate-only traffic, acquisition without integrate, etc.).
+
+- **Exhaustivity:** These three metrics **do not** exhaust user intent, total traffic, or all verification runs. They **do** support bounded comparison of **where** drop-off appears **among rows that satisfy each metric’s denominator rules**.
+
+---
+
+### Three-metric reading table (operator)
+
+| Metric id | Question it answers | Must not be read as |
+|-----------|---------------------|---------------------|
+| `CrossSurface_ConversionRate_AcquisitionToVerifyOutcome_Rolling7dUtc` | Among acquisition-landed ids in the window, what fraction also have a qualifying `verify_outcome` in the window? | Proof that the user opened `/integrate`; proof that verification SQL failed; proof of revenue or subscription state |
+| `CrossSurface_ConversionRate_AcquisitionToIntegrate_Rolling7dUtc` | Among acquisition-landed ids in the window, what fraction also have `integrate_landed` in the window? | Proof that the user ran the CLI; proof of a successful verify engine run |
+| `CrossSurface_ConversionRate_IntegrateToVerifyOutcome_Rolling7dUtc` | Among integrate-landed ids in the window, what fraction also have a qualifying `verify_outcome` in the window? | Proof that the user ever hit acquisition; proof that `funnel_anon_id` was propagated on every machine |
+
+---
+
+### CrossSurface_ConversionRate_AcquisitionToIntegrate_Rolling7dUtc
+
+**Window:** rolling **7** UTC days from `now() AT TIME ZONE 'UTC'`.
+
+**Denominator `D`:** distinct `funnel_anon_id` with ≥1 `acquisition_landed` in window (non-null, non-empty id in `metadata`).
+
+**Numerator `N`:** distinct ids from `D` with ≥1 `integrate_landed` in the same window (same join id in `metadata`).
+
+**Value:** `N / NULLIF(D, 0)` as float.
+
+```sql
+WITH w AS (
+  SELECT (now() AT TIME ZONE 'UTC') AS now_utc
+),
+acq AS (
+  SELECT DISTINCT metadata->>'funnel_anon_id' AS fid
+  FROM funnel_event, w
+  WHERE event = 'acquisition_landed'
+    AND metadata->>'funnel_anon_id' IS NOT NULL
+    AND metadata->>'funnel_anon_id' <> ''
+    AND created_at >= w.now_utc - interval '7 days'
+),
+intg AS (
+  SELECT DISTINCT metadata->>'funnel_anon_id' AS fid
+  FROM funnel_event, w
+  WHERE event = 'integrate_landed'
+    AND metadata->>'funnel_anon_id' IS NOT NULL
+    AND metadata->>'funnel_anon_id' <> ''
+    AND created_at >= w.now_utc - interval '7 days'
+)
+SELECT
+  (SELECT COUNT(*)::int FROM acq) AS d,
+  (SELECT COUNT(*)::int FROM acq INNER JOIN intg ON acq.fid = intg.fid) AS n,
+  (SELECT COUNT(*)::float FROM acq INNER JOIN intg ON acq.fid = intg.fid) / NULLIF((SELECT COUNT(*)::float FROM acq), 0) AS rate
+```
+
+---
+
+### CrossSurface_ConversionRate_IntegrateToVerifyOutcome_Rolling7dUtc
+
+**Window:** rolling **7** UTC days from `now() AT TIME ZONE 'UTC'`.
+
+**Denominator `D`:** distinct `funnel_anon_id` with ≥1 `integrate_landed` in window (non-null, non-empty id in `metadata`).
+
+**Numerator `N`:** distinct ids from `D` with ≥1 **non–`local_dev`** `verify_outcome` in the same window (join on `metadata->>'funnel_anon_id'`).
+
+**Value:** `N / NULLIF(D, 0)` as float.
+
+```sql
+WITH w AS (
+  SELECT (now() AT TIME ZONE 'UTC') AS now_utc
+),
+intg AS (
+  SELECT DISTINCT metadata->>'funnel_anon_id' AS fid
+  FROM funnel_event, w
+  WHERE event = 'integrate_landed'
+    AND metadata->>'funnel_anon_id' IS NOT NULL
+    AND metadata->>'funnel_anon_id' <> ''
+    AND created_at >= w.now_utc - interval '7 days'
+),
+outc AS (
+  SELECT DISTINCT metadata->>'funnel_anon_id' AS fid
+  FROM funnel_event, w
+  WHERE event = 'verify_outcome'
+    AND metadata->>'funnel_anon_id' IS NOT NULL
+    AND metadata->>'funnel_anon_id' <> ''
+    AND (metadata->>'telemetry_source' IS DISTINCT FROM 'local_dev')
+    AND created_at >= w.now_utc - interval '7 days'
+)
+SELECT
+  (SELECT COUNT(*)::int FROM intg) AS d,
+  (SELECT COUNT(*)::int FROM intg INNER JOIN outc ON intg.fid = outc.fid) AS n,
+  (SELECT COUNT(*)::float FROM intg INNER JOIN outc ON intg.fid = outc.fid) / NULLIF((SELECT COUNT(*)::float FROM intg), 0) AS rate
 ```
 
 ---
