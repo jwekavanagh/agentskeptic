@@ -6,6 +6,10 @@ import assert from "node:assert/strict";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
+import {
+  LOCK_SUCCESS_MONETIZED_BOUNDARY_LINE_A,
+  LOCK_SUCCESS_MONETIZED_BOUNDARY_LINE_B,
+} from "../dist/cli/lockOrchestration.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, "..");
@@ -50,7 +54,8 @@ describe("CI workflow truth contract (Postgres CLI) enforce", () => {
     );
     assert.ok(!r.error, r.error?.message ?? String(r.error));
     assert.equal(r.status, 0, r.stderr);
-    assert.equal(r.stderr, "");
+    assert.ok(r.stderr.includes(LOCK_SUCCESS_MONETIZED_BOUNDARY_LINE_A), r.stderr);
+    assert.ok(r.stderr.includes(LOCK_SUCCESS_MONETIZED_BOUNDARY_LINE_B), r.stderr);
     const parsed = JSON.parse(r.stdout.trim());
     assert.equal(parsed.workflowId, "wf_complete");
     assert.equal(parsed.status, "complete");
