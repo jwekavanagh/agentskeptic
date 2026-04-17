@@ -42,7 +42,7 @@
     "export:telemetry-daily-pack": "node scripts/export-telemetry-daily-pack.mjs",
     "validate-commercial": "node scripts/validate-commercial-funnel.mjs",
     "pack-smoke": "node scripts/pack-smoke-commercial.mjs",
-    "sync:public-product-anchors": "node scripts/public-product-anchors.cjs",
+    "sync:public-product-anchors": "node scripts/public-product-anchors.cjs && node scripts/assert-discovery-public-files.mjs",
     "distribution:consumer-pipeline": "node scripts/distribution-consumer-pipeline.mjs",
     "check:discovery-acquisition": "node scripts/validate-discovery-acquisition.mjs",
     "verify:web-marketing-copy": "node scripts/run-verify-web-marketing-copy.mjs",
