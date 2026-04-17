@@ -19,7 +19,17 @@ export function RegistryDraftPanel() {
         body,
       });
       const text = await res.text();
-      setResultText(`${res.status}\n${text}`);
+      if (res.ok) {
+        let body = text;
+        try {
+          body = JSON.stringify(JSON.parse(text) as unknown, null, 2);
+        } catch {
+          /* keep raw text if not JSON */
+        }
+        setResultText(`${d.resultSuccessLead}\n\n${body}`);
+      } else {
+        setResultText(`${res.status}\n${text}`);
+      }
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       setResultText(
@@ -30,7 +40,7 @@ export function RegistryDraftPanel() {
     } finally {
       setBusy(false);
     }
-  }, [body]);
+  }, [body, d.resultSuccessLead]);
 
   return (
     <section
@@ -78,9 +88,11 @@ export function RegistryDraftPanel() {
         </button>
       </p>
       {resultText ? (
-        <pre data-testid="integrate-registry-draft-result">
-          <code>{resultText}</code>
-        </pre>
+        <div data-testid="integrate-registry-draft-result" role="status" aria-live="polite">
+          <pre className="registry-draft-json">
+            <code>{resultText}</code>
+          </pre>
+        </div>
       ) : null}
     </section>
   );

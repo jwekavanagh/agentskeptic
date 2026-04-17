@@ -690,7 +690,8 @@ main {
   cursor: pointer;
   font-weight: 600;
 }
-.integrate-prose textarea.registry-draft-json {
+.integrate-prose textarea.registry-draft-json,
+.integrate-prose pre.registry-draft-json {
   width: 100%;
   box-sizing: border-box;
   display: block;
@@ -702,8 +703,17 @@ main {
   font-size: 0.85rem;
   line-height: 1.4;
   color: inherit;
+}
+.integrate-prose textarea.registry-draft-json {
   resize: vertical;
   min-height: 12rem;
+}
+.integrate-prose pre.registry-draft-json {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-x: auto;
+  max-height: min(70vh, 36rem);
 }
 .integrate-prose code {
   font-family: ui-monospace, monospace;

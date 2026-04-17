@@ -308,6 +308,9 @@ export const integrateRegistryDraft = {
   ],
   requestLabel: "Example JSON body (edit workflow id, tool calls, or paste alternate shapes)",
   submitLabel: "Request draft",
+  /** Shown above the response body when the API returns HTTP 200 with validated JSON. */
+  resultSuccessLead:
+    "Success: the server returned a validated draft registry (HTTP 200). Copy the JSON below and review it before use in any workflow.",
   exampleJson: JSON.stringify(integrateRegistryDraftExampleBody, null, 2),
 } as const;
 
