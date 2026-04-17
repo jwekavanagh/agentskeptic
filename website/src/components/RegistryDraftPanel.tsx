@@ -21,7 +21,12 @@ export function RegistryDraftPanel() {
       const text = await res.text();
       setResultText(`${res.status}\n${text}`);
     } catch (e) {
-      setResultText(e instanceof Error ? e.message : String(e));
+      const msg = e instanceof Error ? e.message : String(e);
+      setResultText(
+        msg === "Failed to fetch"
+          ? `${msg}\n\nNo response from the server. Confirm \`npm run dev\` is running and this tab uses the same URL as the dev server (e.g. http://localhost:3000).`
+          : msg,
+      );
     } finally {
       setBusy(false);
     }

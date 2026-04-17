@@ -14,7 +14,11 @@ function generateNonce(): string {
 export function middleware(request: NextRequest) {
   const nonce = generateNonce();
   const allowEval = process.env.NODE_ENV !== "production";
-  const csp = buildCommercialSiteContentSecurityPolicy(nonce, { allowEval });
+  const isHttps = request.nextUrl.protocol === "https:";
+  const csp = buildCommercialSiteContentSecurityPolicy(nonce, {
+    allowEval,
+    upgradeInsecureRequests: isHttps,
+  });
 
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("Content-Security-Policy", csp);

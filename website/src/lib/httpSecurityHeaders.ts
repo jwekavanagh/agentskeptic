@@ -7,6 +7,12 @@
 export type CommercialSiteCspOptions = {
   /** Next.js webpack dev / HMR may rely on `eval`. Omit in production CSP. */
   allowEval?: boolean;
+  /**
+   * When true (default), emit `upgrade-insecure-requests` (typical for https production).
+   * Omit on plain `http:` (e.g. `next dev`) so same-origin `fetch("/api/...")` is not upgraded to https
+   * without a TLS listener (browsers surface that as "Failed to fetch").
+   */
+  upgradeInsecureRequests?: boolean;
 };
 
 /**
@@ -17,14 +23,16 @@ export function buildCommercialSiteContentSecurityPolicy(
   options: CommercialSiteCspOptions = {},
 ): string {
   const allowEval = options.allowEval ?? false;
+  const upgradeInsecure = options.upgradeInsecureRequests ?? true;
   const evalPart = allowEval ? " 'unsafe-eval'" : "";
+  const upgradePart = upgradeInsecure ? "upgrade-insecure-requests; " : "";
   return (
     "default-src 'self'; " +
     "base-uri 'self'; " +
     "form-action 'self'; " +
     "frame-ancestors 'none'; " +
     "object-src 'none'; " +
-    "upgrade-insecure-requests; " +
+    upgradePart +
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${evalPart} https://va.vercel-scripts.com; ` +
     "connect-src 'self' https://vitals.vercel-insights.com https://va.vercel-scripts.com; " +
     "img-src 'self' data: blob:; " +

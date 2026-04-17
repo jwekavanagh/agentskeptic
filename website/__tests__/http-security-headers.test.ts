@@ -19,6 +19,19 @@ describe("httpSecurityHeaders", () => {
     expect(csp).toContain("'unsafe-eval'");
   });
 
+  it("includes upgrade-insecure-requests by default (https-style CSP)", () => {
+    const csp = buildCommercialSiteContentSecurityPolicy("n", { allowEval: false });
+    expect(csp).toContain("upgrade-insecure-requests;");
+  });
+
+  it("omits upgrade-insecure-requests when disabled (plain http dev pages)", () => {
+    const csp = buildCommercialSiteContentSecurityPolicy("n", {
+      allowEval: false,
+      upgradeInsecureRequests: false,
+    });
+    expect(csp).not.toContain("upgrade-insecure-requests");
+  });
+
   it("exports a stable nonce header name for middleware and layout", () => {
     expect(COMMERCIAL_SITE_CSP_NONCE_HEADER).toBe("x-csp-nonce");
   });
