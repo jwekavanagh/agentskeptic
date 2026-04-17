@@ -44,6 +44,31 @@ function funnelOriginMatchesCanonical(requestOrigin: string, canonical: string):
 }
 
 /**
+ * When `NEXT_PUBLIC_APP_URL` pins port 3000 but `next dev` listens on 3001, Origin/referer origins still
+ * match this request's `Host` header — allow only for loopback + dev-like environments.
+ */
+function loopbackOriginMatchesRequestHost(req: NextRequest, requestOrigin: string): boolean {
+  if (!allowLoopbackOriginAlias()) return false;
+  const hostHeader = req.headers.get("host")?.trim().toLowerCase();
+  if (!hostHeader) return false;
+  let o: URL;
+  try {
+    o = new URL(requestOrigin);
+  } catch {
+    return false;
+  }
+  if (!isLoopbackHostname(o.hostname)) return false;
+  return o.host.toLowerCase() === hostHeader;
+}
+
+function funnelOriginAllowedForRequest(req: NextRequest, requestOrigin: string, canonical: string): boolean {
+  return (
+    funnelOriginMatchesCanonical(requestOrigin, canonical) ||
+    loopbackOriginMatchesRequestHost(req, requestOrigin)
+  );
+}
+
+/**
  * True when Origin or Referer matches the canonical site origin (same policy as getCanonicalSiteOrigin).
  */
 export function isFunnelSurfaceRequestOriginAllowed(req: NextRequest): boolean {
@@ -58,7 +83,7 @@ export function isFunnelSurfaceRequestOriginAllowed(req: NextRequest): boolean {
   if (originHeader) {
     try {
       const o = new URL(originHeader).origin;
-      if (funnelOriginMatchesCanonical(o, canonical)) return true;
+      if (funnelOriginAllowedForRequest(req, o, canonical)) return true;
     } catch {
       return false;
     }
@@ -68,7 +93,7 @@ export function isFunnelSurfaceRequestOriginAllowed(req: NextRequest): boolean {
   if (referer) {
     try {
       const o = new URL(referer).origin;
-      if (funnelOriginMatchesCanonical(o, canonical)) return true;
+      if (funnelOriginAllowedForRequest(req, o, canonical)) return true;
     } catch {
       return false;
     }

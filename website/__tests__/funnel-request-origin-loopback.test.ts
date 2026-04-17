@@ -26,6 +26,21 @@ describe("isFunnelSurfaceRequestOriginAllowed loopback", () => {
     vi.unstubAllEnvs();
   });
 
+  it("allows Origin port when it matches Host even if NEXT_PUBLIC pins a different loopback port", async () => {
+    vi.stubEnv("NODE_ENV", "development");
+    vi.stubEnv("NEXT_PUBLIC_APP_URL", "http://localhost:3000");
+    const { isFunnelSurfaceRequestOriginAllowed } = await import("@/lib/funnelRequestOriginAllowed");
+    const req = new NextRequest("http://localhost:3001/api/integrator/registry-draft", {
+      method: "POST",
+      headers: {
+        host: "localhost:3001",
+        origin: "http://localhost:3001",
+      },
+    });
+    expect(isFunnelSurfaceRequestOriginAllowed(req)).toBe(true);
+    vi.unstubAllEnvs();
+  });
+
   it("does not equate loopback with production canonical", async () => {
     vi.stubEnv("NODE_ENV", "development");
     vi.stubEnv("NEXT_PUBLIC_APP_URL", "https://agentskeptic.com");
