@@ -36,6 +36,13 @@ Normative contract for the **optional** same-origin **`POST /api/integrator/regi
 
 - **Website** imports **`agentskeptic/registryDraft`** only for AJV-backed validation and normalization—no second AJV construction path under `website/` for this route.
 
+## Website route limits (cost and abuse)
+
+- **Feature gate:** `REGISTRY_DRAFT_ENABLED` and `OPENAI_API_KEY` on the website process (see [`website/src/app/api/integrator/registry-draft/route.ts`](../website/src/app/api/integrator/registry-draft/route.ts)); when off, the route returns **404**.
+- **Same-origin:** browser `Origin` / `Referer` must match the canonical site origin.
+- **Body size:** UTF-8 request cap **65536** bytes.
+- **Per-IP hourly cap:** `REGISTRY_DRAFT_IP_CAP` and `reserveRegistryDraftIpSlot` in [`website/src/lib/ossClaimRateLimits.ts`](../website/src/lib/ossClaimRateLimits.ts). A slot is reserved only after the request **JSON validates**; each successful reservation can proceed to OpenAI. Over the cap for that IP in the current UTC hour → **429** (no model call). Tune the constant deliberately for onboarding friction vs. token spend.
+
 ## NDJSON synthesis (tests)
 
 - Single NDJSON authority for quick-ingest synthesis: `synthesizeQuickInputUtf8FromOpenAiV1` (exported via **`agentskeptic/bootstrapPackSynthesis`**).

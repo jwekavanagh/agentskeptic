@@ -5,8 +5,8 @@ import { utcHourStart } from "@/lib/magicLinkSendGate";
 
 export const OSS_CLAIM_TICKET_IP_CAP = 60;
 export const OSS_CLAIM_REDEEM_USER_CAP = 30;
-/** Hourly cap per IP for `POST /api/integrator/registry-draft`. */
-export const REGISTRY_DRAFT_IP_CAP = 20;
+/** Hourly cap per IP for `POST /api/integrator/registry-draft` (each successful reservation may trigger OpenAI). */
+export const REGISTRY_DRAFT_IP_CAP = 5;
 
 export type OssClaimRateScope = "claim_ticket_ip" | "claim_redeem_user" | "registry_draft_ip";
 
