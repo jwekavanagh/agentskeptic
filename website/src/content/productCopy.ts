@@ -347,9 +347,13 @@ export const productCopy = {
   /** Acquisition page closing section title (UI-only). */
   acquisitionDeepContextSectionTitle: "How this fits the problem",
 
+  /** Learn hub (`/guides`) first line under H1 (UI-only). */
+  learnHubPrimaryLede:
+    "Short reads for when a run looked fine but your Postgres or SQLite rows do not match what structured tool activity claimed.",
+
   /** Guides hub second lede (UI-only). */
   guidesHubSupportingSentence:
-    "Each guide maps a symptom to read-only SQL verification when logs or traces disagree with your database—then points you to first-run integration on your own Postgres or SQLite.",
+    "Each piece maps a symptom to read-only checks at verification time, then points you to Get started on your own database.",
 
   /** Indexable guide shell embed (UI-only). */
   indexedGuideEmbedTitle:
@@ -359,7 +363,7 @@ export const productCopy = {
 
   /** Learn hub (`/guides`) metadata.description (UI-only); includes bundled proof list. */
   learnHubIndexDescription:
-    "Learn: problem-oriented guides plus bundled wf_complete and wf_missing verification examples for read-only SQL discovery—not private /r/ share links.",
+    "Learn: short guides plus bundled wf_complete and wf_missing examples for read-only SQL discovery—not private /r/ share links.",
 
   /** Shared report view one-liner (UI-only). */
   publicShareReportIntro:
@@ -410,7 +414,7 @@ export const productCopy = {
   },
 
   homeStakes: {
-    sectionTitle: "When success signals hide bad rows",
+    sectionTitle: "When the database tells a different story",
     stakesTagline: "This is how bugs pass CI, billing breaks, and compliance fails.",
     tensionBullets: [
       "Trace says success.",
@@ -490,7 +494,7 @@ export const productCopy = {
   forYou: [
     "You emit structured tool activity (e.g. NDJSON) your pipeline can produce.",
     "You have SQL-accessible ground truth (SQLite, Postgres, or a mirror).",
-    "You care when traces look fine but rows are wrong or missing.",
+    "You care when the run looked fine but rows are wrong or missing.",
   ],
 
   notForYou: [
@@ -666,6 +670,18 @@ export const productCopy = {
     "/guides/stripe-webhook-database-alignment": "Webhook returned OK; ledger rows still need to match.",
     "/guides/ci-green-missing-database-side-effect": "Green CI while the side-effect row is still missing.",
   } as const satisfies Readonly<Record<string, string>>,
+
+  /**
+   * Hub-only link titles (`/guides` list). Discovery `navLabel` stays for routes, llms, and shells;
+   * use this map to show calmer phrasing where the indexed title still reads search-shaped.
+   */
+  learnGuideHubLinkTitles: {
+    "/guides/ai-agent-wrong-crm-data": "Wrong CRM data after an AI agent run",
+    "/guides/automation-success-database-mismatch": "Automation succeeded; the database disagreed",
+    "/guides/ci-green-missing-database-side-effect": "Green CI, missing database side effect",
+    "/guides/ci-green-logs-row-absent": "CI passed on logs; the row never landed",
+    "/guides/tool-loop-success-crm-state-wrong": "Tool loop says OK; CRM state does not match",
+  } as const satisfies Readonly<Partial<Record<string, string>>>,
 
   companyPageMetadata,
   companyPage,

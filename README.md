@@ -9,7 +9,7 @@ Verify your database state with read-only SQL before you ship, bill, or close. N
 
 Teams ship agent and automation workflows where traces, tool responses, and success flags look green while the database row is missing, stale, or wrong. AgentSkeptic compares structured tool activity to read-only SQL against your SQLite or Postgres at verification time and reports whether observed state matched expectations derived from what the workflow claimed—not whether the step narrative read as successful.
 
-Use it when you need persisted rows checked against declared tool parameters at verification time before customer-facing actions, compliance evidence, or CI gates.
+Use it when you need persisted rows checked against declared tool parameters before customer-facing actions, compliance evidence, or CI gates.
 
 ### Pasteable terminal proof (bundled demo)
 

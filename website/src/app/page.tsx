@@ -90,7 +90,6 @@ export default function HomePage() {
             <li key={t}>{t}</li>
           ))}
         </ul>
-        {demoRepeatCta("home-repeat-cta-what-catches")}
       </section>
     ),
     homeStakes: (
@@ -112,7 +111,6 @@ export default function HomePage() {
             <li key={t}>{t}</li>
           ))}
         </ul>
-        {demoRepeatCta("home-repeat-cta-stakes")}
       </section>
     ),
     howItWorks: (
@@ -135,7 +133,6 @@ export default function HomePage() {
           {" · "}
           <Link href="/security">Security & Trust</Link>
         </p>
-        {demoRepeatCta("home-repeat-cta-how-it-works")}
       </section>
     ),
     fitAndLimits: (

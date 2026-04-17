@@ -15,16 +15,18 @@ export default function GuidesHubPage() {
   return (
     <main className="integrate-main">
       <h1>Learn</h1>
-      <p className="lede">Problem-oriented guides for trace-shaped success versus database truth.</p>
+      <p className="lede">{productCopy.learnHubPrimaryLede}</p>
       <p className="lede">{productCopy.guidesHubSupportingSentence}</p>
       <ul className="mechanism-list guide-hub-list">
         {discoveryAcquisition.indexableGuides.map((g) => {
           const captions = productCopy.learnGuideHubCaptions as Record<string, string>;
           const caption = captions[g.path];
+          const hubTitles = productCopy.learnGuideHubLinkTitles as Record<string, string | undefined>;
+          const linkTitle = hubTitles[g.path] ?? g.navLabel;
           return (
             <li key={g.path}>
               <Link href={g.path} className="guide-hub-link">
-                <span className="guide-hub-link-title">{g.navLabel}</span>
+                <span className="guide-hub-link-title">{linkTitle}</span>
                 {caption ? <span className="muted guide-hub-link-caption">{caption}</span> : null}
               </Link>
             </li>
