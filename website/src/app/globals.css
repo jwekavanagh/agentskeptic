@@ -669,6 +669,23 @@ main {
 .integrate-funnel-anon-hint p {
   margin: 0.5rem 0 0;
 }
+.integrate-registry-draft-secondary {
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+.integrate-registry-draft-secondary > summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 1rem;
+  margin-bottom: 0.35rem;
+}
+.integrate-registry-draft-secondary[open] > summary {
+  margin-bottom: 0.75rem;
+}
+.integrate-registry-draft-panel--secondary {
+  font-size: 0.95rem;
+}
 .registry-draft-constraints-nested {
   margin: 0.65rem 0 0;
   padding-left: 0.5rem;

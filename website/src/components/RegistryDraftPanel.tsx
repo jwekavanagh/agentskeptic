@@ -13,7 +13,12 @@ function draftJsonTextareaRows(json: string): number {
   return Math.min(42, Math.max(14, lines + 2));
 }
 
-export function RegistryDraftPanel() {
+type RegistryDraftPanelProps = {
+  /** When true, omit the page-level h2 so the parent can own the heading (e.g. a `<details>` summary on `/integrate`). */
+  embedInIntegrateSecondary?: boolean;
+};
+
+export function RegistryDraftPanel({ embedInIntegrateSecondary = false }: RegistryDraftPanelProps) {
   const d = integrateRegistryDraft;
   const [body, setBody] = useState(d.exampleJson);
   const [busy, setBusy] = useState(false);
@@ -76,10 +81,14 @@ export function RegistryDraftPanel() {
   return (
     <section
       id="registry-draft-helper"
-      className="integrate-prose muted"
+      className={
+        embedInIntegrateSecondary
+          ? "integrate-prose muted integrate-registry-draft-panel--secondary"
+          : "integrate-prose muted"
+      }
       data-testid="integrate-registry-draft-panel"
     >
-      <h2>{d.sectionHeading}</h2>
+      {embedInIntegrateSecondary ? null : <h2>{d.sectionHeading}</h2>}
       {d.paragraphs.map((p, i) => (
         <p key={i}>{p}</p>
       ))}
@@ -108,7 +117,7 @@ export function RegistryDraftPanel() {
       <textarea
         className="registry-draft-json"
         spellCheck={false}
-        rows={14}
+        rows={embedInIntegrateSecondary ? 8 : 14}
         value={body}
         onChange={(ev) => setBody(ev.target.value)}
         aria-label={d.requestLabel}

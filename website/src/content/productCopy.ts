@@ -218,12 +218,17 @@ export const integrateActivation = {
     "Traces can look successful while the database is wrong—missing rows, wrong values, or writes that never landed.",
     "AgentSkeptic runs read-only SQL at verification time and compares what actually exists with what your tools reported they did, so you get database truth instead of narrative or trace color alone.",
   ],
-  icp: "If you build workflows, agents, or systems that write to a database, this is the fastest way to see how verification reads that ground truth.",
+  icp: "If you build workflows, agents, or systems that write to a database, this shows end to end how verification compares declared tool activity to the database state that actually exists.",
   requirementsHeading: "You need",
-  requirements: ["Node.js 22.13 or newer", "Git", "npm"],
+  requirements: [
+    "Node.js 22.13 or newer",
+    "Git",
+    "npm",
+    "Several minutes on a cold clone for install and build; Node and OS must meet the minimums above, and npm install can fail for ordinary environment reasons—fix versions or tooling and retry.",
+  ],
   runHeading: "Run this",
   runCaption:
-    "Copy the block below, paste into a terminal, then wait for the demo and first-run verify (several minutes on a cold clone).",
+    "Copy the block below, paste into a terminal, then wait through install, build, the bundled demo, and first-run verify. A cold clone can take several minutes and may surface typical Node or network friction.",
   successHeading: "What success looks like",
   successIntro:
     "When it works, you will see proof from both the human report and the machine-readable result.",
@@ -231,17 +236,17 @@ export const integrateActivation = {
     "Stderr includes the human verification report, with wording that the run matched the database.",
     'Stdout is one JSON object with "status":"complete" and at least one step marked verified.',
   ],
-  successDetailsHeading: "Exact output checks",
+  successDetailsHeading: "Practical stdout/stderr checks",
   successDetailsBullets: [
-    "The last line on stdout should read: first-run-verify: ok (sqlite)",
+    'With the default SQLite quickstart, stdout is still the single JSON object above; you may also see a trailing status line such as first-run-verify: ok (sqlite). Treat the JSON as authoritative for pass/fail; the trailing line is a convenience transcript, not a second contract.',
     "If stderr mentions an experimental SQLite feature in Node, you can ignore that line for pass/fail.",
   ],
   provedHeading: "What you just proved",
   proved:
-    "You ran the bundled demo (npm start) then contract verification (npm run first-run-verify): read-only SQL against a temp database file, registry-backed expectations, terminal JSON on stdout, and the human report on stderr—not Quick Verify inference alone.",
+    "You ran the bundled demo (npm start), then first-run verify on the quickstart workflow (npm run first-run-verify): read-only SQL against a temp database file, registry-backed expectations, terminal JSON on stdout, and the human report on stderr—not Quick Verify inference alone.",
   nextHeading: "Next: your system",
   nextLead:
-    "After the demo, point the same CLI at your own database and the same kind of structured events (for example NDJSON your agents emit). The path you used here is the one you will repeat locally: structured events plus a registry file that maps each tool to read-only checks.",
+    "To repeat this on your data you need three concrete artifacts: a database connection (URL you trust for read-only checks), a structured events file (for example NDJSON of tool activity from your agents), and a registry file (for example tools.json) that maps each tool name to read-only SQL expectations. The first-run doc walks through wiring them into the same CLI.",
   nextSteps: [
     {
       title: "Continue: first-run integration (SSOT)",
@@ -270,9 +275,11 @@ const integrateRegistryDraftExampleBody = {
 
 /** Optional same-origin registry draft on `/integrate` (see docs/registry-draft-ssot.md). */
 export const integrateRegistryDraft = {
-  sectionHeading: "Need a starting tools.json?",
+  /** Shown as the `<summary>` when this panel is collapsed under the activation spine on `/integrate`. */
+  optionalSectionSummary: "Optional: registry draft helper (model-assisted, same-origin)",
+  sectionHeading: "Registry draft helper (optional)",
   paragraphs: [
-    "If you already have OpenAI-style function calls (tool name plus JSON arguments), you can request a draft registry JSON from this page. Treat it like autocomplete for file wiring—not a verification run and not a substitute for your own review.",
+    "If you already have OpenAI-style function calls (tool name plus JSON arguments), you can request draft registry JSON from this page. Treat it as autocomplete for file wiring—not a verification run and not a substitute for your own review.",
     "The site only proposes text for you to copy out; it does not change verification semantics and it may be turned off in your environment.",
   ],
   bullets: [
@@ -301,7 +308,7 @@ export const integrateRegistryDraft = {
   copyDraftJsonLabel: "Copy draft JSON",
   copiedDraftJsonFeedback: "Copied",
   draftJsonOutputLabel: "Draft registry JSON (read-only)",
-  exampleJson: JSON.stringify(integrateRegistryDraftExampleBody, null, 2),
+  exampleJson: JSON.stringify(integrateRegistryDraftExampleBody),
 } as const;
 
 export const homeHeroCtaLabels = {
