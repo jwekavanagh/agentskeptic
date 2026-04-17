@@ -297,6 +297,7 @@ export const integrateRegistryDraft = {
     "The server validates your JSON against the published request contract.",
     "A hosted model proposes draft tool entries; the response is validated before it is returned.",
     "You copy the response and save it locally—this page does not write to your repo or database by itself.",
+    "Requests are processed to generate the draft and are not stored or reused after the response is returned.",
   ],
   technicalConstraintsHeading: "Same-origin and payload limits",
   technicalBullets: [
