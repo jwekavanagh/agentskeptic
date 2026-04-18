@@ -1,0 +1,1 @@
+5. **Success criteria (normative):** Meet **Decision-ready ProductionComplete** as defined in [§ Decision-ready ProductionComplete (normative)](#decision-ready-productioncomplete-normative) (pass, explained mismatch, or explained incomplete, each with artifacts **A1–A5** specified in that subsection—not "green only").

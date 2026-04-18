@@ -15,6 +15,7 @@
 
 - [First-run integration (SSOT)](first-run-integration.md) — your database, NDJSON, registry; site **`/integrate`**
 - [PatternComplete (normative checklist)](first-run-integration.md#adoptioncomplete_patterncomplete-normative) — CI-provable adoption vs ProductionComplete boundary
+- [Decision-ready ProductionComplete (normative)](adoption-epistemics-ssot.md#decision-ready-productioncomplete-normative) — artifact bar A1–A5 (distinct from IntegrateSpineComplete alone)
 - [Adoption integrator command](agentskeptic.md#adoption-integrator-command)
 
 ## Operator

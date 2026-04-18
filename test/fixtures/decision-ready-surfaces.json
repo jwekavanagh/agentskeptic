@@ -1,0 +1,26 @@
+{
+  "__fixtureId": "decision-ready-surfaces-v1",
+  "surfaces": [
+    { "repoRelativePath": "docs/adoption-epistemics-ssot.md", "mustContain": "### Decision-ready ProductionComplete (normative)" },
+    { "repoRelativePath": "docs/adoption-epistemics-ssot.md", "mustContain": "5. **Success criteria (normative):** Meet **Decision-ready ProductionComplete**" },
+    { "repoRelativePath": "docs/first-run-integration.md", "mustContain": "adoption-epistemics-ssot.md#decision-ready-productioncomplete-normative" },
+    { "repoRelativePath": "docs/verification-product-ssot.md", "mustContain": "Decision-ready ProductionComplete" },
+    { "repoRelativePath": "docs/golden-path.md", "mustContain": "adoption-epistemics-ssot.md#decision-ready-productioncomplete-normative" },
+    { "repoRelativePath": "docs/growth-metrics-ssot.md", "mustContain": "CrossSurface_ConversionRate_QualifiedIntegrateToVerifyStarted_Rolling7dUtc" },
+    { "repoRelativePath": "docs/growth-metrics-ssot.md", "mustContain": "Counts_QualifiedVerifyOutcomesByTerminalStatus_Rolling7dUtc" },
+    { "repoRelativePath": "docs/commercial-ssot.md", "mustContain": "CrossSurface_ConversionRate_QualifiedIntegrateToVerifyStarted_Rolling7dUtc" },
+    { "repoRelativePath": "docs/funnel-observability-ssot.md", "mustContain": "Counts_QualifiedVerifyOutcomesByTerminalStatus_Rolling7dUtc" },
+    { "repoRelativePath": "website/src/content/productCopy.ts", "mustContain": "decisionReadyProductionCompleteAdoptionBlobUrl" },
+    { "repoRelativePath": "website/src/lib/githubHeadingSlug.ts", "mustContain": "DECISION_READY_PRODUCTION_COMPLETE_ADOPTION_BLOB_URL" },
+    { "repoRelativePath": "website/src/lib/growthMetricsQualifiedIntegrateToVerifyStartedRolling7d.ts", "mustContain": "CrossSurface_ConversionRate_QualifiedIntegrateToVerifyStarted_Rolling7dUtc" },
+    { "repoRelativePath": "website/src/lib/growthMetricsQualifiedVerifyOutcomeTerminalBucketsRolling7d.ts", "mustContain": "Counts_QualifiedVerifyOutcomesByTerminalStatus_Rolling7dUtc" },
+    { "repoRelativePath": "website/__tests__/growthMetricsSqlParity.test.ts", "mustContain": "CrossSurface_ConversionRate_QualifiedIntegrateToVerifyStarted_Rolling7dUtc" },
+    { "repoRelativePath": "website/__tests__/growthMetricsSqlParity.test.ts", "mustContain": "Counts_QualifiedVerifyOutcomesByTerminalStatus_Rolling7dUtc" },
+    { "repoRelativePath": "website/__tests__/growth-cross-surface.integration.test.ts", "mustContain": "Counts_QualifiedVerifyOutcomesByTerminalStatus_Rolling7dUtc" },
+    { "repoRelativePath": "website/__tests__/integrateActivationNorthStar.contract.test.ts", "mustContain": "decisionReadyProductionCompleteAdoptionBlobUrl" },
+    { "repoRelativePath": "test/fixtures/github-heading-slug-vectors.json", "mustContain": "\"Decision-ready ProductionComplete (normative)\"" },
+    { "repoRelativePath": "test/fixtures/adoption-item5-normative-line.txt", "mustContain": "5. **Success criteria (normative):**" },
+    { "repoRelativePath": "test/decision-ready-surfaces-manifest.test.mjs", "mustContain": "decision-ready-surfaces.json" },
+    { "repoRelativePath": "package.json", "mustContain": "\"x-agentskeptic-decision-ready-contract\": \"1\"" }
+  ]
+}

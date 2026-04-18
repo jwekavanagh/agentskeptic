@@ -76,6 +76,7 @@ Normative metric definitions, denominators, numerators, and **explicit prohibiti
 - **`non_bundled` is not proof** of production customer data, ICP fit, or that the integrator has structured tool exports in the sense of product doctrine—it is a **deterministic path heuristic** from [`verifyWorkloadClassify`](src/commercial/verifyWorkloadClassify.ts).
 - **Do not** treat qualified rate as proof of **mental model** or qualification to use the product; use [`verification-product-ssot.md`](verification-product-ssot.md) for product fit.
 - **Missing `workload_class`** on legacy or malformed rows: SQL equality to **`non_bundled`** fails; such rows do **not** increment the qualified numerator (see [`growth-metrics-ssot.md`](growth-metrics-ssot.md) §`CrossSurface_ConversionRate_QualifiedIntegrateToVerifyOutcome_Rolling7dUtc`).
+- **Terminal outcome mix (qualified `verify_outcome` buckets + malformed, rolling 7d UTC):** see **`Counts_QualifiedVerifyOutcomesByTerminalStatus_Rolling7dUtc`** in [`growth-metrics-ssot.md`](growth-metrics-ssot.md); wire literals for `terminal_status` remain **`complete` \| `inconsistent` \| `incomplete`** per product activation contract.
 
 ---
 

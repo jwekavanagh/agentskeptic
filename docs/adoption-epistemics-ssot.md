@@ -70,8 +70,26 @@ Use this checklist when a human operator assists an integrator to reach **Produc
 2. **Trust doctrine:** Integrator has read [What this does not prove](verification-product-ssot.md#what-this-does-not-prove-trust-boundary) and [Quick Verify positioning](verification-product-ssot.md#quick-verify-positioning) if Quick is in scope.
 3. **Bootstrap or registry:** Either run `agentskeptic bootstrap` with **their** `BootstrapPackInput` v1 JSON and DB per [Step 4](first-run-integration.md#step-4-bootstrap-when-you-have-your-own-tool_calls-and-a-db-url), or supply committed **events.ndjson** + **tools.json** they own.
 4. **Contract verify:** Run contract batch `verify` with **their** `--events`, `--registry`, and exactly one of `--db` / `--postgres-url`; capture **exit code** and **stdout** `WorkflowResult` JSON.
-5. **Success criteria:** Exit code `0`, workflow `status` is `complete`, and each observed step is `verified` for the scope they care about—or a deliberate documented failure with remediation.
+5. **Success criteria (normative):** Meet **Decision-ready ProductionComplete** as defined in [§ Decision-ready ProductionComplete (normative)](#decision-ready-productioncomplete-normative) (pass, explained mismatch, or explained incomplete, each with artifacts **A1–A5** specified in that subsection—not "green only").
 6. **Negative (not ProductionComplete):** Missing registry entries, wrong `--workflow-id`, unreadable DB URL, or stopping at demo / PatternComplete / IntegrateSpineComplete alone without Step 4 on **their** inputs.
+
+### Decision-ready ProductionComplete (normative)
+
+1. **Definition.** A run is **Decision-ready ProductionComplete** when cohort checklist items **1–4** and **6** are satisfied and the **Acceptance rules** and artifact obligations **A1–A5** in this subsection are satisfied.
+
+2. **Minimum artifact set (integrator- or operator-retained).** All of the following must exist in durable storage (git, CI artifact store, ticket, or operator log) for the **same** invocation:
+   - **A1 — Machine outcome:** The full stdout payload: exactly one terminal **`WorkflowResult`** JSON object for contract batch verification (the same object the CLI prints on stdout per [docs/verification-operational-notes.md](verification-operational-notes.md) integrator contract).
+   - **A2 — Process outcome:** Integer **exit code** for that invocation.
+   - **A3 — Human layer:** Either the default **stderr human verification report** text for that invocation, **or** an explicit written record that the invocation used **`--no-truth-report`** and therefore stderr was intentionally suppressed (so reviewers do not infer silence means success).
+   - **A4 — Inputs scope attestation:** A short written statement (one sentence minimum) identifying that **`--events`** and **`--registry`** (or the bootstrap output directory used as their stand-in) were **integrator-owned** for this invocation—not solely the shipped `examples/*.ndjson` / `examples/*.tools.json` pair used for demos—**or** that the invocation was an explicitly labeled **drill / reproduction** on bundled fixtures (in which case the outcome is **not** Decision-ready ProductionComplete, but **PatternComplete** or pedagogy only).
+
+3. **Acceptance rules.** Subject to A1–A4:
+   - **Pass:** Exit code `0`, workflow `status` is `complete`, and every observed step in the asserted scope is `verified`.
+   - **Explained mismatch (decision-ready):** Terminal workflow status **`inconsistent`** **or** any step in scope with status **`missing`** / non-verified with reason codes present in stdout JSON, **and** **A5** below.
+   - **Explained incomplete (decision-ready):** Terminal workflow status **`incomplete`**, **and** **A5** below.
+   - **A5 — Documented:** A dated note (ticket, PR, or operator log entry) tying the captured A1–A3 to the next concrete action (registry edit, DB fix, workflow id fix, scope change). *Without A5, a non-pass is not Decision-ready ProductionComplete—it is only a raw failed run.*
+
+4. **Ownership.** The integrator (or operator assisting them) owns retention of A1–A5; the repository cannot assert Decision-ready ProductionComplete in CI without those artifacts.
 
 **This repository cannot automate step 3–5 on integrator production systems** without their credentials and data; CI proves **PatternComplete** and **IntegrateSpineComplete** shapes only.
 

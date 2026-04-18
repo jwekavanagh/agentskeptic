@@ -20,6 +20,8 @@ This document is the **normative semantics SSOT** for **operator growth metrics*
 | `CrossSurface_ConversionRate_AcquisitionToIntegrate_Rolling7dUtc` | Operator | Among acquisition-landed ids in the window, what fraction also have `integrate_landed` in the window (motivation / next-step proxy) |
 | `CrossSurface_ConversionRate_IntegrateToVerifyOutcome_Rolling7dUtc` | Operator | Among integrate-landed ids in the window, what fraction also have a qualifying `verify_outcome` in the window (execution proxy) |
 | `CrossSurface_ConversionRate_QualifiedIntegrateToVerifyOutcome_Rolling7dUtc` | Operator | Same denominator as integrate→`verify_outcome`; numerator restricted to **`verify_outcome`** rows with **`metadata->>'workload_class' = 'non_bundled'`** (path heuristic—see [`funnel-observability-ssot.md`](funnel-observability-ssot.md) §**Qualification proxy (operator)**) |
+| `CrossSurface_ConversionRate_QualifiedIntegrateToVerifyStarted_Rolling7dUtc` | Operator | Among integrate-landed ids in the window, what fraction also have ≥1 **qualified** **`verify_started`** in the window (failure mode **A**—missing qualified start signal after integrate impression) |
+| `Counts_QualifiedVerifyOutcomesByTerminalStatus_Rolling7dUtc` | Operator | Among qualified **`verify_outcome`** rows in the window, counts by **`terminal_status`** wire literals plus **`malformed_other`** (failure mode **B**—terminal mix + malformed) |
 
 ---
 
@@ -85,6 +87,10 @@ Normative rules for reading **stage-separated** cross-surface rates next to the 
 
 - **End-to-end join (compressed):** Use `CrossSurface_ConversionRate_AcquisitionToVerifyOutcome_Rolling7dUtc` for acquisition-landed ids that also show a qualifying `verify_outcome` with the same join id in the window—**without** requiring an explicit integrate row in SQL.
 
+- **Integrate → qualified start (failure mode A):** Use `CrossSurface_ConversionRate_QualifiedIntegrateToVerifyStarted_Rolling7dUtc` among ids that had `integrate_landed` in the window. A drop here means integrate-landed visitors disproportionately never posted a **qualified** `verify_started` (non–`local_dev`, `workload_class = non_bundled`) in the same window—it does **not** prove Step 4 / **ProductionComplete** failure by itself.
+
+- **Qualified outcome terminal mix (failure mode B):** Use `Counts_QualifiedVerifyOutcomesByTerminalStatus_Rolling7dUtc` over qualified `verify_outcome` rows in the window. Compare `complete`, `inconsistent`, `incomplete`, and `malformed_other` (bogus or missing `terminal_status`); wire literals match product activation (`complete` \| `inconsistent` \| `incomplete`).
+
 **Explicit prohibitions (must not)**
 
 - **Integrate-only ids:** If the only in-window surface rows for an id are `integrate_landed` (no in-window `acquisition_landed` for that id), that id **does not** enter the **acquisition→integrate** denominator and **does** enter the **integrate→verify outcome** denominator when integrate fired. Operators **must not** read integrate-only traffic as a failure of the acquisition→integrate rate (that rate’s denominator excludes those ids by definition).
@@ -109,6 +115,8 @@ Normative rules for reading **stage-separated** cross-surface rates next to the 
 | `CrossSurface_ConversionRate_AcquisitionToIntegrate_Rolling7dUtc` | Among acquisition-landed ids in the window, what fraction also have `integrate_landed` in the window? | Proof that the user ran the CLI; proof of a successful verify engine run |
 | `CrossSurface_ConversionRate_IntegrateToVerifyOutcome_Rolling7dUtc` | Among integrate-landed ids in the window, what fraction also have a qualifying `verify_outcome` in the window? | Proof that the user ever hit acquisition; proof that `funnel_anon_id` was propagated on every machine |
 | `CrossSurface_ConversionRate_QualifiedIntegrateToVerifyOutcome_Rolling7dUtc` | Among integrate-landed ids in the window, what fraction also posted a **`verify_outcome`** with **`workload_class` = `non_bundled`** in the window? | Proof of ICP or production traffic; proof the integrator understood the product; substitute for user outcome |
+| `CrossSurface_ConversionRate_QualifiedIntegrateToVerifyStarted_Rolling7dUtc` | Among integrate-landed ids in the window, what fraction also have ≥1 qualified **`verify_started`** in the window? | Proof that the customer failed Step 4 / **ProductionComplete**; proof of revenue; substitute for **Decision-ready ProductionComplete** (see [`adoption-epistemics-ssot.md`](adoption-epistemics-ssot.md)) |
+| `Counts_QualifiedVerifyOutcomesByTerminalStatus_Rolling7dUtc` | Among qualified **`verify_outcome`** rows in the window, how many terminal **`complete` / `inconsistent` / `incomplete`** vs malformed? | Proof of integrator-owned inputs or A1–A5 artifacts; proof that a low `complete` count means the engine failed |
 
 ---
 
@@ -230,6 +238,99 @@ SELECT
   (SELECT COUNT(*)::int FROM intg) AS d,
   (SELECT COUNT(*)::int FROM intg INNER JOIN outc ON intg.fid = outc.fid) AS n,
   (SELECT COUNT(*)::float FROM intg INNER JOIN outc ON intg.fid = outc.fid) / NULLIF((SELECT COUNT(*)::float FROM intg), 0) AS rate
+```
+
+---
+
+### CrossSurface_ConversionRate_QualifiedIntegrateToVerifyStarted_Rolling7dUtc
+
+**Window:** rolling **7** UTC days from `now() AT TIME ZONE 'UTC'`.
+
+**Question:** Among `funnel_anon_id` with `integrate_landed` in the window, what fraction also has ≥1 **qualified** `verify_started` in the same window?
+
+**Qualified `verify_started`:** `event = 'verify_started'` with non-null non-empty `metadata->>'funnel_anon_id'`, **`(metadata->>'workload_class') = 'non_bundled'`**, and **`(metadata->>'telemetry_source' IS DISTINCT FROM 'local_dev')`**. NULL `telemetry_source` key counts as qualified (same rule as other qualified activation metrics).
+
+**Denominator `D`:** distinct `funnel_anon_id` with `integrate_landed` in window (**no** `telemetry_source` or `workload_class` filter on integrate rows).
+
+**Numerator `N`:** distinct ids in `D` that also appear in qualified `verify_started` in the same window.
+
+**Value:** `N / NULLIF(D, 0)` as float (null when `D = 0`).
+
+**Explicit prohibitions (must not):**
+
+- **Low Metric 1 does not prove** the integrator failed **Step 4** or **ProductionComplete**; it proves missing qualified **start** signal after an integrate impression in the rolling window.
+
+```sql
+WITH w AS (
+  SELECT (now() AT TIME ZONE 'UTC') AS now_utc
+),
+intg AS (
+  SELECT DISTINCT metadata->>'funnel_anon_id' AS fid
+  FROM funnel_event, w
+  WHERE event = 'integrate_landed'
+    AND metadata->>'funnel_anon_id' IS NOT NULL
+    AND metadata->>'funnel_anon_id' <> ''
+    AND created_at >= w.now_utc - interval '7 days'
+),
+started AS (
+  SELECT DISTINCT metadata->>'funnel_anon_id' AS fid
+  FROM funnel_event, w
+  WHERE event = 'verify_started'
+    AND metadata->>'funnel_anon_id' IS NOT NULL
+    AND metadata->>'funnel_anon_id' <> ''
+    AND (metadata->>'telemetry_source' IS DISTINCT FROM 'local_dev')
+    AND (metadata->>'workload_class') = 'non_bundled'
+    AND created_at >= w.now_utc - interval '7 days'
+)
+SELECT
+  (SELECT COUNT(*)::int FROM intg) AS d,
+  (SELECT COUNT(*)::int FROM intg INNER JOIN started ON intg.fid = started.fid) AS n,
+  (SELECT COUNT(*)::float FROM intg INNER JOIN started ON intg.fid = started.fid) / NULLIF((SELECT COUNT(*)::float FROM intg), 0) AS rate
+```
+
+---
+
+### Counts_QualifiedVerifyOutcomesByTerminalStatus_Rolling7dUtc
+
+**Window:** rolling **7** UTC days from `now() AT TIME ZONE 'UTC'`.
+
+**Population `q`:** `event = 'verify_outcome'` with **`(metadata->>'telemetry_source' IS DISTINCT FROM 'local_dev')`**, **`(metadata->>'workload_class') = 'non_bundled'`**, and `created_at` in window.
+
+**Buckets:** `complete`, `inconsistent`, `incomplete` via equality on `metadata->>'terminal_status'` to those three wire literals (see [`website/src/lib/funnelProductActivation.contract.ts`](../website/src/lib/funnelProductActivation.contract.ts) `terminalStatusSchema`).
+
+**`malformed_other`:** `total - complete - inconsistent - incomplete` where `total = COUNT(*)` over `q` (includes NULL or non-wire `terminal_status`).
+
+**Explicit prohibitions (must not):**
+
+- **Bucket counts are not** proof of **Decision-ready ProductionComplete** or integrator-retained artifacts **A1–A5**; those are defined only in [`adoption-epistemics-ssot.md`](adoption-epistemics-ssot.md).
+
+```sql
+WITH w AS (
+  SELECT (now() AT TIME ZONE 'UTC') AS now_utc
+),
+q AS (
+  SELECT *
+  FROM funnel_event, w
+  WHERE event = 'verify_outcome'
+    AND (metadata->>'telemetry_source' IS DISTINCT FROM 'local_dev')
+    AND (metadata->>'workload_class') = 'non_bundled'
+    AND created_at >= w.now_utc - interval '7 days'
+),
+agg AS (
+  SELECT
+    COUNT(*)::int AS total,
+    COUNT(*) FILTER (WHERE metadata->>'terminal_status' = 'complete')::int AS complete,
+    COUNT(*) FILTER (WHERE metadata->>'terminal_status' = 'inconsistent')::int AS inconsistent,
+    COUNT(*) FILTER (WHERE metadata->>'terminal_status' = 'incomplete')::int AS incomplete
+  FROM q
+)
+SELECT
+  total,
+  complete,
+  inconsistent,
+  incomplete,
+  (total - complete - inconsistent - incomplete) AS malformed_other
+FROM agg
 ```
 
 ---
