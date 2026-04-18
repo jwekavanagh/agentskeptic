@@ -57,6 +57,7 @@
   "cliFollowupLines": [
     "More context (green trace vs database): {{ACQUISITION_URL}}",
     "First-run on your database: {{INTEGRATE_URL}}",
+    "PatternComplete checklist (SSOT): https://github.com/jwekavanagh/agentskeptic/blob/main/docs/first-run-integration.md#adoptioncomplete_patterncomplete-normative",
     "Canonical site: {{ORIGIN}}/"
   ],
   "shareableTerminalDemo": {

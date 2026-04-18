@@ -2,7 +2,7 @@
 
 **Prerequisite:** Read [**Buy vs build: why not only SQL checks**](../README.md#buy-vs-build-why-not-only-sql-checks) in the root [**README.md**](../README.md) so the recurring failure mode, why ad-hoc SQL checks fail as a long-term substitute, and the **Quick → Contract** path are clear before you integrate.
 
-This is the **authoritative first-run path** for running AgentSkeptic against **your own** database and workflow shape: **demo → `npm run first-run-verify` → bootstrap contract gradient (Step 3)** → **bootstrap on your inputs (Step 4, when ready)** → success criteria → pitfalls. Anything outside that sequence (LangGraph sample, production billing) is grouped **after** the spine—this file stays integrator prose, not an index of every entrypoint.
+This is the **authoritative first-run path** for running AgentSkeptic against **your own** database and workflow shape: **demo → `npm run first-run-verify` → bootstrap contract gradient (Step 3)** → **PatternComplete verify (temp DB + temp pack paths)** → **ProductionComplete: bootstrap on your inputs (Step 4)** → success criteria → pitfalls. Anything outside that sequence (LangGraph sample, production billing) is grouped **after** the spine—this file stays integrator prose, not an index of every entrypoint.
 
 **Optional (not part of the spine):** same-origin **registry draft** (model-assisted)—semantics, schema pins, and harness proof live in [registry-draft-ssot.md](registry-draft-ssot.md); it is **not** contract verification.
 
@@ -13,6 +13,40 @@ This is the **authoritative first-run path** for running AgentSkeptic against **
 Send this to someone who should **try it in one sitting**. The **same** ordered shell commands as **`https://agentskeptic.com/integrate`** (clone, install, build, demo, contract verify, then bootstrap + verify on the pinned fixture) live in the repo template consumed by that page. **All** extended shell commands (Postgres env var, manual `node dist/cli.js …`, LangGraph) live in **[partner-quickstart-commands.md](partner-quickstart-commands.md)** (generated; do not duplicate those blocks here). This file is **prose, semantics, and guarantees** for the spine.
 
 **Throughput note (operator):** The site’s cross-surface metrics for integrate → CLI outcomes are defined in [growth-metrics-ssot.md](growth-metrics-ssot.md) (`CrossSurface_ConversionRate_IntegrateToVerifyOutcome_Rolling7dUtc` and the qualified variant `CrossSurface_ConversionRate_QualifiedIntegrateToVerifyOutcome_Rolling7dUtc`); qualification semantics (what `non_bundled` means) are in [funnel-observability-ssot.md](funnel-observability-ssot.md#qualification-proxy-operator). Activation POST semantics and failure modes are in [funnel-observability-ssot.md](funnel-observability-ssot.md). A **successful local verification** can still fail to appear in operator metrics when telemetry capture diverges—see [User outcome vs telemetry capture (operator)](funnel-observability-ssot.md#user-outcome-vs-telemetry-capture-operator). The trust boundary for Quick vs contract verification is unchanged—see [verification-product-ssot.md](verification-product-ssot.md).
+
+## AdoptionComplete_PatternComplete (normative)
+
+This section is the **single canonical definition** of **PatternComplete** (what this repository can prove in CI) versus **ProductionComplete** (what only you can prove on your systems). Every other surface (`/integrate`, README discovery strings, `golden-path.md`) is a **pointer-only** summary; do not duplicate normative doctrine outside the linked headings.
+
+### Scopes
+
+- **PatternComplete:** You ran **bootstrap** (pinned fixture) and **contract `verify`** with **artifact paths under a temp directory** and a **SQLite DB file copy under your OS temp directory** (not the literal `examples/demo.db` path on the verify invocation). That proves the **mechanical** contract path and **path-separated** workload classification (`non_bundled` per [funnel-observability-ssot.md](funnel-observability-ssot.md#qualification-proxy-operator)) without claiming access to your production secrets.
+- **ProductionComplete:** You run bootstrap and/or contract verify against **your** OpenAI-style `tool_calls` / NDJSON sources and **your** authoritative SQLite or Postgres—[Step 4](#step-4-bootstrap-when-you-have-your-own-tool_calls-and-a-db-url) and ongoing registry ownership. This repository **cannot** automate proof of ProductionComplete without your credentials and data; it is **your** CI or manual evidence.
+
+### Trusted interpretation (checklist IDs)
+
+Each ID is satisfied for PatternComplete when you have **read** the linked normative prose and the successful PatternComplete run has exercised **contract** batch verification (human report on stderr, one `WorkflowResult` JSON object on stdout per [verification-operational-notes.md](verification-operational-notes.md)).
+
+| ID | One-line meaning | Authoritative pointer |
+|----|------------------|------------------------|
+| **AC-TRUST-01** | Pass/fail is **state vs expectation**, not proof a tool executed. | [verification-product-ssot.md — What this does not prove](verification-product-ssot.md#what-this-does-not-prove-trust-boundary) |
+| **AC-TRUST-02** | **Contract** replay is registry-backed; **Quick** is provisional—not audit-final interchangeably. | [verification-product-ssot.md — Quick Verify positioning](verification-product-ssot.md#quick-verify-positioning) and [quick-verify-normative.md](quick-verify-normative.md) (ingest ladder—link only; do not copy thresholds here) |
+| **AC-TRUST-03** | **Export → replay** is **partial coverage**; do not treat it as blanket parity with everything Quick inferred. | [verification-product-ssot.md — Contract replay is partial coverage](verification-product-ssot.md#contract-replay-is-partial-coverage) and [verification-operational-notes.md — Quick export vs contract replay coverage](verification-operational-notes.md#quick-export-vs-contract-replay-coverage) |
+| **AC-TRUST-04** | Automation consumes **stdout** machine JSON; human report on **stderr**—do not parse stderr anchors for automation. | [verification-operational-notes.md — For integrators](verification-operational-notes.md#for-integrators) |
+
+### Operationalizable path (checklist IDs)
+
+Each ID must be **true** for a run to count as PatternComplete in [`artifacts/adoption-complete-validation-verdict.json`](../artifacts/adoption-complete-validation-verdict.json) (written by `scripts/validate-adoption-complete.mjs`).
+
+| ID | Criterion |
+|----|-----------|
+| **AC-OPS-01** | Final contract verify **`--events`** path is **not** one of the bundled example NDJSON suffixes in [`src/commercial/verifyWorkloadClassify.ts`](../src/commercial/verifyWorkloadClassify.ts) (`BUNDLED_PATH_SUFFIXES` for events). |
+| **AC-OPS-02** | Final verify **`--registry`** path is **not** a bundled example registry suffix on that allowlist. |
+| **AC-OPS-03** | Final verify **`--db`** SQLite path is under the OS temp directory and is **not** the repository’s literal `examples/demo.db` path. |
+
+### Completion
+
+**PatternComplete** iff `node scripts/validate-adoption-complete.mjs` exits **0** and the verdict file lists all checklist keys **true**. **ProductionComplete** is satisfied only when you complete [Step 4](#step-4-bootstrap-when-you-have-your-own-tool_calls-and-a-db-url) (or equivalent) on **your** inputs; that is **not** asserted by this repo’s default `npm test` chain.
 
 ## What this does
 
@@ -66,12 +100,14 @@ From the **repository root** (after Steps 1–2), run:
 
 ```bash
 OUT="$(mktemp -d)"
-trap 'rm -rf "$OUT"' EXIT
+ADOPT_DB="$(mktemp)"
+trap 'rm -rf "$OUT" "$ADOPT_DB"' EXIT
 node dist/cli.js bootstrap --input test/fixtures/bootstrap-pack/input.json --db examples/demo.db --out "$OUT"
-node dist/cli.js --workflow-id wf_bootstrap_fixture --events "$OUT/events.ndjson" --registry "$OUT/tools.json" --db examples/demo.db
+cp examples/demo.db "$ADOPT_DB"
+node dist/cli.js --workflow-id wf_bootstrap_fixture --events "$OUT/events.ndjson" --registry "$OUT/tools.json" --db "$ADOPT_DB"
 ```
 
-You should see **`wf_bootstrap_fixture`** end **`complete`** / **`verified`** with machine JSON on stdout and the human report on stderr. **After this succeeds**, substitute **`examples/demo.db`** with your own read-only SQLite path or Postgres URL and replace the input JSON with **your** OpenAI-style `tool_calls` export when you move to real traffic (Step 4).
+You should see **`wf_bootstrap_fixture`** end **`complete`** / **`verified`** with machine JSON on stdout and the human report on stderr. The **`cp`** line makes the final verify use a **DB path under temp** (PatternComplete per [AdoptionComplete_PatternComplete](#adoptioncomplete_patterncomplete-normative)), not only bundled example paths. **After this succeeds**, continue to [Step 4](#step-4-bootstrap-when-you-have-your-own-tool_calls-and-a-db-url) for ProductionComplete on **your** database and `tool_calls`.
 
 ## Step 4: Bootstrap when you have your own tool_calls and a DB URL
 

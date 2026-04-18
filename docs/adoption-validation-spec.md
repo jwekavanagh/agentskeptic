@@ -15,26 +15,31 @@ This document defines how the repository proves the **adoption golden path**: de
 | DOC_BOUNDARY | `adoption-docs-boundary.test.mjs` |
 | GOLDEN_PATH_POINTERS | `docs-golden-path-pointer-only.test.mjs` |
 | ARTIFACT_REGISTRY | `adoption_validation_spec_registry_matches_plan` |
-| VERDICT | `npm test` runs `npm run build`, Vitest, pinned SQLite `node:test`, `node scripts/first-run.mjs`, `node dist/cli.js assurance run --manifest examples/assurance/manifest.json`, `node scripts/commercial-enforce-test-harness.mjs`, then `npm run build` again (restore OSS `dist/` after the commercial harness), then `npm run validate-ttfv` — **no** Postgres |
+| ADOPTION_COMPLETE_PATTERN | `node scripts/validate-adoption-complete.mjs` — PatternComplete bootstrap + verify on temp paths; writes `artifacts/adoption-complete-validation-verdict.json` |
+| VERDICT | `npm test` runs `npm run build`, Vitest, pinned SQLite `node:test`, `node scripts/first-run.mjs`, `node scripts/validate-adoption-complete.mjs`, `npm run partner-quickstart`, `node dist/cli.js assurance run --manifest examples/assurance/manifest.json`, `node scripts/commercial-enforce-test-harness.mjs`, then `npm run build` again (restore OSS `dist/` after the commercial harness), then `npm run validate-ttfv` — **no** Postgres |
 | REGISTRY_NO_STEPS | `src/registryValidation.test.ts` |
 
 ## ADOPTION_ARTIFACT_PROOF (registry TSV)
 
-Canonical registry: exactly **30** data rows (`relpath<TAB>op`), UTF-16 lexicographic order on `relpath`, no header row.
+Canonical registry: exactly **39** data rows (`relpath<TAB>op`), UTF-16 lexicographic order on `relpath`, no header row.
 
 ```adoption-registry
-README.md	modify
+artifacts/adoption-complete-validation-verdict.json	add
 artifacts/adoption-validation-verdict.json	add
-docs/adoption-validation-spec.md	add
-docs/first-run-validation-log.md	modify
-docs/golden-path.md	add
-docs/verification-product-ssot.md	modify
+docs/adoption-validation-spec.md	modify
 docs/agentskeptic.md	modify
+docs/first-run-integration.md	modify
+docs/first-run-validation-log.md	modify
+docs/golden-path.md	modify
+docs/verification-product-ssot.md	modify
 package.json	modify
+README.md	modify
 scripts/demo.mjs	add
 scripts/first-run.mjs	delete
 scripts/record-adoption-verdict.mjs	add
 scripts/regen-truth-goldens.mjs	modify
+scripts/templates/integrate-activation-shell.bash	modify
+scripts/validate-adoption-complete.mjs	add
 scripts/verify-adoption-verdict.mjs	add
 src/loadEvents.ts	modify
 src/noStepsMessage.ts	add
@@ -44,6 +49,7 @@ src/registryValidation.ts	modify
 src/types.ts	modify
 src/workflowTruthReport.semantics.test.ts	modify
 src/wrongWorkflowIdAdoptionFixture.test.ts	add
+test/adoption-complete-surface-parity.test.mjs	add
 test/adoption-docs-boundary.test.mjs	add
 test/adoption-validation-registry.test.mjs	add
 test/adoption-validation.test.mjs	add
@@ -53,6 +59,10 @@ test/docs-readme-no-registry-flag.test.mjs	add
 test/fixtures/adoption-validation/wrong-workflow-id.events.ndjson	add
 test/npm-scripts-contract.test.mjs	modify
 test/pipeline.sqlite.test.mjs	modify
+test/validate-adoption-complete-failure.test.mjs	add
+website/src/content/productCopy.ts	modify
+website/src/generated/integrateActivationShellStatic.ts	modify
+website/src/generated/integratorDocsEmbedded.ts	modify
 ```
 
-After a successful `npm test`, that chain (see VERDICT row) has exercised the onboarding smoke (`scripts/first-run.mjs`), `assurance run` against `examples/assurance/manifest.json`, the commercial enforce harness (rebuilds commercial `dist/`; minimal CI enforcement, `enforce` tests, and `assurance` CLI regression tests), a final **`npm run build`** to restore the default OSS `dist/` (commercial **`quick`**/`verify` requires a license server, so TTFV must run on OSS), then TTFV validation. Optional legacy scripts `scripts/record-adoption-verdict.mjs` and `scripts/verify-adoption-verdict.mjs` can still record `artifacts/adoption-validation-verdict.json` manually; they are **not** invoked by the default `npm test` script.
+After a successful `npm test`, that chain (see VERDICT row) has exercised the onboarding smoke (`scripts/first-run.mjs`), **PatternComplete** proof (`scripts/validate-adoption-complete.mjs`), `assurance run` against `examples/assurance/manifest.json`, the commercial enforce harness (rebuilds commercial `dist/`; minimal CI enforcement, `enforce` tests, and `assurance` CLI regression tests), a final **`npm run build`** to restore the default OSS `dist/` (commercial **`quick`**/`verify` requires a license server, so TTFV must run on OSS), then TTFV validation. Optional legacy scripts `scripts/record-adoption-verdict.mjs` and `scripts/verify-adoption-verdict.mjs` can still record `artifacts/adoption-validation-verdict.json` manually; they are **not** invoked by the default `npm test` script.

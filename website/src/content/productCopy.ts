@@ -253,7 +253,7 @@ export const integrateActivation = {
   copyActivationBlockLabel: "Copy activation commands",
   runHeading: "Run this",
   runCaption:
-    "Enter your hypothesis, then copy the block below into a terminal. Wait through install, build, the bundled demo, first-run verify, and the bootstrap→verify gradient (Step 3). A cold clone can take several minutes and may surface typical Node or network friction.",
+    "Enter your hypothesis, then copy the block below into a terminal. Wait through install, build, the bundled demo, first-run verify, bootstrap, then contract verify using a temp copy of demo.db (PatternComplete per first-run SSOT). A cold clone can take several minutes and may surface typical Node or network friction.",
   successHeading: "What success looks like",
   successIntro:
     "When it works, you will see proof from both the human report and the machine-readable result.",
@@ -264,16 +264,16 @@ export const integrateActivation = {
   ],
   provedHeading: "What you just proved",
   proved:
-    "You ran the bundled demo (npm start), first-run verify (npm run first-run-verify), then the pinned bootstrap→contract verify block: read-only SQL, registry-backed expectations from generated artifacts, terminal JSON on stdout, and the human report on stderr—not Quick Verify inference alone for that final verify.",
+    "PatternComplete: bundled demo (npm start), first-run verify (npm run first-run-verify), then bootstrap plus contract verify against a temp DB file and temp pack paths (checklist IDs AC-TRUST-01 through AC-TRUST-04 and AC-OPS-01 through AC-OPS-03 in first-run SSOT)—read-only SQL, registry-backed expectations, terminal WorkflowResult JSON on stdout, human report on stderr.",
   nextHeading: "Next: your system",
   nextLead:
-    "Cross-surface funnel metrics (integrate → CLI outcomes): https://github.com/jwekavanagh/agentskeptic/blob/main/docs/growth-metrics-ssot.md — activation POST semantics: https://github.com/jwekavanagh/agentskeptic/blob/main/docs/funnel-observability-ssot.md#activation-reachability-operator — Quick vs contract trust boundaries: https://github.com/jwekavanagh/agentskeptic/blob/main/docs/verification-product-ssot.md — site copy does not restate those contracts. To repeat on your data you still need a DB you trust for read-only checks, NDJSON of tool activity, and a registry (or bootstrap from your tool_calls). The first-run doc walks through Step 4 and production wiring.",
+    "PatternComplete is CI-provable; ProductionComplete is your Step 4 on your DB and tool_calls (same doc). Cross-surface funnel metrics: https://github.com/jwekavanagh/agentskeptic/blob/main/docs/growth-metrics-ssot.md — activation POST semantics: https://github.com/jwekavanagh/agentskeptic/blob/main/docs/funnel-observability-ssot.md#activation-reachability-operator — trust boundary: https://github.com/jwekavanagh/agentskeptic/blob/main/docs/verification-product-ssot.md",
   nextSteps: [
     {
       title: "Continue: first-run integration (SSOT)",
-      body: "Steps 3–4: bootstrap gradient on the pinned fixture, then bootstrap with your own tool_calls and DB—see the linked doc.",
-      href: "https://github.com/jwekavanagh/agentskeptic/blob/main/docs/first-run-integration.md",
-      linkLabel: "Open first-run-integration.md",
+      body: "AdoptionComplete_PatternComplete normative section, then Step 4 for ProductionComplete—see the linked doc.",
+      href: "https://github.com/jwekavanagh/agentskeptic/blob/main/docs/first-run-integration.md#adoptioncomplete_patterncomplete-normative",
+      linkLabel: "Open first-run-integration.md (PatternComplete)",
     },
   ],
 } as const;

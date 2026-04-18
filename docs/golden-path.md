@@ -12,6 +12,7 @@
 ## Integrator
 
 - [First-run integration (SSOT)](first-run-integration.md) — your database, NDJSON, registry; site **`/integrate`**
+- [PatternComplete (normative checklist)](first-run-integration.md#adoptioncomplete_patterncomplete-normative) — CI-provable adoption vs ProductionComplete boundary
 - [Adoption integrator command](agentskeptic.md#adoption-integrator-command)
 
 ## Operator

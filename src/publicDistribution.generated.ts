@@ -9,6 +9,7 @@ export const AGENTSKEPTIC_CLI_SEMVER = "0.1.9";
 export function formatDistributionFooter(): string {
   return "More context (green trace vs database): https://agentskeptic.com/database-truth-vs-traces\n"
     + "First-run on your database: https://agentskeptic.com/integrate\n"
+    + "PatternComplete checklist (SSOT): https://github.com/jwekavanagh/agentskeptic/blob/main/docs/first-run-integration.md#adoptioncomplete_patterncomplete-normative\n"
     + "Canonical site: https://agentskeptic.com/\n"
     + "Distribution contract (SSOT): https://github.com/jwekavanagh/agentskeptic/blob/main/docs/public-distribution-ssot.md\n";
 }
