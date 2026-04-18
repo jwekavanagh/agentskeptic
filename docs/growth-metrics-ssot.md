@@ -97,6 +97,8 @@ Normative rules for reading **stage-separated** cross-surface rates next to the 
 
 - **Exhaustivity:** These three metrics **do not** exhaust user intent, total traffic, or all verification runs. They **do** support bounded comparison of **where** drop-off appears **among rows that satisfy each metric’s denominator rules**.
 
+- **Ranking dominant funnel loss:** Identifying **which** real-world stage loses the most integrators (evaluation vs install vs integrate vs Step 4 vs paid) **cannot be inferred from repository files alone**; that requires time-bounded telemetry and product context—see [Structural throughput constraint](adoption-epistemics-ssot.md#structural-throughput-constraint) in [`adoption-epistemics-ssot.md`](adoption-epistemics-ssot.md).
+
 ---
 
 ### Three-metric reading table (operator)

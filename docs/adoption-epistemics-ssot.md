@@ -22,6 +22,24 @@ Four different notions are often conflated. They are **not interchangeable**.
 
 **Structural vs empirical:** The four-way table above is **structural** (definitions and repo proofs). **Where users drop off in production** is **empirical** and requires time-bounded data from telemetry and product analytics; that evidence is **not** committed in this repository.
 
+## Structural throughput constraint
+
+**Property (not a ranked funnel stage):** Company throughput is **structurally constrained** by the **first dependency on integrator-owned, correctly-shaped inputs**—structured tool activity and parameters the engine can ingest, a registry that maps `toolId` to SQL expectations, and read-only access to authoritative SQLite or Postgres—because that is the same moment the product becomes **epistemically “real”** (observed SQL vs expectations derived from declared activity) and **outside** what this repository can prove without the integrator’s data and credentials.
+
+**What “integrator-owned” excludes (for this property):** Bundled demo fixtures, README-only replay, **PatternComplete** temp paths alone, or telemetry **`workload_class`** alone—see [Integrate spine](first-run-integration.md#integrate-spine-normative) vs [Step 4 / ProductionComplete](first-run-integration.md#step-4-bootstrap-when-you-have-your-own-tool_calls-and-a-db-url). **IntegrateSpineComplete** still uses repository-pinned bootstrap inputs for the final segment; **ProductionComplete** requires **their** events/registry (or bootstrap pack from **their** `tool_calls`) on **their** database per [`first-run-integration.md`](first-run-integration.md).
+
+**What “correctly-shaped” means (pointers only):**
+
+- **Structured tool activity** and ICP limits: [`verification-product-ssot.md`](verification-product-ssot.md) (core promise, exclusions).
+- **Event line contract (NDJSON / observation model):** [Event line schema](agentskeptic.md#event-line-schema) in [`agentskeptic.md`](agentskeptic.md).
+- **Registry and contract verify path:** [`first-run-integration.md`](first-run-integration.md) (spine and Step 4).
+
+**Relationship to operator metrics:** Rolling rates that include **`workload_class` = `non_bundled`** are a **path heuristic** for “outside bundled example paths,” not proof of ProductionComplete, ICP fit, or user understanding—see [Qualification proxy (operator)](funnel-observability-ssot.md#qualification-proxy-operator) and [`growth-metrics-ssot.md`](growth-metrics-ssot.md).
+
+**Dominant real-world drop-off:** **Which** link in the chain loses the most mass in production (evaluation vs install vs integrate spine vs Step 4 vs paid conversion) **cannot be ranked from this repository**; ranking requires time-bounded telemetry and context outside committed files (same epistemic line as **Structural vs empirical** above).
+
+**Examples of what this property subsumes (not ranked facts):** a prospect lacks structured tool exports; a team cannot query the authoritative DB read-only; registry rows drift from schema; integrator stops after demo; spine succeeds but Step 4 on owned inputs never runs.
+
 ## Commercial validation verdict (`artifacts/commercial-validation-verdict.json`)
 
 Written by [`scripts/validate-commercial-funnel.mjs`](../scripts/validate-commercial-funnel.mjs).
@@ -62,3 +80,5 @@ Use this checklist when a human operator assists an integrator to reach **Produc
 - Treating **`layers.playwrightCommercialE2e: false`** in [`artifacts/commercial-validation-verdict.json`](../artifacts/commercial-validation-verdict.json) as evidence that **operator funnel conversion** is low — **invalid** reading.
 - Claiming **`npm test` green** implies a specific customer reached **ProductionComplete** — **invalid** unless that customer’s Step 4 evidence exists outside this repo.
 - Inferring **no verification ran** from **missing** `verify_outcome` telemetry alone — **invalid** without ruling out opt-out, transport failure, split deployment, or missing `funnel_anon_id` per [`growth-metrics-ssot.md`](growth-metrics-ssot.md) and [`funnel-observability-ssot.md`](funnel-observability-ssot.md).
+- Treating the **lowest** rolling cross-surface rate in [`growth-metrics-ssot.md`](growth-metrics-ssot.md) as proof of **which funnel stage loses the most mass** for real users — **invalid** without time-bounded telemetry and context outside this repository; see [Structural throughput constraint](#structural-throughput-constraint).
+- Reading **`CrossSurface_ConversionRate_QualifiedIntegrateToVerifyOutcome_Rolling7dUtc`** as proof of ICP fit, dominant commercial bottleneck resolution, or a substitute for **user outcome** — **invalid**; see the three-metric table in [`growth-metrics-ssot.md`](growth-metrics-ssot.md) and [Qualification proxy (operator)](funnel-observability-ssot.md#qualification-proxy-operator).

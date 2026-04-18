@@ -43,4 +43,34 @@ describe("adoption epistemics contract", () => {
       );
     }
   });
+
+  it("adoption_epistemics_structural_throughput_constraint_section", () => {
+    const body = readFileSync(join(root, "docs", "adoption-epistemics-ssot.md"), "utf8");
+    const heading = "## Structural throughput constraint";
+    assert.equal(
+      body.split(heading).length - 1,
+      1,
+      "exactly one ## Structural throughput constraint heading",
+    );
+    for (const s of ["integrator-owned", "correctly-shaped", "cannot be ranked from this repository"]) {
+      assert.ok(body.includes(s), `docs/adoption-epistemics-ssot.md must contain ${JSON.stringify(s)}`);
+    }
+    assert.ok(
+      body.includes("**Dominant real-world drop-off:**"),
+      "dominant drop-off subsection must remain for epistemic clarity",
+    );
+  });
+
+  it("cross_doc_links_to_structural_throughput_constraint_fragment", () => {
+    const frag = "adoption-epistemics-ssot.md#structural-throughput-constraint";
+    for (const rel of ["docs/first-run-integration.md", "docs/growth-metrics-ssot.md"]) {
+      const body = readFileSync(join(root, rel), "utf8");
+      assert.ok(body.includes(frag), `${rel} must include link fragment ${frag}`);
+    }
+    const vp = readFileSync(join(root, "docs", "verification-product-ssot.md"), "utf8");
+    assert.ok(
+      vp.includes("Structural throughput constraint"),
+      "verification-product SSOT authority matrix must name Structural throughput constraint",
+    );
+  });
 });
