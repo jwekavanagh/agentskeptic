@@ -15,7 +15,10 @@ describe("activation spine narrative vs shell template", () => {
 
     const idxStartShell = shell.indexOf("npm start");
     const idxVerifyShell = shell.indexOf("npm run first-run-verify");
-    const idxBootstrapShell = shell.indexOf("bootstrap");
+    // Do not use bare "bootstrap": L0 header comments mention bootstrap before first-run-verify.
+    const idxBootstrapShell = shell.indexOf(
+      "node dist/cli.js bootstrap --input test/fixtures/bootstrap-pack/input.json",
+    );
     const idxWfBootShell = shell.indexOf("wf_bootstrap_fixture");
     expect(idxStartShell).toBeGreaterThanOrEqual(0);
     expect(idxVerifyShell).toBeGreaterThan(idxStartShell);
