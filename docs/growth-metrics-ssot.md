@@ -17,6 +17,7 @@ This document is the **normative semantics SSOT** for **operator growth metrics*
 | `ActiveInstalls_DistinctInstallId_VerifyStarted_Rolling7dUtc` | Operator | Distinct CLI `install_id` values with ≥1 **non–`local_dev`** `verify_started` in rolling 7 UTC days (install cohort, not humans) |
 | `CrossSurface_ConversionRate_AcquisitionToIntegrate_Rolling7dUtc` | Operator | Among acquisition-landed ids in the window, what fraction also have `integrate_landed` in the window (motivation / next-step proxy) |
 | `CrossSurface_ConversionRate_IntegrateToVerifyOutcome_Rolling7dUtc` | Operator | Among integrate-landed ids in the window, what fraction also have a qualifying `verify_outcome` in the window (execution proxy) |
+| `CrossSurface_ConversionRate_QualifiedIntegrateToVerifyOutcome_Rolling7dUtc` | Operator | Same denominator as integrate→`verify_outcome`; numerator restricted to **`verify_outcome`** rows with **`metadata->>'workload_class' = 'non_bundled'`** (path heuristic—see [`funnel-observability-ssot.md`](funnel-observability-ssot.md) §**Qualification proxy (operator)**) |
 
 ---
 
@@ -103,6 +104,7 @@ Normative rules for reading **stage-separated** cross-surface rates next to the 
 | `CrossSurface_ConversionRate_AcquisitionToVerifyOutcome_Rolling7dUtc` | Among acquisition-landed ids in the window, what fraction also have a qualifying `verify_outcome` in the window? | Proof that the user opened `/integrate`; proof that verification SQL failed; proof of revenue or subscription state |
 | `CrossSurface_ConversionRate_AcquisitionToIntegrate_Rolling7dUtc` | Among acquisition-landed ids in the window, what fraction also have `integrate_landed` in the window? | Proof that the user ran the CLI; proof of a successful verify engine run |
 | `CrossSurface_ConversionRate_IntegrateToVerifyOutcome_Rolling7dUtc` | Among integrate-landed ids in the window, what fraction also have a qualifying `verify_outcome` in the window? | Proof that the user ever hit acquisition; proof that `funnel_anon_id` was propagated on every machine |
+| `CrossSurface_ConversionRate_QualifiedIntegrateToVerifyOutcome_Rolling7dUtc` | Among integrate-landed ids in the window, what fraction also posted a **`verify_outcome`** with **`workload_class` = `non_bundled`** in the window? | Proof of ICP or production traffic; proof the integrator understood the product; substitute for user outcome |
 
 ---
 
@@ -173,6 +175,51 @@ outc AS (
     AND metadata->>'funnel_anon_id' IS NOT NULL
     AND metadata->>'funnel_anon_id' <> ''
     AND (metadata->>'telemetry_source' IS DISTINCT FROM 'local_dev')
+    AND created_at >= w.now_utc - interval '7 days'
+)
+SELECT
+  (SELECT COUNT(*)::int FROM intg) AS d,
+  (SELECT COUNT(*)::int FROM intg INNER JOIN outc ON intg.fid = outc.fid) AS n,
+  (SELECT COUNT(*)::float FROM intg INNER JOIN outc ON intg.fid = outc.fid) / NULLIF((SELECT COUNT(*)::float FROM intg), 0) AS rate
+```
+
+---
+
+### CrossSurface_ConversionRate_QualifiedIntegrateToVerifyOutcome_Rolling7dUtc
+
+**Window:** rolling **7** UTC days from `now() AT TIME ZONE 'UTC'`.
+
+**Denominator `D`:** distinct `funnel_anon_id` with ≥1 `integrate_landed` in window (non-null, non-empty id in `metadata`) — **same** as `CrossSurface_ConversionRate_IntegrateToVerifyOutcome_Rolling7dUtc`.
+
+**Numerator `N`:** distinct ids from `D` with ≥1 **non–`local_dev`** `verify_outcome` in the same window where **`(metadata->>'workload_class') = 'non_bundled'`** (join on `metadata->>'funnel_anon_id'`).
+
+**Value:** `N / NULLIF(D, 0)` as float.
+
+**Explicit prohibitions (must not):**
+
+- **`non_bundled`** is assigned by [`src/commercial/verifyWorkloadClassify.ts`](../src/commercial/verifyWorkloadClassify.ts); it is **not** proof of customer data or ICP fit—see [`funnel-observability-ssot.md`](funnel-observability-ssot.md) §**Qualification proxy (operator)**.
+- Rows where **`workload_class`** is null or not exactly **`non_bundled`** do **not** count toward **`N`** (including legacy rows missing the key).
+
+```sql
+WITH w AS (
+  SELECT (now() AT TIME ZONE 'UTC') AS now_utc
+),
+intg AS (
+  SELECT DISTINCT metadata->>'funnel_anon_id' AS fid
+  FROM funnel_event, w
+  WHERE event = 'integrate_landed'
+    AND metadata->>'funnel_anon_id' IS NOT NULL
+    AND metadata->>'funnel_anon_id' <> ''
+    AND created_at >= w.now_utc - interval '7 days'
+),
+outc AS (
+  SELECT DISTINCT metadata->>'funnel_anon_id' AS fid
+  FROM funnel_event, w
+  WHERE event = 'verify_outcome'
+    AND metadata->>'funnel_anon_id' IS NOT NULL
+    AND metadata->>'funnel_anon_id' <> ''
+    AND (metadata->>'telemetry_source' IS DISTINCT FROM 'local_dev')
+    AND (metadata->>'workload_class') = 'non_bundled'
     AND created_at >= w.now_utc - interval '7 days'
 )
 SELECT

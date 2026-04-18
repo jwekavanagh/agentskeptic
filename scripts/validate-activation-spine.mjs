@@ -96,3 +96,22 @@ run("npm", [
   "--",
   "__tests__/funnel-observability-epistemics.source.test.ts",
 ]);
+run("npm", [
+  "run",
+  "test:vitest",
+  "-w",
+  "agentskeptic-web",
+  "--",
+  "__tests__/growth-metrics-qualified-kpi-epistemics.source.test.ts",
+]);
+// Prewarm website .next; markup test + siteTestServer reuse the build (faster, avoids hook timeout)
+run("npm", ["run", "build", "-w", "agentskeptic-web"]);
+childEnv.WEBSITE_TEST_REUSE_DIST = "1";
+run("npm", [
+  "run",
+  "test:vitest",
+  "-w",
+  "agentskeptic-web",
+  "--",
+  "__tests__/integrate-page-prerequisites.markup.test.ts",
+]);

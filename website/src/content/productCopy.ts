@@ -240,6 +240,12 @@ export const integrateActivation = {
   icp: "If you build workflows, agents, or systems that write to a database, this shows end to end how verification compares declared tool activity to the database state that actually exists.",
   requirementsHeading: "You need",
   requirements: ["Node.js 22.13 or newer", "Git", "npm"],
+  productPrerequisitesHeading: "Product prerequisites",
+  productPrerequisites: [
+    "Structured tool activity you can export or emit as NDJSON (not arbitrary log search—see verification-product SSOT).",
+    "A SQLite or Postgres database you can query read-only for verification.",
+    "Alignment with what verification proves: observed SQL state vs expectations from that activity—not proof a specific HTTP call ran.",
+  ],
   hypothesisLabel: "Verification hypothesis (one line)",
   hypothesisHelper:
     "State the database mismatch you are checking for. Allowed: ASCII printable except single or double quotes; length 1–240 after trim. Required before Copy.",

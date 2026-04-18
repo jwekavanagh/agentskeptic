@@ -9,6 +9,7 @@ import { truncateCommercialFixtureDbs } from "./helpers/truncateCommercialFixtur
 import { INTEGRATE_ACTIVATION_SHELL_BODY } from "@/generated/integrateActivationShellStatic";
 import { getCanonicalSiteOrigin } from "@/lib/canonicalSiteOrigin";
 import { getIntegrateToVerifyOutcomeRolling7d } from "@/lib/growthMetricsIntegrateToVerifyOutcomeRolling7d";
+import { getQualifiedIntegrateToVerifyOutcomeRolling7d } from "@/lib/growthMetricsQualifiedIntegrateToVerifyOutcomeRolling7d";
 import { eq } from "drizzle-orm";
 import { readFileSync } from "node:fs";
 import path, { join } from "node:path";
@@ -129,6 +130,10 @@ describe.skipIf(!isValidator && !hasBothDbs)("integrate activation guided spine"
       expect(kpi.d).toBe(1);
       expect(kpi.n).toBe(1);
       expect(kpi.rate).toBe(1);
+      const qual = await getQualifiedIntegrateToVerifyOutcomeRolling7d();
+      expect(qual.d).toBe(1);
+      expect(qual.n).toBe(1);
+      expect(qual.rate).toBe(1);
     },
   );
 });

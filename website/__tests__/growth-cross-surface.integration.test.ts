@@ -7,6 +7,7 @@ import { getCanonicalSiteOrigin } from "@/lib/canonicalSiteOrigin";
 import { getAcquisitionToIntegrateRolling7d } from "@/lib/growthMetricsAcquisitionToIntegrateRolling7d";
 import { getCrossSurfaceConversionRolling7d } from "@/lib/growthMetricsCrossSurfaceConversionRolling7d";
 import { getIntegrateToVerifyOutcomeRolling7d } from "@/lib/growthMetricsIntegrateToVerifyOutcomeRolling7d";
+import { getQualifiedIntegrateToVerifyOutcomeRolling7d } from "@/lib/growthMetricsQualifiedIntegrateToVerifyOutcomeRolling7d";
 import { getTimeToFirstVerifyOutcomeSeconds } from "@/lib/growthMetricsTimeToFirstVerifyOutcome";
 import { eq } from "drizzle-orm";
 import { readFileSync } from "node:fs";
@@ -754,6 +755,139 @@ describe.skipIf(!hasDatabaseUrl || !hasTelemetryUrl)("growth cross-surface metri
       expect(compressed.d).toBe(0);
       expect(compressed.n).toBe(0);
       expect(compressed.rate).toBeNull();
+    });
+  });
+
+  describe("CrossSurface_ConversionRate_QualifiedIntegrateToVerifyOutcome_Rolling7dUtc contract", () => {
+    it("Scenario A: non_bundled success → unqualified and qualified d=1 n=1 rate=1", async () => {
+      const fid = "f3c00001-0003-4003-8003-000000000001";
+      const now = new Date();
+      await dbTelemetry.insert(telemetryFunnelEvents).values([
+        {
+          event: "integrate_landed",
+          userId: null,
+          metadata: {
+            schema_version: 1,
+            surface: "integrate",
+            funnel_anon_id: fid,
+            attribution: {},
+          },
+          createdAt: now,
+          ...telemetryRowDefaults,
+        },
+        {
+          event: "verify_outcome",
+          userId: null,
+          metadata: {
+            schema_version: 1,
+            run_id: "r-q-1",
+            issued_at: now.toISOString(),
+            workload_class: "non_bundled",
+            subcommand: "batch_verify",
+            build_profile: "oss",
+            terminal_status: "complete",
+            funnel_anon_id: fid,
+            telemetry_source: "unknown",
+          },
+          createdAt: now,
+          ...telemetryRowDefaults,
+        },
+      ]);
+      const u = await getIntegrateToVerifyOutcomeRolling7d();
+      expect(u.d).toBe(1);
+      expect(u.n).toBe(1);
+      expect(u.rate).toBe(1);
+      const q = await getQualifiedIntegrateToVerifyOutcomeRolling7d();
+      expect(q.d).toBe(1);
+      expect(q.n).toBe(1);
+      expect(q.rate).toBe(1);
+    });
+
+    it("Scenario B: bundled_examples only → unqualified 1,1,1; qualified 1,0,0", async () => {
+      const fid = "f3c00002-0003-4003-8003-000000000002";
+      const now = new Date();
+      await dbTelemetry.insert(telemetryFunnelEvents).values([
+        {
+          event: "integrate_landed",
+          userId: null,
+          metadata: {
+            schema_version: 1,
+            surface: "integrate",
+            funnel_anon_id: fid,
+            attribution: {},
+          },
+          createdAt: now,
+          ...telemetryRowDefaults,
+        },
+        {
+          event: "verify_outcome",
+          userId: null,
+          metadata: {
+            schema_version: 1,
+            run_id: "r-q-2",
+            issued_at: now.toISOString(),
+            workload_class: "bundled_examples",
+            subcommand: "batch_verify",
+            build_profile: "oss",
+            terminal_status: "complete",
+            funnel_anon_id: fid,
+            telemetry_source: "unknown",
+          },
+          createdAt: now,
+          ...telemetryRowDefaults,
+        },
+      ]);
+      const u = await getIntegrateToVerifyOutcomeRolling7d();
+      expect(u.d).toBe(1);
+      expect(u.n).toBe(1);
+      expect(u.rate).toBe(1);
+      const q = await getQualifiedIntegrateToVerifyOutcomeRolling7d();
+      expect(q.d).toBe(1);
+      expect(q.n).toBe(0);
+      expect(q.rate).toBe(0);
+    });
+
+    it("Scenario C: missing workload_class on verify_outcome → unqualified 1,1,1; qualified 1,0,0", async () => {
+      const fid = "f3c00003-0003-4003-8003-000000000003";
+      const now = new Date();
+      await dbTelemetry.insert(telemetryFunnelEvents).values([
+        {
+          event: "integrate_landed",
+          userId: null,
+          metadata: {
+            schema_version: 1,
+            surface: "integrate",
+            funnel_anon_id: fid,
+            attribution: {},
+          },
+          createdAt: now,
+          ...telemetryRowDefaults,
+        },
+        {
+          event: "verify_outcome",
+          userId: null,
+          metadata: {
+            schema_version: 1,
+            run_id: "r-q-3",
+            issued_at: now.toISOString(),
+            subcommand: "batch_verify",
+            build_profile: "oss",
+            terminal_status: "complete",
+            funnel_anon_id: fid,
+            telemetry_source: "unknown",
+          },
+          createdAt: now,
+          ...telemetryRowDefaults,
+        },
+      ]);
+      const u = await getIntegrateToVerifyOutcomeRolling7d();
+      expect(u.d).toBe(1);
+      expect(u.n).toBe(1);
+      expect(u.rate).toBe(1);
+      const q = await getQualifiedIntegrateToVerifyOutcomeRolling7d();
+      expect(q.d).toBe(1);
+      expect(q.n).toBe(0);
+      expect(q.rate).toBe(0);
     });
   });
 });

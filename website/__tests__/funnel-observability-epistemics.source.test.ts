@@ -21,4 +21,14 @@ describe("funnel observability epistemics SSOT", () => {
     expect(body).toContain("best-effort");
     expect(body).toContain("not authoritative");
   });
+
+  it("docs/funnel-observability-ssot.md retains Qualification proxy (operator)", () => {
+    const p = path.join(root, "docs", "funnel-observability-ssot.md");
+    const body = readFileSync(p, "utf8");
+
+    expect(body).toContain("## Qualification proxy (operator)");
+    expect(body).toContain("workload_class");
+    expect(body).toContain("non_bundled");
+    expect(body).toContain("not proof");
+  });
 });

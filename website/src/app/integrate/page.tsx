@@ -34,6 +34,13 @@ export default function IntegratePage() {
         ))}
       </ul>
 
+      <h2>{a.productPrerequisitesHeading}</h2>
+      <ul className="muted">
+        {a.productPrerequisites.map((item) => (
+          <li key={item}>{item}</li>
+        ))}
+      </ul>
+
       <h2>{a.runHeading}</h2>
       <p className="muted">{a.runCaption}</p>
       <div data-testid="integrator-activation-commands">

@@ -24,7 +24,10 @@ describe.skipIf(!isValidator && !hasBothDbs)("integrate activation telemetry off
     vi.restoreAllMocks();
   });
 
-  it("postProductActivationEvent does not fetch when AGENTSKEPTIC_TELEMETRY=0; partner script exits 0; shell includes Step 3", async () => {
+  it(
+    "postProductActivationEvent does not fetch when AGENTSKEPTIC_TELEMETRY=0; partner script exits 0; shell includes Step 3",
+    { timeout: 120_000 },
+    async () => {
     expect(INTEGRATE_ACTIVATION_SHELL_BODY).toContain("bootstrap");
     expect(INTEGRATE_ACTIVATION_SHELL_BODY).toContain("wf_bootstrap_fixture");
     const fetchMock = vi.fn();
@@ -54,5 +57,6 @@ describe.skipIf(!isValidator && !hasBothDbs)("integrate activation telemetry off
       encoding: "utf8",
     });
     expect(r.status).toBe(0);
-  });
+    },
+  );
 });

@@ -53,6 +53,20 @@ Factors where **user outcome can succeed** while **no qualifying `verify_outcome
 
 Normative metric definitions, denominators, numerators, and **explicit prohibitions** (what a low or missing rate does **not** prove) live only in [`growth-metrics-ssot.md`](growth-metrics-ssot.md)—in particular the **Three-metric reading table** and **Missing join key on activation**. Operators **must not** treat missing **`verify_outcome`** rows as proof that verification did not run, or as proof of ICP fit, without ruling out capture-side causes above.
 
+## Qualification proxy (operator)
+
+**Scope:** This subsection defines the **operator** notion of **qualified integrator activation** for funnel KPIs. It does **not** restate product ICP or trust boundary—those remain in [`verification-product-ssot.md`](verification-product-ssot.md).
+
+**Definition (telemetry heuristic):** For product-activation **`verify_outcome`** rows, the CLI persists **`workload_class`** in row metadata ([`website/src/lib/funnelProductActivationMetadata.ts`](../website/src/lib/funnelProductActivationMetadata.ts)). A **`non_bundled`** value means the classifier ([`src/commercial/verifyWorkloadClassify.ts`](../src/commercial/verifyWorkloadClassify.ts)) treated the run as **outside** the shipped bundled example fixture paths (e.g. Postgres, stdin quick input, or paths not on the bundled allowlist)—see **Operational definition of `workload_class`** in the [`POST /api/funnel/product-activation`](#post-apifunnelproduct-activation-http-semantics) section below.
+
+**Qualified vs behavioral activation:** The rolling metric `CrossSurface_ConversionRate_IntegrateToVerifyOutcome_Rolling7dUtc` counts any qualifying **`verify_outcome`** (subject to **`telemetry_source`** rules in [`growth-metrics-ssot.md`](growth-metrics-ssot.md)). The metric **`CrossSurface_ConversionRate_QualifiedIntegrateToVerifyOutcome_Rolling7dUtc`** uses the **same denominator** (integrate-landed ids in window) but restricts the **numerator** to outcomes where **`metadata->>'workload_class' = 'non_bundled'`**. That is a **refinement of the numerator**, not a second funnel stage.
+
+**Must not (operators)**
+
+- **`non_bundled` is not proof** of production customer data, ICP fit, or that the integrator has structured tool exports in the sense of product doctrine—it is a **deterministic path heuristic** from [`verifyWorkloadClassify`](src/commercial/verifyWorkloadClassify.ts).
+- **Do not** treat qualified rate as proof of **mental model** or qualification to use the product; use [`verification-product-ssot.md`](verification-product-ssot.md) for product fit.
+- **Missing `workload_class`** on legacy or malformed rows: SQL equality to **`non_bundled`** fails; such rows do **not** increment the qualified numerator (see [`growth-metrics-ssot.md`](growth-metrics-ssot.md) §`CrossSurface_ConversionRate_QualifiedIntegrateToVerifyOutcome_Rolling7dUtc`).
+
 ---
 
 ## Audiences
@@ -178,7 +192,7 @@ Commercial vs OSS lock flags are normative in [`commercial-enforce-gate-normativ
 
 **Operator SQL for KPIs (cross-surface, retention, conversion):** Do not duplicate metric SQL in this document — the normative definitions and fenced SQL live in [`docs/growth-metrics-ssot.md`](growth-metrics-ssot.md), with executable mirrors in `website/src/lib/growthMetrics*.ts` enforced by Vitest parity tests.
 
-- **Stage-separated conversion metric ids (definitions and interpretation contract only in growth SSOT):** `CrossSurface_ConversionRate_AcquisitionToIntegrate_Rolling7dUtc`, `CrossSurface_ConversionRate_IntegrateToVerifyOutcome_Rolling7dUtc`; the compressed cross-surface summary remains `CrossSurface_ConversionRate_AcquisitionToVerifyOutcome_Rolling7dUtc` — [`docs/growth-metrics-ssot.md`](growth-metrics-ssot.md).
+- **Stage-separated conversion metric ids (definitions and interpretation contract only in growth SSOT):** `CrossSurface_ConversionRate_AcquisitionToIntegrate_Rolling7dUtc`, `CrossSurface_ConversionRate_IntegrateToVerifyOutcome_Rolling7dUtc`, `CrossSurface_ConversionRate_QualifiedIntegrateToVerifyOutcome_Rolling7dUtc`; the compressed cross-surface summary remains `CrossSurface_ConversionRate_AcquisitionToVerifyOutcome_Rolling7dUtc` — [`docs/growth-metrics-ssot.md`](growth-metrics-ssot.md).
 
 **Why not Vercel-only page views:** Page views do not correlate `run_id` to a completed licensed run. This design stores **queryable rows** in Postgres.
 
