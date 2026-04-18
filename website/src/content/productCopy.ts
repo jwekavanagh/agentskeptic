@@ -256,7 +256,7 @@ export const integrateActivation = {
   copyActivationBlockLabel: "Copy activation commands",
   runHeading: "Run this",
   runCaption:
-    "Enter your hypothesis, then copy the block into a terminal. The script clones this repo, installs, runs the bundled demo and PatternComplete-shaped verify on temp paths, then runs the same bootstrap plus contract verify shape on a SQLite file you supply via AGENTSKEPTIC_VERIFY_DB. Before the final step, apply examples/integrate-your-db/required-sqlite-state.sql to that file (see first-run SSOT). Exit code 0 means IntegrateSpineComplete: the full script finished, including the final verify on your file. A cold clone can take several minutes.",
+    "Enter your hypothesis, then copy the block into a terminal. The script clones this repo, installs, runs the bundled demo and PatternComplete-shaped verify on temp paths (AdoptionComplete_PatternComplete per first-run SSOT; checkpoints AC-TRUST-01 and AC-OPS-01), then runs the same bootstrap plus contract verify shape on a SQLite file you supply via AGENTSKEPTIC_VERIFY_DB. Before the final step, apply examples/integrate-your-db/required-sqlite-state.sql to that file (see first-run SSOT). Exit code 0 means IntegrateSpineComplete: the full script finished, including the final verify on your file. A cold clone can take several minutes.",
   successHeading: "What success looks like",
   successIntro:
     "Terminal success is only when the entire copied script exits 0, including the final verification on AGENTSKEPTIC_VERIFY_DB.",
