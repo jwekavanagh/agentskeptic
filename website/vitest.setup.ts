@@ -1,9 +1,38 @@
 import "@testing-library/jest-dom/vitest";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+/**
+ * Match `website/scripts/db-migrate.mjs`: load `website/.env` so local Vitest sees `DATABASE_URL` /
+ * `TELEMETRY_DATABASE_URL` without exporting them in the shell. Never overwrites non-empty env
+ * (CI / production injection wins).
+ */
+function mergeWebsiteDotEnv(): void {
+  const envPath = path.join(__dirname, ".env");
+  if (!existsSync(envPath)) return;
+  for (const line of readFileSync(envPath, "utf8").split(/\r?\n/)) {
+    const t = line.trim();
+    if (!t || t.startsWith("#")) continue;
+    const eq = t.indexOf("=");
+    if (eq <= 0) continue;
+    const key = t.slice(0, eq).trim();
+    let val = t.slice(eq + 1).trim();
+    if (
+      (val.startsWith('"') && val.endsWith('"')) ||
+      (val.startsWith("'") && val.endsWith("'"))
+    ) {
+      val = val.slice(1, -1);
+    }
+    if (process.env[key] === undefined || process.env[key] === "") {
+      process.env[key] = val;
+    }
+  }
+}
+
+mergeWebsiteDotEnv();
 
 /**
  * Block accidental outbound HTTP(S) to the committed public canonical host during Vitest.

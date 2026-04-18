@@ -70,6 +70,8 @@ Normative contracts (webhook event list, Checkout vs Billing Portal, account **`
 
 **Website Vitest:** from the repo root, **`npm run validate-commercial`** enforces **`DATABASE_URL`**, runs migrate in **`website/`**, then full website Vitest, then **`scripts/pack-smoke-commercial.mjs`** and **`npm run build`** to restore OSS **`dist/`**.
 
+**Local integration DBs:** `vitest.setup.ts` loads **`website/.env`** when the file exists (same merge rule as **`scripts/db-migrate.mjs`**: only keys that are missing or empty in `process.env` are set). That way **`npm run verify:decision-readiness`** and suites like **`growth-cross-surface.integration.test.ts`** see **`DATABASE_URL`** and **`TELEMETRY_DATABASE_URL`** from your gitignored `.env` without pre-exporting them in the shell. **Production / hosted CI** keep using platform-injected env only (no `.env` on the server).
+
 **`RESERVE_EMERGENCY_ALLOW=1`:** see SSOT — waives inactive-subscription checks only where documented; does not bypass **`BILLING_PRICE_UNMAPPED`**.
 
 ## Root package `prepublishOnly` (commercial CLI)
