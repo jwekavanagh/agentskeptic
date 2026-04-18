@@ -12,7 +12,9 @@ const root = join(__dirname, "..");
 
 const EXPECTED = `artifacts/adoption-complete-validation-verdict.json	add
 artifacts/adoption-validation-verdict.json	add
+artifacts/commercial-validation-verdict.json	modify
 artifacts/integrate-spine-validation-verdict.json	add
+docs/adoption-epistemics-ssot.md	add
 docs/adoption-validation-spec.md	modify
 docs/agentskeptic.md	modify
 docs/commercial-ssot.md	modify
@@ -20,6 +22,7 @@ docs/first-run-integration.md	modify
 docs/first-run-validation-log.md	modify
 docs/funnel-observability-ssot.md	modify
 docs/golden-path.md	modify
+docs/growth-metrics-ssot.md	modify
 docs/verification-product-ssot.md	modify
 examples/integrate-your-db/bootstrap-input.json	add
 examples/integrate-your-db/required-sqlite-state.sql	add
@@ -31,6 +34,7 @@ scripts/record-adoption-verdict.mjs	add
 scripts/regen-truth-goldens.mjs	modify
 scripts/templates/integrate-activation-shell.bash	modify
 scripts/validate-adoption-complete.mjs	add
+scripts/validate-commercial-funnel.mjs	modify
 scripts/validate-integrate-spine.mjs	add
 scripts/verify-adoption-verdict.mjs	add
 src/loadEvents.ts	modify
@@ -43,6 +47,7 @@ src/workflowTruthReport.semantics.test.ts	modify
 src/wrongWorkflowIdAdoptionFixture.test.ts	add
 test/adoption-complete-surface-parity.test.mjs	add
 test/adoption-docs-boundary.test.mjs	add
+test/adoption-epistemics-contract.test.mjs	add
 test/adoption-validation-registry.test.mjs	add
 test/adoption-validation.test.mjs	add
 test/cli.test.mjs	modify

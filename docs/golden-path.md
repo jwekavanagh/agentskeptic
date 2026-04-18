@@ -1,5 +1,7 @@
 # Adoption pointers
 
+**Epistemic framing:** same-directory file `adoption-epistemics-ssot.md` (full SSOT; use that filename in repo-relative links from other docs).
+
 ## Start here (read this first)
 
 - [README — Buy vs build: why not only SQL checks](../README.md#buy-vs-build-why-not-only-sql-checks) — recurring failure mode, limits of ad-hoc SQL checks, **Quick → Contract** graduation

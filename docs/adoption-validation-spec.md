@@ -18,16 +18,19 @@ This document defines how the repository proves the **adoption golden path**: de
 | ADOPTION_COMPLETE_PATTERN | `node scripts/validate-adoption-complete.mjs` — PatternComplete bootstrap + verify on temp paths; writes `artifacts/adoption-complete-validation-verdict.json` |
 | VERDICT | `npm test` runs `npm run build`, Vitest, pinned SQLite `node:test`, `node scripts/first-run.mjs`, `node scripts/validate-adoption-complete.mjs`, `npm run partner-quickstart`, `node scripts/validate-integrate-spine.mjs`, `node dist/cli.js assurance run --manifest examples/assurance/manifest.json`, `node scripts/commercial-enforce-test-harness.mjs`, then `npm run build` again (restore OSS `dist/` after the commercial harness), then `npm run validate-ttfv` — **no** Postgres |
 | INTEGRATE_SPINE | `node scripts/validate-integrate-spine.mjs` — full L0 bash E2E, classifier `non_bundled`, missing-env negative, DB-mismatch negative (bootstrap non-zero when contract row absent); writes `artifacts/integrate-spine-validation-verdict.json` |
+| ADOPTION_EPISTEMICS_CONTRACT | `adoption-epistemics-contract.test.mjs` — asserts `artifacts/commercial-validation-verdict.json` `layers` shape (`playwrightCommercialE2e`, no `funnel`) and anchor SSOT links |
 | REGISTRY_NO_STEPS | `src/registryValidation.test.ts` |
 
 ## ADOPTION_ARTIFACT_PROOF (registry TSV)
 
-Canonical registry: exactly **46** data rows (`relpath<TAB>op`), UTF-16 lexicographic order on `relpath`, no header row.
+Canonical registry: exactly **51** data rows (`relpath<TAB>op`), UTF-16 lexicographic order on `relpath`, no header row.
 
 ```adoption-registry
 artifacts/adoption-complete-validation-verdict.json	add
 artifacts/adoption-validation-verdict.json	add
+artifacts/commercial-validation-verdict.json	modify
 artifacts/integrate-spine-validation-verdict.json	add
+docs/adoption-epistemics-ssot.md	add
 docs/adoption-validation-spec.md	modify
 docs/agentskeptic.md	modify
 docs/commercial-ssot.md	modify
@@ -35,6 +38,7 @@ docs/first-run-integration.md	modify
 docs/first-run-validation-log.md	modify
 docs/funnel-observability-ssot.md	modify
 docs/golden-path.md	modify
+docs/growth-metrics-ssot.md	modify
 docs/verification-product-ssot.md	modify
 examples/integrate-your-db/bootstrap-input.json	add
 examples/integrate-your-db/required-sqlite-state.sql	add
@@ -46,6 +50,7 @@ scripts/record-adoption-verdict.mjs	add
 scripts/regen-truth-goldens.mjs	modify
 scripts/templates/integrate-activation-shell.bash	modify
 scripts/validate-adoption-complete.mjs	add
+scripts/validate-commercial-funnel.mjs	modify
 scripts/validate-integrate-spine.mjs	add
 scripts/verify-adoption-verdict.mjs	add
 src/loadEvents.ts	modify
@@ -58,6 +63,7 @@ src/workflowTruthReport.semantics.test.ts	modify
 src/wrongWorkflowIdAdoptionFixture.test.ts	add
 test/adoption-complete-surface-parity.test.mjs	add
 test/adoption-docs-boundary.test.mjs	add
+test/adoption-epistemics-contract.test.mjs	add
 test/adoption-validation-registry.test.mjs	add
 test/adoption-validation.test.mjs	add
 test/cli.test.mjs	modify

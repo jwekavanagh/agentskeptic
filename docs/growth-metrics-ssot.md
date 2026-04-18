@@ -1,5 +1,7 @@
 # Growth metrics — single source of truth
 
+**Epistemic framing:** [`adoption-epistemics-ssot.md`](adoption-epistemics-ssot.md).
+
 This document is the **normative semantics SSOT** for **operator growth metrics**: cross-surface correlation, conversion, retention, and related KPIs backed by `funnel_event` and `usage_counter` data.
 
 **Two databases:** KPIs that reference **telemetry-tier** funnel events (`acquisition_landed`, `integrate_landed`, `verify_started`, `verify_outcome`) execute against **`TELEMETRY_DATABASE_URL`** (same `funnel_event` table name on that server). Metrics that reference **core-tier** events (for example `reserve_allowed`) execute against **`DATABASE_URL`**. See [`docs/telemetry-storage-ssot.md`](telemetry-storage-ssot.md).

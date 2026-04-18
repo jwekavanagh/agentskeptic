@@ -1,5 +1,7 @@
 # First-run integration (SSOT)
 
+**Epistemic framing:** [adoption-epistemics-ssot.md](adoption-epistemics-ssot.md).
+
 **Prerequisite:** Read [**Buy vs build: why not only SQL checks**](../README.md#buy-vs-build-why-not-only-sql-checks) in the root [**README.md**](../README.md) so the recurring failure mode, why ad-hoc SQL checks fail as a long-term substitute, and the **Quick → Contract** path are clear before you integrate.
 
 This is the **authoritative first-run path** for running AgentSkeptic against **your own** database and workflow shape: **demo → `npm run first-run-verify` → bootstrap contract gradient (Step 3)** → **PatternComplete verify (temp DB + temp pack paths)** → **ProductionComplete: bootstrap on your inputs (Step 4)** → success criteria → pitfalls. The **`/integrate` activation shell** is a separate normative contract (**IntegrateSpineComplete**): see [Integrate spine (normative)](#integrate-spine-normative). Anything outside that sequence (LangGraph sample, production billing) is grouped **after** the spine—this file stays integrator prose, not an index of every entrypoint.

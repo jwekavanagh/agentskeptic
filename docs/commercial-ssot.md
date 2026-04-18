@@ -1,5 +1,7 @@
 # Commercial layer — single source of truth
 
+**Epistemic framing:** [adoption-epistemics-ssot.md](adoption-epistemics-ssot.md).
+
 This document is the **narrative SSOT** for the thin commercial layer (website, billing, API keys, CLI preflight). It does **not** redefine CLI verification semantics—see [verification-product-ssot.md](verification-product-ssot.md) and [agentskeptic.md](agentskeptic.md).
 
 **Related (integrator, not duplicated here):** [first-run-integration.md](first-run-integration.md) — run verification against your own SQL database; rendered on the site as **`/integrate`**.

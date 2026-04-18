@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Layer 1 commercial validation + optional Layer 2 (Playwright).
+ * Commercial validation: regression harness, then optional Playwright commercial browser E2E.
  * Always runs pack-smoke (commercial build + npm pack) then restores OSS `dist/` via `npm run build`.
  * Set COMMERCIAL_LICENSE_API_BASE_URL for pack-smoke (defaults to https://pack-smoke.example.com).
  * Writes artifacts/commercial-validation-verdict.json
@@ -117,7 +117,7 @@ function gitHead() {
   }
 }
 
-const layers = { regression: false, funnel: false };
+const layers = { regression: false, playwrightCommercialE2e: false };
 
 if (!run(process.execPath, ["scripts/check-commercial-plans-ssot.mjs"])) {
   writeVerdict("not_solved", layers);
@@ -290,14 +290,16 @@ if (process.env.COMMERCIAL_VALIDATE_PLAYWRIGHT === "1") {
     writeVerdict("not_solved", layers);
     process.exit(1);
   }
-  layers.funnel = true;
+  layers.playwrightCommercialE2e = true;
 } else {
-  layers.funnel = false;
+  layers.playwrightCommercialE2e = false;
 }
 
 const solved =
   layers.regression &&
-  (process.env.COMMERCIAL_REQUIRE_LAYER2 === "1" ? layers.funnel : true);
+  (process.env.COMMERCIAL_REQUIRE_LAYER2 === "1"
+    ? layers.playwrightCommercialE2e
+    : true);
 
 writeVerdict(solved ? "solved" : "not_solved", layers);
 process.exit(solved ? 0 : 1);
