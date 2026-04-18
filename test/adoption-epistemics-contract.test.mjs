@@ -1,5 +1,5 @@
 /**
- * ADOPTION_EPISTEMICS_CONTRACT — commercial verdict shape and anchor SSOT links.
+ * ADOPTION_EPISTEMICS_CONTRACT — commercial verdict shape, anchor SSOT links, epistemic-contract canonical headings.
  */
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
@@ -19,7 +19,8 @@ const ANCHOR_DOCS = [
   "docs/verification-product-ssot.md",
 ];
 
-const LINK = "adoption-epistemics-ssot.md";
+const LINK_ADOPTION = "adoption-epistemics-ssot.md";
+const LINK_EPISTEMIC = "epistemic-contract.md";
 
 describe("adoption epistemics contract", () => {
   it("commercial_validation_verdict_layers_shape", () => {
@@ -37,45 +38,48 @@ describe("adoption epistemics contract", () => {
   it("anchor_docs_link_adoption_epistemics_ssot", () => {
     for (const rel of ANCHOR_DOCS) {
       const body = readFileSync(join(root, rel), "utf8");
-      assert.ok(
-        body.includes(LINK),
-        `${rel} must link to ${LINK}`,
-      );
+      assert.ok(body.includes(LINK_ADOPTION), `${rel} must link to ${LINK_ADOPTION}`);
     }
   });
 
-  it("adoption_epistemics_structural_throughput_constraint_section", () => {
-    const body = readFileSync(join(root, "docs", "adoption-epistemics-ssot.md"), "utf8");
-    const heading = "## Structural throughput constraint";
+  it("anchor_docs_link_epistemic_contract", () => {
+    for (const rel of ANCHOR_DOCS) {
+      const body = readFileSync(join(root, rel), "utf8");
+      assert.ok(body.includes(LINK_EPISTEMIC), `${rel} must link to ${LINK_EPISTEMIC}`);
+    }
+  });
+
+  it("epistemic_contract_canonical_headings", () => {
+    const body = readFileSync(join(root, "docs", "epistemic-contract.md"), "utf8");
     assert.equal(
-      body.split(heading).length - 1,
+      body.split("## First necessary constraint on grounded output (formal property)").length - 1,
       1,
-      "exactly one ## Structural throughput constraint heading",
+      "exactly one first-necessary-constraint heading in epistemic-contract.md",
     );
     assert.equal(
       body.split("## Structural vs empirical vs telemetry proxies").length - 1,
       1,
-      "exactly one ## Structural vs empirical vs telemetry proxies heading",
+      "exactly one telemetry proxies heading in epistemic-contract.md",
     );
     for (const s of ["integrator-owned", "correctly-shaped", "cannot be ranked from this repository"]) {
-      assert.ok(body.includes(s), `docs/adoption-epistemics-ssot.md must contain ${JSON.stringify(s)}`);
+      assert.ok(body.includes(s), `docs/epistemic-contract.md must contain ${JSON.stringify(s)}`);
     }
     assert.ok(
       body.includes("**Dominant real-world drop-off:**"),
-      "dominant drop-off subsection must remain for epistemic clarity",
+      "dominant drop-off subsection must remain in epistemic-contract.md",
     );
   });
 
-  it("cross_doc_links_to_structural_throughput_constraint_fragment", () => {
-    const frag = "adoption-epistemics-ssot.md#structural-throughput-constraint";
+  it("cross_doc_links_to_epistemic_contract_for_ranking_context", () => {
+    const frag = "epistemic-contract.md";
     for (const rel of ["docs/first-run-integration.md", "docs/growth-metrics-ssot.md"]) {
       const body = readFileSync(join(root, rel), "utf8");
-      assert.ok(body.includes(frag), `${rel} must include link fragment ${frag}`);
+      assert.ok(body.includes(frag), `${rel} must reference ${frag}`);
     }
     const vp = readFileSync(join(root, "docs", "verification-product-ssot.md"), "utf8");
     assert.ok(
-      vp.includes("Structural throughput constraint"),
-      "verification-product SSOT authority matrix must name Structural throughput constraint",
+      vp.includes("**Epistemic contract**") && vp.includes("epistemic-contract.md"),
+      "verification-product SSOT authority matrix must name epistemic-contract.md",
     );
   });
 });

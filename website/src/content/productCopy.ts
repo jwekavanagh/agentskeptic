@@ -1,6 +1,7 @@
 /** Single source for homepage, pricing recap, sign-in framing, and test ids. */
 
 import discoveryAcquisition from "@/lib/discoveryAcquisition";
+import { EPISTEMIC_CONTRACT_INTEGRATOR_SNIPPET } from "@/generated/epistemicContractIntegrator";
 import { DECISION_READY_PRODUCTION_COMPLETE_ADOPTION_BLOB_URL } from "@/lib/githubHeadingSlug";
 import { publicProductAnchors } from "@/lib/publicProductAnchors";
 
@@ -265,8 +266,7 @@ export const integrateActivation = {
     "If the script stops after the demo with a message about AGENTSKEPTIC_VERIFY_DB, set that variable to a readable SQLite file prepared per docs/first-run-integration.md (Integrate spine) and rerun from a fresh directory.",
   ],
   provedHeading: "What you proved",
-  proved:
-    "IntegrateSpineComplete when exit code is 0: you ran the pedagogical demo and AdoptionComplete_PatternComplete mid-script (PatternComplete checklist IDs on temp paths, including AC-TRUST-01 and AC-OPS-01), then the final bootstrap plus contract verify on your AGENTSKEPTIC_VERIFY_DB using the fixed pack under examples/integrate-your-db (L0 shell is scripts/templates/integrate-activation-shell.bash). The final verify on your file may not satisfy AC-OPS-03 temp-path rules by design—see first-run SSOT Integrate spine normative section. **Decision-ready ProductionComplete** is a stronger integrator bar (artifacts A1–A5) documented in the adoption epistemics SSOT; IntegrateSpineComplete exit code 0 does not substitute for that bar.",
+  proved: EPISTEMIC_CONTRACT_INTEGRATOR_SNIPPET,
   nextHeading: "Authoritative details",
   nextLead:
     "Command bytes (L0) and the fixed bootstrap plus SQL pair (L0.5) live in the repository; integrator prose is docs/first-run-integration.md. Funnel semantics: docs/funnel-observability-ssot.md — trust boundary: docs/verification-product-ssot.md",

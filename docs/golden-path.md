@@ -1,9 +1,12 @@
 # Adoption pointers
 
-**Epistemic framing:** same-directory file `adoption-epistemics-ssot.md` (full SSOT; use that filename in repo-relative links from other docs).
+<!-- epistemic-contract:consumer:golden-path -->
+**Epistemic framing (pointer only):** [`epistemic-contract.md`](epistemic-contract.md) — then follow adoption and product SSOT below.
+<!-- /epistemic-contract:consumer:golden-path -->
 
 ## Start here (read this first)
 
+- [Epistemic contract (normative)](epistemic-contract.md) — grounded output vs funnel; what the repo cannot rank; telemetry proxies
 - [README — Buy vs build: why not only SQL checks](../README.md#buy-vs-build-why-not-only-sql-checks) — recurring failure mode, limits of ad-hoc SQL checks, **Quick → Contract** graduation
 
 ## Engineer

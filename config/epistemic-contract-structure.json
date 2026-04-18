@@ -1,0 +1,68 @@
+{
+  "schemaVersion": 1,
+  "canonicalPath": "docs/epistemic-contract.md",
+  "generatedWebsitePath": "website/src/generated/epistemicContractIntegrator.ts",
+  "consumers": [
+    {
+      "id": "first-run-integration",
+      "path": "docs/first-run-integration.md",
+      "exactInner": "**Epistemic framing (pointer only):** Normative epistemic definitions live only in [`epistemic-contract.md`](epistemic-contract.md). Operational four-way model, Decision-ready ProductionComplete, and commercial verdict semantics: [`adoption-epistemics-ssot.md`](adoption-epistemics-ssot.md).\n\n**Throughput (operator, pointer only):** Metric SQL and ids: [`growth-metrics-ssot.md`](growth-metrics-ssot.md). Interpretation and proxies: [`epistemic-contract.md`](epistemic-contract.md). User outcome vs telemetry capture: [`funnel-observability-ssot.md`](funnel-observability-ssot.md). **Decision-ready ProductionComplete:** [`adoption-epistemics-ssot.md#decision-ready-productioncomplete-normative`](adoption-epistemics-ssot.md#decision-ready-productioncomplete-normative)."
+    },
+    {
+      "id": "growth-metrics-ssot",
+      "path": "docs/growth-metrics-ssot.md",
+      "exactInner": "**Epistemic framing (pointer only):** Normative definitions—[`epistemic-contract.md`](epistemic-contract.md). Adoption operational SSOT (four-way, verdicts): [`adoption-epistemics-ssot.md`](adoption-epistemics-ssot.md)."
+    },
+    {
+      "id": "golden-path",
+      "path": "docs/golden-path.md",
+      "exactInner": "**Epistemic framing (pointer only):** [`epistemic-contract.md`](epistemic-contract.md) — then follow adoption and product SSOT below."
+    },
+    {
+      "id": "commercial-ssot",
+      "path": "docs/commercial-ssot.md",
+      "exactInner": "**Epistemic framing (pointer only):** [`epistemic-contract.md`](epistemic-contract.md). Adoption and verdict semantics: [`adoption-epistemics-ssot.md`](adoption-epistemics-ssot.md)."
+    },
+    {
+      "id": "funnel-observability-ssot",
+      "path": "docs/funnel-observability-ssot.md",
+      "exactInner": "**Epistemic framing (pointer only):** [`epistemic-contract.md`](epistemic-contract.md). Adoption operational SSOT: [`adoption-epistemics-ssot.md`](adoption-epistemics-ssot.md)."
+    }
+  ],
+  "rankingPointerLineGrowthMetrics": "- **Ranking dominant funnel loss:** Normative rule only—[`epistemic-contract.md`](epistemic-contract.md); metric SQL and denominators below unchanged.",
+  "readmeDocMapRowSubstring": "[`docs/epistemic-contract.md`](docs/epistemic-contract.md)",
+  "forbiddenPatternsOutsideCanonical": [
+    {
+      "id": "cannot_rank_repo",
+      "source": "cannot be ranked from this repository",
+      "description": "Dominant funnel ranking sentence belongs only in epistemic-contract.md"
+    },
+    {
+      "id": "cannot_infer_repo_files",
+      "source": "cannot be inferred from repository files alone",
+      "description": "Ranking / inference disclaimer belongs only in epistemic-contract.md"
+    },
+    {
+      "id": "primary_structural_bottleneck",
+      "source": "Primary structural bottleneck",
+      "description": "Deprecated misleading label"
+    },
+    {
+      "id": "company_throughput_structurally",
+      "source": "Company throughput is **structurally constrained**",
+      "description": "Superseded phrasing; use epistemic-contract.md"
+    },
+    {
+      "id": "dominant_drop_heading",
+      "source": "**Dominant real-world drop-off:**",
+      "description": "Normative subsection lives only in epistemic-contract.md"
+    },
+    {
+      "id": "throughput_cannot_exceed_integrator",
+      "source": "throughput cannot exceed integrator-owned",
+      "description": "Formal constraint prose belongs only in epistemic-contract.md"
+    }
+  ],
+  "scanGlobRoots": ["docs", "README.md", "website/src/content", "website/src/app"],
+  "canonicalHeadingRequired": "## First necessary constraint on grounded output (formal property)"
+}

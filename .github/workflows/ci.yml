@@ -79,6 +79,8 @@ jobs:
           cache: npm
       - name: Install dependencies
         run: npm ci
+      - name: Epistemic contract structure (sync + validate)
+        run: node scripts/sync-epistemic-contract-website.mjs && node scripts/validate-epistemic-contract-structure.mjs
       - name: Install langgraph-reference example dependencies
         run: npm ci --prefix examples/langgraph-reference
       - name: Build, tests, and adoption chain (CI / Postgres)

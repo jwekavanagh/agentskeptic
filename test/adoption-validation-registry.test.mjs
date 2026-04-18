@@ -14,10 +14,12 @@ const EXPECTED = `artifacts/adoption-complete-validation-verdict.json	add
 artifacts/adoption-validation-verdict.json	add
 artifacts/commercial-validation-verdict.json	modify
 artifacts/integrate-spine-validation-verdict.json	add
+config/epistemic-contract-structure.json	add
 docs/adoption-epistemics-ssot.md	add
 docs/adoption-validation-spec.md	modify
 docs/agentskeptic.md	modify
 docs/commercial-ssot.md	modify
+docs/epistemic-contract.md	add
 docs/first-run-integration.md	modify
 docs/first-run-validation-log.md	modify
 docs/funnel-observability-ssot.md	modify
@@ -30,11 +32,14 @@ package.json	modify
 README.md	modify
 scripts/demo.mjs	add
 scripts/first-run.mjs	delete
+scripts/lib/readEpistemicContractFence.mjs	add
 scripts/record-adoption-verdict.mjs	add
 scripts/regen-truth-goldens.mjs	modify
+scripts/sync-epistemic-contract-website.mjs	add
 scripts/templates/integrate-activation-shell.bash	modify
 scripts/validate-adoption-complete.mjs	add
 scripts/validate-commercial-funnel.mjs	modify
+scripts/validate-epistemic-contract-structure.mjs	add
 scripts/validate-integrate-spine.mjs	add
 scripts/verify-adoption-verdict.mjs	add
 src/loadEvents.ts	modify
@@ -58,7 +63,9 @@ test/integrate-spine-contract.test.mjs	add
 test/npm-scripts-contract.test.mjs	modify
 test/pipeline.sqlite.test.mjs	modify
 test/validate-adoption-complete-failure.test.mjs	add
+website/__tests__/epistemicContractIntegrator.parity.test.ts	add
 website/src/content/productCopy.ts	modify
+website/src/generated/epistemicContractIntegrator.ts	add
 website/src/generated/integrateActivationShellStatic.ts	modify
 website/src/generated/integratorDocsEmbedded.ts	modify
 `;

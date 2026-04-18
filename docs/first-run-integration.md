@@ -1,6 +1,10 @@
 # First-run integration (SSOT)
 
-**Epistemic framing:** [adoption-epistemics-ssot.md](adoption-epistemics-ssot.md).
+<!-- epistemic-contract:consumer:first-run-integration -->
+**Epistemic framing (pointer only):** Normative epistemic definitions live only in [`epistemic-contract.md`](epistemic-contract.md). Operational four-way model, Decision-ready ProductionComplete, and commercial verdict semantics: [`adoption-epistemics-ssot.md`](adoption-epistemics-ssot.md).
+
+**Throughput (operator, pointer only):** Metric SQL and ids: [`growth-metrics-ssot.md`](growth-metrics-ssot.md). Interpretation and proxies: [`epistemic-contract.md`](epistemic-contract.md). User outcome vs telemetry capture: [`funnel-observability-ssot.md`](funnel-observability-ssot.md). **Decision-ready ProductionComplete:** [`adoption-epistemics-ssot.md#decision-ready-productioncomplete-normative`](adoption-epistemics-ssot.md#decision-ready-productioncomplete-normative).
+<!-- /epistemic-contract:consumer:first-run-integration -->
 
 **Prerequisite:** Read [**Buy vs build: why not only SQL checks**](../README.md#buy-vs-build-why-not-only-sql-checks) in the root [**README.md**](../README.md) so the recurring failure mode, why ad-hoc SQL checks fail as a long-term substitute, and the **Quick → Contract** path are clear before you integrate.
 
@@ -13,8 +17,6 @@ This is the **authoritative first-run path** for running AgentSkeptic against **
 **Why one doc:** One narrative reduces drift between the website, README, and ad-hoc integrator notes.
 
 Send this to someone who should **try it in one sitting**. The **same** ordered shell commands as **`https://agentskeptic.com/integrate`** (clone, install, build, demo, PatternComplete-shaped verify, guard, then final bootstrap + verify on `AGENTSKEPTIC_VERIFY_DB`) live in [`scripts/templates/integrate-activation-shell.bash`](../scripts/templates/integrate-activation-shell.bash) (L0). **All** extended shell commands (Postgres env var, manual `node dist/cli.js …`, LangGraph) live in **[partner-quickstart-commands.md](partner-quickstart-commands.md)** (generated; do not duplicate those blocks here). This file is **prose, semantics, and guarantees** for the spine.
-
-**Throughput note (operator):** Integrate→CLI cross-surface metrics: `CrossSurface_ConversionRate_IntegrateToVerifyOutcome_Rolling7dUtc`, `CrossSurface_ConversionRate_QualifiedIntegrateToVerifyOutcome_Rolling7dUtc`, `CrossSurface_ConversionRate_QualifiedIntegrateToIntegratorScopedVerifyOutcome_Rolling7dUtc` ([growth-metrics-ssot.md](growth-metrics-ssot.md)); `non_bundled` and **`workflow_lineage`** heuristics are **not** substitutes for **Decision-ready ProductionComplete** (A1–A5)—see [Structural vs empirical vs telemetry proxies](adoption-epistemics-ssot.md#structural-vs-empirical-vs-telemetry-proxies). `non_bundled` qualification ([Qualification proxy (operator)](funnel-observability-ssot.md#qualification-proxy-operator) in [funnel-observability-ssot.md](funnel-observability-ssot.md)). Structural constraint vs telemetry, activation HTTP, and outcome-vs-capture: [adoption-epistemics-ssot.md — Structural throughput constraint](adoption-epistemics-ssot.md#structural-throughput-constraint) and [User outcome vs telemetry capture (operator)](funnel-observability-ssot.md#user-outcome-vs-telemetry-capture-operator). Quick vs contract trust boundary: [verification-product-ssot.md](verification-product-ssot.md). **Decision-ready ProductionComplete** (artifact bar A1–A5, distinct from IntegrateSpineComplete alone): [adoption-epistemics-ssot.md#decision-ready-productioncomplete-normative](adoption-epistemics-ssot.md#decision-ready-productioncomplete-normative).
 
 ## Integrate spine (normative)
 

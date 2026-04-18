@@ -1,6 +1,8 @@
 # Commercial layer — single source of truth
 
-**Epistemic framing:** [adoption-epistemics-ssot.md](adoption-epistemics-ssot.md).
+<!-- epistemic-contract:consumer:commercial-ssot -->
+**Epistemic framing (pointer only):** [`epistemic-contract.md`](epistemic-contract.md). Adoption and verdict semantics: [`adoption-epistemics-ssot.md`](adoption-epistemics-ssot.md).
+<!-- /epistemic-contract:consumer:commercial-ssot -->
 
 This document is the **narrative SSOT** for the thin commercial layer (website, billing, API keys, CLI preflight). It does **not** redefine CLI verification semantics—see [verification-product-ssot.md](verification-product-ssot.md) and [agentskeptic.md](agentskeptic.md).
 

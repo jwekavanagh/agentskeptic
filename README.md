@@ -250,6 +250,7 @@ Everything beyond core contract verification lives in **[`docs/agentskeptic.md`]
 
 | Doc | Purpose |
 |-----|---------|
+| [`docs/epistemic-contract.md`](docs/epistemic-contract.md) | **Normative epistemic contract** (grounded output vs funnel; ranking limits; telemetry proxies)—single authored source; other docs link or generate from here |
 | [README — Buy vs build](#buy-vs-build-why-not-only-sql-checks) | Canonical **buy vs build** narrative (failure mode, scripts limits, Quick → Contract) |
 | [`docs/agentskeptic.md`](docs/agentskeptic.md) | Authoritative CLI and behavior reference (SSOT) |
 | [`docs/quick-verify-normative.md`](docs/quick-verify-normative.md) | Quick Verify normative contract |

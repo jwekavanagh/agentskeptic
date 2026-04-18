@@ -1,6 +1,8 @@
 # Growth metrics — single source of truth
 
-**Epistemic framing:** [`adoption-epistemics-ssot.md`](adoption-epistemics-ssot.md).
+<!-- epistemic-contract:consumer:growth-metrics-ssot -->
+**Epistemic framing (pointer only):** Normative definitions—[`epistemic-contract.md`](epistemic-contract.md). Adoption operational SSOT (four-way, verdicts): [`adoption-epistemics-ssot.md`](adoption-epistemics-ssot.md).
+<!-- /epistemic-contract:consumer:growth-metrics-ssot -->
 
 This document is the **normative semantics SSOT** for **operator growth metrics**: cross-surface correlation, conversion, retention, and related KPIs backed by `funnel_event` and `usage_counter` data.
 
@@ -109,7 +111,7 @@ Normative rules for reading **stage-separated** cross-surface rates next to the 
 
 - **Exhaustivity:** These decomposition metrics **do not** exhaust user intent, total traffic, or all verification runs. They **do** support bounded comparison of **where** drop-off appears **among rows that satisfy each metric’s denominator rules**.
 
-- **Ranking dominant funnel loss:** Identifying **which** real-world stage loses the most integrators (evaluation vs install vs integrate vs Step 4 vs paid) **cannot be inferred from repository files alone**; that requires time-bounded telemetry and product context—see [Structural throughput constraint](adoption-epistemics-ssot.md#structural-throughput-constraint) in [`adoption-epistemics-ssot.md`](adoption-epistemics-ssot.md).
+- **Ranking dominant funnel loss:** Normative rule only—[`epistemic-contract.md`](epistemic-contract.md); metric SQL and denominators below unchanged.
 
 ---
 

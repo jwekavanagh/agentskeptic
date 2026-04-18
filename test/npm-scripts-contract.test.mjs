@@ -81,4 +81,15 @@ describe("npm scripts contract (test / test:ci)", () => {
     assert.equal((s.match(/langgraph-reference-primacy\.dom\.test\.tsx/g) || []).length, 1);
     assert.equal((s.match(/node scripts\/langgraph-reference-verify\.mjs/g) || []).length, 1);
   });
+
+  it("scripts.test and test:ci include exactly one epistemic contract structure check after build", () => {
+    const token = "npm run check:epistemic-contract-structure";
+    for (const key of ["test", "test:ci"]) {
+      const s = pkg.scripts[key];
+      assert.equal((s.match(new RegExp(token.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g")) || []).length, 1, key);
+      const build = s.indexOf("npm run build");
+      const ep = s.indexOf(token);
+      assert.ok(build !== -1 && ep !== -1 && build < ep, `${key}: epistemic check must follow build`);
+    }
+  });
 });

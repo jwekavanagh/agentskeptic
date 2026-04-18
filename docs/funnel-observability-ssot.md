@@ -1,6 +1,8 @@
 # Funnel observability — single source of truth
 
-**Epistemic framing:** [`adoption-epistemics-ssot.md`](adoption-epistemics-ssot.md).
+<!-- epistemic-contract:consumer:funnel-observability-ssot -->
+**Epistemic framing (pointer only):** [`epistemic-contract.md`](epistemic-contract.md). Adoption operational SSOT: [`adoption-epistemics-ssot.md`](adoption-epistemics-ssot.md).
+<!-- /epistemic-contract:consumer:funnel-observability-ssot -->
 
 This document is the **SSOT** for **North Star funnel metrics**: measurable progression from canonical acquisition → integrate → **CLI verification attempts and outcomes** (OSS and commercial) → **licensed verification completion** where applicable. It does **not** change verification semantics, entitlements, or OpenAPI integrator contracts.
 

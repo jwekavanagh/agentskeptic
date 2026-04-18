@@ -6,7 +6,7 @@
     "node": "22.x"
   },
   "scripts": {
-    "prebuild": "node ../scripts/generate-integrate-activation-shell.mjs && npm --prefix .. run sync:public-product-anchors && node ../scripts/sync-integrator-docs-embedded.mjs",
+    "prebuild": "node ../scripts/generate-integrate-activation-shell.mjs && npm --prefix .. run sync:public-product-anchors && node ../scripts/sync-integrator-docs-embedded.mjs && node ../scripts/sync-epistemic-contract-website.mjs",
     "dev": "next dev --webpack",
     "build": "next build --webpack",
     "start": "next start",
@@ -14,7 +14,7 @@
     "db:generate:telemetry": "node ./scripts/drizzle-kit-guarded.mjs generate --config drizzle.telemetry.config.ts",
     "db:migrate": "node ./scripts/db-migrate.mjs",
     "db:migrate:telemetry": "node ./scripts/db-migrate-telemetry.mjs",
-    "test:vitest": "node ../scripts/sync-integrator-docs-embedded.mjs && vitest run"
+    "test:vitest": "node ../scripts/sync-integrator-docs-embedded.mjs && node ../scripts/sync-epistemic-contract-website.mjs && vitest run"
   },
   "dependencies": {
     "@auth/core": "0.41.1",
