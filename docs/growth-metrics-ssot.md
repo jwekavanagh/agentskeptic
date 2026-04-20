@@ -4,15 +4,29 @@
 **Epistemic framing (pointer only):** Normative definitions—[`epistemic-contract.md`](epistemic-contract.md). Adoption operational SSOT (four-way, verdicts): [`adoption-epistemics-ssot.md`](adoption-epistemics-ssot.md).
 <!-- /epistemic-contract:consumer:growth-metrics-ssot -->
 
-This document is the **normative semantics SSOT** for **operator growth metrics**: cross-surface correlation, conversion, retention, and related KPIs backed by `funnel_event` and `usage_counter` data.
+This document is the **normative semantics SSOT** for **operator growth metrics**: cross-surface correlation, conversion, retention, and related KPIs backed by `funnel_event` and `usage_counter` data. **Normative SQL** lives only in the fenced `sql` blocks below; **structural completeness** of this file is enforced by `website/__tests__/growth-metrics-ssot.contract.test.ts` in CI.
 
 **Join completeness:** Cross-surface numerators that correlate on **`funnel_anon_id`** assume the integrator followed [Funnel attribution (normative)](funnel-observability-ssot.md#funnel-attribution-normative) (`agentskeptic funnel-anon pull`, **`funnel-anon set`**, or the documented env override).
 
-**Two databases:** KPIs that reference **telemetry-tier** funnel events (`acquisition_landed`, `integrate_landed`, `verify_started`, `verify_outcome`) execute against **`TELEMETRY_DATABASE_URL`** (same `funnel_event` table name on that server). Metrics that reference **core-tier** events (for example `reserve_allowed`) execute against **`DATABASE_URL`**. See [`docs/telemetry-storage-ssot.md`](telemetry-storage-ssot.md).
-
-**Executable SQL mirrors** live under `website/src/lib/growthMetrics*.ts` and **must match** the fenced `sql` blocks below after whitespace normalization — enforced by `website/__tests__/growthMetricsSqlParity.test.ts`.
-
 **HTTP ingestion, attribution field shapes, max lengths, and `schema_version` for beacons** are defined only in [`docs/funnel-observability-ssot.md`](funnel-observability-ssot.md). This document references **`funnel_anon_id`** as a join key only; it does **not** redefine attribution schema. **`install_id`** (CLI pseudonymous machine cohort on `funnel_event`) is defined only in that SSOT.
+
+### Operator execution contract (normative)
+
+**Supported tooling (sole path):** Operators MUST run the SQL in this document only from **Cursor** using the repository-configured **Supabase MCP** integration against the correct database. No other operator execution path (including the Supabase Dashboard SQL editor, `psql`, ad-hoc scripts, or npm export commands) is documented or supported in this repository.
+
+**Telemetry-tier binding:** For every metric in this document whose SQL reads from **`funnel_event`** and is defined over anonymous acquisition / integrate / activation events (`acquisition_landed`, `integrate_landed`, `verify_started`, `verify_outcome`), operators MUST execute that SQL only against the **Postgres database identified by production `TELEMETRY_DATABASE_URL`**. In Supabase terms: the **Supabase project whose database connection string is production `TELEMETRY_DATABASE_URL`**. Default table: **`public.funnel_event`** on that database unless a future metric section explicitly names another table.
+
+**Core-tier prohibition for telemetry KPIs:** Operators MUST NOT run telemetry-tier metric SQL (any section above except **core-tier** sections) against the database identified by **`DATABASE_URL`** or against the core commercial Supabase project. Doing so yields **wrong numerators** and violates this SSOT.
+
+**Core-tier carve-out:** The metric **`Retention_ActiveReserveDays_ge2_Rolling28dUtc`** is a **core-tier** metric only: its SQL reads **`funnel_event`** on **`DATABASE_URL`**. Operators MUST run that section’s SQL only against the core database, not against `TELEMETRY_DATABASE_URL`.
+
+**Read-only obligation:** Operators MUST issue only **read-only** statements for production observation—**`SELECT`** and **`EXPLAIN`** (for analysis). Operators MUST NOT run **`INSERT`**, **`UPDATE`**, **`DELETE`**, or **DDL** (`CREATE`, `ALTER`, `DROP`, etc.) against production from operator sessions.
+
+**Two databases (summary):** Telemetry-tier anonymous funnel KPIs → **`TELEMETRY_DATABASE_URL`**. Core-tier `reserve_allowed` retention → **`DATABASE_URL`**. Storage split: [`docs/telemetry-storage-ssot.md`](telemetry-storage-ssot.md).
+
+### Rolling versus calendar bounded windows (normative warning)
+
+**Rolling 7d cross-surface KPIs in this document are not interchangeable with UTC calendar-day bounded aggregates.** Calendar-day windows (half-open UTC midnight to midnight) answer different questions than rolling windows anchored at `now() AT TIME ZONE 'UTC'` minus a fixed interval. Do not compare or merge results across those definitions without explicit relabeling.
 
 **Metric roles:**
 
@@ -434,6 +448,8 @@ SELECT
 
 ### Retention_ActiveReserveDays_ge2_Rolling28dUtc
 
+**Core-tier metric (`DATABASE_URL` only):** Run this SQL only against the Postgres instance for **`DATABASE_URL`** (core `funnel_event`). Do not run it against **`TELEMETRY_DATABASE_URL`**.
+
 **Window:** rolling **28** UTC days.
 
 **Denominator:** distinct `user_id` with ≥1 `reserve_allowed` in window.
@@ -473,4 +489,4 @@ SELECT
 
 ## Validation (release gate)
 
-`npm run validate-commercial` runs website Vitest including SQL parity and growth doc boundary tests.
+`npm run validate-commercial` runs the commercial funnel harness (see [`scripts/validate-commercial-funnel.mjs`](../scripts/validate-commercial-funnel.mjs)). **Growth metric SQL** in this document is not executed in CI; **structural and reference integrity** for this SSOT are enforced by `website/__tests__/growth-metrics-ssot.contract.test.ts` and `website/__tests__/repo-reference-integrity.growth-observability.test.ts`.

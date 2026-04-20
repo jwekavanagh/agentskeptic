@@ -28,7 +28,7 @@ Cross-links:
 | 2 | Set `AGENTSKEPTIC_TELEMETRY_CORE_WRITE_FREEZE=1` in production; confirm **503** on the three routes. |
 | 3 | Run [`website/scripts/telemetry-backfill-core-to-telemetry.mjs`](../website/scripts/telemetry-backfill-core-to-telemetry.mjs) with both URLs set; script exits **0** only if telemetry DB was empty beforehand and counts match core. |
 | 4 | Single deploy: unset freeze, set `AGENTSKEPTIC_TELEMETRY_WRITES_TELEMETRY_DB=1`, keep `TELEMETRY_DATABASE_URL` (see [`website/src/lib/funnelEvent.ts`](../website/src/lib/funnelEvent.ts)). |
-| 5 | Growth reads already use `dbTelemetry` for telemetry-tier SQL (see `growthMetrics*.ts`). |
+| 5 | Operators run telemetry-tier KPI SQL from [`docs/growth-metrics-ssot.md`](growth-metrics-ssot.md) via **Cursor + Supabase MCP** against the `TELEMETRY_DATABASE_URL` database (see that SSOT); application `dbTelemetry` remains for ingestion and product tests only. |
 | 6 | After steady state, apply core cleanup migration **`0012_core_telemetry_cleanup`** (removes telemetry-tier rows and activation beacons from core; tightens `funnel_event` CHECK to core-tier events only). |
 
 ## Schema

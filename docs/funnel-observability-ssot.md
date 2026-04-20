@@ -12,8 +12,6 @@ This document is the **SSOT** for **North Star funnel metrics**: measurable prog
 
 **Telemetry-tier persistence:** Which rows live on core vs telemetry Postgres, cutover order, freeze, and backfill are documented only in [`docs/telemetry-storage-ssot.md`](telemetry-storage-ssot.md).
 
-**Operator daily aggregate export (CSV pack):** Read-only `funnel_event` aggregates, verdict JSON, and scheduling contract are documented only in [`docs/telemetry-daily-pack-ssot.md`](telemetry-daily-pack-ssot.md).
-
 ## Funnel attribution (normative)
 
 **Purpose:** One integrator-facing contract for joining **browser-issued** `funnel_anon_id` to **CLI** `POST /api/funnel/product-activation` bodies, without treating shell `export` as the default persistence path.
@@ -241,7 +239,7 @@ Commercial vs OSS lock flags are normative in [`commercial-enforce-gate-normativ
 
 **`verify_started` without `verify_outcome` (same `run_id` in metadata):** means **no terminal activation outcome row was accepted** by the server (or never sent). Causes include: **`AGENTSKEPTIC_TELEMETRY=0`** before the outcome POST, network or timeout, **`issued_at`** skew **`400`**, missing route on the POST origin, CLI **exit 3** before the outcome POST, or engine failure before a terminal result. **Do not** read this pattern as “user abandoned” by itself — it is only “no persisted activation outcome for that run.”
 
-**Operator SQL for KPIs (cross-surface, retention, conversion):** Do not duplicate metric SQL in this document — the normative definitions and fenced SQL live in [`docs/growth-metrics-ssot.md`](growth-metrics-ssot.md), with executable mirrors in `website/src/lib/growthMetrics*.ts` enforced by Vitest parity tests.
+**Operator SQL for KPIs (cross-surface, retention, conversion):** Do not duplicate metric SQL in this document — the normative definitions, fenced SQL, and **operator execution contract** (Cursor + Supabase MCP only) live in [`docs/growth-metrics-ssot.md`](growth-metrics-ssot.md), enforced structurally by `website/__tests__/growth-metrics-ssot.contract.test.ts`.
 
 - **Stage-separated conversion metric ids (definitions and interpretation contract only in growth SSOT):** `CrossSurface_ConversionRate_AcquisitionToIntegrate_Rolling7dUtc`, `CrossSurface_ConversionRate_IntegrateToVerifyOutcome_Rolling7dUtc`, `CrossSurface_ConversionRate_QualifiedIntegrateToVerifyOutcome_Rolling7dUtc`; the compressed cross-surface summary remains `CrossSurface_ConversionRate_AcquisitionToVerifyOutcome_Rolling7dUtc` — [`docs/growth-metrics-ssot.md`](growth-metrics-ssot.md).
 

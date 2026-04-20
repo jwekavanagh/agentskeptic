@@ -8,9 +8,6 @@ import { telemetryFunnelEvents } from "@/db/telemetrySchema";
 import { truncateCommercialFixtureDbs } from "./helpers/truncateCommercialFixture";
 import { INTEGRATE_ACTIVATION_SHELL_BODY } from "@/generated/integrateActivationShellStatic";
 import { getCanonicalSiteOrigin } from "@/lib/canonicalSiteOrigin";
-import { getIntegrateToVerifyOutcomeRolling7d } from "@/lib/growthMetricsIntegrateToVerifyOutcomeRolling7d";
-import { getQualifiedIntegrateToIntegratorScopedVerifyOutcomeRolling7d } from "@/lib/growthMetricsQualifiedIntegrateToIntegratorScopedVerifyOutcomeRolling7d";
-import { getQualifiedIntegrateToVerifyOutcomeRolling7d } from "@/lib/growthMetricsQualifiedIntegrateToVerifyOutcomeRolling7d";
 import { eq } from "drizzle-orm";
 import { readFileSync } from "node:fs";
 import path, { join } from "node:path";
@@ -40,7 +37,7 @@ describe.skipIf(!isValidator && !hasBothDbs)("integrate activation guided spine"
   });
 
   it(
-    "RTL shell + join key, surface + product-activation, North Star rolling 7d",
+    "RTL shell + join key, surface + product-activation, telemetry rows",
     { timeout: 180_000 },
     async () => {
       const F = "a1b2c3d4-e5f6-4a7b-8c9d-0123456789ab";
@@ -127,18 +124,15 @@ describe.skipIf(!isValidator && !hasBothDbs)("integrate activation guided spine"
         true,
       );
 
-      const kpi = await getIntegrateToVerifyOutcomeRolling7d();
-      expect(kpi.d).toBe(1);
-      expect(kpi.n).toBe(1);
-      expect(kpi.rate).toBe(1);
-      const qual = await getQualifiedIntegrateToVerifyOutcomeRolling7d();
-      expect(qual.d).toBe(1);
-      expect(qual.n).toBe(1);
-      expect(qual.rate).toBe(1);
-      const qualScoped = await getQualifiedIntegrateToIntegratorScopedVerifyOutcomeRolling7d();
-      expect(qualScoped.d).toBe(1);
-      expect(qualScoped.n).toBe(0);
-      expect(qualScoped.rate).toBe(0);
+      const started = await dbTelemetry
+        .select()
+        .from(telemetryFunnelEvents)
+        .where(eq(telemetryFunnelEvents.event, "verify_started"));
+      const startedRow = started.find(
+        (r) => (r.metadata as { funnel_anon_id?: string }).funnel_anon_id === F,
+      );
+      expect(startedRow).toBeDefined();
+      expect((startedRow!.metadata as { workload_class?: string }).workload_class).toBe("non_bundled");
     },
   );
 });

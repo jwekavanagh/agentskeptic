@@ -17,7 +17,7 @@ const DENY_SUBSTRINGS = [
   "512",
 ] as const;
 
-describe("growthMetricsDocBoundary", () => {
+describe("growth-metrics-ssot-doc-boundary", () => {
   it("growth-metrics-ssot does not embed attribution-contract literals", () => {
     const md = readFileSync(docPath, "utf8");
     for (const s of DENY_SUBSTRINGS) {
