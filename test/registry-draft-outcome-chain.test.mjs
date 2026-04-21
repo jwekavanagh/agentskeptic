@@ -49,7 +49,8 @@ describe("registry-draft outcome chain", () => {
         },
       );
       assert.equal(r.status, 0, r.stderr + r.stdout);
-      assert.ok(r.stdout.includes('"verdict":"pass"') || r.stdout.includes('"verdict": "pass"'), r.stdout);
+      // quick stdout is Outcome Certificate v1 (stableStringify); rollup pass is stateRelation, not a top-level verdict field.
+      assert.ok(r.stdout.includes('"stateRelation":"matches_expectations"'), r.stdout);
     } finally {
       rmSync(tmp, { recursive: true, force: true });
     }

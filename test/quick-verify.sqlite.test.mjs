@@ -13,6 +13,21 @@ import { DatabaseSync } from "node:sqlite";
 import { runQuickVerify } from "../dist/quickVerify/runQuickVerify.js";
 import { canonicalToolsArrayUtf8 } from "../dist/quickVerify/canonicalJson.js";
 import { loadSchemaValidator } from "../dist/schemaLoad.js";
+
+const validateOutcomeCertificate = loadSchemaValidator("outcome-certificate-v1");
+
+/** Last stdout line that looks like a single JSON object (Outcome Certificate from `quick` / batch verify). */
+function parseOutcomeCertificateStdout(stdout) {
+  const line = stdout
+    .trim()
+    .split(/\r?\n/)
+    .filter((l) => l.startsWith("{"))
+    .pop();
+  assert.ok(line, "expected JSON object line on stdout");
+  const cert = JSON.parse(line);
+  assert.equal(validateOutcomeCertificate(cert), true, JSON.stringify(validateOutcomeCertificate.errors ?? []));
+  return cert;
+}
 import {
   HUMAN_REPORT_BEGIN,
   HUMAN_REPORT_END,
@@ -89,55 +104,64 @@ describe("Quick Verify SQLite", () => {
     assert.ok(contractExports.length >= 1);
   });
 
-  it("CLI quick exits 0 and registry bytes match stdout", () => {
+  it("CLI quick exits 0 and registry bytes match runQuickVerify export", async () => {
+    const inputPath = join(root, "test", "fixtures", "quick-verify", "pass-line.ndjson");
+    const inputUtf8 = readFileSync(inputPath, "utf8");
+    const { report: expectedReport } = await runQuickVerify({ inputUtf8, sqlitePath: dbPath });
     const outReg = join(tmp, "exported.json");
     const r = spawnSync(
       process.execPath,
-      [cliJs, "quick", "--input", join(root, "test", "fixtures", "quick-verify", "pass-line.ndjson"), "--db", dbPath, "--export-registry", outReg],
+      [cliJs, "quick", "--input", inputPath, "--db", dbPath, "--export-registry", outReg],
       { encoding: "utf8", cwd: root, maxBuffer: 10_000_000 },
     );
     assert.equal(r.status, 0, r.stderr);
-    const line = r.stdout.trim().split("\n").filter(Boolean).pop();
-    const report = JSON.parse(line);
+    const cert = parseOutcomeCertificateStdout(r.stdout);
+    assert.equal(cert.stateRelation, "matches_expectations");
     const fileUtf8 = readFileSync(outReg, "utf8");
-    assert.equal(fileUtf8, canonicalToolsArrayUtf8(report.exportableRegistry.tools));
+    assert.equal(fileUtf8, canonicalToolsArrayUtf8(expectedReport.exportableRegistry.tools));
     assertHumanAnchors(r.stderr, "pass");
   });
 
-  it("whitespace-only input: exit 2, INGEST_NO_ACTIONS, anchors", () => {
+  it("whitespace-only input: exit 2, INGEST_NO_ACTIONS, anchors", async () => {
     const outReg = join(tmp, "ws.json");
     const inPath = join(tmp, "ws.txt");
-    writeFileSync(inPath, "  \n\t  \n", "utf8");
+    const inputUtf8 = "  \n\t  \n";
+    writeFileSync(inPath, inputUtf8, "utf8");
+    const { report: qw } = await runQuickVerify({ inputUtf8, sqlitePath: dbPath });
+    assert.ok(qw.ingest.reasonCodes.includes("INGEST_NO_ACTIONS"));
     const r = spawnSync(
       process.execPath,
       [cliJs, "quick", "--input", inPath, "--db", dbPath, "--export-registry", outReg],
       { encoding: "utf8", cwd: root, maxBuffer: 10_000_000 },
     );
     assert.equal(r.status, 2, r.stderr);
-    const line = r.stdout.trim().split("\n").filter(Boolean).pop();
-    const report = JSON.parse(line);
-    assert.ok(report.ingest.reasonCodes.includes("INGEST_NO_ACTIONS"));
-    assert.equal(report.verdict, "uncertain");
-    assert.ok(report.summary.includes(MSG_NO_TOOL_CALLS));
+    const cert = parseOutcomeCertificateStdout(r.stdout);
+    assert.equal(cert.stateRelation, "not_established");
+    assert.equal(qw.verdict, "uncertain");
+    assert.ok(qw.summary.includes(MSG_NO_TOOL_CALLS));
+    assert.ok(cert.intentSummary.includes(MSG_NO_TOOL_CALLS));
     assertHumanAnchors(r.stderr, "uncertain");
     assert.ok(r.stderr.includes(MSG_NO_TOOL_CALLS));
   });
 
-  it("non-empty JSON with no tools: exit 2, INGEST_NO_STRUCTURED_TOOL_ACTIVITY, anchors", () => {
+  it("non-empty JSON with no tools: exit 2, INGEST_NO_STRUCTURED_TOOL_ACTIVITY, anchors", async () => {
     const outReg = join(tmp, "none.json");
     const inPath = join(tmp, "empty.json");
-    writeFileSync(inPath, "{}", "utf8");
+    const inputUtf8 = "{}";
+    writeFileSync(inPath, inputUtf8, "utf8");
+    const { report: qw } = await runQuickVerify({ inputUtf8, sqlitePath: dbPath });
+    assert.ok(qw.ingest.reasonCodes.includes("INGEST_NO_STRUCTURED_TOOL_ACTIVITY"));
     const r = spawnSync(
       process.execPath,
       [cliJs, "quick", "--input", inPath, "--db", dbPath, "--export-registry", outReg],
       { encoding: "utf8", cwd: root, maxBuffer: 10_000_000 },
     );
     assert.equal(r.status, 2, r.stderr);
-    const line = r.stdout.trim().split("\n").filter(Boolean).pop();
-    const report = JSON.parse(line);
-    assert.ok(report.ingest.reasonCodes.includes("INGEST_NO_STRUCTURED_TOOL_ACTIVITY"));
-    assert.equal(report.verdict, "uncertain");
-    assert.ok(report.summary.includes(MSG_NO_STRUCTURED_TOOL_ACTIVITY));
+    const cert = parseOutcomeCertificateStdout(r.stdout);
+    assert.equal(cert.stateRelation, "not_established");
+    assert.equal(qw.verdict, "uncertain");
+    assert.ok(qw.summary.includes(MSG_NO_STRUCTURED_TOOL_ACTIVITY));
+    assert.ok(cert.intentSummary.includes(MSG_NO_STRUCTURED_TOOL_ACTIVITY));
     assertHumanAnchors(r.stderr, "uncertain");
     assert.ok(r.stderr.includes(MSG_NO_STRUCTURED_TOOL_ACTIVITY));
   });
@@ -272,20 +296,21 @@ describe("Quick Verify SQLite", () => {
         { encoding: "utf8", cwd: root, maxBuffer: 10_000_000 },
       );
       assert.equal(r1.status, 0, r1.stderr);
-      const quickLine = r1.stdout.trim().split("\n").filter(Boolean).pop();
-      const quickReport = JSON.parse(quickLine);
+      parseOutcomeCertificateStdout(r1.stdout);
+      const regTools = JSON.parse(readFileSync(reg, "utf8"));
       const r2 = spawnSync(
         process.execPath,
         [cliJs, "--workflow-id", "quick-verify", "--events", ev, "--registry", reg, "--db", dbPath],
         { encoding: "utf8", cwd: root, maxBuffer: 10_000_000 },
       );
       assert.equal(r2.status, 0, r2.stderr);
-      const batch = JSON.parse(r2.stdout.trim());
-      assert.equal(batch.status, "complete");
-      assert.equal(batch.steps.length, quickReport.exportableRegistry.tools.length);
-      for (let i = 0; i < batch.steps.length; i++) {
-        const st = batch.steps[i].status;
-        assert.equal(st, "verified");
+      const batchCert = JSON.parse(r2.stdout.trim());
+      assert.equal(validateOutcomeCertificate(batchCert), true);
+      assert.equal(batchCert.stateRelation, "matches_expectations");
+      assert.equal(batchCert.steps.length, regTools.length);
+      const batchToolIds = new Set(batchCert.steps.map((s) => s.toolId));
+      for (const t of regTools) {
+        assert.ok(batchToolIds.has(t.toolId), `missing toolId ${t.toolId}`);
       }
     } finally {
       rmSync(tdir, { recursive: true, force: true });
@@ -330,21 +355,22 @@ describe("Quick Verify SQLite", () => {
         { encoding: "utf8", cwd: root, maxBuffer: 10_000_000 },
       );
       assert.equal(r1.status, 0, r1.stderr);
-      const quickLine = r1.stdout.trim().split("\n").filter(Boolean).pop();
-      const quickReport = JSON.parse(quickLine);
-      assert.ok(quickReport.exportableRegistry.tools.some((t) => t.toolId.startsWith("quick:rel:")));
+      parseOutcomeCertificateStdout(r1.stdout);
+      const regTools = JSON.parse(readFileSync(reg, "utf8"));
+      assert.ok(regTools.some((t) => t.toolId.startsWith("quick:rel:")));
       const r2 = spawnSync(
         process.execPath,
         [cliJs, "--workflow-id", "quick-verify", "--events", ev, "--registry", reg, "--db", dbp],
         { encoding: "utf8", cwd: root, maxBuffer: 10_000_000 },
       );
       assert.equal(r2.status, 0, r2.stderr);
-      const batch = JSON.parse(r2.stdout.trim());
-      assert.equal(batch.status, "complete");
-      assert.equal(batch.steps.length, quickReport.exportableRegistry.tools.length);
-      const rel = batch.steps.find((s) => s.toolId.startsWith("quick:rel:"));
+      const batchCert = JSON.parse(r2.stdout.trim());
+      assert.equal(validateOutcomeCertificate(batchCert), true);
+      assert.equal(batchCert.stateRelation, "matches_expectations");
+      assert.equal(batchCert.steps.length, regTools.length);
+      const rel = batchCert.steps.find((s) => s.toolId.startsWith("quick:rel:"));
       assert.ok(rel);
-      assert.equal(rel.status, "verified");
+      assert.ok(regTools.some((t) => t.toolId === rel.toolId));
     } finally {
       rmSync(tdir, { recursive: true, force: true });
     }
@@ -408,11 +434,11 @@ describe("Quick Verify SQLite", () => {
       { encoding: "utf8", cwd: root, maxBuffer: 10_000_000 },
     );
     assert.equal(r.status, 2, r.stderr);
-    const batch = JSON.parse(r.stdout.trim());
-    assert.equal(batch.status, "incomplete");
-    assert.equal(batch.steps.length, 1);
-    assert.equal(batch.steps[0].status, "incomplete_verification");
-    assert.equal(batch.steps[0].reasons[0].code, "INVALID_IDENTIFIER");
+    const cert = JSON.parse(r.stdout.trim());
+    assert.equal(validateOutcomeCertificate(cert), true);
+    assert.equal(cert.stateRelation, "not_established");
+    assert.equal(cert.steps.length, 1);
+    assert.ok(cert.explanation.details.some((d) => d.code === "INVALID_IDENTIFIER"));
   });
 
   it("tampered synthetic event (__qvFields removed) fails batch resolution", () => {

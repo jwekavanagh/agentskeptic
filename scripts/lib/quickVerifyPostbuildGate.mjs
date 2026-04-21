@@ -107,8 +107,9 @@ export async function runQuickVerifyPostbuildGate(opts) {
       };
     }
 
+    let cert;
     try {
-      report = JSON.parse(line);
+      cert = JSON.parse(line);
     } catch {
       stderrParts.push("validate-ttfv: stdout JSON parse failed");
       return {
@@ -120,6 +121,23 @@ export async function runQuickVerifyPostbuildGate(opts) {
         stderrSummary: stderrParts.join("; "),
       };
     }
+    if (cert?.schemaVersion !== 1 || typeof cert?.stateRelation !== "string") {
+      stderrParts.push("validate-ttfv: stdout is not an Outcome Certificate (schemaVersion 1)");
+      return {
+        exitCode: 1,
+        elapsedMs,
+        report: null,
+        registryUtf8Match: false,
+        spawnTimedOut: false,
+        stderrSummary: stderrParts.join("; "),
+      };
+    }
+
+    const qvUrl = pathToFileURL(join(root, "dist", "quickVerify", "runQuickVerify.js")).href;
+    const { runQuickVerify } = await import(qvUrl);
+    const inputUtf8 = readFileSync(inputPath, "utf8");
+    const qvOut = await runQuickVerify({ inputUtf8, sqlitePath: dbPath });
+    report = qvOut.report;
 
     const canonicalUrl = pathToFileURL(join(root, "dist", "quickVerify", "canonicalJson.js")).href;
     const { canonicalToolsArrayUtf8 } = await import(canonicalUrl);
@@ -127,7 +145,9 @@ export async function runQuickVerifyPostbuildGate(opts) {
     registryUtf8Match = fileUtf8 === canonicalToolsArrayUtf8(report.exportableRegistry.tools);
 
     if (!registryUtf8Match) {
-      stderrParts.push("validate-ttfv: registry file !== canonicalToolsArrayUtf8(stdout.tools)");
+      stderrParts.push(
+        "validate-ttfv: registry file !== canonicalToolsArrayUtf8(runQuickVerify.report.exportableRegistry.tools)",
+      );
       return {
         exitCode: 1,
         elapsedMs,

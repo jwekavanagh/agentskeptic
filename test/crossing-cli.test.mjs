@@ -51,7 +51,7 @@ describe("crossing CLI", () => {
     assert.equal(r.stderr.trim(), "");
   });
 
-  it("bootstrap-led: stdout is single WorkflowResult JSON line; no bootstrap envelope; stderr ends with Decision-ready footer", () => {
+  it("bootstrap-led: stdout is single Outcome Certificate JSON line; no bootstrap envelope; stderr ends with Decision-ready footer", () => {
     const outDir = join(tmp, "cross-pack");
     const r = spawnCli([
       "crossing",
@@ -66,10 +66,10 @@ describe("crossing CLI", () => {
     assert.ok(!r.stdout.includes("agentskeptic_bootstrap_result"), r.stdout);
     const lines = r.stdout.trim().split(/\r?\n/).filter(Boolean);
     assert.equal(lines.length, 1, r.stdout);
-    const wr = JSON.parse(lines[0]);
-    const validateResult = loadSchemaValidator("workflow-result");
-    assert.equal(validateResult(wr), true);
-    assert.equal(wr.status, "complete");
+    const cert = JSON.parse(lines[0]);
+    const validateCert = loadSchemaValidator("outcome-certificate-v1");
+    assert.equal(validateCert(cert), true);
+    assert.equal(cert.stateRelation, "matches_expectations");
     assert.ok(r.stderr.includes("Decision-ready ProductionComplete"), r.stderr);
     assert.ok(existsSync(join(outDir, "events.ndjson")));
   });
