@@ -59,12 +59,25 @@ try {
     process.exit(1);
   }
   const batch = JSON.parse(r2.stdout.trim());
-  if (batch.status !== "complete") {
+  const isOutcomeCert =
+    batch.schemaVersion === 1 &&
+    typeof batch.stateRelation === "string" &&
+    Object.prototype.hasOwnProperty.call(batch, "humanReport");
+  if (isOutcomeCert) {
+    if (batch.stateRelation !== "matches_expectations") {
+      console.error("expected certificate stateRelation matches_expectations, got", batch.stateRelation);
+      process.exit(1);
+    }
+  } else if (batch.status !== "complete") {
     console.error("expected workflow complete, got", batch.status);
     process.exit(1);
   }
   const relStep = batch.steps.find((s) => typeof s.toolId === "string" && s.toolId.startsWith("quick:rel:"));
-  if (!relStep || relStep.status !== "verified") {
+  if (!relStep) {
+    console.error("expected quick:rel step in replay output", JSON.stringify(batch.steps, null, 2));
+    process.exit(1);
+  }
+  if (!isOutcomeCert && relStep.status !== "verified") {
     console.error("expected quick:rel step verified", JSON.stringify(batch.steps, null, 2));
     process.exit(1);
   }

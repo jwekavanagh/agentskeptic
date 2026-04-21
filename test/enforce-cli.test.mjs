@@ -150,7 +150,16 @@ describe("enforce CLI", () => {
     assert.ok(r.stderr.includes(LOCK_SUCCESS_MONETIZED_BOUNDARY_LINE_A));
     assert.ok(r.stderr.includes(LOCK_SUCCESS_MONETIZED_BOUNDARY_LINE_B));
     const parsed = JSON.parse(r.stdout.trim());
-    assert.equal(parsed.status, "complete");
+    const isCert =
+      parsed.schemaVersion === 1 &&
+      typeof parsed.stateRelation === "string" &&
+      Object.prototype.hasOwnProperty.call(parsed, "humanReport");
+    if (isCert) {
+      assert.equal(parsed.stateRelation, "matches_expectations");
+      assert.equal(parsed.workflowId, "wf_complete");
+    } else {
+      assert.equal(parsed.status, "complete");
+    }
   });
 
   it("enforce batch expect-lock mismatch exits 4; stderr last line is envelope; --no-human-report stderr only envelope", () => {

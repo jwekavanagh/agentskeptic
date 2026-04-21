@@ -29,7 +29,7 @@ function spawnCli(args) {
 }
 
 describe("crossing commercial smoke (harness license mock)", () => {
-  it("bootstrap-led exits 0; single WorkflowResult stdout; pack artifacts exist", () => {
+  it("bootstrap-led exits 0; single Outcome Certificate v1 or WorkflowResult stdout; pack artifacts exist", () => {
     const tmp = mkdtempSync(join(tmpdir(), "crossing-commercial-"));
     try {
       const dbPath = join(tmp, "db.sqlite");
@@ -42,7 +42,17 @@ describe("crossing commercial smoke (harness license mock)", () => {
       const lines = r.stdout.trim().split(/\r?\n/).filter(Boolean);
       assert.equal(lines.length, 1);
       const wr = JSON.parse(lines[0]);
-      assert.equal(wr.status, "complete");
+      const isCert =
+        wr.schemaVersion === 1 &&
+        typeof wr.stateRelation === "string" &&
+        Object.prototype.hasOwnProperty.call(wr, "humanReport");
+      if (isCert) {
+        assert.equal(wr.stateRelation, "matches_expectations");
+        assert.equal(wr.workflowId, "wf_bootstrap_fixture");
+        assert.equal(wr.runKind, "contract_sql");
+      } else {
+        assert.equal(wr.status, "complete");
+      }
       assert.ok(existsSync(join(packOut, "events.ndjson")));
     } finally {
       rmSync(tmp, { recursive: true, force: true });
