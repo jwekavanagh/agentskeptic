@@ -27,7 +27,7 @@ const sampleParsed: ParsedBatchVerifyCli = {
   registryPath: "r.json",
   database: { kind: "sqlite", path: "x.db" },
   verificationPolicy: { consistencyMode: "strong", verificationWindowMs: 0, pollIntervalMs: 0 },
-  noTruthReport: true,
+  noHumanReport: true,
   shareReportOrigin: undefined,
   writeRunBundleDir: undefined,
   signPrivateKeyPath: undefined,

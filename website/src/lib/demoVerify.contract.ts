@@ -10,19 +10,19 @@ export const demoVerifyRequestSchema = z.object({
 
 export type DemoVerifyRequest = z.infer<typeof demoVerifyRequestSchema>;
 
-const validateWorkflowResult = loadSchemaValidator("workflow-result");
+const validateOutcomeCertificate = loadSchemaValidator("outcome-certificate-v1");
 
-function workflowResultRefines(data: unknown): boolean {
-  return validateWorkflowResult(data) === true;
+function outcomeCertificateRefines(data: unknown): boolean {
+  return validateOutcomeCertificate(data) === true;
 }
 
 export const demoVerifySuccessResponseSchema = z.object({
   ok: z.literal(true),
   scenarioId: z.enum(DEMO_SCENARIO_IDS),
-  workflowResult: z.unknown().refine(workflowResultRefines, {
-    message: "workflowResult failed workflow-result JSON Schema",
+  certificate: z.unknown().refine(outcomeCertificateRefines, {
+    message: "certificate failed outcome-certificate-v1 JSON Schema",
   }),
-  truthReportText: z.string().min(1),
+  humanReport: z.string().min(1),
 });
 
 export type DemoVerifySuccessResponse = z.infer<typeof demoVerifySuccessResponseSchema>;

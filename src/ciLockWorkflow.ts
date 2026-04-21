@@ -132,7 +132,7 @@ function opEnv(code: string, message: string): LockOperationalEnvelope {
 
 export async function executeBatchLockFromParsed(params: ExecuteBatchLockParams): Promise<BatchLockTerminal> {
   const { parsed, lockKind, lockAbsolutePath, truthReport } = params;
-  const truthCb = parsed.noTruthReport ? () => {} : truthReport;
+  const truthCb = parsed.noHumanReport ? () => {} : truthReport;
 
   const runVerify = () =>
     verifyWorkflow({

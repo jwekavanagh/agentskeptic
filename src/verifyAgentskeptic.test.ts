@@ -25,37 +25,35 @@ function seedTempProject(): string {
 }
 
 describe("verifyAgentskeptic", () => {
-  it("wf_complete: ok true and status complete", async () => {
+  it("wf_complete: contract certificate matches expectations and permits high-stakes reliance", async () => {
     const projectRoot = seedTempProject();
     try {
       const dbPath = join(projectRoot, "demo.db");
-      const { ok, result } = await verifyAgentskeptic({
+      const certificate = await verifyAgentskeptic({
         workflowId: "wf_complete",
         databaseUrl: dbPath,
         projectRoot,
       });
-      expect(result.status).toBe("complete");
-      expect(ok).toBe(true);
-      expect(ok === (result.status === "complete")).toBe(true);
+      expect(certificate.stateRelation).toBe("matches_expectations");
+      expect(certificate.highStakesReliance).toBe("permitted");
+      expect(certificate.runKind).toBe("contract_sql");
     } finally {
       rmSync(projectRoot, { recursive: true, force: true });
     }
   });
 
-  it("wf_missing: ok false and status inconsistent", async () => {
+  it("wf_missing: mismatch and prohibited reliance; explanation cites ROW_ABSENT", async () => {
     const projectRoot = seedTempProject();
     try {
       const dbPath = join(projectRoot, "demo.db");
-      const { ok, result } = await verifyAgentskeptic({
+      const certificate = await verifyAgentskeptic({
         workflowId: "wf_missing",
         databaseUrl: dbPath,
         projectRoot,
       });
-      expect(result.status).toBe("inconsistent");
-      expect(ok).toBe(false);
-      expect(ok === (result.status === "complete")).toBe(true);
-      expect(result.steps[0]?.status).toBe("missing");
-      expect(result.steps[0]?.reasons[0]?.code).toBe("ROW_ABSENT");
+      expect(certificate.stateRelation).toBe("does_not_match");
+      expect(certificate.highStakesReliance).toBe("prohibited");
+      expect(certificate.explanation.details.some((d) => d.code === "ROW_ABSENT")).toBe(true);
     } finally {
       rmSync(projectRoot, { recursive: true, force: true });
     }

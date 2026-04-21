@@ -51,7 +51,7 @@ describe("assurance CLI enforce", () => {
                 join(minimalCi, "tools.json"),
                 "--db",
                 join(minimalCi, "ci-check.sqlite"),
-                "--no-truth-report",
+                "--no-human-report",
                 "--expect-lock",
                 badLock,
               ],

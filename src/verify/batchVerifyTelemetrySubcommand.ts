@@ -21,9 +21,17 @@ import { classifyWorkflowLineage } from "../funnel/workflowLineageClassify.js";
 import { postProductActivationEvent } from "../telemetry/postProductActivationEvent.js";
 import {
   CLI_EXITED_AFTER_ERROR,
-  emitVerifyWorkflowCliJsonAndExitByStatus,
+  emitOutcomeCertificateCliAndExitByStateRelation,
   runStandardVerifyWorkflowCliToTerminalResult,
 } from "../standardVerifyWorkflowCli.js";
+
+function terminalStatusFromCertificate(
+  c: import("../outcomeCertificate.js").OutcomeCertificateV1,
+): "complete" | "inconsistent" | "incomplete" {
+  if (c.stateRelation === "matches_expectations") return "complete";
+  if (c.stateRelation === "does_not_match") return "inconsistent";
+  return "incomplete";
+}
 
 function writeCliError(code: string, message: string): void {
   console.error(cliErrorEnvelope(code, formatOperationalMessage(message)));
@@ -64,7 +72,6 @@ export async function runBatchVerifyWithTelemetrySubcommand(
     throw e;
   }
 
-  const suppressTruthToStderr = parsedBatch.noTruthReport || parsedBatch.shareReportOrigin !== undefined;
   const batchBuildProfile = LICENSE_PREFLIGHT_ENABLED ? ("commercial" as const) : ("oss" as const);
   const batchWorkloadClass = classifyBatchVerifyWorkload({
     eventsPath: parsedBatch.eventsPath,
@@ -105,7 +112,7 @@ export async function runBatchVerifyWithTelemetrySubcommand(
     },
   };
   try {
-    const result = await runStandardVerifyWorkflowCliToTerminalResult({
+    const { certificate, workflowResult } = await runStandardVerifyWorkflowCliToTerminalResult({
       shareReportOrigin: parsedBatch.shareReportOrigin,
       runVerify: () =>
         verifyWorkflow({
@@ -114,14 +121,7 @@ export async function runBatchVerifyWithTelemetrySubcommand(
           registryPath: parsedBatch.registryPath,
           database: parsedBatch.database,
           verificationPolicy: parsedBatch.verificationPolicy,
-          ...(suppressTruthToStderr ?
-            { truthReport: () => {} }
-          : {
-              truthReport: (report: string) => {
-                process.stderr.write(`${report}\n`);
-                process.stderr.write(formatDistributionFooter());
-              },
-            }),
+          truthReport: () => {},
         }),
       maybeWriteBundle:
         parsedBatch.writeRunBundleDir === undefined
@@ -135,6 +135,10 @@ export async function runBatchVerifyWithTelemetrySubcommand(
               ),
       io: batchIo,
     });
+    if (!parsedBatch.noHumanReport && parsedBatch.shareReportOrigin === undefined) {
+      process.stderr.write(`${certificate.humanReport}\n${formatDistributionFooter()}\n`);
+    }
+    const terminalStatus = terminalStatusFromCertificate(certificate);
     await postProductActivationEvent({
       phase: "verify_outcome",
       run_id: batchActivationRunId,
@@ -143,12 +147,12 @@ export async function runBatchVerifyWithTelemetrySubcommand(
       workflow_lineage: batchLineage,
       subcommand: opts.telemetrySubcommand,
       build_profile: batchBuildProfile,
-      terminal_status: result.status,
+      terminal_status: terminalStatus,
     });
-    if (!parsedBatch.noTruthReport) {
+    if (!parsedBatch.noHumanReport) {
       await maybeEmitOssClaimTicketUrlToStderr({
         run_id: batchActivationRunId,
-        terminal_status: result.status,
+        terminal_status: terminalStatus,
         workload_class: batchWorkloadClass,
         subcommand: opts.telemetrySubcommand,
         build_profile: batchBuildProfile,
@@ -156,12 +160,12 @@ export async function runBatchVerifyWithTelemetrySubcommand(
     }
     await postVerifyOutcomeBeacon({
       runId: batchPreflight.runId,
-      terminal_status: result.status,
+      terminal_status: terminalStatus,
       workload_class: batchWorkloadClass,
       subcommand: opts.telemetrySubcommand,
     });
-    opts.stderrAppendBeforeStdout?.(result);
-    emitVerifyWorkflowCliJsonAndExitByStatus(result, batchIo);
+    opts.stderrAppendBeforeStdout?.(workflowResult);
+    emitOutcomeCertificateCliAndExitByStateRelation(certificate, batchIo);
   } catch (e) {
     if (e instanceof Error && e.message === CLI_EXITED_AFTER_ERROR) return;
     throw e;

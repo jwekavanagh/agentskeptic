@@ -42,8 +42,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     const { id } = await insertPublicVerificationReport(envelope);
     const origin = getCanonicalSiteOrigin();
     const url = `${origin.replace(/\/$/, "")}/r/${id}`;
-    await logFunnelEvent({ event: "report_share_created", metadata: { id, kind: envelope.kind } });
-    return NextResponse.json({ schemaVersion: 1, id, url }, { status: 201 });
+    const kind =
+      "schemaVersion" in envelope && envelope.schemaVersion === 2 ? "outcome_certificate_v2" : envelope.kind;
+    await logFunnelEvent({ event: "report_share_created", metadata: { id, kind } });
+    return NextResponse.json({ schemaVersion: 2, id, url }, { status: 201 });
   } catch (e) {
     const status = (e as Error & { status?: number }).status;
     if (status === 400) {

@@ -1,3 +1,5 @@
+import type { OutcomeCertificateV1 } from "../outcomeCertificate.js";
+
 const MAX_BODY_BYTES = 393216;
 
 export type ShareReportEnvelope =
@@ -13,6 +15,12 @@ export type ShareReportEnvelope =
       workflowDisplayId: string;
       quickReport: unknown;
       humanReportText: string;
+    }
+  | {
+      schemaVersion: 2;
+      certificate: OutcomeCertificateV1;
+      cliVersion?: string;
+      createdFrom?: string;
     };
 
 export type PostShareReportResult =
@@ -49,7 +57,11 @@ export async function postPublicVerificationReport(
   }
   try {
     const json = JSON.parse(text) as { schemaVersion?: number; id?: string; url?: string };
-    if (json.schemaVersion !== 1 || typeof json.id !== "string" || typeof json.url !== "string") {
+    if (
+      (json.schemaVersion !== 1 && json.schemaVersion !== 2) ||
+      typeof json.id !== "string" ||
+      typeof json.url !== "string"
+    ) {
       return { ok: false, status: res.status, bodySnippet: text.slice(0, 200) };
     }
     return { ok: true, id: json.id, url: json.url };

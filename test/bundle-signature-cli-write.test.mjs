@@ -60,7 +60,7 @@ describe("CLI signed run bundle", () => {
           registryPath,
           "--db",
           dbPath,
-          "--no-truth-report",
+          "--no-human-report",
           "--write-run-bundle",
           outDir,
           "--sign-ed25519-private-key",

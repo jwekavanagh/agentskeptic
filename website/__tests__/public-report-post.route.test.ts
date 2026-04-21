@@ -53,10 +53,27 @@ describe("POST /api/public/verification-reports", () => {
     expect(insert).not.toHaveBeenCalled();
   });
 
-  it("returns 201 with schemaVersion, id, url on valid workflow envelope", async () => {
+  it("returns 400 for legacy public-verification-report v1 envelope (POST is v2-only)", async () => {
+    const body = JSON.stringify({
+      schemaVersion: 1,
+      kind: "workflow",
+      workflowResult: { schemaVersion: 15, workflowId: "wf_x", status: "complete" },
+      truthReportText: "x",
+    });
+    const req = new NextRequest("http://localhost/api/public/verification-reports", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body,
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(400);
+    expect(insert).not.toHaveBeenCalled();
+  });
+
+  it("returns 201 with schemaVersion, id, url on valid v2 outcome-certificate envelope", async () => {
     const root = getRepoRoot();
     const raw = readFileSync(
-      join(root, "website", "src", "content", "embeddedReports", "langgraph-guide.v1.json"),
+      join(root, "website", "src", "content", "embeddedReports", "minimal-share-v2.json"),
       "utf8",
     );
     const req = new NextRequest("http://agentskeptic.com/api/public/verification-reports", {
@@ -70,7 +87,7 @@ describe("POST /api/public/verification-reports", () => {
     const res = await POST(req);
     expect(res.status).toBe(201);
     const json = (await res.json()) as { schemaVersion: number; id: string; url: string };
-    expect(json.schemaVersion).toBe(1);
+    expect(json.schemaVersion).toBe(2);
     expect(json.id).toBe("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
     expect(json.url).toBe("https://agentskeptic.com/r/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
     expect(insert).toHaveBeenCalled();

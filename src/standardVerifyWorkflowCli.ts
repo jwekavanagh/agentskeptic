@@ -4,11 +4,14 @@ import {
   cliErrorEnvelope,
   formatOperationalMessage,
 } from "./failureCatalog.js";
+import {
+  buildOutcomeCertificateFromWorkflowResult,
+  type OutcomeCertificateV1,
+} from "./outcomeCertificate.js";
 import { loadSchemaValidator } from "./schemaLoad.js";
 import { postPublicVerificationReport } from "./shareReport/postPublicVerificationReport.js";
 import { TruthLayerError } from "./truthLayerError.js";
 import type { WorkflowResult } from "./types.js";
-import { formatWorkflowTruthReportStruct } from "./workflowTruthReport.js";
 
 /**
  * Run batch verification and validate emitted WorkflowResult against schema.
@@ -29,6 +32,22 @@ export async function runBatchVerifyToValidatedResult(
   return result;
 }
 
+/** Validates engine `WorkflowResult`, builds public Outcome Certificate v1, validates certificate schema. */
+export async function runBatchVerifyToValidatedCertificate(
+  runVerify: () => Promise<WorkflowResult>,
+): Promise<{ workflowResult: WorkflowResult; certificate: OutcomeCertificateV1 }> {
+  const workflowResult = await runBatchVerifyToValidatedResult(runVerify);
+  const certificate = buildOutcomeCertificateFromWorkflowResult(workflowResult, "contract_sql");
+  const validateCert = loadSchemaValidator("outcome-certificate-v1");
+  if (!validateCert(certificate)) {
+    throw new TruthLayerError(
+      CLI_OPERATIONAL_CODES.WORKFLOW_RESULT_SCHEMA_INVALID,
+      JSON.stringify(validateCert.errors ?? []),
+    );
+  }
+  return { workflowResult, certificate };
+}
+
 export type StandardVerifyWorkflowCliIo = {
   consoleLog: (line: string) => void;
   stderrLine: (line: string) => void;
@@ -36,17 +55,25 @@ export type StandardVerifyWorkflowCliIo = {
 };
 
 /**
- * After `verifyWorkflow` has emitted the human truth report to stderr (unless suppressed),
- * print WorkflowResult JSON to stdout and exit with the same codes as batch `verify`.
+ * Print Outcome Certificate JSON to stdout and exit by `stateRelation` (same thresholds as legacy workflow status).
  */
+export function emitOutcomeCertificateCliAndExitByStateRelation(
+  certificate: OutcomeCertificateV1,
+  io: Pick<StandardVerifyWorkflowCliIo, "consoleLog" | "exit">,
+): void {
+  io.consoleLog(JSON.stringify(certificate));
+  if (certificate.stateRelation === "matches_expectations") io.exit(0);
+  if (certificate.stateRelation === "does_not_match") io.exit(1);
+  io.exit(2);
+}
+
+/** @internal Emit Outcome Certificate to stdout from an already-validated engine result (lock / bootstrap paths). */
 export function emitVerifyWorkflowCliJsonAndExitByStatus(
   result: WorkflowResult,
   io: Pick<StandardVerifyWorkflowCliIo, "consoleLog" | "exit">,
 ): void {
-  io.consoleLog(JSON.stringify(result));
-  if (result.status === "complete") io.exit(0);
-  else if (result.status === "inconsistent") io.exit(1);
-  else io.exit(2);
+  const certificate = buildOutcomeCertificateFromWorkflowResult(result, "contract_sql");
+  emitOutcomeCertificateCliAndExitByStateRelation(certificate, io);
 }
 
 const defaultIo: StandardVerifyWorkflowCliIo = {
@@ -76,7 +103,7 @@ function abortVerifyCli(
 }
 
 /**
- * Runs verify through bundle/share side effects and returns the terminal WorkflowResult.
+ * Runs verify through bundle/share side effects and returns the terminal Outcome Certificate.
  * On failure, writes CLI error, calls `io.exit(3)`, then throws `CLI_EXITED_AFTER_ERROR` if the process continues.
  */
 export async function runStandardVerifyWorkflowCliToTerminalResult(options: {
@@ -85,15 +112,18 @@ export async function runStandardVerifyWorkflowCliToTerminalResult(options: {
   /** When set, human stderr is deferred until after a successful POST to this origin. */
   shareReportOrigin?: string;
   io?: Partial<StandardVerifyWorkflowCliIo>;
-}): Promise<WorkflowResult> {
+}): Promise<{ certificate: OutcomeCertificateV1; workflowResult: WorkflowResult }> {
   const io = { ...defaultIo, ...options.io };
   const writeCliError = (code: string, message: string): void => {
     io.stderrLine(cliErrorEnvelope(code, message));
   };
 
-  let result: WorkflowResult;
+  let certificate: OutcomeCertificateV1;
+  let workflowResult: WorkflowResult;
   try {
-    result = await runBatchVerifyToValidatedResult(options.runVerify);
+    const pair = await runBatchVerifyToValidatedCertificate(options.runVerify);
+    workflowResult = pair.workflowResult;
+    certificate = pair.certificate;
   } catch (e) {
     if (e instanceof TruthLayerError) {
       abortVerifyCli(io, writeCliError, e.code, e.message);
@@ -109,7 +139,7 @@ export async function runStandardVerifyWorkflowCliToTerminalResult(options: {
 
   if (options.maybeWriteBundle !== undefined) {
     try {
-      options.maybeWriteBundle(result);
+      options.maybeWriteBundle(workflowResult);
     } catch (e) {
       if (e instanceof TruthLayerError) {
         abortVerifyCli(io, writeCliError, e.code, e.message);
@@ -126,12 +156,9 @@ export async function runStandardVerifyWorkflowCliToTerminalResult(options: {
 
   const origin = options.shareReportOrigin;
   if (origin !== undefined) {
-    const truthReportText = formatWorkflowTruthReportStruct(result.workflowTruthReport);
     const shareRes = await postPublicVerificationReport(origin, {
-      schemaVersion: 1,
-      kind: "workflow",
-      workflowResult: result,
-      truthReportText,
+      schemaVersion: 2,
+      certificate,
     });
     if (!shareRes.ok) {
       abortVerifyCli(
@@ -143,10 +170,10 @@ export async function runStandardVerifyWorkflowCliToTerminalResult(options: {
         ),
       );
     }
-    io.stderrLine(`${truthReportText}\n${formatDistributionFooter()}`);
+    io.stderrLine(`${certificate.humanReport}\n${formatDistributionFooter()}`);
   }
 
-  return result;
+  return { certificate, workflowResult };
 }
 
 /**
@@ -162,8 +189,8 @@ export async function runStandardVerifyWorkflowCliFlow(options: {
 }): Promise<void> {
   const io = { ...defaultIo, ...options.io };
   try {
-    const result = await runStandardVerifyWorkflowCliToTerminalResult({ ...options, io });
-    emitVerifyWorkflowCliJsonAndExitByStatus(result, io);
+    const { certificate } = await runStandardVerifyWorkflowCliToTerminalResult({ ...options, io });
+    emitOutcomeCertificateCliAndExitByStateRelation(certificate, io);
   } catch (e) {
     if (e instanceof Error && e.message === CLI_EXITED_AFTER_ERROR) return;
     throw e;

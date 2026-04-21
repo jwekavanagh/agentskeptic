@@ -1,5 +1,7 @@
 # AgentSkeptic CLI (MVP) — Single Source of Truth
 
+**Integrators — public verification artifact:** Outcome Certificate v1 is defined in [`outcome-certificate-normative.md`](outcome-certificate-normative.md); usage and CLI contracts in [`outcome-certificate-integrator.md`](outcome-certificate-integrator.md). This document is the **engine / wire / reconciliation** SSOT (`WorkflowResult`, NDJSON, registry SQL semantics).
+
 **Quick Verify (zero-config inference)** is specified in [`quick-verify-normative.md`](quick-verify-normative.md). **Bootstrap pack** (`agentskeptic bootstrap`) is specified in [`bootstrap-pack-normative.md`](bootstrap-pack-normative.md). Product narrative, audiences, and documentation ownership for the wedge live in [`verification-product-ssot.md`](verification-product-ssot.md). This document remains the SSOT for **Advanced verification** (NDJSON events, `tools.json` registry, `WorkflowResult`).
 
 This document is the authoritative specification for the MVP. The product verifies **external SQL state** (**observed**) against **expectations** derived from **declared tool parameters** and a **tool registry**—**not** proof that a tool executed, and **not** a logging or tracing system. Product positioning and non-guarantees: [`verification-product-ssot.md`](verification-product-ssot.md).
@@ -270,7 +272,7 @@ When **`workflowId === wf_plan_transition`**, **`renderRunTrustPanelHtml`** uses
 
 ```text
 agentskeptic plan-transition --repo <dir> --before <ref> --after <ref> --plan <path>
-  [--workflow-id <id>] [--no-truth-report] [--write-run-bundle <dir>]
+  [--workflow-id <id>] [--no-human-report] [--write-run-bundle <dir>]
 ```
 
 Exit codes match batch verify (**0** / **1** / **2** / **3**). Operational codes include **`PLAN_TRANSITION_*`** and **`PLAN_VALIDATION_*`** (see **`cliOperationalCodes.ts`** / **`operationalDisposition.ts`**).
@@ -389,7 +391,7 @@ node dist/cli.js --workflow-id <id> --events <path> --registry <path> --postgres
 
 **Default integrator path:** **`agentskeptic crossing`** (bootstrap-led or pack-led) runs bootstrap when needed, then the **same** integrator-owned final phase as this subcommand—full stdout/stderr/exit contract: [`crossing-normative.md`](crossing-normative.md).
 
-**Command:** `agentskeptic verify-integrator-owned` with the **same** contract flags as batch replay (`--workflow-id`, `--events`, `--registry`, exactly one of `--db` / `--postgres-url`, optional **`--no-truth-report`**, **`--share-report-origin`**, **`--write-run-bundle`**, verification policy flags, etc.).
+**Command:** `agentskeptic verify-integrator-owned` with the **same** contract flags as batch replay (`--workflow-id`, `--events`, `--registry`, exactly one of `--db` / `--postgres-url`, optional **`--no-human-report`**, **`--share-report-origin`**, **`--write-run-bundle`**, verification policy flags, etc.).
 
 **Gate (SQLite only):** After the same license preflight as batch verify, the CLI classifies paths with **`classifyBatchVerifyWorkload`** (`src/commercial/verifyWorkloadClassify.ts`). If the result is **`bundled_examples`**, the CLI writes a short **stderr** message containing **`INTEGRATOR_OWNED_GATE`** and **`bundled_examples`**, then exits **2** **without** running **`verifyWorkflow`** and **without** posting **`verify_started`** / **`verify_outcome`** product-activation beacons. Use standard batch verify for demos on shipped `examples/*` triples; use **`verify-integrator-owned`** when asserting integrator-owned paths (see [`docs/first-run-integration.md`](first-run-integration.md)). Postgres invocations are always **`non_bundled`** for this classifier and are never blocked by the gate.
 
@@ -409,38 +411,38 @@ node dist/cli.js --workflow-id <id> --events <path> --registry <path> --postgres
 
 **`--help` / `-h`:** Prints usage to **stdout** and exits **0** (not a verification run).
 
-**I/O order (CLI — verdict paths 0/1/2):** **`verifyWorkflow`** emits the human report via default **`truthReport`** to **stderr** first, then the CLI writes **stdout**. So: **stderr (human) → stdout (JSON)**. If the CLI is invoked with **`--no-truth-report`**, the CLI passes a no-op **`truthReport`** into **`verifyWorkflow`**: for exits **0–2**, **stderr** is **empty** (no human report); **stdout** is unchanged (still one **`WorkflowResult`** JSON line). Exit **3** is unchanged (see [CLI operational errors](#cli-operational-errors)).
+**I/O order (CLI — verdict paths 0/1/2):** **`verifyWorkflow`** may emit structured truth to an internal **`truthReport`** callback; the **integrator-facing** contract is **stderr (`certificate.humanReport` + optional distribution footer) → stdout (Outcome Certificate JSON)** after the engine completes. If the CLI is invoked with **`--no-human-report`**, **stderr** is **empty** for exits **0–2** (no human report and no footer). **stdout** is always one **Outcome Certificate v1** JSON line on verdict exits **0–2**. Exit **3** is unchanged (see [CLI operational errors](#cli-operational-errors)).
 
-<!-- ci:normative-workflow-result-schemaVersion:15 -->
-<!-- ci:workflow-result-normative-prose:start -->
-**stdout:** Single JSON object matching `schemas/workflow-result.schema.json` (`schemaVersion` **`15`**; required **`verificationRunContext`** digest; required **`workflowTruthReport`** subtree validated by [`schemas/workflow-truth-report.schema.json`](../schemas/workflow-truth-report.schema.json) — **SSOT** for structured truth JSON, including required **`failureAnalysis`** (`null` when complete, object when not — see [Actionable failure classification](#actionable-failure-classification-normative)); required **`correctnessDefinition`** (`null` when complete, object when not — see [Correctness definition](correctness-definition-normative.md)); required **`executionPathFindings`** and **`executionPathSummary`** (see [Execution path findings](#execution-path-findings-normative)); required **`verificationPolicy`** `{ consistencyMode, verificationWindowMs, pollIntervalMs }`; required **`eventSequenceIntegrity`**; required **`runLevelReasons`** (**`runLevelCodes` is not a property** on v15 — derive a parallel code list with `runLevelReasons.map((r) => r.code)` if needed); each step includes **`intendedEffect`** `{ narrative }`, **`observedExecution`** `{ paramsCanonical }` (from evaluated `tool_observed.params` via `canonicalJsonForParams`), **`repeatObservationCount`**, and **`evaluatedObservationOrdinal`**; each non-**`verified`** step includes required **`failureDiagnostic`** — see [Verification diagnostics](#verification-diagnostics-normative)). The aggregated engine shape before finalization is `schemas/workflow-engine-result.schema.json` (`schemaVersion` **8**, also without **`runLevelCodes`**); see [Structured workflow truth report](#structured-workflow-truth-report-normative) and [Failure analysis](#failure-analysis-normative).
+<!-- ci:normative-outcome-certificate-schemaVersion:1 -->
+<!-- ci:outcome-certificate-normative-prose:start -->
+**stdout:** Single JSON object matching [`schemas/outcome-certificate-v1.schema.json`](../schemas/outcome-certificate-v1.schema.json) (**`schemaVersion` 1**). Required fields: **`workflowId`**, **`runKind`** (`contract_sql` for batch replay, `quick_preview` for Quick Verify), **`stateRelation`** (`matches_expectations` \| `does_not_match` \| `not_established`), **`highStakesReliance`** (`permitted` \| `prohibited`) with mandatory **`relianceRationale`**, **`intentSummary`**, **`explanation`** (`headline` + `details[]` with stable `code` / `message`), **`steps`**, and **`humanReport`**. Product semantics and derivation table: [`outcome-certificate-normative.md`](outcome-certificate-normative.md). The engine still materializes an internal **`WorkflowResult`** (`schemaVersion` **15**) for reconciliation and bundles; that shape is **not** the integrator stdout contract.
 
 **Verification policy (CLI):** Default is **`strong`** (single read per check). For **`eventual`**, pass **`--consistency eventual`** plus required **`--verification-window-ms`** and **`--poll-interval-ms`** (integers ≥ 1, **`pollIntervalMs` ≤ `verificationWindowMs`**). With **`strong`**, do not pass the millisecond flags. See [Verification policy (normative)](#verification-policy-normative).
 
-**stderr (verdict paths):** Unless **`--no-truth-report`** is set, one **human truth report** per verification (same text as `formatWorkflowTruthReport`); see [Human truth report](#human-truth-report).
+**stderr (verdict paths):** Unless **`--no-human-report`** is set, **`certificate.humanReport`** (same bytes as the certificate field) followed by the distribution footer from **`formatDistributionFooter()`**; see [Human truth report](#human-truth-report).
 
-**Distribution footer (batch verify + quick):** After that human report (batch) or after the Quick Verify human block (quick), the CLI appends several stderr lines from **`formatDistributionFooter()`** in **`src/publicDistribution.generated.ts`** (generated by **`npm run sync:public-product-anchors`** from **`config/discovery-acquisition.json`** `cliFollowupLines`): canonical acquisition URL (`productionCanonicalOrigin` + acquisition slug), **`/integrate`**, site origin reminder, then a final line pointing at the public distribution SSOT on GitHub. With **`--no-truth-report`**, batch verify leaves stderr empty (no report and no footer). Exit **3** behavior is unchanged.
+**Distribution footer (batch verify + quick):** After **`humanReport`**, the CLI appends several stderr lines from **`formatDistributionFooter()`** in **`src/publicDistribution.generated.ts`** (generated by **`npm run sync:public-product-anchors`** from **`config/discovery-acquisition.json`** `cliFollowupLines`): canonical acquisition URL (`productionCanonicalOrigin` + acquisition slug), **`/integrate`**, site origin reminder, then a final line pointing at the public distribution SSOT on GitHub. With **`--no-human-report`**, batch verify leaves stderr empty (no report and no footer). Exit **3** behavior is unchanged.
 
 ### CI workflow truth contract (Postgres CLI)
 
-This subsection is **normative** for CI and for any automation that treats **`agentskeptic`** as the sole machine-facing verification surface. The **only** structured artifacts for workflow truth from the CLI are:
+This subsection is **normative** for CI and for any automation that treats **`agentskeptic`** as the sole machine-facing verification surface. The **only** structured artifacts for verification from the CLI are:
 
-- **Exits 0–2:** one JSON object on **stdout** matching **`schemas/workflow-result.schema.json`** (see **stdout** above).
+- **Exits 0–2:** one JSON object on **stdout** matching **`schemas/outcome-certificate-v1.schema.json`** (see **stdout** above).
 - **Exit 3:** **stdout** empty; **stderr** exactly one JSON line with **`kind`:** **`execution_truth_layer_error`** (see [CLI operational errors](#cli-operational-errors)).
 
-There is **no** separate CI-only report format. Integrators should parse **stdout** for verdicts **0–2** and **stderr** for exit **3**, not the human truth report text.
+There is **no** separate CI-only report format. Integrators should parse **stdout** for verdicts **0–2** and **stderr** for exit **3**, not the human report text when **`--no-human-report`** is used.
 
 **Environment:** **`POSTGRES_VERIFICATION_URL`** must be set to a **`verifier_ro`**-capable URL after **`scripts/pg-ci-init.mjs`** (or equivalent) has created roles and seeded tables. **`examples/events.ndjson`** and **`examples/tools.json`** are the event and registry paths.
 
-**`--no-truth-report`:** For the cases below that verify exits **0** and **1**, the CLI **must** be invoked with **`--no-truth-report`** so **stderr** is **empty** and automation does not need to skip human lines.
+**`--no-human-report`:** For the cases below that verify exits **0** and **1**, the CLI **must** be invoked with **`--no-human-report`** so **stderr** is **empty** and automation does not need to skip human lines.
 
 **Case 1 — Postgres happy path (exit 0)**
 
 | Observable | Required |
 |------------|----------|
-| argv | `--workflow-id wf_complete --events <examples/events.ndjson> --registry <examples/tools.json> --postgres-url <POSTGRES_VERIFICATION_URL> --no-truth-report` |
+| argv | `--workflow-id wf_complete --events <examples/events.ndjson> --registry <examples/tools.json> --postgres-url <POSTGRES_VERIFICATION_URL> --no-human-report` |
 | Exit code | **0** |
-| **stdout** | One line; valid **`WorkflowResult`**; **`schemaVersion`** **15**; required **`verificationRunContext`**; required **`workflowTruthReport`** with **`failureAnalysis`** **`null`** and **`correctnessDefinition`** **`null`**; **`workflowId`** **`wf_complete`**; **`status`** **`complete`**; first step **`status`** **`verified`**; **`runLevelReasons`** **`[]`** (no **`runLevelCodes`** key) |
+| **stdout** | One line; valid **Outcome Certificate v1**; **`schemaVersion`** **1**; **`workflowId`** **`wf_complete`**; **`runKind`** **`contract_sql`**; **`stateRelation`** **`matches_expectations`**; **`highStakesReliance`** **`permitted`**; non-empty **`steps`** for this fixture |
 | **stderr** | Empty |
 
 **Case 2 — Postgres determinate failure (exit 1)**
@@ -449,7 +451,7 @@ There is **no** separate CI-only report format. Integrators should parse **stdou
 |------------|----------|
 | argv | Same as case 1 with **`--workflow-id wf_missing`** |
 | Exit code | **1** |
-| **stdout** | One line; valid **`WorkflowResult`**; **`workflowId`** **`wf_missing`**; **`status`** **`inconsistent`**; first step **`status`** **`missing`**; first step first reason **`code`** **`ROW_ABSENT`** |
+| **stdout** | One line; valid **Outcome Certificate v1**; **`workflowId`** **`wf_missing`**; **`stateRelation`** **`does_not_match`**; **`highStakesReliance`** **`prohibited`** |
 | **stderr** | Empty |
 
 **Case 3 — Operational failure before verification (exit 3)**
@@ -461,9 +463,9 @@ There is **no** separate CI-only report format. Integrators should parse **stdou
 | **stdout** | Empty |
 | **stderr** | One line; JSON with **`schemaVersion`** **2**, **`kind`** **`execution_truth_layer_error`**, **`code`** **`CLI_USAGE`**, **`message`** non-empty string length ≤ **2048**, required **`failureDiagnosis`** (`summary`, **`primaryOrigin`**, **`confidence`**, **`evidence`**, **`actionableFailure`**) — see [`schemas/cli-error-envelope.schema.json`](../schemas/cli-error-envelope.schema.json) |
 
-**Enforcement:** **`test/ci-workflow-truth-postgres-contract.test.mjs`** implements these three cases; **`npm run test:workflow-truth-contract`** runs that file alone. **`npm run test:ci`** runs the full CI suite (build, Vitest, SQLite `node:test` files, **`npm run test:postgres`** which runs **`scripts/pg-ci-init.mjs`** then all Postgres-backed `node:test` files including this contract, then Playwright for the Debug Console). GitHub Actions runs **`npm run test:ci`** after **`npm ci`**. Local **`npm test`** additionally runs **`scripts/first-run.mjs`** for the bundled demo smoke.
+**Enforcement:** **`test/ci-workflow-truth-postgres-contract.test.mjs`** implements these cases (including relational **`wf_rel_pg`** and operational **`CLI_USAGE`**); **`npm run test:workflow-truth-contract`** runs that file alone. **`npm run test:ci`** runs the full CI suite (build, Vitest, SQLite `node:test` files, **`npm run test:postgres`** which runs **`scripts/pg-ci-init.mjs`** then all Postgres-backed `node:test` files including this contract, then Playwright for the Debug Console). GitHub Actions runs **`npm run test:ci`** after **`npm ci`**. Local **`npm test`** additionally runs **`scripts/first-run.mjs`** for the bundled demo smoke.
 
-<!-- ci:workflow-result-normative-prose:end -->
+<!-- ci:outcome-certificate-normative-prose:end -->
 
 ### CLI operational errors
 
@@ -479,7 +481,7 @@ When the CLI exits **3**, **stderr** is exactly **one** UTF-8 line: a JSON objec
 
 ### Share report origin (`--share-report-origin`)
 
-Optional on **batch verify** and **`quick`** (non-enforce): **`--share-report-origin <origin>`** where **`<origin>`** is an **`https:`** URL with no path (e.g. **`https://agentskeptic.com`**). When set, the CLI **does not** write the human truth report to stderr during the engine run; after verification succeeds and **`WorkflowResult`** / **`QuickVerifyReport`** validates, the CLI **POST**s the share envelope to **`{origin}/api/public/verification-reports`**. On **HTTP 201**, the CLI then writes the human report and distribution footer to stderr, then one JSON line to stdout, then exits **0 / 1 / 2** as usual. On POST failure (non-201, network error, or oversize), the CLI exits **3** with **stdout empty** and stderr exactly one **`cliErrorEnvelope`** line with **`code` `SHARE_REPORT_FAILED`**; **`message`** includes **`share_report_origin=`** and the origin host. Full contract: **[`docs/shareable-verification-reports.md`](shareable-verification-reports.md)**.
+Optional on **batch verify** and **`quick`** (non-enforce): **`--share-report-origin <origin>`** where **`<origin>`** is an **`https:`** URL with no path (e.g. **`https://agentskeptic.com`**). When set, the CLI **does not** write the human report to stderr during the engine run; after verification succeeds and the **Outcome Certificate** validates, the CLI **POST**s the **v2** share envelope to **`{origin}/api/public/verification-reports`**. On **HTTP 201**, the CLI then writes **`certificate.humanReport`** and distribution footer to stderr, then one **Outcome Certificate** JSON line to stdout, then exits **0 / 1 / 2** as usual. On POST failure (non-201, network error, or oversize), the CLI exits **3** with **stdout empty** and stderr exactly one **`cliErrorEnvelope`** line with **`code` `SHARE_REPORT_FAILED`**; **`message`** includes **`share_report_origin=`** and the origin host. Full contract: **[`docs/shareable-verification-reports.md`](shareable-verification-reports.md)**.
 
 ### Commercial license preflight (commercial CLI build)
 
@@ -507,7 +509,7 @@ This section is **normative**: literals and line shape match `formatWorkflowTrut
 **Why this shape**
 
 - **Structured SSOT, one human rendering:** The canonical machine shape is **`workflowTruthReport`** on emitted **`WorkflowResult`** (see [Structured workflow truth report](#structured-workflow-truth-report-normative)). CLI, `verifyWorkflow`, and `withWorkflowVerification` write the human report via optional **`truthReport?: (report: string) => void`**; the default appends one newline after the string to **stderr** (`process.stderr.write`). Same text surfaces—no parallel logic.
-- **stderr human / stdout JSON:** Automation keeps a single JSON record on stdout (`jq`, pipes); operators read the verdict on stderr. The CLI flag **`--no-truth-report`** yields empty stderr on verdict exits **0–2** so logs and parsers need not skip the human report (see [Batch and CLI (replay)](#batch-and-cli-replay)).
+- **stderr human / stdout JSON:** Automation keeps a single JSON record on stdout (`jq`, pipes); operators read the verdict on stderr. The CLI flag **`--no-human-report`** yields empty stderr on verdict exits **0–2** so logs and parsers need not skip the human report (see [Batch and CLI (replay)](#batch-and-cli-replay)).
 - **Default `truthReport` to stderr:** Gives a clear truth signal without extra configuration; silent tests pass `truthReport: () => {}`.
 - **Default `logStep` no-op:** Removes the old default of one JSON object per step on stderr, which duplicated `WorkflowResult` and conflicted with the human report.
 - **Fixed `trust:` lines:** Most `trust:` lines map to one `WorkflowStatus` from `aggregate.ts`, except the **eventual-window uncertainty** line which applies when `workflow_status` is `incomplete` under the narrow rule in the grammar below.
@@ -1462,8 +1464,8 @@ Automation should use **`agentskeptic enforce batch`** or **`agentskeptic enforc
 | Exit | stdout | stderr |
 |------|--------|--------|
 | **3** | empty | one line JSON `cli-error-envelope` only |
-| **4** (lock mismatch only) | one line **`JSON.stringify(result)`** + newline (full `WorkflowResult`, same as verdict **0–2**) | content produced during `verifyWorkflow` **then** one **additional** final line: JSON envelope with **`VERIFICATION_OUTPUT_LOCK_MISMATCH`** (if **`--no-truth-report`**, stderr is **only** that envelope line) |
-| **0 / 1 / 2** | one line **`JSON.stringify(result)`** + newline | same as bare batch for **`--no-truth-report`** and human report behavior |
+| **4** (lock mismatch only) | one line **`JSON.stringify(result)`** + newline (full `WorkflowResult`, same as verdict **0–2**) | content produced during `verifyWorkflow` **then** one **additional** final line: JSON envelope with **`VERIFICATION_OUTPUT_LOCK_MISMATCH`** (if **`--no-human-report`**, stderr is **only** that envelope line) |
+| **0 / 1 / 2** | one line **`JSON.stringify(result)`** + newline | same as bare batch for **`--no-human-report`** and human report behavior |
 
 **`enforce quick`** matches bare quick (`runQuickSubcommand`):
 
@@ -1475,7 +1477,7 @@ Automation should use **`agentskeptic enforce batch`** or **`agentskeptic enforc
 
 **Lock file bytes (`--output-lock`):** **`stableStringify(lockObject) + "\n"`**, UTF-8; object must validate as **`ci-lock-v1`**.
 
-Substrings for contract tests: **compare-only**, **batch verify**, **enforce batch**, **enforce quick**, **JSON.stringify(result)**, **stableStringify(report)**, **VERIFICATION_OUTPUT_LOCK_MISMATCH**, **`--no-truth-report`**.
+Substrings for contract tests: **compare-only**, **batch verify**, **enforce batch**, **enforce quick**, **JSON.stringify(result)**, **stableStringify(report)**, **VERIFICATION_OUTPUT_LOCK_MISMATCH**, **`--no-human-report`**.
 
 <!-- etl:enforce-stream-contract:end -->
 

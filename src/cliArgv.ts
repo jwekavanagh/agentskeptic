@@ -101,7 +101,7 @@ export type ParsedBatchVerifyCli = {
   registryPath: string;
   database: VerificationDatabase;
   verificationPolicy: VerificationPolicy;
-  noTruthReport: boolean;
+  noHumanReport: boolean;
   writeRunBundleDir: string | undefined;
   signPrivateKeyPath: string | undefined;
   shareReportOrigin: string | undefined;
@@ -134,7 +134,7 @@ export function parseBatchVerifyCliArgs(args: string[]): ParsedBatchVerifyCli {
   }
 
   const verificationPolicy = verificationPolicyFromCliArgs(args);
-  const noTruthReport = args.includes("--no-truth-report");
+  const noHumanReport = args.includes("--no-human-report");
   const writeRunBundleDir = argValue(args, "--write-run-bundle");
   const signPrivateKeyPath = argValue(args, "--sign-ed25519-private-key");
   if (signPrivateKeyPath !== undefined && writeRunBundleDir === undefined) {
@@ -152,7 +152,7 @@ export function parseBatchVerifyCliArgs(args: string[]): ParsedBatchVerifyCli {
       ? { kind: "postgres", connectionString: postgresUrl }
       : { kind: "sqlite", path: dbPath! },
     verificationPolicy,
-    noTruthReport,
+    noHumanReport,
     writeRunBundleDir,
     signPrivateKeyPath,
     shareReportOrigin: parseOptionalShareReportOrigin(args),
@@ -167,6 +167,7 @@ export type ParsedQuickCli = {
   dbPath: string | undefined;
   postgresUrl: string | undefined;
   shareReportOrigin: string | undefined;
+  noHumanReport: boolean;
 };
 
 /**
@@ -198,5 +199,6 @@ export function parseQuickCliArgs(args: string[]): ParsedQuickCli {
     dbPath,
     postgresUrl,
     shareReportOrigin: parseOptionalShareReportOrigin(args),
+    noHumanReport: args.includes("--no-human-report"),
   };
 }

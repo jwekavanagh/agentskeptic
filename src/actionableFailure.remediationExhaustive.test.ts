@@ -306,7 +306,7 @@ describe("operational success: no stderr envelope (Module A negative)", () => {
     rmSync(dir, { recursive: true, force: true });
   });
 
-  it("wf_complete --no-truth-report: stdout valid, failureAnalysis null, no execution_truth_layer_error", () => {
+  it("wf_complete --no-human-report: stdout Outcome Certificate valid, no execution_truth_layer_error", () => {
     const cliJs = join(root, "dist", "cli.js");
     const eventsPath = join(root, "examples", "events.ndjson");
     const registryPath = join(root, "examples", "tools.json");
@@ -323,17 +323,17 @@ describe("operational success: no stderr envelope (Module A negative)", () => {
         registryPath,
         "--db",
         dbPath,
-        "--no-truth-report",
+        "--no-human-report",
       ],
       { encoding: "utf8", cwd: root },
     );
     expect(r.status).toBe(0);
     expect(r.stderr).toBe("");
-    const parsed = JSON.parse(r.stdout.trim()) as WorkflowResult;
-    const validateResult = loadSchemaValidator("workflow-result");
+    const parsed = JSON.parse(r.stdout.trim()) as Record<string, unknown>;
+    const validateResult = loadSchemaValidator("outcome-certificate-v1");
     expect(validateResult(parsed)).toBe(true);
     expect(parsed.workflowId).toBe("wf_complete");
-    expect(parsed.workflowTruthReport.failureAnalysis).toBeNull();
+    expect(parsed.stateRelation).toBe("matches_expectations");
     expect(r.stdout).not.toContain("execution_truth_layer_error");
   });
 });

@@ -1,13 +1,17 @@
-import { verifyWorkflow, loadSchemaValidator } from "agentskeptic";
+import {
+  verifyWorkflow,
+  loadSchemaValidator,
+  buildOutcomeCertificateFromWorkflowResult,
+} from "agentskeptic";
 import type { DemoScenarioId } from "./demoScenarioIds";
 import { DemoFixturesMissingError, resolveRepoExamplesPaths } from "./resolveRepoExamples";
 
-const validateWorkflowResult = loadSchemaValidator("workflow-result");
+const validateCertificate = loadSchemaValidator("outcome-certificate-v1");
 
 export class DemoResultSchemaMismatchError extends Error {
   readonly code = "DEMO_RESULT_SCHEMA_MISMATCH" as const;
   constructor() {
-    super("Emitted workflow result failed JSON Schema");
+    super("Emitted outcome certificate failed JSON Schema");
     this.name = "DemoResultSchemaMismatchError";
   }
 }
@@ -17,8 +21,8 @@ export class DemoResultSchemaMismatchError extends Error {
  */
 export async function runDemoVerifyScenario(scenarioId: DemoScenarioId): Promise<{
   scenarioId: DemoScenarioId;
-  workflowResult: unknown;
-  truthReportText: string;
+  certificate: unknown;
+  humanReport: string;
 }> {
   let paths;
   try {
@@ -28,7 +32,6 @@ export async function runDemoVerifyScenario(scenarioId: DemoScenarioId): Promise
     throw e;
   }
 
-  let truthReportText = "";
   let workflowResult;
   try {
     workflowResult = await verifyWorkflow({
@@ -37,23 +40,22 @@ export async function runDemoVerifyScenario(scenarioId: DemoScenarioId): Promise
       registryPath: paths.toolsJson,
       database: { kind: "sqlite", path: paths.demoDb },
       logStep: () => {},
-      truthReport: (s: string) => {
-        truthReportText = s;
-      },
+      truthReport: () => {},
     });
   } catch {
     throw new DemoEngineFailedError();
   }
 
-  const serialized: unknown = JSON.parse(JSON.stringify(workflowResult));
-  if (!validateWorkflowResult(serialized)) {
+  const certificate = buildOutcomeCertificateFromWorkflowResult(workflowResult, "contract_sql");
+  const serialized: unknown = JSON.parse(JSON.stringify(certificate));
+  if (!validateCertificate(serialized)) {
     throw new DemoResultSchemaMismatchError();
   }
 
   return {
     scenarioId,
-    workflowResult: serialized,
-    truthReportText,
+    certificate: serialized,
+    humanReport: certificate.humanReport,
   };
 }
 

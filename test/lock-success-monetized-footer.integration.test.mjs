@@ -41,7 +41,7 @@ describe("lock success monetized boundary footers", () => {
           join(root, "examples", "tools.json"),
           "--db",
           dbPath,
-          "--no-truth-report",
+          "--no-human-report",
           "--output-lock",
           lockPath,
         ],

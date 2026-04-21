@@ -117,8 +117,8 @@ test("consumer E2E: verifyAgentskeptic scenarios via packed tarball", async () =
     writeFileSync(join(asDir, "events.ndjson"), `${JSON.stringify(eventOk)}\n`);
 
     const runnerA = `import { verifyAgentskeptic } from 'agentskeptic';
-const { ok, result } = await verifyAgentskeptic({ workflowId: 'e2e_ok', databaseUrl: 'app.db' });
-if (result.status !== 'complete' || ok !== true || ok !== (result.status === 'complete')) process.exit(2);
+const certificate = await verifyAgentskeptic({ workflowId: 'e2e_ok', databaseUrl: 'app.db' });
+if (certificate.stateRelation !== 'matches_expectations' || certificate.highStakesReliance !== 'permitted') process.exit(2);
 process.exit(0);
 `;
     writeFileSync(join(consumerDir, "run-a.mjs"), runnerA);
@@ -137,9 +137,9 @@ process.exit(0);
     writeFileSync(join(asDir, "events.ndjson"), `${JSON.stringify(eventBad)}\n`);
 
     const runnerB = `import { verifyAgentskeptic } from 'agentskeptic';
-const { ok, result } = await verifyAgentskeptic({ workflowId: 'e2e_bad', databaseUrl: 'app.db' });
-if (result.status !== 'inconsistent' || ok !== false) process.exit(3);
-if (result.steps[0]?.status !== 'missing' || result.steps[0]?.reasons?.[0]?.code !== 'ROW_ABSENT') process.exit(4);
+const certificate = await verifyAgentskeptic({ workflowId: 'e2e_bad', databaseUrl: 'app.db' });
+if (certificate.stateRelation !== 'does_not_match' || certificate.highStakesReliance !== 'prohibited') process.exit(3);
+if (!certificate.explanation.details.some((d) => d.code === 'ROW_ABSENT')) process.exit(4);
 process.exit(0);
 `;
     writeFileSync(join(consumerDir, "run-b.mjs"), runnerB);

@@ -41,7 +41,7 @@ describe("registry-draft outcome chain", () => {
 
       const r = spawnSync(
         process.execPath,
-        [cliJs, "quick", "--input", inPath, "--db", dbPath, "--export-registry", exportReg, "--no-truth-report"],
+        [cliJs, "quick", "--input", inPath, "--db", dbPath, "--export-registry", exportReg, "--no-human-report"],
         {
           encoding: "utf8",
           cwd: root,

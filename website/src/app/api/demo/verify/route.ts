@@ -62,8 +62,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({
       ok: true as const,
       scenarioId: out.scenarioId,
-      workflowResult: out.workflowResult,
-      truthReportText: out.truthReportText,
+      certificate: out.certificate,
+      humanReport: out.humanReport,
     });
   } catch (e) {
     if (e instanceof DemoFixturesMissingError) {

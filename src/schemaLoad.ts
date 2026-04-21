@@ -83,6 +83,8 @@ export type SchemaValidatorName =
   | "assurance-manifest-v1"
   | "assurance-run-report-v1"
   | "public-verification-report-v1"
+  | "public-verification-report-v2"
+  | "outcome-certificate-v1"
   | "bootstrap-pack-input-v1"
   | "openai-function-tool-call-item-v1";
 
@@ -181,6 +183,11 @@ export function loadSchemaValidator(name: SchemaValidatorName): ValidateFunction
       compileSchemaFile("workflow-result", "workflow-result.schema.json");
       compileSchemaFile("quick-verify-report", "quick-verify-report.schema.json");
       return compileSchemaFile(name, "public-verification-report-v1.schema.json");
+    case "outcome-certificate-v1":
+      return compileSchemaFile(name, "outcome-certificate-v1.schema.json");
+    case "public-verification-report-v2":
+      compileSchemaFile("outcome-certificate-v1", "outcome-certificate-v1.schema.json");
+      return compileSchemaFile(name, "public-verification-report-v2.schema.json");
     case "openai-function-tool-call-item-v1":
       return compileSchemaFile(name, "openai-function-tool-call-item-v1.schema.json");
     case "bootstrap-pack-input-v1":

@@ -51,7 +51,7 @@ describe("enforce OSS forbidden", () => {
       join(root, "examples", "tools.json"),
       "--db",
       join(root, "examples", "demo.db"),
-      "--no-truth-report",
+      "--no-human-report",
     ]);
     assert.equal(r.status, 3);
     assert.equal(r.stdout, "");
@@ -88,7 +88,7 @@ describe("enforce OSS forbidden", () => {
       join(root, "examples", "tools.json"),
       "--db",
       join(root, "examples", "demo.db"),
-      "--no-truth-report",
+      "--no-human-report",
       "--expect-lock",
       join(root, "test", "fixtures", "ci-enforcement", "wf_complete.ci-lock-v1.json"),
     ]);

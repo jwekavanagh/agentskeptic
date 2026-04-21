@@ -58,7 +58,7 @@ describe("enforce CLI", () => {
         registryPath,
         "--db",
         dbPath,
-        "--no-truth-report",
+        "--no-human-report",
         "--output-lock",
         join(dir, "reject.json"),
       ],
@@ -85,7 +85,7 @@ describe("enforce CLI", () => {
         registryPath,
         "--db",
         dbPath,
-        "--no-truth-report",
+        "--no-human-report",
       ],
       { encoding: "utf8", cwd: root },
     );
@@ -111,7 +111,7 @@ describe("enforce CLI", () => {
         registryPath,
         "--db",
         dbPath,
-        "--no-truth-report",
+        "--no-human-report",
         "--expect-lock",
         lockComplete,
         "--output-lock",
@@ -140,7 +140,7 @@ describe("enforce CLI", () => {
         registryPath,
         "--db",
         dbPath,
-        "--no-truth-report",
+        "--no-human-report",
         "--expect-lock",
         lockComplete,
       ],
@@ -153,7 +153,7 @@ describe("enforce CLI", () => {
     assert.equal(parsed.status, "complete");
   });
 
-  it("enforce batch expect-lock mismatch exits 4; stderr last line is envelope; --no-truth-report stderr only envelope", () => {
+  it("enforce batch expect-lock mismatch exits 4; stderr last line is envelope; --no-human-report stderr only envelope", () => {
     const badLock = join(dir, "bad-lock.json");
     const good = JSON.parse(readFileSync(lockComplete, "utf8"));
     good.workflowId = "tampered_wf_id";
@@ -173,7 +173,7 @@ describe("enforce CLI", () => {
         registryPath,
         "--db",
         dbPath,
-        "--no-truth-report",
+        "--no-human-report",
         "--expect-lock",
         badLock,
       ],
@@ -203,7 +203,7 @@ describe("enforce CLI", () => {
         registryPath,
         "--db",
         dbPath,
-        "--no-truth-report",
+        "--no-human-report",
         "--output-lock",
         outLock,
       ],
@@ -228,7 +228,7 @@ describe("enforce CLI", () => {
         registryPath,
         "--db",
         dbPath,
-        "--no-truth-report",
+        "--no-human-report",
         "--expect-lock",
         outLock,
       ],

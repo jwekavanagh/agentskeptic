@@ -49,12 +49,11 @@ import {
 import { PLAN_TRANSITION_WORKFLOW_ID } from "./planTransitionConstants.js";
 import { COMPARE_INPUT_RUN_LEVEL_INCONSISTENT_MESSAGE } from "./runLevelDriftMessages.js";
 import { isV9RunLevelCodesInconsistent } from "./workflowRunLevelConsistency.js";
-import { formatWorkflowTruthReport } from "./workflowTruthReport.js";
-import { workflowEngineResultFromEmitted } from "./workflowResultNormalize.js";
+import { buildOutcomeCertificateFromWorkflowResult } from "./outcomeCertificate.js";
 import { atomicWriteUtf8File } from "./quickVerify/atomicWrite.js";
 import { buildQuickContractEventsNdjson } from "./quickVerify/buildQuickContractEventsNdjson.js";
 import { stableStringify } from "./quickVerify/canonicalJson.js";
-import { formatQuickVerifyHumanReport } from "./quickVerify/formatQuickVerifyHumanReport.js";
+import { buildOutcomeCertificateFromQuickReport } from "./outcomeCertificate.js";
 import { runQuickVerifyToValidatedReport } from "./quickVerify/runQuickVerify.js";
 import type { QuickVerifyReport } from "./quickVerify/runQuickVerify.js";
 import type { QuickContractExport } from "./quickVerify/buildQuickContractEventsNdjson.js";
@@ -79,7 +78,7 @@ import { runFunnelAnonCliAndExit } from "./cli/runFunnelAnonSet.js";
 function usageQuick(): string {
   return `Usage:
   agentskeptic quick --input <path> (--postgres-url <url> | --db <sqlitePath>) --export-registry <path>
-    [--emit-events <path>] [--workflow-id <id>] [--share-report-origin <https://host>]
+    [--emit-events <path>] [--workflow-id <id>] [--share-report-origin <https://host>] [--no-human-report]
 
   Input must contain structured tool activity (tool names and parameters extractable as JSON). Verification uses read-only SQL against the database you pass.
 
@@ -105,8 +104,8 @@ function usageVerify(): string {
   agentskeptic bootstrap --input <path> (--db <sqlitePath> | --postgres-url <url>) --out <path>
     (BootstrapPackInput v1 JSON → contract pack + in-process verify; see docs/bootstrap-pack-normative.md)
 
-  agentskeptic crossing --bootstrap-input <path> --pack-out <path> (--db <sqlitePath> | --postgres-url <url>) [--no-truth-report]
-  agentskeptic crossing --workflow-id <id> --events <path> --registry <path> (--db <sqlitePath> | --postgres-url <url>) [--no-truth-report]
+  agentskeptic crossing --bootstrap-input <path> --pack-out <path> (--db <sqlitePath> | --postgres-url <url>) [--no-human-report]
+  agentskeptic crossing --workflow-id <id> --events <path> --registry <path> (--db <sqlitePath> | --postgres-url <url>) [--no-human-report]
     (canonical integrator crossing: bootstrap-led or pack-led; see docs/crossing-normative.md)
 
   agentskeptic verify-integrator-owned --workflow-id <id> --events <path> --registry <path> (--db <sqlitePath> | --postgres-url <url>)
@@ -129,8 +128,8 @@ With strong, do not pass --verification-window-ms or --poll-interval-ms.
 Provide exactly one of --db or --postgres-url.
 
 Optional output:
-  --no-truth-report   For verdict exits 0–2, do not print the human truth report to stderr (stderr empty). stdout WorkflowResult JSON is unchanged. Exit 3 stderr is unchanged (single-line JSON envelope).
-  --share-report-origin <https://host>   After successful verification, POST a shareable report to that origin (https only, origin with no path), then print human report + footer to stderr and WorkflowResult JSON to stdout. On POST failure: exit 3, stdout empty, stderr single-line JSON envelope (code SHARE_REPORT_FAILED). See docs/shareable-verification-reports.md.
+  --no-human-report   For verdict exits 0–2, do not print certificate.humanReport or distribution footer to stderr (stderr empty). stdout Outcome Certificate JSON is unchanged. Exit 3 stderr is unchanged (single-line JSON envelope).
+  --share-report-origin <https://host>   After successful verification, POST a shareable report (v2 envelope) to that origin (https only, origin with no path), then print human report + footer to stderr and Outcome Certificate JSON to stdout. On POST failure: exit 3, stdout empty, stderr single-line JSON envelope (code SHARE_REPORT_FAILED). See docs/shareable-verification-reports.md.
 
 Exit codes:
   0  workflow status complete
@@ -502,7 +501,16 @@ async function runQuickSubcommand(args: string[]): Promise<void> {
     }
     throw e;
   }
-  const { inputPath, exportPath, emitEventsPath, workflowIdQuick, dbPath, postgresUrl, shareReportOrigin } = pq;
+  const {
+    inputPath,
+    exportPath,
+    emitEventsPath,
+    workflowIdQuick,
+    dbPath,
+    postgresUrl,
+    shareReportOrigin,
+    noHumanReport,
+  } = pq;
   const activationRunId =
     process.env.AGENTSKEPTIC_RUN_ID?.trim() ||
     process.env.WORKFLOW_VERIFIER_RUN_ID?.trim() ||
@@ -597,20 +605,22 @@ async function runQuickSubcommand(args: string[]): Promise<void> {
       process.exit(3);
     }
   }
-  const human = formatQuickVerifyHumanReport(report, {
+  const quickHumanOpts = {
     workflowId: workflowIdQuick,
     eventsPath: emitEventsPath !== undefined ? emitEventsPath : undefined,
     registryPath: exportPath,
     dbFlag: dbPath ?? undefined,
     postgresUrl: postgresUrl !== undefined,
+  };
+  const certificate = buildOutcomeCertificateFromQuickReport({
+    report,
+    workflowId: workflowIdQuick,
+    humanReportOptions: quickHumanOpts,
   });
   if (shareReportOrigin !== undefined) {
     const shareRes = await postPublicVerificationReport(shareReportOrigin, {
-      schemaVersion: 1,
-      kind: "quick",
-      workflowDisplayId: workflowIdQuick,
-      quickReport: report,
-      humanReportText: human,
+      schemaVersion: 2,
+      certificate,
     });
     if (!shareRes.ok) {
       writeCliError(
@@ -623,14 +633,16 @@ async function runQuickSubcommand(args: string[]): Promise<void> {
     }
   }
   try {
-    process.stdout.write(stableStringify(report) + "\n");
+    process.stdout.write(stableStringify(certificate) + "\n");
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     writeCliError(CLI_OPERATIONAL_CODES.INTERNAL_ERROR, formatOperationalMessage(`stdout: ${msg}`));
     process.exit(3);
   }
-  console.error(human);
-  process.stderr.write(formatDistributionFooter());
+  if (!noHumanReport) {
+    console.error(certificate.humanReport);
+    process.stderr.write(formatDistributionFooter());
+  }
   await maybeEmitOssClaimTicketUrlToStderr({
     run_id: activationRunId,
     terminal_status: quickVerifyVerdictToTerminalStatus(report.verdict),
@@ -955,7 +967,7 @@ function usagePlanTransition(): string {
 
 Optional:
   --workflow-id <id>   (default ${PLAN_TRANSITION_WORKFLOW_ID})
-  --no-truth-report
+  --no-human-report
   --write-run-bundle <dir>
   --sign-ed25519-private-key <path>   (requires --write-run-bundle)
 
@@ -987,7 +999,7 @@ function runPlanTransitionSubcommand(args: string[]): void {
     process.exit(3);
   }
   const workflowId = argValue(args, "--workflow-id") ?? PLAN_TRANSITION_WORKFLOW_ID;
-  const noTruthReport = args.includes("--no-truth-report");
+  const noHumanReport = args.includes("--no-human-report");
   const writeRunBundleDir = argValue(args, "--write-run-bundle");
   const signPrivateKeyPath = argValue(args, "--sign-ed25519-private-key");
   if (signPrivateKeyPath !== undefined && writeRunBundleDir === undefined) {
@@ -1027,9 +1039,9 @@ function runPlanTransitionSubcommand(args: string[]): void {
     process.exit(3);
   }
 
-  if (!noTruthReport) {
-    const engine = workflowEngineResultFromEmitted(result);
-    process.stderr.write(`${formatWorkflowTruthReport(engine)}\n`);
+  if (!noHumanReport) {
+    const cert = buildOutcomeCertificateFromWorkflowResult(result, "contract_sql");
+    process.stderr.write(`${cert.humanReport}\n`);
   }
 
   if (writeRunBundleDir !== undefined) {

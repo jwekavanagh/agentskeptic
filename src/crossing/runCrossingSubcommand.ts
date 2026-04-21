@@ -20,8 +20,8 @@ import type { WorkflowResult } from "../types.js";
 
 function usageCrossing(): string {
   return `Usage:
-  agentskeptic crossing --bootstrap-input <path> --pack-out <path> (--db <sqlitePath> | --postgres-url <url>) [--no-truth-report]
-  agentskeptic crossing --workflow-id <id> --events <path> --registry <path> (--db <sqlitePath> | --postgres-url <url>) [--no-truth-report]
+  agentskeptic crossing --bootstrap-input <path> --pack-out <path> (--db <sqlitePath> | --postgres-url <url>) [--no-human-report]
+  agentskeptic crossing --workflow-id <id> --events <path> --registry <path> (--db <sqlitePath> | --postgres-url <url>) [--no-human-report]
 
 Normative: docs/crossing-normative.md
 
@@ -45,7 +45,7 @@ const BOOTSTRAP_LED_FLAGS = new Set([
   "--pack-out",
   "--db",
   "--postgres-url",
-  "--no-truth-report",
+  "--no-human-report",
   "--help",
   "-h",
 ]);
@@ -53,7 +53,7 @@ const BOOTSTRAP_LED_FLAGS = new Set([
 function assertBootstrapLedCrossingArgsOnly(args: string[]): void {
   for (let i = 0; i < args.length; i++) {
     const a = args[i]!;
-    if (a === "-h" || a === "--help" || a === "--no-truth-report") continue;
+    if (a === "-h" || a === "--help" || a === "--no-human-report") continue;
     if (!a.startsWith("--")) {
       writeCrossingUsageAndExit(`Unexpected argument: ${a}`);
     }
@@ -80,7 +80,7 @@ function buildVerifyIntegratorOwnedReplayLine(opts: {
   registryPath: string;
   dbPath?: string;
   postgresUrl?: string;
-  noTruthReport: boolean;
+  noHumanReport: boolean;
 }): string {
   const ev = path.resolve(opts.eventsPath);
   const reg = path.resolve(opts.registryPath);
@@ -88,7 +88,7 @@ function buildVerifyIntegratorOwnedReplayLine(opts: {
     opts.postgresUrl !== undefined ?
       `--postgres-url ${JSON.stringify(opts.postgresUrl)}`
     : `--db ${JSON.stringify(opts.dbPath!)}`;
-  const ntr = opts.noTruthReport ? " --no-truth-report" : "";
+  const ntr = opts.noHumanReport ? " --no-human-report" : "";
   return `agentskeptic verify-integrator-owned --workflow-id ${JSON.stringify(opts.workflowId)} --events ${JSON.stringify(ev)} --registry ${JSON.stringify(reg)} ${dbPart}${ntr}`;
 }
 
@@ -100,7 +100,7 @@ export async function runCrossingSubcommand(args: string[]): Promise<void> {
 
   assertNoLockFlags(args);
 
-  const noTruthReport = args.includes("--no-truth-report");
+  const noHumanReport = args.includes("--no-human-report");
   const bootstrapLed = isBootstrapLedMode(args);
 
   if (bootstrapLed) {
@@ -160,7 +160,7 @@ export async function runCrossingSubcommand(args: string[]): Promise<void> {
       "--registry",
       outcome.registryPath,
       ...(db ? ["--db", path.resolve(db)] : ["--postgres-url", pu!]),
-      ...(noTruthReport ? ["--no-truth-report"] : []),
+      ...(noHumanReport ? ["--no-human-report"] : []),
     ];
 
     await runBatchVerifyWithTelemetrySubcommand(batchArgs, {
@@ -176,7 +176,7 @@ export async function runCrossingSubcommand(args: string[]): Promise<void> {
               registryPath: outcome.registryPath,
               dbPath: db ? path.resolve(db) : undefined,
               postgresUrl: pu ?? undefined,
-              noTruthReport,
+              noHumanReport,
             })}\n`,
           );
         }

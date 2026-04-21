@@ -29,7 +29,7 @@ describe("docs enforce stream contract marker", () => {
       "JSON.stringify(result)",
       "stableStringify(report)",
       "VERIFICATION_OUTPUT_LOCK_MISMATCH",
-      "--no-truth-report",
+      "--no-human-report",
     ]) {
       assert.ok(inner.includes(s), `missing substring: ${s}`);
     }

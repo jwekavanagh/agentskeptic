@@ -1,5 +1,5 @@
 /**
- * WorkflowResult stdout: required keys for consumers plus runLevelReasons (v11).
+ * Outcome Certificate consumer contract (CLI stdout).
  */
 import { describe, it, before, after } from "node:test";
 import assert from "node:assert/strict";
@@ -9,12 +9,13 @@ import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
 import { DatabaseSync } from "node:sqlite";
+import { loadSchemaValidator } from "../dist/schemaLoad.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, "..");
 const cliJs = join(root, "dist", "cli.js");
 
-describe("WorkflowResult consumer contract (CLI stdout)", () => {
+describe("Outcome Certificate consumer contract (CLI stdout)", () => {
   let dir;
   let dbPath;
 
@@ -31,7 +32,7 @@ describe("WorkflowResult consumer contract (CLI stdout)", () => {
     rmSync(dir, { recursive: true, force: true });
   });
 
-  it("wf_complete includes legacy keys and runLevelReasons", () => {
+  it("wf_complete certificate validates and maps contract_sql + permitted", () => {
     const eventsPath = join(root, "examples", "events.ndjson");
     const registryPath = join(root, "examples", "tools.json");
     const r = spawnSync(
@@ -52,32 +53,22 @@ describe("WorkflowResult consumer contract (CLI stdout)", () => {
     );
     assert.equal(r.status, 0, r.stderr);
     const parsed = JSON.parse(r.stdout.trim());
-    for (const k of [
-      "schemaVersion",
-      "workflowId",
-      "status",
-      "steps",
-      "runLevelReasons",
-      "verificationPolicy",
-      "eventSequenceIntegrity",
-      "workflowTruthReport",
-    ]) {
-      assert.ok(k in parsed, `missing key ${k}`);
-    }
-    assert.equal(parsed.schemaVersion, 15);
-    assert.equal(typeof parsed.schemaVersion, "number");
+    const validateResult = loadSchemaValidator("outcome-certificate-v1");
+    assert.equal(validateResult(parsed), true, JSON.stringify(validateResult.errors ?? []));
+    assert.equal(parsed.schemaVersion, 1);
     assert.equal(typeof parsed.workflowId, "string");
-    assert.equal(typeof parsed.status, "string");
-    assert.ok(Array.isArray(parsed.runLevelReasons));
+    assert.equal(parsed.workflowId, "wf_complete");
+    assert.equal(parsed.runKind, "contract_sql");
+    assert.equal(parsed.stateRelation, "matches_expectations");
+    assert.equal(parsed.highStakesReliance, "permitted");
     assert.ok(Array.isArray(parsed.steps));
-    assert.equal(parsed.runLevelReasons.length, 0);
+    assert.ok(parsed.steps.length >= 1);
     const s0 = parsed.steps[0];
     assert.ok(s0 && typeof s0 === "object");
-    assert.equal(s0.intendedEffect?.narrative?.includes("Upsert contact"), true);
-    assert.equal(
-      s0.observedExecution?.paramsCanonical,
-      '{"fields":{"name":"Alice","status":"active"},"recordId":"c_ok"}',
-    );
-    assert.equal(parsed.workflowTruthReport?.schemaVersion, 9);
+    assert.equal(typeof s0.declaredAction, "string");
+    assert.equal(typeof s0.expectedOutcome, "string");
+    assert.equal(typeof s0.observedOutcome, "string");
+    assert.equal(typeof parsed.humanReport, "string");
+    assert.ok(parsed.humanReport.length > 0);
   });
 });

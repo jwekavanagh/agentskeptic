@@ -26,7 +26,7 @@ describe("CI workflow truth contract (Postgres CLI)", () => {
 
   const env = { ...process.env, POSTGRES_VERIFICATION_URL: verifyUrl };
 
-  it("case 1: wf_complete exit 0; stdout WorkflowResult; stderr empty with --no-truth-report", () => {
+  it("case 1: wf_complete exit 0; stdout Outcome Certificate; stderr empty with --no-human-report", () => {
     const r = spawnSync(
       process.execPath,
       [
@@ -40,7 +40,7 @@ describe("CI workflow truth contract (Postgres CLI)", () => {
         registryPath,
         "--postgres-url",
         verifyUrl,
-        "--no-truth-report",
+        "--no-human-report",
       ],
       { encoding: "utf8", cwd: root, env, timeout: cliSpawnMs },
     );
@@ -48,16 +48,18 @@ describe("CI workflow truth contract (Postgres CLI)", () => {
     assert.equal(r.status, 0, r.stderr);
     assert.equal(r.stderr, "");
     const parsed = JSON.parse(r.stdout.trim());
-    const validateResult = loadSchemaValidator("workflow-result");
+    const validateResult = loadSchemaValidator("outcome-certificate-v1");
     assert.equal(validateResult(parsed), true, JSON.stringify(validateResult.errors ?? []));
-    assert.equal(parsed.schemaVersion, 15);
+    assert.equal(parsed.schemaVersion, 1);
     assert.equal(parsed.workflowId, "wf_complete");
-    assert.equal(parsed.status, "complete");
-    assert.equal(parsed.steps[0]?.status, "verified");
-    assert.deepStrictEqual(parsed.runLevelReasons, []);
+    assert.equal(parsed.stateRelation, "matches_expectations");
+    assert.equal(parsed.highStakesReliance, "permitted");
+    assert.equal(parsed.runKind, "contract_sql");
+    assert.ok(Array.isArray(parsed.steps));
+    assert.ok(parsed.steps.length >= 1);
   });
 
-  it("case 2: wf_missing exit 1; stderr empty with --no-truth-report", () => {
+  it("case 2: wf_missing exit 1; stderr empty with --no-human-report", () => {
     const r = spawnSync(
       process.execPath,
       [
@@ -71,7 +73,7 @@ describe("CI workflow truth contract (Postgres CLI)", () => {
         registryPath,
         "--postgres-url",
         verifyUrl,
-        "--no-truth-report",
+        "--no-human-report",
       ],
       { encoding: "utf8", cwd: root, env, timeout: cliSpawnMs },
     );
@@ -79,13 +81,13 @@ describe("CI workflow truth contract (Postgres CLI)", () => {
     assert.equal(r.status, 1, r.stderr);
     assert.equal(r.stderr, "");
     const parsed = JSON.parse(r.stdout.trim());
-    const validateResult = loadSchemaValidator("workflow-result");
+    const validateResult = loadSchemaValidator("outcome-certificate-v1");
     assert.equal(validateResult(parsed), true);
-    assert.equal(parsed.schemaVersion, 15);
+    assert.equal(parsed.schemaVersion, 1);
     assert.equal(parsed.workflowId, "wf_missing");
-    assert.equal(parsed.status, "inconsistent");
-    assert.equal(parsed.steps[0]?.status, "missing");
-    assert.equal(parsed.steps[0]?.reasons[0]?.code, "ROW_ABSENT");
+    assert.equal(parsed.stateRelation, "does_not_match");
+    assert.equal(parsed.highStakesReliance, "prohibited");
+    assert.ok(parsed.explanation?.headline?.length > 0);
   });
 
   it("case 3: wf_rel_pg sql_relational on stdout (fixture registry + events)", () => {
@@ -104,7 +106,7 @@ describe("CI workflow truth contract (Postgres CLI)", () => {
         relReg,
         "--postgres-url",
         verifyUrl,
-        "--no-truth-report",
+        "--no-human-report",
       ],
       { encoding: "utf8", cwd: root, env, timeout: cliSpawnMs },
     );
@@ -112,14 +114,13 @@ describe("CI workflow truth contract (Postgres CLI)", () => {
     assert.equal(r.status, 0, r.stderr);
     assert.equal(r.stderr, "");
     const parsed = JSON.parse(r.stdout.trim());
-    const validateResult = loadSchemaValidator("workflow-result");
+    const validateResult = loadSchemaValidator("outcome-certificate-v1");
     assert.equal(validateResult(parsed), true, JSON.stringify(validateResult.errors ?? []));
-    assert.equal(parsed.schemaVersion, 15);
-    const vr = parsed.steps[0]?.verificationRequest;
-    assert.equal(vr?.kind, "sql_relational");
-    assert.ok(Array.isArray(vr?.checks));
-    assert.equal(vr.checks.length, 1);
-    assert.equal(parsed.steps[0]?.status, "verified");
+    assert.equal(parsed.schemaVersion, 1);
+    assert.equal(parsed.workflowId, "wf_rel_pg");
+    assert.equal(parsed.stateRelation, "matches_expectations");
+    assert.ok(Array.isArray(parsed.steps));
+    assert.ok(parsed.steps.length >= 1);
   });
 
   it("case 4: operational CLI_USAGE — only --workflow-id wf_complete", () => {

@@ -8,10 +8,11 @@ Single source of truth for **public persisted reports**, the **`POST /api/public
 - **Integrator:** what gets stored, privacy expectations, LangGraph-shaped ingest (see also [`docs/first-run-integration.md`](first-run-integration.md)).
 - **Operator:** environment flags, retention, disabling the surface, manual deletion.
 
-## Trust boundary and privacy (v1)
+## Trust boundary and privacy
 
-- The server stores the **exact JSON envelope** accepted by **`schemas/public-verification-report-v1.schema.json`** after AJV validation. **There is no redaction** in v1: tool parameters and human-readable lines may contain secrets. **Do not** publish reports that include credentials or regulated data unless you accept public persistence.
-- Reports are **immutable** after insert (no update API v1).
+- **POST (new writes):** body must match **`schemas/public-verification-report-v2.schema.json`** (`schemaVersion` **2** + **`certificate`** = Outcome Certificate v1). **There is no redaction**: tool parameters and human-readable lines may contain secrets.
+- **GET (legacy rows):** older rows may store **`public-verification-report-v1`** payloads (`kind: workflow` \| `quick`). **`VerificationReportView`** renders them read-only; that path is **frozen** (security fixes only; owner: website maintainers).
+- Reports are **immutable** after insert (no update API).
 
 ## Indexable marketing vs `/r/*`
 
@@ -20,14 +21,14 @@ Single source of truth for **public persisted reports**, the **`POST /api/public
 
 ## Wire: POST `/api/public/verification-reports`
 
-- **Request body:** UTF-8 JSON matching **`public-verification-report-v1`** (`kind: workflow` with **`workflowResult`** + **`truthReportText`**, or `kind: quick` with **`workflowDisplayId`**, **`quickReport`**, **`humanReportText`**). Inner **`workflowResult`** must satisfy **`workflow-result`**; inner **`quickReport`** must satisfy **`quick-verify-report`**.
+- **Request body:** UTF-8 JSON matching **`public-verification-report-v2`**: `{ "schemaVersion": 2, "certificate": <OutcomeCertificateV1> }` (see [`outcome-certificate-normative.md`](outcome-certificate-normative.md)). **v1 POST bodies are rejected** with **400**.
 - **Maximum body size:** **393216** bytes (384 KiB) measured on the raw request bytes before parse. Larger bodies → **413** with JSON **`{ "error": "payload_too_large" }`** (when parse succeeded enough to return JSON).
 - **Feature gate:** when **`PUBLIC_VERIFICATION_REPORTS_ENABLED`** is not exactly **`1`**, **`POST`** returns **503** with minimal JSON **`{ "error": "server_error" }`** or empty body per handler; **`GET /r/{id}`** returns **404** for every id (including valid UUID shape) so callers cannot probe enabled state.
 
 ## Response: `201 Created`
 
 ```json
-{ "schemaVersion": 1, "id": "<uuid>", "url": "https://<public-origin>/r/<uuid>" }
+{ "schemaVersion": 2, "id": "<uuid>", "url": "https://<public-origin>/r/<uuid>" }
 ```
 
 **`url`** uses the request’s public origin from **`x-forwarded-proto`** / **`x-forwarded-host`** (or **`Host`**) normalized the same way as [`website/src/lib/publicOrigin.ts`](../website/src/lib/publicOrigin.ts).
@@ -40,11 +41,11 @@ Table **`shared_verification_report`**:
 |--------|------|
 | **`id`** | UUID primary key |
 | **`created_at`** | Insert time |
-| **`kind`** | **`workflow`** or **`quick`** |
+| **`kind`** | **`outcome_certificate_v2`** for new writes; legacy **`workflow`** / **`quick`** for old rows |
 | **`payload`** | Full validated envelope (jsonb) |
-| **`report_workflow_id`** | **`workflowResult.workflowId`** or quick **`workflowDisplayId`** |
-| **`report_status_token`** | **`workflowResult.status`** or **`quickReport.verdict`** |
-| **`human_text`** | Duplicate of **`truthReportText`** / **`humanReportText`** for fast render and OG description |
+| **`report_workflow_id`** | **`certificate.workflowId`** (v2) or legacy equivalents |
+| **`report_status_token`** | **`certificate.stateRelation`** (v2) or legacy equivalents |
+| **`human_text`** | **`certificate.humanReport`** (v2) or legacy human text |
 
 **Retention v1:** rows are kept **indefinitely** (no TTL job). Operators may delete by **`id`**:
 
@@ -62,8 +63,8 @@ DELETE FROM shared_verification_report WHERE id = '<uuid>';
 
 ## CLI: `--share-report-origin`
 
-- **Batch verify:** optional **`--share-report-origin <https://host>`** — **https only**, **origin only** (path must be **`/`**; no query or fragment; no userinfo). Human stderr during **`verifyWorkflow`** is **suppressed**; after a successful verification and optional bundle write, the CLI **POST**s the envelope. On **201**, the CLI prints **human report + distribution footer** to stderr, then **one line `WorkflowResult` JSON** to stdout, then exits **0 / 1 / 2** as usual. On failure: **exit 3**, **stdout empty**, **stderr exactly one line** — the **`cliErrorEnvelope`** with **`code` `SHARE_REPORT_FAILED`** and **`message`** containing **`share_report_origin=`** and the origin host plus HTTP status / snippet.
-- **Quick verify:** same flag and same failure contract; **`workflowDisplayId`** is the CLI **`--workflow-id`** value (default **`quick-verify`**).
+- **Batch verify:** optional **`--share-report-origin <https://host>`** — **https only**, **origin only** (path must be **`/`**; no query or fragment; no userinfo). Human stderr during **`verifyWorkflow`** is **suppressed**; after a successful verification and optional bundle write, the CLI **POST**s the **v2** envelope. On **201**, the CLI prints **human report + distribution footer** to stderr, then **one line Outcome Certificate JSON** to stdout, then exits **0 / 1 / 2** as usual. On failure: **exit 3**, **stdout empty**, **stderr exactly one line** — the **`cliErrorEnvelope`** with **`code` `SHARE_REPORT_FAILED`** and **`message`** containing **`share_report_origin=`** and the origin host plus HTTP status / snippet.
+- **Quick verify:** same flag and same failure contract; certificate uses CLI **`--workflow-id`** as **`workflowId`** (default **`quick-verify`**).
 
 **`--share-report-origin` is rejected with `enforce` batch/quick** (see [`src/ciLockWorkflow.ts`](../src/ciLockWorkflow.ts)).
 

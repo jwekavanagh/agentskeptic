@@ -40,7 +40,7 @@ try {
       registryPath,
       "--db",
       dbPath,
-      "--no-truth-report",
+      "--no-human-report",
       "--expect-lock",
       lockPath,
     ],

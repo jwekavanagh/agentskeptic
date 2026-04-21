@@ -10,7 +10,7 @@ import {
   CLI_OPERATIONAL_CODES,
   RETRY_OBSERVATIONS_DIVERGE_MESSAGE,
 } from "../dist/failureCatalog.js";
-import { formatWorkflowTruthReport } from "../dist/workflowTruthReport.js";
+import { formatOutcomeCertificateHuman } from "../dist/outcomeCertificate.js";
 import { formatDistributionFooter } from "../dist/distributionFooter.js";
 import { loadSchemaValidator } from "../dist/schemaLoad.js";
 import { loadCorpusRun, resolveCorpusRootReal } from "../dist/debugCorpus.js";
@@ -47,7 +47,7 @@ describe("CLI agentskeptic", () => {
   const eventsPath = join(root, "examples", "events.ndjson");
   const registryPath = join(root, "examples", "tools.json");
 
-  it("stderr report then stdout JSON; stderr equals formatWorkflowTruthReport(stdout)", () => {
+  it("stderr report then stdout JSON; stderr equals certificate humanReport + footer", () => {
     const r = spawnSync(
       process.execPath,
       [
@@ -66,19 +66,20 @@ describe("CLI agentskeptic", () => {
     );
     assert.equal(r.status, 0, r.stderr);
     const stdout = r.stdout.trimEnd();
-    const stderr = r.stderr.replace(/\r\n/g, "\n").replace(/\n$/, "");
+    const stderr = r.stderr.replace(/\r\n/g, "\n").trimEnd();
     const parsed = JSON.parse(stdout);
-    const validateResult = loadSchemaValidator("workflow-result");
-    assert.equal(validateResult(parsed), true);
+    const validateResult = loadSchemaValidator("outcome-certificate-v1");
+    assert.equal(validateResult(parsed), true, JSON.stringify(validateResult.errors ?? []));
+    assert.equal(parsed.humanReport, formatOutcomeCertificateHuman(parsed));
     const expected = (
-      formatWorkflowTruthReport(parsed).replace(/\r\n/g, "\n") +
+      String(parsed.humanReport).replace(/\r\n/g, "\n") +
       "\n" +
       formatDistributionFooter()
-    ).replace(/\n$/, "");
+    ).trimEnd();
     assert.equal(stderr, expected);
   });
 
-  it("--no-truth-report: stderr empty; stdout schema-valid wf_complete", () => {
+  it("--no-human-report: stderr empty; stdout schema-valid wf_complete", () => {
     const r = spawnSync(
       process.execPath,
       [
@@ -92,18 +93,19 @@ describe("CLI agentskeptic", () => {
         registryPath,
         "--db",
         dbPath,
-        "--no-truth-report",
+        "--no-human-report",
       ],
       { encoding: "utf8", cwd: root },
     );
     assert.equal(r.status, 0, r.stderr);
     assert.equal(r.stderr, "");
     const parsed = JSON.parse(r.stdout.trim());
-    const validateResult = loadSchemaValidator("workflow-result");
-    assert.equal(validateResult(parsed), true);
+    const validateResult = loadSchemaValidator("outcome-certificate-v1");
+    assert.equal(validateResult(parsed), true, JSON.stringify(validateResult.errors ?? []));
     assert.equal(parsed.workflowId, "wf_complete");
-    assert.equal(parsed.status, "complete");
-    assert.equal(parsed.steps[0]?.status, "verified");
+    assert.equal(parsed.stateRelation, "matches_expectations");
+    assert.equal(parsed.highStakesReliance, "permitted");
+    assert.equal(parsed.runKind, "contract_sql");
   });
 
   it("--share-report-origin to closed port: exit 3, stdout empty, stderr one JSON line SHARE_REPORT_FAILED", () => {
@@ -150,7 +152,7 @@ describe("CLI agentskeptic", () => {
           registryPath,
           "--db",
           dbPath,
-          "--no-truth-report",
+          "--no-human-report",
           "--write-run-bundle",
           bundleDir,
         ],
@@ -409,7 +411,7 @@ describe("CLI agentskeptic", () => {
     assert.equal(err.code, CLI_OPERATIONAL_CODES.CLI_USAGE);
   });
 
-  it("wf_missing exit 1 and inconsistent trust line", () => {
+  it("wf_missing exit 1 and certificate reflects does_not_match", () => {
     const r = spawnSync(process.execPath, [
       "--no-warnings",
       cliJs,
@@ -424,8 +426,9 @@ describe("CLI agentskeptic", () => {
     ], { encoding: "utf8", cwd: root });
     assert.equal(r.status, 1);
     const parsed = JSON.parse(r.stdout.trim());
-    assert.equal(parsed.status, "inconsistent");
-    const errText = r.stderr.replace(/\r\n/g, "\n");
+    assert.equal(parsed.stateRelation, "does_not_match");
+    assert.equal(parsed.highStakesReliance, "prohibited");
+    const errText = (parsed.humanReport + "\n" + r.stderr).replace(/\r\n/g, "\n");
     assert.ok(
       errText.includes(
         "trust: NOT TRUSTED: At least one step failed verification against the database (determinate failure).",

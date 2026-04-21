@@ -28,14 +28,28 @@ import {
   parseQuickLockXorAndParsed,
   type ParsedBatchLockRoute,
 } from "../ciLockWorkflow.js";
+import { buildOutcomeCertificateFromQuickReport } from "../outcomeCertificate.js";
 import { emitVerifyWorkflowCliJsonAndExitByStatus } from "../standardVerifyWorkflowCli.js";
 import { formatDistributionFooter } from "../distributionFooter.js";
 import { maybeEmitOssClaimTicketUrlToStderr } from "../telemetry/maybeEmitOssClaimTicketUrl.js";
 import { postProductActivationEvent } from "../telemetry/postProductActivationEvent.js";
 import { stableStringify } from "../quickVerify/canonicalJson.js";
-import { formatQuickVerifyHumanReport } from "../quickVerify/formatQuickVerifyHumanReport.js";
 import type { QuickVerifyReport } from "../quickVerify/runQuickVerify.js";
 import type { WorkflowResult } from "../types.js";
+
+function quickOutcomeCertificate(report: QuickVerifyReport, pq: ParsedQuickCli) {
+  return buildOutcomeCertificateFromQuickReport({
+    report,
+    workflowId: pq.workflowIdQuick,
+    humanReportOptions: {
+      workflowId: pq.workflowIdQuick,
+      eventsPath: pq.emitEventsPath !== undefined ? pq.emitEventsPath : undefined,
+      registryPath: pq.exportPath,
+      dbFlag: pq.dbPath ?? undefined,
+      postgresUrl: pq.postgresUrl !== undefined,
+    },
+  });
+}
 
 function writeCliError(code: string, message: string): void {
   console.error(cliErrorEnvelope(code, message));
@@ -254,7 +268,7 @@ export async function orchestrateVerifyBatchLockRun(restArgs: string[]): Promise
     registryPath: route.parsed.registryPath,
     database: route.parsed.database,
   });
-  const suppressOssClaim = route.parsed.noTruthReport || route.parsed.shareReportOrigin !== undefined;
+  const suppressOssClaim = route.parsed.noHumanReport || route.parsed.shareReportOrigin !== undefined;
 
   const batchLineage = classifyWorkflowLineage({
     subcommand: "batch_verify",
@@ -272,7 +286,7 @@ export async function orchestrateVerifyBatchLockRun(restArgs: string[]): Promise
   });
 
   const truthReport =
-    route.parsed.noTruthReport ?
+    route.parsed.noHumanReport ?
       () => {}
     : (report: string) => {
         stderrWrite(`${report}\n`);
@@ -371,7 +385,7 @@ export async function orchestrateEnforceBatchLockRun(restArgs: string[]): Promis
     registryPath: route.parsed.registryPath,
     database: route.parsed.database,
   });
-  const suppressOssClaim = route.parsed.noTruthReport || route.parsed.shareReportOrigin !== undefined;
+  const suppressOssClaim = route.parsed.noHumanReport || route.parsed.shareReportOrigin !== undefined;
 
   const enforceBatchLineage = classifyWorkflowLineage({
     subcommand: "batch_verify",
@@ -389,7 +403,7 @@ export async function orchestrateEnforceBatchLockRun(restArgs: string[]): Promis
   });
 
   const truthReport =
-    route.parsed.noTruthReport ?
+    route.parsed.noHumanReport ?
       () => {}
     : (report: string) => {
         stderrWrite(`${report}\n`);
@@ -495,7 +509,7 @@ export async function orchestrateVerifyQuickLockRun(restArgs: string[]): Promise
     sqlitePath: route.pq.dbPath ?? undefined,
     postgresUrl: route.pq.postgresUrl ?? undefined,
   });
-  const suppressOssClaim = route.pq.shareReportOrigin !== undefined;
+  const suppressOssClaim = route.pq.noHumanReport || route.pq.shareReportOrigin !== undefined;
 
   const quickLockLineage = classifyWorkflowLineage({
     subcommand: "quick_verify",
@@ -537,42 +551,32 @@ export async function orchestrateVerifyQuickLockRun(restArgs: string[]): Promise
   }
 
   if (terminal.tag === "workflow_terminal") {
+    const qCert = quickOutcomeCertificate(terminal.report, terminal.pq);
     try {
-      process.stdout.write(stableStringify(terminal.report) + "\n");
+      process.stdout.write(stableStringify(qCert) + "\n");
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       writeCliError(CLI_OPERATIONAL_CODES.INTERNAL_ERROR, formatOperationalMessage(`stdout: ${msg}`));
       process.exit(3);
     }
-    const human = formatQuickVerifyHumanReport(terminal.report, {
-      workflowId: terminal.pq.workflowIdQuick,
-      eventsPath: terminal.pq.emitEventsPath !== undefined ? terminal.pq.emitEventsPath : undefined,
-      registryPath: terminal.pq.exportPath,
-      dbFlag: terminal.pq.dbPath ?? undefined,
-      postgresUrl: terminal.pq.postgresUrl !== undefined,
-    });
-    console.error(human);
-    stderrWrite(formatDistributionFooter());
+    if (!terminal.pq.noHumanReport) {
+      console.error(qCert.humanReport);
+      stderrWrite(formatDistributionFooter());
+    }
     if (terminal.exitCode === 0) emitMonetizedBoundaryFootersOnSuccess();
     process.exit(terminal.exitCode);
   }
 
   if (terminal.tag === "lock_mismatch") {
+    const qCert = quickOutcomeCertificate(terminal.report, terminal.pq);
     try {
-      process.stdout.write(stableStringify(terminal.report) + "\n");
+      process.stdout.write(stableStringify(qCert) + "\n");
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       writeCliError(CLI_OPERATIONAL_CODES.INTERNAL_ERROR, formatOperationalMessage(`stdout: ${msg}`));
       process.exit(3);
     }
-    const human = formatQuickVerifyHumanReport(terminal.report, {
-      workflowId: terminal.pq.workflowIdQuick,
-      eventsPath: terminal.pq.emitEventsPath !== undefined ? terminal.pq.emitEventsPath : undefined,
-      registryPath: terminal.pq.exportPath,
-      dbFlag: terminal.pq.dbPath ?? undefined,
-      postgresUrl: terminal.pq.postgresUrl !== undefined,
-    });
-    console.error(human);
+    if (!terminal.pq.noHumanReport) console.error(qCert.humanReport);
     writeCliError(
       CLI_OPERATIONAL_CODES.VERIFICATION_OUTPUT_LOCK_MISMATCH,
       "Lock fixture does not match verification output.",
@@ -616,7 +620,7 @@ export async function orchestrateEnforceQuickLockRun(restArgs: string[]): Promis
     sqlitePath: route.pq.dbPath ?? undefined,
     postgresUrl: route.pq.postgresUrl ?? undefined,
   });
-  const suppressOssClaim = route.pq.shareReportOrigin !== undefined;
+  const suppressOssClaim = route.pq.noHumanReport || route.pq.shareReportOrigin !== undefined;
 
   const enforceQuickLineage = classifyWorkflowLineage({
     subcommand: "quick_verify",
@@ -658,42 +662,32 @@ export async function orchestrateEnforceQuickLockRun(restArgs: string[]): Promis
   }
 
   if (terminal.tag === "workflow_terminal") {
+    const qCert = quickOutcomeCertificate(terminal.report, terminal.pq);
     try {
-      process.stdout.write(stableStringify(terminal.report) + "\n");
+      process.stdout.write(stableStringify(qCert) + "\n");
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       writeCliError(CLI_OPERATIONAL_CODES.INTERNAL_ERROR, formatOperationalMessage(`stdout: ${msg}`));
       process.exit(3);
     }
-    const human = formatQuickVerifyHumanReport(terminal.report, {
-      workflowId: terminal.pq.workflowIdQuick,
-      eventsPath: terminal.pq.emitEventsPath !== undefined ? terminal.pq.emitEventsPath : undefined,
-      registryPath: terminal.pq.exportPath,
-      dbFlag: terminal.pq.dbPath ?? undefined,
-      postgresUrl: terminal.pq.postgresUrl !== undefined,
-    });
-    console.error(human);
-    stderrWrite(formatDistributionFooter());
+    if (!terminal.pq.noHumanReport) {
+      console.error(qCert.humanReport);
+      stderrWrite(formatDistributionFooter());
+    }
     if (terminal.exitCode === 0) emitMonetizedBoundaryFootersOnSuccess();
     process.exit(terminal.exitCode);
   }
 
   if (terminal.tag === "lock_mismatch") {
+    const qCert = quickOutcomeCertificate(terminal.report, terminal.pq);
     try {
-      process.stdout.write(stableStringify(terminal.report) + "\n");
+      process.stdout.write(stableStringify(qCert) + "\n");
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       writeCliError(CLI_OPERATIONAL_CODES.INTERNAL_ERROR, formatOperationalMessage(`stdout: ${msg}`));
       process.exit(3);
     }
-    const human = formatQuickVerifyHumanReport(terminal.report, {
-      workflowId: terminal.pq.workflowIdQuick,
-      eventsPath: terminal.pq.emitEventsPath !== undefined ? terminal.pq.emitEventsPath : undefined,
-      registryPath: terminal.pq.exportPath,
-      dbFlag: terminal.pq.dbPath ?? undefined,
-      postgresUrl: terminal.pq.postgresUrl !== undefined,
-    });
-    console.error(human);
+    if (!terminal.pq.noHumanReport) console.error(qCert.humanReport);
     writeCliError(
       CLI_OPERATIONAL_CODES.VERIFICATION_OUTPUT_LOCK_MISMATCH,
       "Lock fixture does not match verification output.",

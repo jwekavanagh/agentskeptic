@@ -107,11 +107,16 @@ appendFileSync(
   }) + "\n",
 );
 
-const { ok, result } = await verifyAgentskeptic({
+const certificate = await verifyAgentskeptic({
   workflowId: "wf_demo",
   databaseUrl: join(projectRoot, "app.db"),
 });
-if (!ok) throw new Error(`Verification failed: ${result.status}`);
+if (certificate.stateRelation !== "matches_expectations") {
+  throw new Error(`Verification failed: ${certificate.stateRelation}`);
+}
+if (certificate.highStakesReliance !== "permitted") {
+  throw new Error(`Not decision-grade: ${certificate.relianceRationale}`);
+}
 ```
 <!-- adoption-canonical:end -->
 

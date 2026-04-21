@@ -1,9 +1,11 @@
 import { existsSync } from "node:fs";
 import path from "node:path";
+import { CLI_OPERATIONAL_CODES } from "./failureCatalog.js";
+import { buildOutcomeCertificateFromWorkflowResult, type OutcomeCertificateV1 } from "./outcomeCertificate.js";
 import { verifyWorkflow } from "./pipeline.js";
+import { loadSchemaValidator } from "./schemaLoad.js";
 import { TruthLayerError } from "./truthLayerError.js";
 import type { VerificationDatabase } from "./types.js";
-import type { WorkflowResult } from "./types.js";
 
 const POSTGRES_URL_RE = /^postgres(ql)?:\/\//i;
 
@@ -19,13 +21,13 @@ function verificationDatabaseFromUrl(databaseUrl: string, projectRoot: string): 
 /**
  * Default adoption path: reads `agentskeptic/events.ndjson` and `agentskeptic/tools.json`
  * under `projectRoot`, verifies `workflowId` against `databaseUrl` (SQLite path or postgres URL).
- * For arbitrary paths use `verifyWorkflow` instead.
+ * Returns the public Outcome Certificate v1 (contract_sql). For arbitrary paths use `verifyWorkflow`.
  */
 export async function verifyAgentskeptic(options: {
   workflowId: string;
   databaseUrl: string;
   projectRoot?: string;
-}): Promise<{ ok: boolean; result: WorkflowResult }> {
+}): Promise<OutcomeCertificateV1> {
   const projectRoot = options.projectRoot ?? process.cwd();
   const resolvedRoot = path.resolve(projectRoot);
   const agentskepticDir = path.join(resolvedRoot, "agentskeptic");
@@ -49,6 +51,13 @@ export async function verifyAgentskeptic(options: {
     truthReport: () => {},
   });
 
-  const ok = result.status === "complete";
-  return { ok, result };
+  const certificate = buildOutcomeCertificateFromWorkflowResult(result, "contract_sql");
+  const validate = loadSchemaValidator("outcome-certificate-v1");
+  if (!validate(certificate)) {
+    throw new TruthLayerError(
+      CLI_OPERATIONAL_CODES.WORKFLOW_RESULT_SCHEMA_INVALID,
+      JSON.stringify(validate.errors ?? []),
+    );
+  }
+  return certificate;
 }

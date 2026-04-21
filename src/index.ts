@@ -6,7 +6,28 @@ export {
   assertCiLockSchemaValid,
 } from "./ciLock.js";
 export type { CiLockV1, CiLockBatchV1, CiLockQuickV1 } from "./ciLock.js";
-export { runBatchVerifyToValidatedResult } from "./standardVerifyWorkflowCli.js";
+export {
+  runBatchVerifyToValidatedResult,
+  runBatchVerifyToValidatedCertificate,
+  emitOutcomeCertificateCliAndExitByStateRelation,
+} from "./standardVerifyWorkflowCli.js";
+export {
+  buildOutcomeCertificateFromWorkflowResult,
+  buildOutcomeCertificateFromQuickReport,
+  deriveHighStakesReliance,
+  assertOutcomeCertificateInvariants,
+  formatOutcomeCertificateHuman,
+  workflowResultToStateRelation,
+} from "./outcomeCertificate.js";
+export type {
+  OutcomeCertificateV1,
+  OutcomeCertificateRunKind,
+  OutcomeCertificateStateRelation,
+  OutcomeCertificateHighStakesReliance,
+  OutcomeCertificateStep,
+  OutcomeCertificateExplanationDetail,
+  BuildQuickOutcomeCertificateOptions,
+} from "./outcomeCertificate.js";
 export { verifyWorkflow, loadToolsRegistry, withWorkflowVerification } from "./pipeline.js";
 export { verifyAgentskeptic } from "./verifyAgentskeptic.js";
 export { loadSchemaValidator } from "./schemaLoad.js";
@@ -167,11 +188,6 @@ export type {
   VerificationRequest,
   VerificationDatabase,
   VerificationPolicy,
-  WorkflowEngineResult,
-  WorkflowResult,
-  WorkflowTruthReport,
-  WorkflowTruthStep,
-  StepOutcome,
   EventSequenceIntegrity,
   IntendedEffect,
   ObservedExecution,

@@ -20,18 +20,18 @@ If argv is invalid, modes conflict, unknown flags appear, or lock flags are pass
 ### A — Bootstrap-led
 
 ```text
-agentskeptic crossing --bootstrap-input <path> --pack-out <path> (--db <sqlitePath> | --postgres-url <url>) [--no-truth-report]
+agentskeptic crossing --bootstrap-input <path> --pack-out <path> (--db <sqlitePath> | --postgres-url <url>) [--no-human-report]
 ```
 
 ### B — Pack-led
 
 ```text
-agentskeptic crossing --workflow-id <id> --events <path> --registry <path> (--db <sqlitePath> | --postgres-url <url>) [--no-truth-report]
+agentskeptic crossing --workflow-id <id> --events <path> --registry <path> (--db <sqlitePath> | --postgres-url <url>) [--no-human-report]
 ```
 
 - **`--pack-out`:** directory must **not** exist (same rule as **`bootstrap --out`**).
 - **No** **`--output-lock`** / **`--expect-lock`** on **`crossing`** (reject with **`CROSSING_USAGE`**, exit **3**).
-- **`--no-truth-report`:** applies **only** to **phase 2** (final batch verify). Phase 1 follows standalone **`bootstrap`** stderr rules on failure.
+- **`--no-human-report`:** applies **only** to **phase 2** (final batch verify). Phase 1 follows standalone **`bootstrap`** stderr rules on failure.
 
 ## Stdout (entire process)
 
@@ -44,7 +44,7 @@ If invocation fails with **`CROSSING_USAGE`** or phase 1 fails before a phase-2 
 
 ## Stderr ordering
 
-**Pack-led:** identical order to **`verify-integrator-owned`** for the phase-2 body, then **one** fixed **Decision-ready** pointer block (**`CROSSING_DECISION_READY_FOOTER`** in source). If **`--no-truth-report`**: phase-2 human report is suppressed as today; the **footer still prints** last.
+**Pack-led:** identical order to **`verify-integrator-owned`** for the phase-2 body, then **one** fixed **Decision-ready** pointer block (**`CROSSING_DECISION_READY_FOOTER`** in source). If **`--no-human-report`**: phase-2 stderr is **empty** (no human report and no distribution footer), matching batch verify.
 
 **Bootstrap-led:**
 
@@ -67,7 +67,7 @@ There is **no** exit code that means “phase 1 ok only”; the integrator eithe
 
 - **`--pack-out` directory:** **retained** (not deleted after phase 1 succeeds). Pack contains **`events.ndjson`**, **`tools.json`**, **`quick-report.json`**, **`README.bootstrap.md`** as for standalone bootstrap.
 - **stdout:** If phase 2 produces a terminal **`WorkflowResult`** (`inconsistent` / `incomplete`): **that single JSON line** on stdout. If phase 2 fails operationally before **`WorkflowResult`**: stdout **empty**.
-- **stderr:** Phase-2 human report (unless **`--no-truth-report`**) + mandatory single-line prefix: `agentskeptic-crossing: pack-out retained at <absolute-path> — fix DB/registry or paths, then re-run phase 2:` followed by a **printed** equivalent **`agentskeptic verify-integrator-owned …`** command using resolved absolute paths and the same flags. Then **`CROSSING_DECISION_READY_FOOTER`**.
+- **stderr:** Phase-2 human report (unless **`--no-human-report`**) + mandatory single-line prefix: `agentskeptic-crossing: pack-out retained at <absolute-path> — fix DB/registry or paths, then re-run phase 2:` followed by a **printed** equivalent **`agentskeptic verify-integrator-owned …`** command using resolved absolute paths and the same flags. Then **`CROSSING_DECISION_READY_FOOTER`**.
 - **exit:** Phase 2’s code (**1** / **2** / **3**).
 
 ## CI / commercial smoke

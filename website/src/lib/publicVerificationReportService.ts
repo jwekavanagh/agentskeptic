@@ -5,9 +5,7 @@ import { loadSchemaValidator } from "agentskeptic";
 
 const MAX_BODY_BYTES = 393216;
 
-const validateEnvelope = loadSchemaValidator("public-verification-report-v1");
-const validateWorkflowResult = loadSchemaValidator("workflow-result");
-const validateQuickReport = loadSchemaValidator("quick-verify-report");
+const validateEnvelopeV2 = loadSchemaValidator("public-verification-report-v2");
 
 export type PublicReportEnvelope =
   | {
@@ -22,6 +20,12 @@ export type PublicReportEnvelope =
       workflowDisplayId: string;
       quickReport: unknown;
       humanReportText: string;
+    }
+  | {
+      schemaVersion: 2;
+      certificate: Record<string, unknown>;
+      cliVersion?: string;
+      createdFrom?: string;
     };
 
 export function assertBodySizeWithinLimit(rawUtf8: string): void {
@@ -34,34 +38,29 @@ export function assertBodySizeWithinLimit(rawUtf8: string): void {
 }
 
 export function parseAndValidateEnvelope(raw: unknown): PublicReportEnvelope {
-  if (!validateEnvelope(raw)) {
+  if (!validateEnvelopeV2(raw)) {
     const err = new Error("ENVELOPE_INVALID");
     (err as Error & { status: number }).status = 400;
     throw err;
   }
-  const env = raw as PublicReportEnvelope;
-  if (env.kind === "workflow") {
-    if (!validateWorkflowResult(env.workflowResult)) {
-      const err = new Error("WORKFLOW_RESULT_INVALID");
-      (err as Error & { status: number }).status = 400;
-      throw err;
-    }
-  } else {
-    if (!validateQuickReport(env.quickReport)) {
-      const err = new Error("QUICK_REPORT_INVALID");
-      (err as Error & { status: number }).status = 400;
-      throw err;
-    }
-  }
-  return env;
+  return raw as PublicReportEnvelope;
 }
 
 export function derivedFieldsFromEnvelope(env: PublicReportEnvelope): {
-  kind: "workflow" | "quick";
+  kind: string;
   reportWorkflowId: string;
   reportStatusToken: string;
   humanText: string;
 } {
+  if (env.schemaVersion === 2) {
+    const c = env.certificate as { workflowId: string; stateRelation: string; humanReport: string };
+    return {
+      kind: "outcome_certificate_v2",
+      reportWorkflowId: c.workflowId,
+      reportStatusToken: c.stateRelation,
+      humanText: c.humanReport,
+    };
+  }
   if (env.kind === "workflow") {
     const wr = env.workflowResult as { workflowId: string; status: string };
     return {

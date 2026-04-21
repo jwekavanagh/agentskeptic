@@ -272,9 +272,9 @@ export const integrateActivation = {
   spineCheckpointIntro:
     "When the copied script exits 0 after the guard, you have reached IntegrateSpineComplete: pedagogical demo, AdoptionComplete_PatternComplete-shaped mid segment, then bootstrap plus crossing (pack-led) on your prepared AGENTSKEPTIC_VERIFY_DB using the fixed pack under examples/integrate-your-db. That is still not ProductionComplete on your own emitters.",
   spineCheckpointBullets: [
-    "After the demo segment you see PatternComplete-style contract verify on temp paths (human report on stderr, WorkflowResult JSON on stdout for the temp DB path).",
+    "After the demo segment you see PatternComplete-style contract verify on temp paths (human report on stderr, Outcome Certificate JSON on stdout for the temp DB path).",
     "The final line in the script is crossing pack-led for wf_integrate_spine on the generated pack under $OUT2 and your AGENTSKEPTIC_VERIFY_DB; final-phase telemetry matches verify_integrator_owned and bundled example triples stay rejected.",
-    "When your DB matches examples/integrate-your-db/bootstrap-input.json and required-sqlite-state.sql, stderr shows the human report and stdout one WorkflowResult JSON with status complete for wf_integrate_spine.",
+    "When your DB matches examples/integrate-your-db/bootstrap-input.json and required-sqlite-state.sql, stderr shows the human report and stdout one Outcome Certificate JSON with stateRelation matches_expectations for wf_integrate_spine.",
     "If the script stops after the demo with a message about AGENTSKEPTIC_VERIFY_DB, set that variable to a readable SQLite file prepared per docs/first-run-integration.md (Integrate spine) and rerun from a fresh directory.",
   ],
   productCompletionHeading: "Product completion: Step 4 on your emitters",

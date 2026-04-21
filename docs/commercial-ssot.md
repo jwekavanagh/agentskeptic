@@ -47,6 +47,8 @@ Single matrix for what the **default OSS artifact** vs **published commercial np
 
 **Why this shape:** OSS stays useful for adoption and local experimentation (including generating lock artifacts). **Subscription-backed reliance** for the published npm path—licensed verify, compare against an existing lock in CI, and **`enforce`**—is gated by the license server and Stripe-backed entitlement. Normative CLI split: **[`docs/commercial-enforce-gate-normative.md`](commercial-enforce-gate-normative.md)**; CI recipes: **[`docs/ci-enforcement.md`](ci-enforcement.md)**.
 
+**Outcome Certificate vs billing:** The public **Outcome Certificate** JSON never contains Stripe, plan, or quota fields. Subscription and reserve gate **whether verification is allowed to run**; see [`outcome-certificate-normative.md`](outcome-certificate-normative.md) and [`outcome-certificate-integrator.md`](outcome-certificate-integrator.md).
+
 ## Packaging and CLI build profiles
 
 | Artifact              | `WF_BUILD_PROFILE` | Behavior |

@@ -862,7 +862,7 @@ planValidation:
 
     const out = execFileSync(
       process.execPath,
-      [cliJs, "plan-transition", "--repo", dir, "--before", b, "--after", a, "--plan", planPath, "--no-truth-report"],
+      [cliJs, "plan-transition", "--repo", dir, "--before", b, "--after", a, "--plan", planPath, "--no-human-report"],
       { encoding: "utf8", windowsHide: true },
     );
     const wf = JSON.parse(out.trim()) as { status: string; workflowId: string };
@@ -911,7 +911,7 @@ planValidation:
         a,
         "--plan",
         planPath,
-        "--no-truth-report",
+        "--no-human-report",
         "--write-run-bundle",
         bundleDir,
       ],
@@ -972,7 +972,7 @@ rules:
         a,
         "--plan",
         planPath,
-        "--no-truth-report",
+        "--no-human-report",
         "--write-run-bundle",
         bundleDir,
       ],
@@ -1030,7 +1030,7 @@ Change \`src/t.ts\`.
         a,
         "--plan",
         planPath,
-        "--no-truth-report",
+        "--no-human-report",
         "--write-run-bundle",
         bundleDir,
       ],

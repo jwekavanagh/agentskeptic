@@ -39,7 +39,7 @@ describe("OSS batch --output-lock", () => {
           registryPath,
           "--db",
           dbPath,
-          "--no-truth-report",
+          "--no-human-report",
           "--output-lock",
           lockPath,
         ],

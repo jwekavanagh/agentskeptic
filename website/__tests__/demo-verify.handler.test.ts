@@ -8,28 +8,20 @@ import { loadSchemaValidator } from "agentskeptic";
 import { NextRequest } from "next/server";
 import { describe, expect, it } from "vitest";
 
-const validateWr = loadSchemaValidator("workflow-result");
+const validateCert = loadSchemaValidator("outcome-certificate-v1");
 
-function assertScenarioMatrix(scenarioId: string, w: Record<string, unknown>) {
-  const steps = w.steps as { status: string; reasons?: { code: string }[] }[];
-  const truth = w.workflowTruthReport as { steps: { outcomeLabel: string }[] };
+function assertScenarioMatrix(scenarioId: string, c: Record<string, unknown>) {
   if (scenarioId === "wf_complete") {
-    expect(w.status).toBe("complete");
-    expect(steps[0]?.status).toBe("verified");
-    expect(steps[0]?.reasons?.length ?? 0).toBe(0);
-    expect(truth.steps[0]?.outcomeLabel).toBe("VERIFIED");
+    expect(c.stateRelation).toBe("matches_expectations");
+    expect(c.highStakesReliance).toBe("permitted");
   }
   if (scenarioId === "wf_missing") {
-    expect(w.status).toBe("inconsistent");
-    expect(steps[0]?.status).toBe("missing");
-    expect(steps[0]?.reasons?.[0]?.code).toBe("ROW_ABSENT");
-    expect(truth.steps[0]?.outcomeLabel).toBe("FAILED_ROW_MISSING");
+    expect(c.stateRelation).toBe("does_not_match");
+    expect(c.highStakesReliance).toBe("prohibited");
   }
   if (scenarioId === "wf_inconsistent") {
-    expect(w.status).toBe("inconsistent");
-    expect(steps[0]?.status).toBe("inconsistent");
-    expect(steps[0]?.reasons?.[0]?.code).toBe("VALUE_MISMATCH");
-    expect(truth.steps[0]?.outcomeLabel).toBe("FAILED_VALUE_MISMATCH");
+    expect(c.stateRelation).toBe("does_not_match");
+    expect(c.highStakesReliance).toBe("prohibited");
   }
 }
 
@@ -38,8 +30,8 @@ describe("POST /api/demo/verify", () => {
     it(`returns 200 and valid payload for ${scenarioId}`, async () => {
       const once = await runDemoVerifyScenario(scenarioId);
       const twice = await runDemoVerifyScenario(scenarioId);
-      expect(once.workflowResult).toEqual(twice.workflowResult);
-      expect(once.truthReportText).toBe(twice.truthReportText);
+      expect(once.certificate).toEqual(twice.certificate);
+      expect(once.humanReport).toBe(twice.humanReport);
 
       const req = new NextRequest("http://localhost/api/demo/verify", {
         method: "POST",
@@ -53,11 +45,11 @@ describe("POST /api/demo/verify", () => {
       expect(parsed.success, JSON.stringify(parsed.error)).toBe(true);
       if (!parsed.success) return;
 
-      expect(parsed.data.workflowResult).toEqual(once.workflowResult);
-      expect(parsed.data.truthReportText).toBe(once.truthReportText);
+      expect(parsed.data.certificate).toEqual(once.certificate);
+      expect(parsed.data.humanReport).toBe(once.humanReport);
 
-      expect(validateWr(parsed.data.workflowResult)).toBe(true);
-      assertScenarioMatrix(scenarioId, parsed.data.workflowResult as Record<string, unknown>);
+      expect(validateCert(parsed.data.certificate)).toBe(true);
+      assertScenarioMatrix(scenarioId, parsed.data.certificate as Record<string, unknown>);
     });
   }
 

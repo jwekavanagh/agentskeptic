@@ -28,8 +28,10 @@ describe("first-run-verify output (integration)", () => {
       `expected human report phrase in stderr, got:\n${r.stderr.slice(0, 2000)}`,
     );
     assert.ok(
-      r.stdout.includes('"status"') && r.stdout.includes("complete") && r.stdout.includes("verified"),
-      `expected WorkflowResult JSON in stdout, got:\n${r.stdout.slice(0, 2000)}`,
+      r.stdout.includes('"stateRelation"') &&
+        r.stdout.includes("matches_expectations") &&
+        r.stdout.includes('"highStakesReliance"'),
+      `expected Outcome Certificate JSON in stdout, got:\n${r.stdout.slice(0, 2000)}`,
     );
     const lines = r.stdout.trim().split(/\r?\n/);
     const last = lines.at(-1);

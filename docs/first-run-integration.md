@@ -55,7 +55,7 @@ agentskeptic crossing --workflow-id <id> --events path/to/events.ndjson --regist
 ### What success looks like (integrator-owned)
 
 - **Exit code `0`**: stdout is one **WorkflowResult** JSON object with `"status":"complete"` and the step `"verified"`.
-- **Stderr** (default) is the **human verification report** (trust line + per-step wording). Use **`--no-truth-report`** if you want stderr empty and JSON-only on stdout.
+- **Stderr** (default) is the **human verification report** (trust line + per-step wording). Use **`--no-human-report`** if you want stderr empty and JSON-only on stdout.
 
 Example stdout (one JSON object; `schemaVersion` and nested fields evolve over releases):
 

@@ -73,7 +73,7 @@ function assertOutputLockMatchesGolden(dbArg) {
     fail(`Missing golden ci-lock: ${goldenLockPath}`);
   }
   const lockTmp = path.join(tmpdir(), `partner-ci-lock-${randomUUID()}.json`);
-  const r = runCli(dbArg, ["--no-truth-report", "--output-lock", lockTmp]);
+  const r = runCli(dbArg, ["--no-human-report", "--output-lock", lockTmp]);
   try {
     if (r.status !== 0) {
       console.error(r.stderr);
@@ -100,10 +100,15 @@ function assertVerified(stdout) {
   } catch {
     fail("CLI stdout is not JSON: " + stdout.slice(0, 200));
   }
-  if (obj.status !== "complete") fail("Expected workflow status complete, got: " + JSON.stringify(obj.status));
+  if (obj.stateRelation !== "matches_expectations") {
+    fail("Expected stateRelation matches_expectations, got: " + JSON.stringify(obj.stateRelation));
+  }
+  if (obj.highStakesReliance !== "permitted") {
+    fail("Expected highStakesReliance permitted, got: " + JSON.stringify(obj.highStakesReliance));
+  }
   const step0 = obj.steps?.[0];
-  if (!step0 || step0.status !== "verified") {
-    fail("Expected first step verified, got: " + JSON.stringify(step0));
+  if (!step0 || typeof step0.seq !== "number") {
+    fail("Expected certificate steps[0], got: " + JSON.stringify(step0));
   }
 }
 

@@ -7,18 +7,35 @@ type Props = {
   variant: "standalone" | "embed";
 };
 
+function machineJsonFromPayload(payload: PublicReportEnvelope): string {
+  if ("schemaVersion" in payload && payload.schemaVersion === 2) {
+    return JSON.stringify(payload.certificate, null, 2);
+  }
+  if ("kind" in payload && payload.kind === "workflow") {
+    return JSON.stringify(payload.workflowResult, null, 2);
+  }
+  if ("kind" in payload && payload.kind === "quick") {
+    return JSON.stringify(payload.quickReport, null, 2);
+  }
+  return JSON.stringify(payload, null, 2);
+}
+
+function kindLabel(payload: PublicReportEnvelope): string {
+  if ("schemaVersion" in payload && payload.schemaVersion === 2) return "outcome_certificate_v2";
+  if ("kind" in payload) return payload.kind;
+  return "unknown";
+}
+
 export function VerificationReportView({ humanText, payload, variant }: Props) {
-  const machineJson =
-    payload.kind === "workflow"
-      ? JSON.stringify(payload.workflowResult, null, 2)
-      : JSON.stringify(payload.quickReport, null, 2);
+  const machineJson = machineJsonFromPayload(payload);
+  const kind = kindLabel(payload);
   if (variant === "embed") {
     return (
       <section className="verification-report-embed" data-testid="verification-report-embed">
         <h2 className="verification-report-embed-title">Verification report</h2>
         <p className="muted">{productCopy.publicShareReportIntro}</p>
         <p className="muted">
-          Kind: <strong>{payload.kind}</strong>
+          Kind: <strong>{kind}</strong>
         </p>
         <section className="home-section" aria-labelledby="human-heading-embed">
           <h2 id="human-heading-embed">Human report</h2>
@@ -40,7 +57,7 @@ export function VerificationReportView({ humanText, payload, variant }: Props) {
       <h1>Verification report</h1>
       <p className="muted">{productCopy.publicShareReportIntro}</p>
       <p className="muted">
-        Kind: <strong>{payload.kind}</strong>
+        Kind: <strong>{kind}</strong>
       </p>
       <section className="home-section" aria-labelledby="human-heading">
         <h2 id="human-heading">Human report</h2>
