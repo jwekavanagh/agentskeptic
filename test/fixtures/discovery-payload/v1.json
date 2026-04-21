@@ -118,6 +118,21 @@
         "problemAnchor": "Markdown-backed discovery surface content for /guides/automation-success-database-mismatch — read-only SQL verification context."
       },
       {
+        "path": "/guides/buyer-ci-enforcement-metering",
+        "navLabel": "buyer-ci-enforcement-metering",
+        "problemAnchor": "Markdown-backed discovery surface content for /guides/buyer-ci-enforcement-metering — read-only SQL verification context."
+      },
+      {
+        "path": "/guides/buyer-commercial-boundary",
+        "navLabel": "buyer-commercial-boundary",
+        "problemAnchor": "Markdown-backed discovery surface content for /guides/buyer-commercial-boundary — read-only SQL verification context."
+      },
+      {
+        "path": "/guides/buyer-trust-production-implications",
+        "navLabel": "buyer-trust-production-implications",
+        "problemAnchor": "Markdown-backed discovery surface content for /guides/buyer-trust-production-implications — read-only SQL verification context."
+      },
+      {
         "path": "/guides/ci-green-logs-row-absent",
         "navLabel": "ci-green-logs-row-absent",
         "problemAnchor": "Markdown-backed discovery surface content for /guides/ci-green-logs-row-absent — read-only SQL verification context."
