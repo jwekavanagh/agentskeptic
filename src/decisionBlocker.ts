@@ -13,6 +13,8 @@ function sortedUniqueCodes(codes: string[], cap: number): string[] {
 function inferStepStatus(step: OutcomeCertificateV1["steps"][0]): string {
   const o = step.observedOutcome.toLowerCase();
   if (o.includes("missing") || o.includes("row is missing")) return "missing";
+  // Batch contract `formatBatchObservedStateSummary`: ROW_ABSENT is often summarized as `rowCount=0` only.
+  if (/\browcount=0\b/.test(o) && !o.includes("field=")) return "missing";
   if (o.includes("mismatch") || o.includes("wrong")) return "inconsistent";
   if (o.includes("matched") || o.includes("verified")) return "verified";
   return "non_verified";

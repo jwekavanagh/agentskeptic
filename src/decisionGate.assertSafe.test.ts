@@ -1,17 +1,35 @@
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
+import { readFileSync, mkdtempSync, rmSync } from "node:fs";
+import { join, dirname } from "node:path";
+import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
-import { describe, expect, it } from "vitest";
+import { DatabaseSync } from "node:sqlite";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createDecisionGate } from "./decisionGate.js";
 import { DecisionUnsafeError } from "./decisionUnsafeError.js";
 
-const root = join(fileURLToPath(import.meta.url), "..", "..");
+const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 describe("DecisionGate.assertSafeForIrreversibleAction", () => {
+  /** Seeded SQLite under tmp — `examples/demo.db` is gitignored and absent on clean CI. */
+  let workDir: string;
+  let dbPath: string;
+
+  beforeAll(() => {
+    workDir = mkdtempSync(join(tmpdir(), "agentskeptic-assert-safe-"));
+    dbPath = join(workDir, "demo.db");
+    const sql = readFileSync(join(root, "examples", "seed.sql"), "utf8");
+    const db = new DatabaseSync(dbPath);
+    db.exec(sql);
+    db.close();
+  });
+
+  afterAll(() => {
+    rmSync(workDir, { recursive: true, force: true });
+  });
+
   it("throws DecisionUnsafeError when DB does not match (wf_missing)", async () => {
     const eventsPath = join(root, "examples", "events.ndjson");
     const registryPath = join(root, "examples", "tools.json");
-    const dbPath = join(root, "examples", "demo.db");
     const lines = readFileSync(eventsPath, "utf8").split(/\r?\n/).filter((l) => l.trim().length > 0);
     const gate = createDecisionGate({
       workflowId: "wf_missing",
