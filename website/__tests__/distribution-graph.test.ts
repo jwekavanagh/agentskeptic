@@ -34,12 +34,8 @@ function escapeRegExp(s: string): string {
  * needles (plain `&`, quotes, etc.) match what the browser exposes without manual
  * entity replacement (avoids CodeQL js/double-escaping on test-only normalization).
  */
-function htmlForTextNeedleMatch(html: string): string {
-  const { window } = new JSDOM(html);
-  const { Node: DomNode } = window;
-  const root = window.document.documentElement;
+function collectTextNeedleMatch(root: Element | null, DomNode: Pick<typeof Node, "TEXT_NODE" | "ELEMENT_NODE">): string {
   if (!root) return "";
-
   const parts: string[] = [];
   function visit(el: Element): void {
     const { attributes } = el;
@@ -56,6 +52,17 @@ function htmlForTextNeedleMatch(html: string): string {
   }
   visit(root);
   return parts.join("");
+}
+
+function htmlForTextNeedleMatch(html: string): string {
+  const { window } = new JSDOM(html);
+  return collectTextNeedleMatch(window.document.documentElement, window.Node);
+}
+
+/** Same as {@link htmlForTextNeedleMatch} but only `<main>` — excludes `<head>` meta (OG/Twitter) from needles. */
+function mainHtmlForTextNeedleMatch(html: string): string {
+  const { window } = new JSDOM(html);
+  return collectTextNeedleMatch(window.document.querySelector("main"), window.Node);
 }
 
 registerMarketingSiteTeardown();
@@ -217,25 +224,25 @@ describe(
 
       // Homepage `/`: hero (includes try-it embed), failure excerpt, what-this-catches + strip links, stakes, how-it-works; no homepageHero narrative.
       const homeAgain = await getSiteHtml("/");
-      const homeAgainText = htmlForTextNeedleMatch(homeAgain);
-      expect(homeAgainText).toContain(disc.heroTitle);
-      expect(homeAgainText).toContain(disc.homepageDecisionFraming);
-      expect(homeAgainText).toContain(productCopy.homeHeroShortTagline);
-      expect(homeAgainText).not.toContain(disc.heroSubtitle);
-      const idxTitle = homeAgainText.indexOf(disc.heroTitle);
-      const idxFrame = homeAgainText.indexOf(disc.homepageDecisionFraming);
-      const idxSub = homeAgainText.indexOf(productCopy.homeHeroShortTagline);
+      const homeMainText = mainHtmlForTextNeedleMatch(homeAgain);
+      expect(homeMainText).toContain(disc.heroTitle);
+      expect(homeMainText).toContain(disc.homepageDecisionFraming);
+      expect(homeMainText).toContain(productCopy.homeHeroShortTagline);
+      expect(homeMainText).not.toContain(disc.heroSubtitle);
+      const idxTitle = homeMainText.indexOf(disc.heroTitle);
+      const idxFrame = homeMainText.indexOf(disc.homepageDecisionFraming);
+      const idxSub = homeMainText.indexOf(productCopy.homeHeroShortTagline);
       // htmlForTextNeedleMatch is attribute values + text only (no literal `data-testid="…"` substrings).
-      const idxHow = homeAgainText.indexOf("home-how-it-works");
+      const idxHow = homeMainText.indexOf("home-how-it-works");
       expect(idxTitle).toBeGreaterThanOrEqual(0);
       expect(idxFrame).toBeGreaterThan(idxTitle);
       expect(idxSub).toBeGreaterThan(idxFrame);
       expect(idxHow).toBeGreaterThan(idxSub);
-      expect(homeAgainText).not.toContain(disc.homepageHero.why);
-      expect(homeAgainText).not.toContain(disc.homepageHero.what);
-      expect(homeAgainText).not.toContain(disc.homepageHero.when);
+      expect(homeMainText).not.toContain(disc.homepageHero.why);
+      expect(homeMainText).not.toContain(disc.homepageHero.what);
+      expect(homeMainText).not.toContain(disc.homepageHero.when);
       expect(homeAgain).not.toContain('data-testid="home-cold-proof"');
-      expect(homeAgainText).not.toContain(disc.shareableTerminalDemo.transcript.slice(0, 80));
+      expect(homeMainText).not.toContain(disc.shareableTerminalDemo.transcript.slice(0, 80));
       expect(homeAgain).toContain('data-testid="home-how-it-works"');
       expect(homeAgain).toContain('data-testid="home-try-it"');
       const ctaNeedle = 'data-testid="homepage-acquisition-cta"';
