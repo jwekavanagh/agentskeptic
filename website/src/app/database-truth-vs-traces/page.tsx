@@ -1,10 +1,13 @@
 import { productCopy } from "@/content/productCopy";
 import discoveryAcquisition from "@/lib/discoveryAcquisition";
+import { indexableGuideCanonical } from "@/lib/indexableGuides";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: discoveryAcquisition.pageMetadata.title,
-  description: discoveryAcquisition.pageMetadata.description,
+  description: `${discoveryAcquisition.pageMetadata.description} Includes shareable demo transcript and evaluator proof.`,
+  alternates: { canonical: indexableGuideCanonical(discoveryAcquisition.slug) },
+  robots: { index: true, follow: true },
 };
 
 export default function DatabaseTruthVsTracesPage() {

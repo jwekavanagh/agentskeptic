@@ -1,6 +1,6 @@
 "use strict";
 
-const { readFileSync } = require("node:fs");
+const { existsSync, readFileSync, readdirSync } = require("node:fs");
 const { join } = require("node:path");
 const Ajv = require("ajv");
 const addFormats = require("ajv-formats");
@@ -31,6 +31,36 @@ function discoveryPaths(root) {
 function loadDiscoveryAcquisition(root) {
   const { jsonPath } = discoveryPaths(root);
   return JSON.parse(readFileSync(jsonPath, "utf8"));
+}
+
+/**
+ * @param {string} root
+ * @returns {{ guides: string[]; examples: string[]; compare: string[] }}
+ */
+function listMarkdownSurfaceRoutesGrouped(root) {
+  const base = join(root, "website", "content", "surfaces");
+  /** @type {{ guides: string[]; examples: string[]; compare: string[] }} */
+  const out = { guides: [], examples: [], compare: [] };
+  for (const seg of /** @type {const} */ (["guides", "examples", "compare"])) {
+    const dir = join(base, seg);
+    if (!existsSync(dir)) continue;
+    for (const f of readdirSync(dir)) {
+      if (!f.endsWith(".md")) continue;
+      const raw = readFileSync(join(dir, f), "utf8");
+      const m = raw.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+      if (!m) throw new Error(`markdown-surfaces: missing frontmatter in ${seg}/${f}`);
+      const rm = m[1].match(/^route:\s*(.+)$/m);
+      if (!rm) throw new Error(`markdown-surfaces: missing route in ${seg}/${f}`);
+      const route = rm[1].trim().replace(/^['"]|['"]$/g, "");
+      if (seg === "guides") out.guides.push(route);
+      else if (seg === "examples") out.examples.push(route);
+      else out.compare.push(route);
+    }
+  }
+  out.guides.sort((a, b) => a.localeCompare(b, "en", { sensitivity: "base" }));
+  out.examples.sort((a, b) => a.localeCompare(b, "en", { sensitivity: "base" }));
+  out.compare.sort((a, b) => a.localeCompare(b, "en", { sensitivity: "base" }));
+  return out;
 }
 
 /**
@@ -86,71 +116,6 @@ function escapeMdLinkText(s) {
 }
 
 /**
- * @param {Record<string, unknown>} discovery
- */
-function validateIndexableGuides(discovery) {
-  const guides = /** @type {{ path: string; navLabel: string; problemAnchor: string }[]} */ (
-    discovery.indexableGuides
-  );
-  if (!Array.isArray(guides)) {
-    throw new Error("discovery-acquisition: indexableGuides must be an array");
-  }
-  const paths = guides.map((g) => String(g.path));
-  const uniq = new Set(paths);
-  if (uniq.size !== paths.length) {
-    throw new Error("discovery-acquisition: indexableGuides paths must be unique");
-  }
-  const demandMoments = /** @type {string[]} */ (discovery.demandMoments);
-  for (let k = 0; k < guides.length; k++) {
-    const pa = String(guides[k].problemAnchor);
-    if (pa.includes("`")) {
-      throw new Error("discovery-acquisition: problemAnchor must not contain backtick");
-    }
-    if (k >= 1) {
-      const dm = String(demandMoments[k - 1]);
-      if (!dm.includes(pa)) {
-        throw new Error(
-          `discovery-acquisition: indexableGuides[${k}].problemAnchor must be a substring of demandMoments[${k - 1}]`,
-        );
-      }
-    }
-  }
-}
-
-/**
- * @param {Record<string, unknown>} discovery
- */
-function validateIndexableExamples(discovery) {
-  const ex = /** @type {{ path: string; navLabel: string; problemAnchor: string; embedKey: string }[]} */ (
-    discovery.indexableExamples
-  );
-  if (!Array.isArray(ex)) {
-    throw new Error("discovery-acquisition: indexableExamples must be an array");
-  }
-  if (ex.length !== 2) {
-    throw new Error("discovery-acquisition: indexableExamples must have length exactly 2");
-  }
-  if (ex[0].path !== "/examples/wf-complete" || ex[1].path !== "/examples/wf-missing") {
-    throw new Error(
-      "discovery-acquisition: indexableExamples paths must be /examples/wf-complete then /examples/wf-missing",
-    );
-  }
-  if (ex[0].embedKey !== "wf_complete" || ex[1].embedKey !== "wf_missing") {
-    throw new Error(
-      "discovery-acquisition: indexableExamples embedKey order must be wf_complete then wf_missing",
-    );
-  }
-  for (let i = 0; i < ex.length; i++) {
-    const row = ex[i];
-    const nl = String(row.navLabel);
-    const pa = String(row.problemAnchor);
-    if (nl.includes("`") || pa.includes("`")) {
-      throw new Error(`discovery-acquisition: indexableExamples[${i}] must not contain backtick`);
-    }
-  }
-}
-
-/**
  * @param {string} baseLlms
  * @param {Record<string, unknown>} discovery
  * @param {string} canonicalOrigin
@@ -162,18 +127,24 @@ function appendDiscoveryLlmsAppendix(baseLlms, discovery, canonicalOrigin) {
   const bullets = (/** @type {string[]} */ arr) => arr.map((x) => `- ${x}`).join("\n");
 
   let out = String(baseLlms).replace(/\s*$/, "") + "\n";
-  const guides = /** @type {{ path: string }[] | undefined} */ (discovery.indexableGuides);
-  if (Array.isArray(guides) && guides.length > 0) {
+  const root = join(__dirname, "..");
+  const grouped = listMarkdownSurfaceRoutesGrouped(root);
+  if (grouped.guides.length > 0) {
     out += "\n## Indexable guides\n";
-    for (const g of guides) {
-      out += `- ${origin}${String(g.path)}\n`;
+    for (const path of grouped.guides) {
+      out += `- ${origin}${path}\n`;
     }
   }
-  const examples = /** @type {{ path: string }[] | undefined} */ (discovery.indexableExamples);
-  if (Array.isArray(examples) && examples.length > 0) {
+  if (grouped.examples.length > 0) {
     out += "\n## Indexable examples\n";
-    for (const ex of examples) {
-      out += `- ${origin}${String(ex.path)}\n`;
+    for (const path of grouped.examples) {
+      out += `- ${origin}${path}\n`;
+    }
+  }
+  if (grouped.compare.length > 0) {
+    out += "\n## Indexable comparisons\n";
+    for (const path of grouped.compare) {
+      out += `- ${origin}${path}\n`;
     }
   }
   const demo = discovery.shareableTerminalDemo;
@@ -221,8 +192,6 @@ function validateDiscoveryAcquisition(root) {
       "discovery-acquisition: shareableTerminalDemo.transcript must not contain markdown fence ```",
     );
   }
-  validateIndexableGuides(discovery);
-  validateIndexableExamples(discovery);
   return discovery;
 }
 
@@ -231,7 +200,6 @@ module.exports = {
   buildDiscoveryFoldBody,
   appendDiscoveryLlmsAppendix,
   validateDiscoveryAcquisition,
-  validateIndexableGuides,
-  validateIndexableExamples,
   discoveryPaths,
+  listMarkdownSurfaceRoutesGrouped,
 };

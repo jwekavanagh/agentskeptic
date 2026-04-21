@@ -2,12 +2,15 @@ import { IntegrateActivationBlock } from "@/components/IntegrateActivationBlock"
 import { IntegrateCrossingCommands } from "@/components/IntegrateCrossingCommands";
 import { integrateActivation } from "@/content/productCopy";
 import { siteMetadata } from "@/content/siteMetadata";
+import { indexableGuideCanonical } from "@/lib/indexableGuides";
 import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
   title: siteMetadata.integrate.title,
   description: siteMetadata.integrate.description,
+  alternates: { canonical: indexableGuideCanonical("/integrate") },
+  robots: { index: true, follow: true },
 };
 
 export default function IntegratePage() {

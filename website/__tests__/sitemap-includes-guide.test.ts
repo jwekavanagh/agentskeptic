@@ -1,21 +1,20 @@
 import sitemap from "@/app/sitemap";
 import discoveryAcquisition from "@/lib/discoveryAcquisition";
 import { publicProductAnchors } from "@/lib/publicProductAnchors";
+import { listAllSurfaces, listDiscoveryRoutes } from "@/lib/surfaceMarkdown";
 import { describe, expect, it } from "vitest";
 
 describe("sitemap", () => {
-  it("includes every indexable guide and example path, /guides hub in pinned order, /security; omits /examples hub", async () => {
+  it("includes every markdown discovery route, /guides and /compare hubs, /security; omits /examples hub", async () => {
     const entries = await sitemap();
     const urls = entries.map((e) => e.url);
     const base = publicProductAnchors.productionCanonicalOrigin.replace(/\/$/, "");
-    for (const g of discoveryAcquisition.indexableGuides) {
-      expect(urls.some((u) => u === `${base}${g.path}`)).toBe(true);
-    }
-    for (const e of discoveryAcquisition.indexableExamples) {
-      expect(urls.some((u) => u === `${base}${e.path}`)).toBe(true);
+    for (const route of listDiscoveryRoutes()) {
+      expect(urls.some((u) => u === `${base}${route}`)).toBe(true);
     }
     expect(urls.some((u) => u.endsWith("/security"))).toBe(true);
     expect(urls).toContain(`${base}/guides`);
+    expect(urls).toContain(`${base}/compare`);
     expect(urls).not.toContain(`${base}/examples`);
 
     const idx = (suffix: string) => urls.findIndex((u) => u === `${base}${suffix}`);
@@ -27,5 +26,17 @@ describe("sitemap", () => {
     expect(iSupport).toBeGreaterThanOrEqual(0);
     expect(iGuides).toBeGreaterThan(iIntegrate);
     expect(iSupport).toBeGreaterThan(iGuides);
+  });
+
+  it("includes acquisition slug from discovery SSOT", async () => {
+    const entries = await sitemap();
+    const base = publicProductAnchors.productionCanonicalOrigin.replace(/\/$/, "");
+    expect(entries.some((e) => e.url === `${base}${discoveryAcquisition.slug}`)).toBe(true);
+  });
+
+  it("lists discovery surfaces in route order under markdown corpus", () => {
+    const routes = listAllSurfaces().map((s) => s.route);
+    const sorted = [...routes].sort((a, b) => a.localeCompare(b, "en", { sensitivity: "base" }));
+    expect(routes).toEqual(sorted);
   });
 });

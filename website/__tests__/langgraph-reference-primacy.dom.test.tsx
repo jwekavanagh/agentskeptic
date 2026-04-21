@@ -1,8 +1,9 @@
 /** @vitest-environment jsdom */
 
 import IntegratePage from "@/app/integrate/page";
-import LangGraphVerificationGuidePage from "@/app/guides/verify-langgraph-workflows/page";
+import { DiscoverySurfacePage } from "@/components/discovery/DiscoverySurfacePage";
 import { langgraphReferenceReadmeUrl } from "@/lib/langgraphReferenceReadmeUrl";
+import { readSurfaceFile } from "@/lib/surfaceMarkdown";
 import { cleanup, render } from "@testing-library/react";
 import type { ReactElement } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -32,12 +33,12 @@ describe("langgraph reference integrator primacy", () => {
     expect(container.querySelector('[data-testid="integrator-activation-commands"]')).toBeTruthy();
   });
 
-  it("LangGraph guide: primary block first https link matches canonical README blob URL", () => {
-    const { container } = render(<LangGraphVerificationGuidePage /> as ReactElement);
-    const wrap = container.querySelector('[data-testid="langgraph-guide-primary-cta"]');
-    expect(wrap).toBeTruthy();
-    expect(container.querySelector(".mechanism-list")).toBeNull();
-    const https = (wrap as HTMLElement).querySelectorAll('a[href^="https://"]');
+  it("LangGraph guide: first https link in prose matches canonical README blob URL", () => {
+    const surface = readSurfaceFile("guides", "verify-langgraph-workflows");
+    const { container } = render(<DiscoverySurfacePage surface={surface} /> as ReactElement);
+    const prose = container.querySelector(".integrate-prose");
+    expect(prose).toBeTruthy();
+    const https = (prose as HTMLElement).querySelectorAll('a[href^="https://"]');
     expect(https.length).toBeGreaterThan(0);
     expect((https[0] as HTMLAnchorElement).getAttribute("href")).toBe(langgraphReferenceReadmeUrl);
   });

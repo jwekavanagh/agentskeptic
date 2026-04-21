@@ -13,12 +13,14 @@ const humanText = derivedFieldsFromEnvelope(embed).humanText;
 
 type Props = {
   children: ReactNode;
+  /** When set, replaces the default single “Run first-run integration” row (discovery surfaces use `SurfaceProgression`). */
+  progressionStrip?: ReactNode;
 };
 
 /**
  * Shared layout for indexable /guides/* acquisition pages: prose, bundled verification embed, single integrate CTA.
  */
-export function IndexedGuideShell({ children }: Props) {
+export function IndexedGuideShell({ children, progressionStrip }: Props) {
   return (
     <main className="integrate-main" data-testid="indexed-guide-shell">
       {children}
@@ -27,11 +29,13 @@ export function IndexedGuideShell({ children }: Props) {
         <p className="muted">{productCopy.indexedGuideEmbedMuted}</p>
         <VerificationReportView humanText={humanText} payload={embed} variant="embed" />
       </section>
-      <p className="home-cta-row">
-        <Link className="btn" href="/integrate">
-          Run first-run integration
-        </Link>
-      </p>
+      {progressionStrip ?? (
+        <p className="home-cta-row">
+          <Link className="btn" href="/integrate">
+            Run first-run integration
+          </Link>
+        </p>
+      )}
     </main>
   );
 }

@@ -1,33 +1,47 @@
 /**
- * Every indexableGuides.path has a matching Next app route file.
+ * Markdown-backed discovery surfaces: dynamic App Router handlers + on-disk .md.
  */
 import assert from "node:assert/strict";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
+import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, "..");
+const require = createRequire(import.meta.url);
+const da = require(join(root, "scripts", "discovery-acquisition.lib.cjs"));
 
-test("indexableGuides paths resolve to page.tsx under website/src/app/guides", () => {
-  const discovery = JSON.parse(readFileSync(join(root, "config", "discovery-acquisition.json"), "utf8"));
-  const guides = discovery.indexableGuides;
-  assert.ok(Array.isArray(guides));
-  for (const g of guides) {
-    const seg = String(g.path).replace(/^\/guides\//, "");
-    const pagePath = join(root, "website", "src", "app", "guides", seg, "page.tsx");
-    assert.ok(existsSync(pagePath), `missing page for ${g.path}: ${pagePath}`);
+test("guides/[slug]/page.tsx exists and every guides route has matching markdown", () => {
+  const grouped = da.listMarkdownSurfaceRoutesGrouped(root);
+  const pagePath = join(root, "website", "src", "app", "guides", "[slug]", "page.tsx");
+  assert.ok(existsSync(pagePath), `missing ${pagePath}`);
+  for (const path of grouped.guides) {
+    const seg = String(path).replace(/^\/guides\//, "");
+    const mdPath = join(root, "website", "content", "surfaces", "guides", `${seg}.md`);
+    assert.ok(existsSync(mdPath), `missing markdown for ${path}: ${mdPath}`);
   }
 });
 
-test("indexableExamples paths resolve to page.tsx under website/src/app/examples", () => {
-  const discovery = JSON.parse(readFileSync(join(root, "config", "discovery-acquisition.json"), "utf8"));
-  const examples = discovery.indexableExamples;
-  assert.ok(Array.isArray(examples));
-  for (const e of examples) {
-    const seg = String(e.path).replace(/^\/examples\//, "");
-    const pagePath = join(root, "website", "src", "app", "examples", seg, "page.tsx");
-    assert.ok(existsSync(pagePath), `missing page for ${e.path}: ${pagePath}`);
+test("examples/[slug]/page.tsx exists and every examples route has matching markdown", () => {
+  const grouped = da.listMarkdownSurfaceRoutesGrouped(root);
+  const pagePath = join(root, "website", "src", "app", "examples", "[slug]", "page.tsx");
+  assert.ok(existsSync(pagePath), `missing ${pagePath}`);
+  for (const path of grouped.examples) {
+    const seg = String(path).replace(/^\/examples\//, "");
+    const mdPath = join(root, "website", "content", "surfaces", "examples", `${seg}.md`);
+    assert.ok(existsSync(mdPath), `missing markdown for ${path}: ${mdPath}`);
+  }
+});
+
+test("compare/[slug]/page.tsx exists and every compare route has matching markdown", () => {
+  const grouped = da.listMarkdownSurfaceRoutesGrouped(root);
+  const pagePath = join(root, "website", "src", "app", "compare", "[slug]", "page.tsx");
+  assert.ok(existsSync(pagePath), `missing ${pagePath}`);
+  for (const path of grouped.compare) {
+    const seg = String(path).replace(/^\/compare\//, "");
+    const mdPath = join(root, "website", "content", "surfaces", "compare", `${seg}.md`);
+    assert.ok(existsSync(mdPath), `missing markdown for ${path}: ${mdPath}`);
   }
 });

@@ -29,16 +29,15 @@ const productJsonLd = {
 
 export const metadata: Metadata = {
   metadataBase: new URL(publicProductAnchors.productionCanonicalOrigin),
-  title: siteMetadata.title,
-  description: siteMetadata.description,
-  alternates: {
-    canonical: "/",
+  title: {
+    default: siteMetadata.title,
+    template: "%s — AgentSkeptic",
   },
+  description: siteMetadata.description,
   openGraph: {
     title: siteMetadata.openGraph.title,
     description: siteMetadata.openGraph.description,
     type: "website",
-    url: "/",
     images: [
       {
         url: siteMetadata.openGraphImage.path,

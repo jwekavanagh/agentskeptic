@@ -105,6 +105,20 @@ function buildDiscoveryPayload(root) {
   const discoveryLib = require("./discovery-acquisition.lib.cjs");
   discoveryLib.validateDiscoveryAcquisition(root);
   const discovery = discoveryLib.loadDiscoveryAcquisition(root);
+  const grouped = discoveryLib.listMarkdownSurfaceRoutesGrouped(root);
+  const padAnchor = (path) =>
+    `Markdown-backed discovery surface content for ${path} — read-only SQL verification context.`;
+  const indexableGuidesFromMd = grouped.guides.map((path) => ({
+    path,
+    navLabel: path.replace(/^\/guides\//, ""),
+    problemAnchor: padAnchor(path),
+  }));
+  const indexableExamplesFromMd = grouped.examples.map((path) => ({
+    path,
+    navLabel: path.replace(/^\/examples\//, ""),
+    problemAnchor: padAnchor(path),
+    embedKey: path.endsWith("wf-complete") ? "wf_complete" : "wf_missing",
+  }));
   const anchorsPath = join(root, "config", "public-product-anchors.json");
   const anchors = JSON.parse(readFileSync(anchorsPath, "utf8"));
   const canonicalOrigin = normalizeOrigin(anchors.productionCanonicalOrigin);
@@ -141,8 +155,8 @@ function buildDiscoveryPayload(root) {
       notFor: llms.notFor.map(String),
       relatedQueries: llms.relatedQueries.map(String),
       demandMoments: /** @type {string[]} */ (discovery.demandMoments).map(String),
-      indexableGuides: /** @type {unknown} */ (discovery.indexableGuides),
-      indexableExamples: /** @type {unknown} */ (discovery.indexableExamples),
+      indexableGuides: /** @type {unknown} */ (indexableGuidesFromMd),
+      indexableExamples: /** @type {unknown} */ (indexableExamplesFromMd),
       shareableTerminalDemo: {
         title: String(demo.title),
         transcript: String(demo.transcript),

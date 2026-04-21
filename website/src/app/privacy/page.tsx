@@ -3,6 +3,16 @@ import path from "node:path";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { loadLegalMetadata } from "@/lib/plans";
+import { indexableGuideCanonical } from "@/lib/indexableGuides";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Privacy Policy — AgentSkeptic",
+  description:
+    "How AgentSkeptic processes account email, billing metadata via Stripe, and usage counters required to enforce plan limits.",
+  alternates: { canonical: indexableGuideCanonical("/privacy") },
+  robots: { index: true, follow: true },
+};
 
 export default function PrivacyPage() {
   const meta = loadLegalMetadata();

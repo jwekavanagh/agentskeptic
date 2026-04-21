@@ -638,6 +638,7 @@ export const productCopy = {
     "/guides/debug-postgres-after-langgraph": "Post-LangGraph debugging with row-level verification.",
     "/guides/stripe-webhook-database-alignment": "Webhook returned OK; ledger rows still need to match.",
     "/guides/ci-green-missing-database-side-effect": "Green CI while the side-effect row is still missing.",
+    "/guides/first-run-verification": "Clone to crossing: run first-run verify on your own database.",
   } as const satisfies Readonly<Record<string, string>>,
 
   /**

@@ -1,7 +1,10 @@
 import { HeroTerminalHighlighted } from "@/components/HeroTerminalHighlighted";
 import { productCopy } from "@/content/productCopy";
+import { siteMetadata } from "@/content/siteMetadata";
 import discoveryAcquisition from "@/lib/discoveryAcquisition";
+import { indexableGuideCanonical } from "@/lib/indexableGuides";
 import { publicProductAnchors } from "@/lib/publicProductAnchors";
+import type { Metadata } from "next";
 import { shareableTerminalFailureExcerpt } from "@/lib/shareableTerminalFailureExcerpt";
 import { buildHomeTrustStripLinks, openapiHrefFromProcessEnv } from "@/lib/siteChrome";
 import Link from "next/link";
@@ -9,6 +12,26 @@ import { Fragment } from "react";
 import { EvaluatorTruthAndAdoptionSection } from "./home/EvaluatorTruthAndAdoptionSection";
 import { TryItSection } from "./home/TryItSection";
 import { HOME_SECTION_ORDER, type HomeSectionId } from "./page.sections";
+
+export const metadata: Metadata = {
+  title: siteMetadata.title,
+  description: siteMetadata.description,
+  alternates: { canonical: indexableGuideCanonical("/") },
+  openGraph: {
+    title: siteMetadata.openGraph.title,
+    description: siteMetadata.openGraph.description,
+    type: "website",
+    url: "/",
+    images: [
+      {
+        url: siteMetadata.openGraphImage.path,
+        width: siteMetadata.openGraphImage.width,
+        height: siteMetadata.openGraphImage.height,
+        alt: siteMetadata.openGraphImage.alt,
+      },
+    ],
+  },
+};
 
 const anchors = {
   gitRepositoryUrl: publicProductAnchors.gitRepositoryUrl,

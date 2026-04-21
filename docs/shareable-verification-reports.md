@@ -17,7 +17,7 @@ Single source of truth for **public persisted reports**, the **`POST /api/public
 ## Indexable marketing vs `/r/*`
 
 - **`GET /r/{id}`** remains **`noindex`** (see HTML + `X-Robots-Tag` in this doc). It is for **private** artifact sharing, not organic discovery.
-- **Indexable** problem-oriented pages live under **`/guides/*`** driven by **`indexableGuides`** in [`config/discovery-acquisition.json`](discovery-acquisition.json). Narrative SSOT: [`docs/discovery-guides.md`](discovery-guides.md).
+- **Indexable** problem-oriented pages live under **`/guides/*`** as markdown surfaces (see [`docs/discovery-surfaces.md`](discovery-surfaces.md)). Acquisition JSON remains the SSOT for `/database-truth-vs-traces` and homepage acquisition copy only.
 
 ## Wire: POST `/api/public/verification-reports`
 

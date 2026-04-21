@@ -1,11 +1,14 @@
 import { productCopy } from "@/content/productCopy";
 import { siteMetadata } from "@/content/siteMetadata";
+import { indexableGuideCanonical } from "@/lib/indexableGuides";
 import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
   title: siteMetadata.security.title,
   description: siteMetadata.security.description,
+  alternates: { canonical: indexableGuideCanonical("/security") },
+  robots: { index: true, follow: true },
 };
 
 export default function SecurityPage() {

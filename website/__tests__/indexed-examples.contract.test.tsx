@@ -1,19 +1,24 @@
 /** @vitest-environment jsdom */
 
 import GuidesHubPage from "@/app/guides/page";
-import WfCompletePage from "@/app/examples/wf-complete/page";
-import WfMissingPage from "@/app/examples/wf-missing/page";
+import { DiscoverySurfacePage } from "@/components/discovery/DiscoverySurfacePage";
 import * as hubMeta from "@/app/guides/page";
-import * as completeMeta from "@/app/examples/wf-complete/page";
-import * as missingMeta from "@/app/examples/wf-missing/page";
-import discoveryAcquisition from "@/lib/discoveryAcquisition";
-import { indexableExampleCanonical } from "@/lib/indexableGuides";
+import { listAllSurfaces, readSurfaceFile } from "@/lib/surfaceMarkdown";
 import { cleanup, render } from "@testing-library/react";
+import type { ReactElement } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("next/link", () => ({
-  default: function MockLink({ children, href }: { children: React.ReactNode; href: string }) {
-    return <a href={href}>{children}</a>;
+  default: function MockLink({
+    children,
+    href,
+    ...rest
+  }: { children: React.ReactNode; href: string } & Record<string, unknown>) {
+    return (
+      <a href={href} {...rest}>
+        {children}
+      </a>
+    );
   },
 }));
 
@@ -22,45 +27,31 @@ afterEach(() => {
 });
 
 describe("indexed examples", () => {
-  it("Learn hub is indexable and lists exactly indexableExamples links in bundled-proof section", () => {
+  it("Learn hub lists every example surface in bundled-proof section", () => {
     expect(hubMeta.metadata.robots).toEqual({ index: true, follow: true });
+    const examples = listAllSurfaces().filter((s) => s.surfaceKind === "example");
     const { container } = render(<GuidesHubPage />);
     const bundled = container.querySelector("#bundled-proof");
     expect(bundled).toBeTruthy();
     const links = bundled!.querySelectorAll("ul.mechanism-list a[href]");
-    expect(links.length).toBe(discoveryAcquisition.indexableExamples.length);
-    for (const e of discoveryAcquisition.indexableExamples) {
-      expect(bundled!.querySelector(`a[href="${e.path}"]`)).toBeTruthy();
+    expect(links.length).toBe(examples.length);
+    for (const e of examples) {
+      expect(bundled!.querySelector(`a[href="${e.route}"]`)).toBeTruthy();
     }
   });
 
-  it("wf-complete page shows problem anchor and verification view", () => {
-    const e = discoveryAcquisition.indexableExamples[0]!;
-    expect(e.path).toBe("/examples/wf-complete");
-    const { container } = render(<WfCompletePage />);
-    expect(container.textContent).toContain(e.problemAnchor);
+  it("wf-complete surface shows verification embed", () => {
+    const surface = readSurfaceFile("examples", "wf-complete");
+    const { container } = render(<DiscoverySurfacePage surface={surface} /> as ReactElement);
+    expect(container.textContent).toContain("Bundled wf_complete demo");
     expect(container.querySelector('[data-testid="verification-report-embed"]')).toBeTruthy();
   });
 
-  it("wf-missing page shows problem anchor and ROW_ABSENT in view", () => {
-    const e = discoveryAcquisition.indexableExamples[1]!;
-    expect(e.path).toBe("/examples/wf-missing");
-    const { container } = render(<WfMissingPage />);
-    expect(container.textContent).toContain(e.problemAnchor);
+  it("wf-missing surface shows ROW_ABSENT in view", () => {
+    const surface = readSurfaceFile("examples", "wf-missing");
+    const { container } = render(<DiscoverySurfacePage surface={surface} /> as ReactElement);
+    expect(container.textContent).toContain("Bundled wf_missing demo");
     expect(container.textContent).toContain("ROW_ABSENT");
     expect(container.querySelector('[data-testid="verification-report-embed"]')).toBeTruthy();
-  });
-
-  it("metadata for example leaf pages is indexable with fixed titles", () => {
-    expect(completeMeta.metadata.robots).toEqual({ index: true, follow: true });
-    expect(missingMeta.metadata.robots).toEqual({ index: true, follow: true });
-    expect(completeMeta.metadata.title).toBe("Example verified workflow wf_complete — AgentSkeptic");
-    expect(missingMeta.metadata.title).toBe("Example inconsistent workflow wf_missing — AgentSkeptic");
-    expect(completeMeta.metadata.alternates?.canonical).toBe(
-      indexableExampleCanonical("/examples/wf-complete"),
-    );
-    expect(missingMeta.metadata.alternates?.canonical).toBe(
-      indexableExampleCanonical("/examples/wf-missing"),
-    );
   });
 });

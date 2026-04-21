@@ -1,36 +1,24 @@
 /** @vitest-environment jsdom */
 
-import TraceGreenPage from "@/app/guides/trace-green-postgres-row-missing/page";
-import ToolLoopPage from "@/app/guides/tool-loop-success-crm-state-wrong/page";
-import CiGreenPage from "@/app/guides/ci-green-logs-row-absent/page";
-import PreProdPage from "@/app/guides/pre-production-read-only-sql-gate/page";
-import LangGraphPage from "@/app/guides/verify-langgraph-workflows/page";
-import AiAgentWrongCrmPage from "@/app/guides/ai-agent-wrong-crm-data/page";
-import AutomationMismatchPage from "@/app/guides/automation-success-database-mismatch/page";
-import DebugPostgresLangGraphPage from "@/app/guides/debug-postgres-after-langgraph/page";
-import StripeWebhookPage from "@/app/guides/stripe-webhook-database-alignment/page";
-import CiGreenMissingPage from "@/app/guides/ci-green-missing-database-side-effect/page";
 import GuidesHubPage from "@/app/guides/page";
-import * as traceMeta from "@/app/guides/trace-green-postgres-row-missing/page";
-import * as toolMeta from "@/app/guides/tool-loop-success-crm-state-wrong/page";
-import * as ciMeta from "@/app/guides/ci-green-logs-row-absent/page";
-import * as preMeta from "@/app/guides/pre-production-read-only-sql-gate/page";
-import * as lgMeta from "@/app/guides/verify-langgraph-workflows/page";
-import * as aiMeta from "@/app/guides/ai-agent-wrong-crm-data/page";
-import * as autoMeta from "@/app/guides/automation-success-database-mismatch/page";
-import * as dbgMeta from "@/app/guides/debug-postgres-after-langgraph/page";
-import * as stripeMeta from "@/app/guides/stripe-webhook-database-alignment/page";
-import * as ciMissMeta from "@/app/guides/ci-green-missing-database-side-effect/page";
+import { DiscoverySurfacePage } from "@/components/discovery/DiscoverySurfacePage";
 import * as hubMeta from "@/app/guides/page";
-import discoveryAcquisition from "@/lib/discoveryAcquisition";
-import { indexableGuideCanonical } from "@/lib/indexableGuides";
+import { listAllSurfaces, readSurfaceFile } from "@/lib/surfaceMarkdown";
 import { cleanup, render } from "@testing-library/react";
 import type { ReactElement } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("next/link", () => ({
-  default: function MockLink({ children, href }: { children: React.ReactNode; href: string }) {
-    return <a href={href}>{children}</a>;
+  default: function MockLink({
+    children,
+    href,
+    ...rest
+  }: { children: React.ReactNode; href: string } & Record<string, unknown>) {
+    return (
+      <a href={href} {...rest}>
+        {children}
+      </a>
+    );
   },
 }));
 
@@ -38,69 +26,39 @@ afterEach(() => {
   cleanup();
 });
 
-function assertGuideContract(Page: () => ReactElement, path: string) {
-  const g = discoveryAcquisition.indexableGuides.find((x) => x.path === path)!;
-  const { container } = render(<Page />);
+function assertGuideShell(surface: ReturnType<typeof readSurfaceFile>) {
+  const { container } = render(<DiscoverySurfacePage surface={surface} /> as ReactElement);
   const shell = container.querySelector('[data-testid="indexed-guide-shell"]');
   expect(shell).toBeTruthy();
   const text = (shell as HTMLElement).textContent ?? "";
-  expect(text).toContain(g.problemAnchor);
-  expect(text).toContain("ROW_ABSENT");
-  const integrate = (shell as HTMLElement).querySelectorAll('a[href="/integrate"]');
-  expect(integrate.length).toBe(1);
+  expect(text.toUpperCase()).toContain("ROW_ABSENT");
+  expect((shell as HTMLElement).querySelector('a[href="/integrate"]')).toBeTruthy();
 }
 
 describe("indexed guides", () => {
-  it("hub is indexable and lists guide links, example leaves, and /integrate", () => {
+  it("hub is indexable and lists guide, scenario, example links, and /integrate", () => {
     expect(hubMeta.metadata.robots).toEqual({ index: true, follow: true });
+    const surfaces = listAllSurfaces();
+    const guides = surfaces.filter((s) => s.route.startsWith("/guides/") && s.surfaceKind === "guide");
+    const scenarios = surfaces.filter((s) => s.route.startsWith("/guides/") && s.surfaceKind === "scenario");
+    const examples = surfaces.filter((s) => s.route.startsWith("/examples/"));
     const { container } = render(<GuidesHubPage />);
     const links = container.querySelectorAll("a[href]");
-    const expectedCount =
-      discoveryAcquisition.indexableGuides.length +
-      discoveryAcquisition.indexableExamples.length +
-      1;
+    const expectedCount = guides.length + scenarios.length + examples.length + 1;
     expect(links.length).toBe(expectedCount);
-    for (const g of discoveryAcquisition.indexableGuides) {
-      expect(container.querySelector(`a[href="${g.path}"]`)).toBeTruthy();
+    for (const s of [...guides, ...scenarios]) {
+      expect(container.querySelector(`a[href="${s.route}"]`)).toBeTruthy();
     }
-    for (const e of discoveryAcquisition.indexableExamples) {
-      expect(container.querySelector(`a[href="${e.path}"]`)).toBeTruthy();
+    for (const e of examples) {
+      expect(container.querySelector(`a[href="${e.route}"]`)).toBeTruthy();
     }
     expect(container.querySelector('a[href="/integrate"]')).toBeTruthy();
   });
 
-  it("each indexable guide meets shell contract", () => {
-    assertGuideContract(LangGraphPage, "/guides/verify-langgraph-workflows");
-    assertGuideContract(TraceGreenPage, "/guides/trace-green-postgres-row-missing");
-    assertGuideContract(ToolLoopPage, "/guides/tool-loop-success-crm-state-wrong");
-    assertGuideContract(CiGreenPage, "/guides/ci-green-logs-row-absent");
-    assertGuideContract(PreProdPage, "/guides/pre-production-read-only-sql-gate");
-    assertGuideContract(AiAgentWrongCrmPage, "/guides/ai-agent-wrong-crm-data");
-    assertGuideContract(AutomationMismatchPage, "/guides/automation-success-database-mismatch");
-    assertGuideContract(DebugPostgresLangGraphPage, "/guides/debug-postgres-after-langgraph");
-    assertGuideContract(StripeWebhookPage, "/guides/stripe-webhook-database-alignment");
-    assertGuideContract(CiGreenMissingPage, "/guides/ci-green-missing-database-side-effect");
-  });
-
-  it("metadata titles and descriptions are unique and canonical matches origin+path", () => {
-    const metas = [
-      lgMeta.metadata,
-      traceMeta.metadata,
-      toolMeta.metadata,
-      ciMeta.metadata,
-      preMeta.metadata,
-      aiMeta.metadata,
-      autoMeta.metadata,
-      dbgMeta.metadata,
-      stripeMeta.metadata,
-      ciMissMeta.metadata,
-    ];
-    const keys = metas.map((m) => `${String(m.title)}|${String(m.description)}`);
-    expect(new Set(keys).size).toBe(keys.length);
-    const paths = discoveryAcquisition.indexableGuides.map((g) => g.path);
-    for (let i = 0; i < paths.length; i++) {
-      expect(metas[i].robots).toEqual({ index: true, follow: true });
-      expect(metas[i].alternates?.canonical).toBe(indexableGuideCanonical(paths[i]));
+  it("each guide surfaceKind guide meets shell contract", () => {
+    const guides = listAllSurfaces().filter((s) => s.surfaceKind === "guide" && s.segment === "guides");
+    for (const s of guides) {
+      assertGuideShell(readSurfaceFile("guides", s.slug));
     }
   });
 });

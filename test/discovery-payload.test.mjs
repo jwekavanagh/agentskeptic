@@ -14,6 +14,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, "..");
 const require = createRequire(import.meta.url);
 const dp = require(join(root, "scripts", "discovery-payload.lib.cjs"));
+const da = require(join(root, "scripts", "discovery-acquisition.lib.cjs"));
 
 const fixturePath = join(root, "test", "fixtures", "discovery-payload", "v1.json");
 const goldenSummary = join(root, "test", "golden", "discovery-ci-summary.md");
@@ -75,44 +76,50 @@ test("llms.txt normalized equals renderLlmsTextFromPayload(build)", () => {
   assert.equal(dp.normalizeDiscoveryText(onDisk), rendered);
 });
 
-test("rendered llms Indexable guides lists indexableGuides in order before Indexable examples", () => {
-  const discovery = JSON.parse(readFileSync(join(root, "config", "discovery-acquisition.json"), "utf8"));
+test("rendered llms lists guides, examples, comparisons, then terminal demo", () => {
+  const grouped = da.listMarkdownSurfaceRoutesGrouped(root);
   const payload = dp.buildDiscoveryPayload(root);
   const rendered = dp.renderLlmsTextFromPayload(payload);
   const hGuides = rendered.indexOf("## Indexable guides");
   const hExamples = rendered.indexOf("## Indexable examples");
+  const hCompare = rendered.indexOf("## Indexable comparisons");
   const demoTitle = payload.appendix.shareableTerminalDemo.title;
   const hDemo = rendered.indexOf(`## ${demoTitle}`);
   assert.ok(hGuides >= 0);
   assert.ok(hExamples > hGuides);
-  assert.ok(hDemo > hExamples);
-  const section = rendered.slice(hGuides, hExamples);
-  const lines = section
-    .split("\n")
-    .map((l) => l.trim())
-    .filter((l) => l.startsWith("- https://"));
+  assert.ok(hCompare > hExamples);
+  assert.ok(hDemo > hCompare);
   const origin = String(payload.links.site).replace(/\/$/, "");
-  const expected = discovery.indexableGuides.map((g) => `- ${origin}${g.path}`);
-  assert.deepEqual(lines, expected);
-});
 
-test("rendered llms Indexable examples lists indexableExamples in order before terminal demo", () => {
-  const discovery = JSON.parse(readFileSync(join(root, "config", "discovery-acquisition.json"), "utf8"));
-  const payload = dp.buildDiscoveryPayload(root);
-  const rendered = dp.renderLlmsTextFromPayload(payload);
-  const hExamples = rendered.indexOf("## Indexable examples");
-  const demoTitle = payload.appendix.shareableTerminalDemo.title;
-  const hDemo = rendered.indexOf(`## ${demoTitle}`);
-  assert.ok(hExamples >= 0);
-  assert.ok(hDemo > hExamples);
-  const section = rendered.slice(hExamples, hDemo);
-  const lines = section
+  const guidesSection = rendered.slice(hGuides, hExamples);
+  const guidesLines = guidesSection
     .split("\n")
     .map((l) => l.trim())
     .filter((l) => l.startsWith("- https://"));
-  const origin = String(payload.links.site).replace(/\/$/, "");
-  const expected = discovery.indexableExamples.map((e) => `- ${origin}${e.path}`);
-  assert.deepEqual(lines, expected);
+  assert.deepEqual(
+    guidesLines,
+    grouped.guides.map((path) => `- ${origin}${path}`),
+  );
+
+  const examplesSection = rendered.slice(hExamples, hCompare);
+  const examplesLines = examplesSection
+    .split("\n")
+    .map((l) => l.trim())
+    .filter((l) => l.startsWith("- https://"));
+  assert.deepEqual(
+    examplesLines,
+    grouped.examples.map((path) => `- ${origin}${path}`),
+  );
+
+  const compareSection = rendered.slice(hCompare, hDemo);
+  const compareLines = compareSection
+    .split("\n")
+    .map((l) => l.trim())
+    .filter((l) => l.startsWith("- https://"));
+  assert.deepEqual(
+    compareLines,
+    grouped.compare.map((path) => `- ${origin}${path}`),
+  );
 });
 
 test("rendered llms Primary links include repo-raw OpenAPI and llms.txt", () => {

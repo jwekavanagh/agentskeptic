@@ -1,4 +1,5 @@
 import discoveryAcquisition from "@/lib/discoveryAcquisition";
+import { listDiscoveryRoutes } from "@/lib/surfaceMarkdown";
 import { publicProductAnchors } from "@/lib/publicProductAnchors";
 import type { MetadataRoute } from "next";
 
@@ -8,15 +9,14 @@ function abs(path: string): string {
 }
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const guidePaths = discoveryAcquisition.indexableGuides.map((g) => g.path);
-  const examplePaths = discoveryAcquisition.indexableExamples.map((e) => e.path);
+  const discoveryPaths = listDiscoveryRoutes();
   const paths = [
     "/",
     discoveryAcquisition.slug,
-    ...guidePaths,
-    ...examplePaths,
+    ...discoveryPaths,
     "/integrate",
     "/guides",
+    "/compare",
     "/support",
     "/pricing",
     "/security",

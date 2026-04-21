@@ -1,38 +1,45 @@
 import sitemap from "@/app/sitemap";
-import discoveryAcquisition from "@/lib/discoveryAcquisition";
 import { publicProductAnchors } from "@/lib/publicProductAnchors";
+import { listAllSurfaces } from "@/lib/surfaceMarkdown";
 import { describe, expect, it } from "vitest";
 
-describe("indexableGuides path drift", () => {
-  it("sitemap guide URLs match discovery indexableGuides exactly", async () => {
+describe("markdown discovery path drift", () => {
+  it("sitemap guide leaf URLs match guides/*.md routes exactly", async () => {
     const base = publicProductAnchors.productionCanonicalOrigin.replace(/\/$/, "");
     const expected = new Set(
-      discoveryAcquisition.indexableGuides.map((g) => `${base}${g.path}`),
+      listAllSurfaces()
+        .filter((s) => s.segment === "guides")
+        .map((s) => `${base}${s.route}`),
     );
     const entries = await sitemap();
     const urls = new Set(entries.map((e) => e.url));
-    for (const u of expected) {
-      expect(urls.has(u)).toBe(true);
-    }
-    const guideUrlsInSitemap = [...urls].filter((u) =>
-      discoveryAcquisition.indexableGuides.some((g) => u.endsWith(g.path)),
-    );
-    expect(new Set(guideUrlsInSitemap)).toEqual(expected);
+    const guideLeafUrls = new Set([...urls].filter((u) => u.startsWith(`${base}/guides/`)));
+    expect(guideLeafUrls).toEqual(expected);
   });
 
-  it("sitemap example URLs match discovery indexableExamples exactly", async () => {
+  it("sitemap example leaf URLs match examples/*.md routes exactly", async () => {
     const base = publicProductAnchors.productionCanonicalOrigin.replace(/\/$/, "");
     const expected = new Set(
-      discoveryAcquisition.indexableExamples.map((e) => `${base}${e.path}`),
+      listAllSurfaces()
+        .filter((s) => s.segment === "examples")
+        .map((s) => `${base}${s.route}`),
     );
     const entries = await sitemap();
     const urls = new Set(entries.map((e) => e.url));
-    for (const u of expected) {
-      expect(urls.has(u)).toBe(true);
-    }
-    const exampleUrlsInSitemap = [...urls].filter((u) =>
-      discoveryAcquisition.indexableExamples.some((e) => u.endsWith(e.path)),
+    const exampleLeafUrls = new Set([...urls].filter((u) => u.startsWith(`${base}/examples/`)));
+    expect(exampleLeafUrls).toEqual(expected);
+  });
+
+  it("sitemap compare leaf URLs match compare/*.md routes exactly", async () => {
+    const base = publicProductAnchors.productionCanonicalOrigin.replace(/\/$/, "");
+    const expected = new Set(
+      listAllSurfaces()
+        .filter((s) => s.segment === "compare")
+        .map((s) => `${base}${s.route}`),
     );
-    expect(new Set(exampleUrlsInSitemap)).toEqual(expected);
+    const entries = await sitemap();
+    const urls = new Set(entries.map((e) => e.url));
+    const compareLeafUrls = new Set([...urls].filter((u) => u.startsWith(`${base}/compare/`)));
+    expect(compareLeafUrls).toEqual(expected);
   });
 });

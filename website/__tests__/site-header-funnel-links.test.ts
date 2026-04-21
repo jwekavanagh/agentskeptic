@@ -9,7 +9,9 @@ describe("SiteHeader funnel links", () => {
   it("exposes Learn, acquisition, Get started, pricing, sign-in callback, account, sign-out, and CLI quickstart in primary nav", () => {
     expect(src).toContain("buildSiteHeaderPrimaryLinks");
     expect(siteChromeSrc).toContain('href: "/guides"');
+    expect(siteChromeSrc).toContain('href: "/compare"');
     expect(siteChromeSrc).toContain('label: "Learn"');
+    expect(siteChromeSrc).toContain('label: "Compare"');
     expect(siteChromeSrc).toContain('label: "Get started"');
     expect(src).toContain("href={productCopy.homepageAcquisitionCta.href}");
     expect(src).toContain("{discoveryAcquisition.homepageAcquisitionCtaLabel}");

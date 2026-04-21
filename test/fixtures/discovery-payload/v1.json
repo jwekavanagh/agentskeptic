@@ -48,67 +48,97 @@
     ],
     "indexableGuides": [
       {
-        "path": "/guides/verify-langgraph-workflows",
-        "navLabel": "LangGraph workflows and your database",
-        "problemAnchor": "LangGraph runs produce structured tool parameters; traces and success flags do not prove the Postgres or SQLite row exists with the values your graph implied at verification time."
-      },
-      {
-        "path": "/guides/trace-green-postgres-row-missing",
-        "navLabel": "Green trace, missing Postgres row",
-        "problemAnchor": "Green LangGraph or agent trace but wrong or missing Postgres row"
-      },
-      {
-        "path": "/guides/tool-loop-success-crm-state-wrong",
-        "navLabel": "Tool loop success, CRM state wrong",
-        "problemAnchor": "OpenAI-style tool loop reported success; CRM or SQLite state does not match"
-      },
-      {
-        "path": "/guides/ci-green-logs-row-absent",
-        "navLabel": "CI green logs, row absent",
-        "problemAnchor": "CI passed on workflow logs; database side effect never showed up"
-      },
-      {
-        "path": "/guides/pre-production-read-only-sql-gate",
-        "navLabel": "Pre-production read-only SQL gate",
-        "problemAnchor": "Need a gate before production: read-only verification, not more log volume"
-      },
-      {
         "path": "/guides/ai-agent-wrong-crm-data",
-        "navLabel": "AI agent wrong CRM data read-only check",
-        "problemAnchor": "Green dashboards still happen when an AI agent writes wrong CRM data"
+        "navLabel": "ai-agent-wrong-crm-data",
+        "problemAnchor": "Markdown-backed discovery surface content for /guides/ai-agent-wrong-crm-data — read-only SQL verification context."
       },
       {
         "path": "/guides/automation-success-database-mismatch",
-        "navLabel": "Automation success vs database mismatch",
-        "problemAnchor": "When automation reports success while database records disagree with declared tool parameters until read-only verification"
+        "navLabel": "automation-success-database-mismatch",
+        "problemAnchor": "Markdown-backed discovery surface content for /guides/automation-success-database-mismatch — read-only SQL verification context."
       },
       {
-        "path": "/guides/debug-postgres-after-langgraph",
-        "navLabel": "Debug Postgres after LangGraph runs",
-        "problemAnchor": "Debugging Postgres after a LangGraph run requires row-level truth at verification time beyond trace completion flags alone"
-      },
-      {
-        "path": "/guides/stripe-webhook-database-alignment",
-        "navLabel": "Stripe webhook OK vs database alignment",
-        "problemAnchor": "When a Stripe webhook returns OK you still need the ledger database row to match before finance treats settlement as final"
+        "path": "/guides/ci-green-logs-row-absent",
+        "navLabel": "ci-green-logs-row-absent",
+        "problemAnchor": "Markdown-backed discovery surface content for /guides/ci-green-logs-row-absent — read-only SQL verification context."
       },
       {
         "path": "/guides/ci-green-missing-database-side-effect",
-        "navLabel": "CI green but missing database side effect",
-        "problemAnchor": "CI can stay green on workflow logs while the database side effect is missing until a read-only gate surfaces ROW_ABSENT before production"
+        "navLabel": "ci-green-missing-database-side-effect",
+        "problemAnchor": "Markdown-backed discovery surface content for /guides/ci-green-missing-database-side-effect — read-only SQL verification context."
+      },
+      {
+        "path": "/guides/debug-postgres-after-langgraph",
+        "navLabel": "debug-postgres-after-langgraph",
+        "problemAnchor": "Markdown-backed discovery surface content for /guides/debug-postgres-after-langgraph — read-only SQL verification context."
+      },
+      {
+        "path": "/guides/first-run-verification",
+        "navLabel": "first-run-verification",
+        "problemAnchor": "Markdown-backed discovery surface content for /guides/first-run-verification — read-only SQL verification context."
+      },
+      {
+        "path": "/guides/pre-production-read-only-sql-gate",
+        "navLabel": "pre-production-read-only-sql-gate",
+        "problemAnchor": "Markdown-backed discovery surface content for /guides/pre-production-read-only-sql-gate — read-only SQL verification context."
+      },
+      {
+        "path": "/guides/scenario-agent-crm-silent-drift",
+        "navLabel": "scenario-agent-crm-silent-drift",
+        "problemAnchor": "Markdown-backed discovery surface content for /guides/scenario-agent-crm-silent-drift — read-only SQL verification context."
+      },
+      {
+        "path": "/guides/scenario-ci-green-side-effect-missing",
+        "navLabel": "scenario-ci-green-side-effect-missing",
+        "problemAnchor": "Markdown-backed discovery surface content for /guides/scenario-ci-green-side-effect-missing — read-only SQL verification context."
+      },
+      {
+        "path": "/guides/scenario-green-trace-row-missing",
+        "navLabel": "scenario-green-trace-row-missing",
+        "problemAnchor": "Markdown-backed discovery surface content for /guides/scenario-green-trace-row-missing — read-only SQL verification context."
+      },
+      {
+        "path": "/guides/scenario-preprod-gate-before-ship",
+        "navLabel": "scenario-preprod-gate-before-ship",
+        "problemAnchor": "Markdown-backed discovery surface content for /guides/scenario-preprod-gate-before-ship — read-only SQL verification context."
+      },
+      {
+        "path": "/guides/scenario-stripe-webhook-ledger-mismatch",
+        "navLabel": "scenario-stripe-webhook-ledger-mismatch",
+        "problemAnchor": "Markdown-backed discovery surface content for /guides/scenario-stripe-webhook-ledger-mismatch — read-only SQL verification context."
+      },
+      {
+        "path": "/guides/stripe-webhook-database-alignment",
+        "navLabel": "stripe-webhook-database-alignment",
+        "problemAnchor": "Markdown-backed discovery surface content for /guides/stripe-webhook-database-alignment — read-only SQL verification context."
+      },
+      {
+        "path": "/guides/tool-loop-success-crm-state-wrong",
+        "navLabel": "tool-loop-success-crm-state-wrong",
+        "problemAnchor": "Markdown-backed discovery surface content for /guides/tool-loop-success-crm-state-wrong — read-only SQL verification context."
+      },
+      {
+        "path": "/guides/trace-green-postgres-row-missing",
+        "navLabel": "trace-green-postgres-row-missing",
+        "problemAnchor": "Markdown-backed discovery surface content for /guides/trace-green-postgres-row-missing — read-only SQL verification context."
+      },
+      {
+        "path": "/guides/verify-langgraph-workflows",
+        "navLabel": "verify-langgraph-workflows",
+        "problemAnchor": "Markdown-backed discovery surface content for /guides/verify-langgraph-workflows — read-only SQL verification context."
       }
     ],
     "indexableExamples": [
       {
         "path": "/examples/wf-complete",
-        "navLabel": "Bundled verified workflow (wf_complete)",
-        "problemAnchor": "Bundled wf_complete demo: read-only SQL matched the expected contacts row under the packaged registry at verification time.",
+        "navLabel": "wf-complete",
+        "problemAnchor": "Markdown-backed discovery surface content for /examples/wf-complete — read-only SQL verification context.",
         "embedKey": "wf_complete"
       },
       {
         "path": "/examples/wf-missing",
-        "navLabel": "Bundled inconsistent workflow (wf_missing)",
-        "problemAnchor": "Bundled wf_missing demo: ROW_ABSENT when structured tool activity implied a row read-only SQL did not find at verification time.",
+        "navLabel": "wf-missing",
+        "problemAnchor": "Markdown-backed discovery surface content for /examples/wf-missing — read-only SQL verification context.",
         "embedKey": "wf_missing"
       }
     ],

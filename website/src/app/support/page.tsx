@@ -1,5 +1,6 @@
 import { productCopy } from "@/content/productCopy";
 import { siteMetadata } from "@/content/siteMetadata";
+import { indexableGuideCanonical } from "@/lib/indexableGuides";
 import { publicProductAnchors } from "@/lib/publicProductAnchors";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -7,6 +8,8 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: siteMetadata.support.title,
   description: siteMetadata.support.description,
+  alternates: { canonical: indexableGuideCanonical("/support") },
+  robots: { index: true, follow: true },
 };
 
 export default function SupportPage() {

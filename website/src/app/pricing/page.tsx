@@ -1,12 +1,21 @@
 import { PRICING_COMMERCIAL_TERMS_BULLETS } from "@/content/marketingContracts";
 import { productCopy } from "@/content/productCopy";
 import { enterpriseMailtoHref } from "@/lib/contactSalesEmail";
+import { indexableGuideCanonical } from "@/lib/indexableGuides";
+import type { Metadata } from "next";
 import { loadCommercialPlans, type PlanId } from "@/lib/plans";
 import Link from "next/link";
 import { PricingClient, type PlanRow } from "./PricingClient";
 import { PricingCompareTable } from "./PricingCompareTable";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: productCopy.pricingHero.title,
+  description: `${productCopy.pricingHero.positioning} ${productCopy.pricingHero.subtitle}`,
+  alternates: { canonical: indexableGuideCanonical("/pricing") },
+  robots: { index: true, follow: true },
+};
 
 export default function PricingPage() {
   const commercial = loadCommercialPlans();

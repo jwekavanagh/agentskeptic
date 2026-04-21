@@ -75,20 +75,31 @@ State verification engine: read-only SQL checks that database state matches expe
 - llms.txt (repo raw): https://raw.githubusercontent.com/jwekavanagh/agentskeptic/refs/heads/main/llms.txt
 
 ## Indexable guides
-- https://agentskeptic.com/guides/verify-langgraph-workflows
-- https://agentskeptic.com/guides/trace-green-postgres-row-missing
-- https://agentskeptic.com/guides/tool-loop-success-crm-state-wrong
-- https://agentskeptic.com/guides/ci-green-logs-row-absent
-- https://agentskeptic.com/guides/pre-production-read-only-sql-gate
 - https://agentskeptic.com/guides/ai-agent-wrong-crm-data
 - https://agentskeptic.com/guides/automation-success-database-mismatch
-- https://agentskeptic.com/guides/debug-postgres-after-langgraph
-- https://agentskeptic.com/guides/stripe-webhook-database-alignment
+- https://agentskeptic.com/guides/ci-green-logs-row-absent
 - https://agentskeptic.com/guides/ci-green-missing-database-side-effect
+- https://agentskeptic.com/guides/debug-postgres-after-langgraph
+- https://agentskeptic.com/guides/first-run-verification
+- https://agentskeptic.com/guides/pre-production-read-only-sql-gate
+- https://agentskeptic.com/guides/scenario-agent-crm-silent-drift
+- https://agentskeptic.com/guides/scenario-ci-green-side-effect-missing
+- https://agentskeptic.com/guides/scenario-green-trace-row-missing
+- https://agentskeptic.com/guides/scenario-preprod-gate-before-ship
+- https://agentskeptic.com/guides/scenario-stripe-webhook-ledger-mismatch
+- https://agentskeptic.com/guides/stripe-webhook-database-alignment
+- https://agentskeptic.com/guides/tool-loop-success-crm-state-wrong
+- https://agentskeptic.com/guides/trace-green-postgres-row-missing
+- https://agentskeptic.com/guides/verify-langgraph-workflows
 
 ## Indexable examples
 - https://agentskeptic.com/examples/wf-complete
 - https://agentskeptic.com/examples/wf-missing
+
+## Indexable comparisons
+- https://agentskeptic.com/compare/evals-vs-row-gates
+- https://agentskeptic.com/compare/observability-vs-preaction-gate
+- https://agentskeptic.com/compare/traces-vs-read-only-sql-verification
 
 ## Pasteable terminal proof (bundled demo)
 
