@@ -120,8 +120,38 @@ function parseWorkflowResult(stdout) {
   return obj;
 }
 
+/** stdout is Outcome Certificate v1 (schemaVersion 1), not legacy WorkflowResult (schemaVersion 15). */
+function isOutcomeCertificateV1Stdout(obj) {
+  return (
+    obj !== null &&
+    typeof obj === "object" &&
+    obj.schemaVersion === 1 &&
+    typeof obj.stateRelation === "string" &&
+    "humanReport" in obj
+  );
+}
+
 function assertVerifiedStdout(stdout) {
   const obj = parseWorkflowResult(stdout);
+  if (isOutcomeCertificateV1Stdout(obj)) {
+    if (obj.stateRelation !== "matches_expectations") {
+      throw new Error(
+        "langgraph-reference-verify: OPERATIONAL: expected certificate stateRelation matches_expectations, got " +
+          JSON.stringify(obj.stateRelation),
+      );
+    }
+    if (obj.runKind !== "contract_sql") {
+      throw new Error(
+        "langgraph-reference-verify: OPERATIONAL: expected certificate runKind contract_sql, got " +
+          JSON.stringify(obj.runKind),
+      );
+    }
+    const step0 = obj.steps?.[0];
+    if (!step0) {
+      throw new Error("langgraph-reference-verify: OPERATIONAL: expected at least one certificate step");
+    }
+    return;
+  }
   if (obj.status !== "complete") {
     throw new Error(
       "langgraph-reference-verify: OPERATIONAL: expected status complete, got " + JSON.stringify(obj.status),
@@ -135,6 +165,20 @@ function assertVerifiedStdout(stdout) {
 
 function assertNegativeStdout(stdout) {
   const obj = parseWorkflowResult(stdout);
+  if (isOutcomeCertificateV1Stdout(obj)) {
+    if (obj.stateRelation !== "does_not_match") {
+      throw new Error(
+        "langgraph-reference-verify: NEGATIVE_PHASE: expected certificate stateRelation does_not_match, got " +
+          JSON.stringify(obj.stateRelation),
+      );
+    }
+    const details = obj.explanation?.details;
+    const hasRowAbsent = Array.isArray(details) && details.some((x) => x && x.code === "ROW_ABSENT");
+    if (!hasRowAbsent) {
+      throw new Error("langgraph-reference-verify: NEGATIVE_PHASE: expected ROW_ABSENT in certificate explanation.details");
+    }
+    return;
+  }
   if (obj.status !== "inconsistent") {
     throw new Error("langgraph-reference-verify: NEGATIVE_PHASE: expected inconsistent");
   }
