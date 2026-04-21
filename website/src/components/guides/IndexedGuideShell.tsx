@@ -1,12 +1,15 @@
 import { VerificationReportView } from "@/components/VerificationReportView";
 import { productCopy } from "@/content/productCopy";
 import indexedGuideFixture from "@/content/indexedGuideFixture";
-import type { PublicReportEnvelope } from "@/lib/publicVerificationReportService";
+import {
+  derivedFieldsFromEnvelope,
+  type PublicReportEnvelope,
+} from "@/lib/publicVerificationReportService";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
 const embed = indexedGuideFixture as unknown as PublicReportEnvelope;
-const humanText = embed.kind === "workflow" ? embed.truthReportText : embed.humanReportText;
+const humanText = derivedFieldsFromEnvelope(embed).humanText;
 
 type Props = {
   children: ReactNode;

@@ -1,5 +1,6 @@
 import { VerificationReportView } from "@/components/VerificationReportView";
 import { getExampleEmbed } from "@/lib/exampleEmbeds";
+import { derivedFieldsFromEnvelope } from "@/lib/publicVerificationReportService";
 
 type Variant = "wf_complete" | "wf_missing";
 
@@ -21,8 +22,7 @@ type Props = {
 
 export function ExampleVerificationEmbed({ variant }: Props) {
   const embed = getExampleEmbed(variant);
-  const humanText =
-    embed.kind === "workflow" ? embed.truthReportText : embed.humanReportText;
+  const { humanText } = derivedFieldsFromEnvelope(embed);
   return (
     <section className="home-section" aria-labelledby={`example-embed-${variant}`}>
       <h2 id={`example-embed-${variant}`}>{titles[variant]}</h2>

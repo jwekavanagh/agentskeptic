@@ -107,8 +107,8 @@ components:
   schemas:
     PublicVerificationReportCreate:
       description: >
-        Discriminated envelope (schemaVersion 1). Workflow branch includes WorkflowResult + truth report text.
-        Quick branch includes QuickVerifyReport + human report text + workflowDisplayId for labeling.
+        POST accepts schemaVersion 2 only: { "schemaVersion": 2, "certificate": <OutcomeCertificateV1> } per
+        schemas/public-verification-report-v2.schema.json. Legacy v1 envelopes are rejected with HTTP 400.
       type: object
       additionalProperties: true
     PublicVerificationReportCreated:
@@ -121,7 +121,7 @@ components:
       properties:
         schemaVersion:
           type: integer
-          const: 1
+          const: 2
         id:
           type: string
           format: uuid
