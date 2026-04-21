@@ -2,9 +2,20 @@ node_modules/
 dist/
 src/generated/
 website/.next/
+
+# Playwright default output directory (local/CI)
+test-results/
+
+# TypeScript incremental cache (see tsconfig "incremental": true)
+*.tsbuildinfo
+
 website/public/openapi-commercial-v1.yaml
 website/public/llms.txt
 .next/
+
+# Lighthouse CI (local/CI run output; config stays in repo e.g. lighthouserc)
+.lighthouseci/
+
 *.db
 .DS_Store
 
@@ -19,8 +30,9 @@ website/.env
 website/.env.local
 .env.local
 
-# Cursor / agent workspace (open-source tree stays product-facing)
+# Cursor / Claude Code / agent workspace (open-source tree stays product-facing)
 .cursor/
+.claude/
 .agents/
 
 examples/.canonical-verify-run/
