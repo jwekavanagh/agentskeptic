@@ -25,6 +25,6 @@ export const siteMetadata = {
     path: "/og.png",
     width: 1200,
     height: 630,
-    alt: "AgentSkeptic — read-only SQL checks against structured tool activity",
+    alt: "AgentSkeptic — trust reality, not traces; read-only SQL verifies persisted database rows",
   },
 } as const;

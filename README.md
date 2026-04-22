@@ -1,15 +1,15 @@
 <!-- discovery-readme-title:start -->
-# AgentSkeptic — when traces say success but your database does not match
+# AgentSkeptic — trust database rows, not trace color
 <!-- discovery-readme-title:end -->
 
 <!-- discovery-acquisition-fold:start -->
-## Your traces say "success." Your database disagrees.
+## Your trace says success. Your database is the verdict.
 
-Verify your database state with read-only SQL before you ship, bill, or close. Not arbitrary log search—structured tool events (for example NDJSON), then read-only SQL against the actual database.
+Traces and success flags are appearances. Read-only SQL at verification time on Postgres or SQLite compares persisted rows to structured tool activity—VERIFIED or inconsistent—before you ship, bill, or close.
 
-Teams ship agent and automation workflows where traces, tool responses, and success flags look green while the database row is missing, stale, or wrong. AgentSkeptic compares structured tool activity to read-only SQL against your SQLite or Postgres at verification time and reports whether observed state matched expectations derived from what the workflow claimed—not whether the step narrative read as successful.
+Your traces, tool responses, and workflow success flags can look green while persisted database rows are missing, stale, or wrong. AgentSkeptic compares structured tool activity to read-only SQL at verification time on your SQLite or Postgres and emits a binary outcome: observed state matched expectations derived from what the workflow claimed—or it did not—not whether the step narrative read as successful.
 
-Use it when you need persisted rows checked against declared tool parameters before customer-facing actions, compliance evidence, or CI gates.
+Use read-only verification before customer-facing actions, compliance evidence, or CI gates when you need row truth—not more log volume.
 
 ### Pasteable terminal proof (bundled demo)
 
@@ -132,7 +132,7 @@ await gate.assertSafeForIrreversibleAction();
 **Core mechanism:** Read-only SQL checks that your database **at verification time** matches **expectations derived from structured tool activity**—not whether a trace step “succeeded.”
 
 <!-- public-product-anchors:start -->
-State verification engine: read-only SQL checks that database state matches expectations from structured tool activity (not arbitrary logs)—not proof of execution
+Truth is persisted rows at verification time: read-only SQL checks database state against structured tool activity—not trace color or success flags.
 
 - **Repository:** https://github.com/jwekavanagh/agentskeptic
 - **npm package:** https://www.npmjs.com/package/agentskeptic

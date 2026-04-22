@@ -1,6 +1,6 @@
 {
   "name": "agentskeptic-web",
-  "version": "1.0.4",
+  "version": "1.1.0",
   "private": true,
   "engines": {
     "node": "22.x"
@@ -50,6 +50,7 @@
     "cheerio": "^1.0.0",
     "drizzle-kit": "0.31.10",
     "jsdom": "^26.1.0",
+    "sharp": "^0.34.1",
     "tar": "7.5.13",
     "typescript": "^5.7.2",
     "vitest": "^4.1.4"

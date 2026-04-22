@@ -3,19 +3,19 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 const ROOT_BLOCK = `:root {
-  --bg: #0b0d10;
-  --surface: #12151a;
-  --surface-2: #2a3140;
-  --fg: #e7e9ee;
-  --muted: #98a1ad;
-  --accent: #5c6cfa;
-  /* Readable on \`var(--card)\` at small sizes (WCAG AA); primary \`--accent\` is for fills/large UI. */
-  --accent-on-card: #aab4ff;
-  --accent-contrast: #ffffff;
-  --card: #151922;
-  --border: #2a3140;
+  --bg: #070b12;
+  --surface: #0c121c;
+  --surface-2: #141c2a;
+  --fg: #e8eaef;
+  --muted: #8b95a8;
+  --brand-navy-ink: #0b1f33;
+  --accent: #00c853;
+  --accent-on-card: #69f0ae;
+  --accent-contrast: #031008;
+  --card: #0a1018;
+  --border: #1e2a3d;
   /* Populated by next/font variable on <html> (see layout.tsx). */
-  --font-heading: ui-sans-serif, system-ui, sans-serif;
+  --font-sans: ui-sans-serif, system-ui, sans-serif;
 }`;
 
 const PRELUDE_SELECTORS = [

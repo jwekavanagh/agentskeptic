@@ -4,10 +4,10 @@ export const PUBLIC_DISTRIBUTION_SSOT_BLOB_URL = "https://github.com/jwekavanagh
 
 export const PUBLIC_CANONICAL_SITE_ORIGIN = "https://agentskeptic.com";
 
-export const AGENTSKEPTIC_CLI_SEMVER = "1.0.4";
+export const AGENTSKEPTIC_CLI_SEMVER = "1.1.0";
 
 export function formatDistributionFooter(): string {
-  return "More context (green trace vs database): https://agentskeptic.com/database-truth-vs-traces\n"
+  return "TRUST REALITY, NOT TRACES. More context (green trace vs database): https://agentskeptic.com/database-truth-vs-traces\n"
     + "First-run on your database: https://agentskeptic.com/integrate\n"
     + "PatternComplete checklist (SSOT): https://github.com/jwekavanagh/agentskeptic/blob/main/docs/first-run-integration.md#adoptioncomplete_patterncomplete-normative\n"
     + "Canonical site: https://agentskeptic.com/\n"

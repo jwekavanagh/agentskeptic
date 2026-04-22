@@ -3,7 +3,7 @@ import { COMMERCIAL_SITE_CSP_NONCE_HEADER } from "@/lib/httpSecurityHeaders";
 import discoveryAcquisition from "@/lib/discoveryAcquisition";
 import { publicProductAnchors } from "@/lib/publicProductAnchors";
 import { Analytics } from "@vercel/analytics/react";
-import { DM_Sans } from "next/font/google";
+import { Inter } from "next/font/google";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import "./globals.css";
@@ -12,9 +12,9 @@ import { SkipToMainContent } from "@/components/SkipToMainContent";
 import { SiteFooter } from "./SiteFooter";
 import { SiteHeader } from "./SiteHeader";
 
-const headingFont = DM_Sans({
+const inter = Inter({
   subsets: ["latin"],
-  variable: "--font-heading",
+  variable: "--font-sans",
   display: "swap",
 });
 
@@ -62,7 +62,7 @@ export default async function RootLayout({
 }>) {
   const nonce = (await headers()).get(COMMERCIAL_SITE_CSP_NONCE_HEADER) ?? "";
   return (
-    <html lang="en" className={headingFont.variable}>
+    <html lang="en" className={inter.variable}>
       <body>
         <script
           type="application/ld+json"

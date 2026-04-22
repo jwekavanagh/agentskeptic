@@ -62,7 +62,7 @@ gate.appendRunEvent(ev);
 await gate.assertSafeForIrreversibleAction();
 ```
 <!-- adoption-canonical-llms:end -->
-State verification engine: read-only SQL checks that database state matches expectations from structured tool activity (not arbitrary logs)—not proof of execution
+Truth is persisted rows at verification time: read-only SQL checks database state against structured tool activity—not trace color or success flags.
 
 ## Primary links
 - Canonical site: https://agentskeptic.com/
@@ -182,6 +182,6 @@ steps:
 
 ## Visitor problem (canonical answer)
 
-Teams ship agent and automation workflows where traces, tool responses, and success flags look green while the database row is missing, stale, or wrong. AgentSkeptic compares structured tool activity to read-only SQL against your SQLite or Postgres at verification time and reports whether observed state matched expectations derived from what the workflow claimed—not whether the step narrative read as successful.
+Your traces, tool responses, and workflow success flags can look green while persisted database rows are missing, stale, or wrong. AgentSkeptic compares structured tool activity to read-only SQL at verification time on your SQLite or Postgres and emits a binary outcome: observed state matched expectations derived from what the workflow claimed—or it did not—not whether the step narrative read as successful.
 
-Use it when you need persisted rows checked against declared tool parameters before customer-facing actions, compliance evidence, or CI gates.
+Use read-only verification before customer-facing actions, compliance evidence, or CI gates when you need row truth—not more log volume.

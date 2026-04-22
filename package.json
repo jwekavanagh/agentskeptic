@@ -1,7 +1,7 @@
 {
   "name": "agentskeptic",
-  "version": "1.0.4",
-  "description": "Traces say success while rows are missing or wrong. AgentSkeptic runs read-only SQL at verification time on Postgres/SQLite plus vectors, S3, HTTP, Mongo—ground truth from structured tool activity, not trace color alone.",
+  "version": "1.1.0",
+  "description": "Traces and success flags are not proof: read-only SQL at verification time checks persisted database rows against structured tool activity—VERIFIED or inconsistent with reason codes, not log search.",
   "license": "MIT",
   "type": "module",
   "x-agentskeptic-decision-ready-contract": "1",

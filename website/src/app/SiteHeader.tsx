@@ -3,6 +3,7 @@ import { productCopy } from "@/content/productCopy";
 import discoveryAcquisition from "@/lib/discoveryAcquisition";
 import { publicProductAnchors } from "@/lib/publicProductAnchors";
 import { buildSiteHeaderPrimaryLinks } from "@/lib/siteChrome";
+import { BrandLockup } from "@/components/BrandLockup";
 import Link from "next/link";
 import { SignOutButton } from "./SignOutButton";
 
@@ -25,9 +26,7 @@ export async function SiteHeader() {
   return (
     <header className="site-header">
       <div className="site-header-inner">
-        <Link href="/" className="site-logo">
-          AgentSkeptic
-        </Link>
+        <BrandLockup />
         <nav className="site-nav" aria-label="Primary">
           {primaryLinks.map((link) => {
             if (link.key === "acquisition") {

@@ -1,20 +1,20 @@
 {
   "schemaVersion": 1,
   "slug": "/database-truth-vs-traces",
-  "readmeTitle": "AgentSkeptic — when traces say success but your database does not match",
-  "heroTitle": "Your traces say \"success.\" Your database disagrees.",
-  "heroSubtitle": "Verify your database state with read-only SQL before you ship, bill, or close. Not arbitrary log search—structured tool events (for example NDJSON), then read-only SQL against the actual database.",
+  "readmeTitle": "AgentSkeptic — trust database rows, not trace color",
+  "heroTitle": "Your trace says success. Your database is the verdict.",
+  "heroSubtitle": "Traces and success flags are appearances. Read-only SQL at verification time on Postgres or SQLite compares persisted rows to structured tool activity—VERIFIED or inconsistent—before you ship, bill, or close.",
   "homepageAcquisitionCtaLabel": "Product brief",
-  "homepageDecisionFraming": "AgentSkeptic runs read-only SQL at verification time on Postgres or SQLite, comparing persisted rows to structured tool activity—before you ship, bill, or close.",
+  "homepageDecisionFraming": "Traces and logs show what appeared to happen. AgentSkeptic runs read-only SQL at verification time on Postgres or SQLite, comparing persisted database rows to structured tool activity—before you ship, bill, or close.",
   "homepageHero": {
     "what": "AgentSkeptic turns tool parameters and registry rules into read-only SELECTs you can treat as a gate—separate from whether a step narrative read as successful.",
     "why": "Most reviews still treat traces and chat as proof of what landed in the database; that habit is how wrong rows slip through green CI.",
     "when": "Use it after a replay or deploy when you need a decisive check before customer-facing actions, finance touches, or a merge—not when you only want another log volume."
   },
-  "visitorProblemAnswer": "Teams ship agent and automation workflows where traces, tool responses, and success flags look green while the database row is missing, stale, or wrong. AgentSkeptic compares structured tool activity to read-only SQL against your SQLite or Postgres at verification time and reports whether observed state matched expectations derived from what the workflow claimed—not whether the step narrative read as successful.\n\nUse it when you need persisted rows checked against declared tool parameters before customer-facing actions, compliance evidence, or CI gates.",
+  "visitorProblemAnswer": "Your traces, tool responses, and workflow success flags can look green while persisted database rows are missing, stale, or wrong. AgentSkeptic compares structured tool activity to read-only SQL at verification time on your SQLite or Postgres and emits a binary outcome: observed state matched expectations derived from what the workflow claimed—or it did not—not whether the step narrative read as successful.\n\nUse read-only verification before customer-facing actions, compliance evidence, or CI gates when you need row truth—not more log volume.",
   "pageMetadata": {
     "title": "Database truth vs traces — AgentSkeptic",
-    "description": "Traces say success while rows are missing or wrong. AgentSkeptic runs read-only SQL at verification time on Postgres/SQLite plus vectors, S3, HTTP, Mongo—ground truth from structured tool activity, not trace color alone."
+    "description": "Traces and success flags are not proof: read-only SQL at verification time checks persisted database rows against structured tool activity—VERIFIED or inconsistent with reason codes, not log search."
   },
   "sections": [
     {
@@ -91,7 +91,7 @@
     }
   ],
   "cliFollowupLines": [
-    "More context (green trace vs database): {{ACQUISITION_URL}}",
+    "TRUST REALITY, NOT TRACES. More context (green trace vs database): {{ACQUISITION_URL}}",
     "First-run on your database: {{INTEGRATE_URL}}",
     "PatternComplete checklist (SSOT): https://github.com/jwekavanagh/agentskeptic/blob/main/docs/first-run-integration.md#adoptioncomplete_patterncomplete-normative",
     "Canonical site: {{ORIGIN}}/"

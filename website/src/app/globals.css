@@ -8,6 +8,7 @@ textarea:focus-visible,
 .link-secondary:focus-visible,
 .link-tertiary:focus-visible,
 .skip-to-main:focus-visible,
+[data-testid="brand-lockup"]:focus-visible,
 .site-logo:focus-visible,
 .site-nav a:focus-visible,
 .site-nav button.site-nav-signout:focus-visible {
@@ -55,38 +56,68 @@ textarea:focus-visible,
 }
 
 :root {
-  --bg: #0b0d10;
-  --surface: #12151a;
-  --surface-2: #2a3140;
-  --fg: #e7e9ee;
-  --muted: #98a1ad;
-  --accent: #5c6cfa;
-  /* Readable on `var(--card)` at small sizes (WCAG AA); primary `--accent` is for fills/large UI. */
-  --accent-on-card: #aab4ff;
-  --accent-contrast: #ffffff;
-  --card: #151922;
-  --border: #2a3140;
+  --bg: #070b12;
+  --surface: #0c121c;
+  --surface-2: #141c2a;
+  --fg: #e8eaef;
+  --muted: #8b95a8;
+  --brand-navy-ink: #0b1f33;
+  --accent: #00c853;
+  --accent-on-card: #69f0ae;
+  --accent-contrast: #031008;
+  --card: #0a1018;
+  --border: #1e2a3d;
   /* Populated by next/font variable on <html> (see layout.tsx). */
-  --font-heading: ui-sans-serif, system-ui, sans-serif;
+  --font-sans: ui-sans-serif, system-ui, sans-serif;
+}
+
+.surface-ghost {
+  border: 1px dashed color-mix(in srgb, var(--accent) 55%, var(--border));
+  background: color-mix(in srgb, var(--card) 88%, transparent);
+}
+
+.brand-wordmark-agent {
+  color: var(--brand-navy-ink);
+}
+.brand-wordmark-skeptic {
+  color: var(--accent);
+}
+.brand-tagline {
+  display: block;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  color: var(--brand-navy-ink);
+  margin-top: 0.2rem;
+}
+.brand-lockup-inner {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.brand-lockup-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+.brand-lockup-wordmark {
+  font-weight: 700;
+  font-size: 1.05rem;
+  letter-spacing: -0.02em;
 }
 
 h1,
 h2,
 h3,
 .site-logo {
-  font-family: var(--font-heading), ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
 }
 * {
   box-sizing: border-box;
 }
 body {
   margin: 0;
-  font-family:
-    system-ui,
-    -apple-system,
-    Segoe UI,
-    Roboto,
-    sans-serif;
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
   background: var(--bg);
   color: var(--fg);
   line-height: 1.5;
@@ -118,7 +149,7 @@ main {
   border-radius: 10px;
   background: linear-gradient(145deg, var(--surface-2) 0%, #1a1f2e 100%);
   box-shadow:
-    0 0 0 1px rgba(92, 108, 250, 0.22),
+    0 0 0 1px rgba(0, 200, 83, 0.28),
     0 4px 14px rgba(0, 0, 0, 0.35);
 }
 .account-api-key-reveal code {

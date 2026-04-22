@@ -1,6 +1,6 @@
 ## AgentSkeptic
 
-State verification engine: read-only SQL checks that database state matches expectations from structured tool activity (not arbitrary logs)—not proof of execution
+Truth is persisted rows at verification time: read-only SQL checks database state against structured tool activity—not trace color or success flags.
 
 - Canonical site: https://agentskeptic.com/
 - Integrate: https://agentskeptic.com/integrate

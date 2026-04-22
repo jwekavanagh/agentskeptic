@@ -98,7 +98,7 @@ test("invalid pageMetadata.description fails schema (negative)", () => {
     heroSubtitle:
       "AgentSkeptic answers with read-only SQL at verification time—not with trace success flags or chat narratives.",
     homepageAcquisitionCtaLabel: "Why traces are not database truth",
-    readmeTitle: "AgentSkeptic — when traces say success but your database does not match",
+    readmeTitle: "AgentSkeptic — trust database rows, not trace color",
     homepageHero: {
       what: "You shipped an agent run and the trace says success. This product runs read-only SQL to check rows.",
       why: "Traces do not prove the row exists with the right values. That gap ships silent failures.",
