@@ -10,6 +10,7 @@ import { verifyWorkflow } from "../pipeline.js";
 import { loadSchemaValidator } from "../schemaLoad.js";
 import { TruthLayerError } from "../truthLayerError.js";
 import type { VerificationDatabase } from "../types.js";
+import { parseVerificationDatabaseUrl } from "../verificationDatabaseUrl.js";
 import type { WorkflowResult } from "../types.js";
 import { formatDistributionFooter } from "../distributionFooter.js";
 import { atomicWriteUtf8File } from "../quickVerify/atomicWrite.js";
@@ -108,8 +109,8 @@ export async function executeBootstrapPack(
   mkdirSync(outResolved, { recursive: false });
 
   const database: VerificationDatabase = parsed.postgresUrl
-    ? { kind: "postgres", connectionString: parsed.postgresUrl }
-    : { kind: "sqlite", path: path.resolve(parsed.dbPath!) };
+    ? parseVerificationDatabaseUrl(parsed.postgresUrl, process.cwd())
+    : parseVerificationDatabaseUrl(parsed.dbPath!, process.cwd());
 
   const inputUtf8 = synthesizeQuickInputUtf8FromOpenAiV1(packInput);
 

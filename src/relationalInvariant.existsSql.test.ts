@@ -3,7 +3,7 @@ import { buildRelatedExistsSql } from "./relationalInvariant.js";
 
 describe("buildRelatedExistsSql", () => {
   it("emits EXISTS for both dialects and never COUNT(*)", () => {
-    for (const dialect of ["sqlite", "postgres"] as const) {
+    for (const dialect of ["sqlite", "postgresql"] as const) {
       const { text } = buildRelatedExistsSql(dialect, "child", "fk");
       expect(text).toContain("EXISTS (");
       expect(text).not.toMatch(/COUNT\s*\(\s*\*\s*\)/i);

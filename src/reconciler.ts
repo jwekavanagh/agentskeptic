@@ -3,6 +3,7 @@ import { compareUtf16Id } from "./resolveExpectation.js";
 import { SQL_VERIFICATION_OUTCOME_CODE } from "./wireReasonCodes.js";
 import { ConnectorError, fetchRowsForVerification } from "./sqlConnector.js";
 import type { SqlReadBackend } from "./sqlReadBackend.js";
+import { nextPlaceholderSqlRow, quoteBigQueryTableId, quoteIdent, type SqlRowDialect } from "./sqlDialect.js";
 import type { DatabaseSync } from "node:sqlite";
 import type { Reason, RowAbsentVerificationRequest, StepStatus, VerificationRequest } from "./types.js";
 import { verificationScalarsEqual } from "./valueVerification.js";
@@ -15,10 +16,6 @@ export type ReconcileOutput = {
 
 /** Max rows returned in `sampleRows` for absent / orphan failures (normative). */
 export const MAX_VERIFICATION_SAMPLE_ROWS = 3;
-
-function quoteIdent(id: string): string {
-  return `"${id.replace(/"/g, '""')}"`;
-}
 
 function rowKeyContext(req: VerificationRequest): string {
   const t = formatOperationalMessage(req.table);
@@ -39,22 +36,27 @@ function absentKeyContext(req: RowAbsentVerificationRequest): string {
   return `table=${t} identity=[${idParts.join(" ")}]${fParts.length ? ` filter=[${fParts.join(" ")}]` : ""}`;
 }
 
-/** Parameterized COUNT + SELECT for `sql_row_absent` (shared SQLite / Postgres). */
+function tableExprForRowDialect(dialect: SqlRowDialect, table: string): string {
+  if (dialect === "bigquery") return quoteBigQueryTableId(table);
+  return quoteIdent(dialect, table);
+}
+
+/** Parameterized COUNT + SELECT for `sql_row_absent` (SQLite / Postgres / MySQL / MSSQL / BigQuery). */
 export function buildRowAbsentSqlPlan(
-  dialect: "sqlite" | "postgres",
+  dialect: SqlRowDialect,
   req: RowAbsentVerificationRequest,
 ): { countSql: string; sampleSql: string; values: string[] } {
-  const table = quoteIdent(req.table);
+  const table = tableExprForRowDialect(dialect, req.table);
   const conds: string[] = [];
   const vals: string[] = [];
   let p = 1;
-  const nextPh = () => (dialect === "postgres" ? `$${p++}` : "?");
+  const nextPh = () => nextPlaceholderSqlRow(dialect, p++);
   for (const pair of req.identityEq) {
-    conds.push(`${table}.${quoteIdent(pair.column)} = ${nextPh()}`);
+    conds.push(`${table}.${quoteIdent(dialect, pair.column)} = ${nextPh()}`);
     vals.push(pair.value);
   }
   for (const pair of req.filterEq) {
-    conds.push(`${table}.${quoteIdent(pair.column)} = ${nextPh()}`);
+    conds.push(`${table}.${quoteIdent(dialect, pair.column)} = ${nextPh()}`);
     vals.push(pair.value);
   }
   const whereClause = conds.join(" AND ");
@@ -63,7 +65,7 @@ export function buildRowAbsentSqlPlan(
   for (const x of req.identityEq) projSet.add(x.column);
   for (const x of req.filterEq) projSet.add(x.column);
   const projCols = [...projSet].sort((a, b) => compareUtf16Id(a, b));
-  const selectList = projCols.map((c) => `${table}.${quoteIdent(c)}`).join(", ");
+  const selectList = projCols.map((c) => `${table}.${quoteIdent(dialect, c)}`).join(", ");
   const sampleSql = `SELECT ${selectList} FROM ${table} WHERE ${whereClause} LIMIT ${MAX_VERIFICATION_SAMPLE_ROWS}`;
   return { countSql, sampleSql, values: vals };
 }
@@ -245,12 +247,13 @@ export function reconcileSqlRowAbsent(db: DatabaseSync, req: RowAbsentVerificati
   }
 }
 
-export async function executeRowAbsentPostgres(
+export async function executeRowAbsentRemote(
+  dialect: SqlRowDialect,
   query: (text: string, values: string[]) => Promise<{ rows: Record<string, unknown>[] }>,
   req: RowAbsentVerificationRequest,
 ): Promise<ReconcileOutput> {
   const ctx = absentKeyContext(req);
-  const plan = buildRowAbsentSqlPlan("postgres", req);
+  const plan = buildRowAbsentSqlPlan(dialect, req);
   try {
     const r = await query(plan.countSql, plan.values);
     const row0 = r.rows[0];
@@ -298,4 +301,11 @@ export async function executeRowAbsentPostgres(
       evidenceSummary: { error: true },
     };
   }
+}
+
+export async function executeRowAbsentPostgres(
+  query: (text: string, values: string[]) => Promise<{ rows: Record<string, unknown>[] }>,
+  req: RowAbsentVerificationRequest,
+): Promise<ReconcileOutput> {
+  return executeRowAbsentRemote("postgresql", query, req);
 }

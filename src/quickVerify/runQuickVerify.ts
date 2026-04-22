@@ -357,7 +357,7 @@ export async function runQuickVerify(opts: RunQuickVerifyOptions): Promise<RunQu
         const uid = `u${units.length}`;
         const rout =
           dialect === "postgres"
-            ? await verifyRelatedExists("postgres", pgClient!, rel)
+            ? await verifyRelatedExists("postgresql", pgClient!, rel)
             : await verifyRelatedExists("sqlite", sqliteDb!, rel);
         const relConfidence = 0.8;
         let relContractEligible = false;

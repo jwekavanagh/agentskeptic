@@ -49,6 +49,7 @@ LangGraph checkpoint trust consumes **`schemaVersion: 3`** lines whose **`type`*
 
 - **TypeScript:** **`verifyRunStateFromBufferedRunEvents`** in [`src/verifyRunStateFromBufferedRunEvents.ts`](../src/verifyRunStateFromBufferedRunEvents.ts).
 - **Python:** `agentskeptic.kernel.verify_sqlite` (SQLite sync path; Postgres port is optional / behind extras).
+- **Other engines and witness kinds:** [`verification-state-stores-ssot.md`](verification-state-stores-ssot.md).
 
 ### Batch / CLI (A2 short-circuit)
 

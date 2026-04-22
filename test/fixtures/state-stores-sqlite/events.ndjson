@@ -1,0 +1,1 @@
+{"schemaVersion":1,"workflowId":"wf_vector_sqlite","seq":0,"type":"tool_observed","toolId":"kb.upsert_vector","params":{"docId":"doc-1"}}

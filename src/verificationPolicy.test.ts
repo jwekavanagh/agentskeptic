@@ -25,6 +25,8 @@ const unusedRelationalOk = async () => ({
   evidenceSummary: {},
 });
 
+const unusedStateWitnessOk = unusedRelationalOk;
+
 const unusedReconcileRowAbsent = async () => ({
   status: "verified" as const,
   reasons: [] as { code: string; message: string }[],
@@ -94,6 +96,7 @@ describe("verificationPolicy", () => {
       },
       reconcileRowAbsent: unusedReconcileRowAbsent,
       reconcileRelationalCheck: unusedRelationalOk,
+      reconcileStateWitness: unusedStateWitnessOk,
     };
     const out = await executeVerificationWithPolicyAsync(
       { ok: true, verificationKind: "sql_row", request: baseReq },
@@ -130,6 +133,7 @@ describe("verificationPolicy", () => {
       },
       reconcileRowAbsent: unusedReconcileRowAbsent,
       reconcileRelationalCheck: unusedRelationalOk,
+      reconcileStateWitness: unusedStateWitnessOk,
     };
     const timing = {
       now: () => t,
@@ -166,6 +170,7 @@ describe("verificationPolicy", () => {
       },
       reconcileRowAbsent: unusedReconcileRowAbsent,
       reconcileRelationalCheck: unusedRelationalOk,
+      reconcileStateWitness: unusedStateWitnessOk,
     };
     const timing = {
       now: () => t,
@@ -204,6 +209,7 @@ describe("verificationPolicy", () => {
       },
       reconcileRowAbsent: unusedReconcileRowAbsent,
       reconcileRelationalCheck: unusedRelationalOk,
+      reconcileStateWitness: unusedStateWitnessOk,
     };
     const timing = {
       now: () => 0,
@@ -239,6 +245,7 @@ describe("verificationPolicy", () => {
       },
       reconcileRowAbsent: unusedReconcileRowAbsent,
       reconcileRelationalCheck: unusedRelationalOk,
+      reconcileStateWitness: unusedStateWitnessOk,
     };
     const out = await executeVerificationWithPolicyAsync(
       { ok: true, verificationKind: "sql_row", request: baseReq },
@@ -272,6 +279,7 @@ describe("verificationPolicy", () => {
       },
       reconcileRowAbsent: unusedReconcileRowAbsent,
       reconcileRelationalCheck: unusedRelationalOk,
+      reconcileStateWitness: unusedStateWitnessOk,
     };
     const timing = {
       now: () => t,

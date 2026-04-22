@@ -23,6 +23,16 @@ describe("classifyBatchVerifyWorkload", () => {
     ).toBe("non_bundled");
   });
 
+  it("returns non_bundled for mysql remote URL", () => {
+    expect(
+      classifyBatchVerifyWorkload({
+        eventsPath: path.join(repoRoot, "examples", "events.ndjson"),
+        registryPath: path.join(repoRoot, "examples", "tools.json"),
+        database: { kind: "mysql", connectionString: "mysql://u@h/db" },
+      }),
+    ).toBe("non_bundled");
+  });
+
   it("returns bundled_examples when all paths are bundled examples", () => {
     expect(
       classifyBatchVerifyWorkload({

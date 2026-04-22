@@ -14,7 +14,7 @@
   "visitorProblemAnswer": "Teams ship agent and automation workflows where traces, tool responses, and success flags look green while the database row is missing, stale, or wrong. AgentSkeptic compares structured tool activity to read-only SQL against your SQLite or Postgres at verification time and reports whether observed state matched expectations derived from what the workflow claimed—not whether the step narrative read as successful.\n\nUse it when you need persisted rows checked against declared tool parameters before customer-facing actions, compliance evidence, or CI gates.",
   "pageMetadata": {
     "title": "Database truth vs traces — AgentSkeptic",
-    "description": "Traces say success while rows are missing or wrong. AgentSkeptic runs read-only SQL at verification time on Postgres or SQLite—ground truth from structured tool activity, not trace color alone."
+    "description": "Traces say success while rows are missing or wrong. AgentSkeptic runs read-only SQL at verification time on Postgres/SQLite plus vectors, S3, HTTP, Mongo—ground truth from structured tool activity, not trace color alone."
   },
   "sections": [
     {

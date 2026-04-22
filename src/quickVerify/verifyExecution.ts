@@ -4,6 +4,7 @@ import { fetchRowsForVerification } from "../sqlConnector.js";
 import { buildSelectByIdentitySqlPostgres } from "../sqlReadBackend.js";
 import { reconcileFromRows } from "../reconciler.js";
 import { buildRelationalScalarSql } from "../relationalInvariant.js";
+import type { RelationalSqlDialect } from "../sqlDialect.js";
 import { ConnectorError } from "../sqlConnector.js";
 import type { ResolvedRelationalCheck, VerificationRequest } from "../types.js";
 
@@ -80,13 +81,14 @@ export async function verifyRowPostgres(client: pg.Client, req: VerificationRequ
 }
 
 export async function verifyRelatedExists(
-  dialect: "postgres" | "sqlite",
+  dialect: "postgresql" | "sqlite",
   clientOrDb: pg.Client | DatabaseSync,
   check: ResolvedRelationalCheck & { checkKind: "related_exists" },
 ): Promise<RowVerifyOutcome> {
-  const { text, values } = buildRelationalScalarSql(dialect, check);
+  const d: RelationalSqlDialect = dialect;
+  const { text, values } = buildRelationalScalarSql(d, check);
   try {
-    if (dialect === "postgres") {
+    if (dialect === "postgresql") {
       const client = clientOrDb as pg.Client;
       const r = await client.query(text, values);
       const row = r.rows[0] as Record<string, unknown> | undefined;

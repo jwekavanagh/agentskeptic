@@ -72,12 +72,115 @@
                 "items": { "$ref": "#/$defs/sqlRelationalCheck" }
               }
             }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["kind", "provider", "documentId", "indexName"],
+            "properties": {
+              "kind": { "const": "vector_document" },
+              "provider": { "type": "string", "enum": ["pinecone", "weaviate", "chroma"] },
+              "documentId": { "$ref": "#/$defs/stringSpec" },
+              "indexName": { "$ref": "#/$defs/stringSpec" },
+              "namespace": { "$ref": "#/$defs/stringSpec" },
+              "host": { "$ref": "#/$defs/stringSpec" },
+              "metadataEq": { "$ref": "#/$defs/requiredFieldsPointer" },
+              "expectPayloadSha256": { "$ref": "#/$defs/stringSpec" }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["kind", "bucket", "key"],
+            "properties": {
+              "kind": { "const": "object_storage_object" },
+              "bucket": { "$ref": "#/$defs/stringSpec" },
+              "key": { "$ref": "#/$defs/stringSpec" },
+              "endpoint": { "$ref": "#/$defs/stringSpec" },
+              "expectSizeBytes": { "$ref": "#/$defs/numberOrPointerSpec" },
+              "expectSha256": { "$ref": "#/$defs/stringSpec" },
+              "expectEtag": { "$ref": "#/$defs/stringSpec" }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["kind", "url"],
+            "properties": {
+              "kind": { "const": "http_witness" },
+              "method": { "type": "string", "enum": ["GET", "POST"] },
+              "url": { "$ref": "#/$defs/stringSpec" },
+              "expectedStatus": { "$ref": "#/$defs/numberOrPointerSpec" },
+              "assertions": {
+                "type": "array",
+                "items": { "$ref": "#/$defs/httpWitnessAssertion" }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["kind", "collection", "filterPointer", "requiredFields"],
+            "properties": {
+              "kind": { "const": "mongo_document" },
+              "collection": { "$ref": "#/$defs/stringSpec" },
+              "filterPointer": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["pointer"],
+                "properties": {
+                  "pointer": { "type": "string", "pattern": "^/" }
+                }
+              },
+              "requiredFields": { "$ref": "#/$defs/requiredFieldsPointer" }
+            }
           }
         ]
       }
     }
   },
   "$defs": {
+    "stringSpec": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["const"],
+          "properties": { "const": { "type": "string", "minLength": 1 } }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["pointer"],
+          "properties": { "pointer": { "type": "string", "pattern": "^/" } }
+        }
+      ]
+    },
+    "numberOrPointerSpec": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["const"],
+          "properties": { "const": { "type": "number" } }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["pointer"],
+          "properties": { "pointer": { "type": "string", "pattern": "^/" } }
+        }
+      ]
+    },
+    "httpWitnessAssertion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["jsonPointer", "value"],
+      "properties": {
+        "jsonPointer": { "type": "string", "minLength": 1 },
+        "value": { "$ref": "#/$defs/scalarOrPointer" }
+      }
+    },
     "tableSpec": {
       "oneOf": [
         {

@@ -173,6 +173,52 @@ export type SqlRelationalCheckSpec =
       filterEqLookup?: RegistryEqualityPair[];
     };
 
+/** String or JSON pointer in tools.json (const vs /path). */
+export type RegistryStringSpec = { const: string } | { pointer: string };
+
+export type RegistryNumberOrPointerSpec = { const: number } | { pointer: string };
+
+export type VectorDocumentVerificationSpec = {
+  kind: "vector_document";
+  provider: "pinecone" | "weaviate" | "chroma";
+  documentId: RegistryStringSpec;
+  indexName: RegistryStringSpec;
+  namespace?: RegistryStringSpec;
+  host?: RegistryStringSpec;
+  metadataEq?: { pointer: string };
+  expectPayloadSha256?: RegistryStringSpec;
+};
+
+export type ObjectStorageVerificationSpec = {
+  kind: "object_storage_object";
+  bucket: RegistryStringSpec;
+  key: RegistryStringSpec;
+  endpoint?: RegistryStringSpec;
+  expectSizeBytes?: RegistryNumberOrPointerSpec;
+  expectSha256?: RegistryStringSpec;
+  expectEtag?: RegistryStringSpec;
+};
+
+export type HttpWitnessAssertionSpec = {
+  jsonPointer: string;
+  value: { const: string | number | boolean | null } | { pointer: string };
+};
+
+export type HttpWitnessVerificationSpec = {
+  kind: "http_witness";
+  method?: "GET" | "POST";
+  url: RegistryStringSpec;
+  expectedStatus?: RegistryNumberOrPointerSpec;
+  assertions?: HttpWitnessAssertionSpec[];
+};
+
+export type MongoDocumentVerificationSpec = {
+  kind: "mongo_document";
+  collection: RegistryStringSpec;
+  filterPointer: { pointer: string };
+  requiredFields: { pointer: string };
+};
+
 export type ToolRegistryVerification =
   | ({ kind: "sql_row" } & SqlRowVerificationSpec)
   | ({ kind: "sql_row_absent" } & SqlRowAbsentVerificationSpec)
@@ -183,7 +229,11 @@ export type ToolRegistryVerification =
   | {
       kind: "sql_relational";
       checks: SqlRelationalCheckSpec[];
-    };
+    }
+  | VectorDocumentVerificationSpec
+  | ObjectStorageVerificationSpec
+  | HttpWitnessVerificationSpec
+  | MongoDocumentVerificationSpec;
 
 export type ToolRegistryEntry = {
   toolId: string;
@@ -277,11 +327,62 @@ export type SqlRelationalVerificationPayload = {
   checks: ResolvedRelationalCheck[];
 };
 
+export type VectorDocumentVerificationRequest = {
+  kind: "vector_document";
+  provider: "pinecone" | "weaviate" | "chroma";
+  documentId: string;
+  indexName: string;
+  namespace?: string;
+  host?: string;
+  metadataSubset?: Record<string, VerificationScalar>;
+  expectPayloadSha256?: string;
+};
+
+export type ObjectStorageVerificationRequest = {
+  kind: "object_storage_object";
+  bucket: string;
+  key: string;
+  endpoint?: string;
+  expectSizeBytes?: number;
+  expectSha256?: string;
+  expectEtag?: string;
+};
+
+export type HttpWitnessResolvedAssertion = {
+  jsonPointer: string;
+  value: VerificationScalar;
+};
+
+export type HttpWitnessVerificationRequest = {
+  kind: "http_witness";
+  method: "GET" | "POST";
+  url: string;
+  expectedStatus: number;
+  assertions?: HttpWitnessResolvedAssertion[];
+};
+
+export type MongoDocumentVerificationRequest = {
+  kind: "mongo_document";
+  collection: string;
+  filter: Record<string, unknown>;
+  requiredFields: Record<string, VerificationScalar>;
+};
+
+export type StateWitnessRequest =
+  | VectorDocumentVerificationRequest
+  | ObjectStorageVerificationRequest
+  | HttpWitnessVerificationRequest
+  | MongoDocumentVerificationRequest;
+
 export type StepVerificationRequest =
   | VerificationRequest
   | RowAbsentVerificationRequest
   | SqlEffectsVerificationPayload
   | SqlRelationalVerificationPayload
+  | VectorDocumentVerificationRequest
+  | ObjectStorageVerificationRequest
+  | HttpWitnessVerificationRequest
+  | MongoDocumentVerificationRequest
   | null;
 
 export type StepStatus =
@@ -802,4 +903,7 @@ export type LoadEventsResult = {
 /** Batch / CLI verification target (`verifyWorkflow`) and `createDecisionGate` (`databaseUrl`). */
 export type VerificationDatabase =
   | { kind: "sqlite"; path: string }
-  | { kind: "postgres"; connectionString: string };
+  | { kind: "postgres"; connectionString: string }
+  | { kind: "mysql"; connectionString: string }
+  | { kind: "bigquery"; connectionString: string }
+  | { kind: "sqlserver"; connectionString: string };

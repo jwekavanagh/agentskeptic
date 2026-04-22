@@ -5,7 +5,6 @@ import { enrichNoStepsRunLevelReasons } from "./noStepsMessage.js";
 import { prepareWorkflowEvents } from "./prepareWorkflowEvents.js";
 import { canonicalJsonForParams } from "./canonicalParams.js";
 import { planLogicalSteps, type LogicalStepPlan } from "./planLogicalSteps.js";
-import { reconcileRelationalPostgres } from "./relationalInvariant.js";
 import { reconcileSqlRowAsync } from "./reconciler.js";
 import {
   buildRegistryMap,
@@ -13,11 +12,8 @@ import {
   resolveVerificationRequest,
 } from "./resolveExpectation.js";
 import { loadRegistryEntriesAfterSchema } from "./toolsRegistryLoad.js";
-import {
-  connectPostgresVerificationClient,
-  createPostgresSqlReadBackend,
-  type SqlReadBackend,
-} from "./sqlReadBackend.js";
+import { reconcileStateWitness } from "./stateWitness.js";
+import { openVerificationSqlTarget } from "./verificationConnections.js";
 import type {
   EventFileAggregateCounts,
   EventSequenceIntegrity,
@@ -147,8 +143,9 @@ export function verifyToolObservedStep(options: {
   logStep: (line: object) => void;
   verificationPolicy: VerificationPolicy;
   repeatObservationCount?: number;
+  verificationDatabase?: VerificationDatabase;
 }): StepOutcome {
-  const { workflowId, ev, registry, db, logStep, verificationPolicy } = options;
+  const { workflowId, ev, registry, db, logStep, verificationPolicy, verificationDatabase } = options;
   const repeatObservationCount = options.repeatObservationCount ?? 1;
   const evaluatedObservationOrdinal = repeatObservationCount;
   const entry = registry.get(ev.toolId);
@@ -172,7 +169,7 @@ export function verifyToolObservedStep(options: {
 
   const intendedEffect = intendedEffectNarrative(entry, ev.toolId, ev.params);
   const observedExecution = observedExecutionFromParams(ev.params);
-  const resolved = resolveVerificationRequest(entry, ev.params);
+  const resolved = resolveVerificationRequest(entry, ev.params, verificationDatabase);
   if (!resolved.ok) {
     const outcome: StepOutcome = {
       seq: ev.seq,
@@ -217,8 +214,9 @@ async function verifyToolObservedStepAsync(options: {
   logStep: (line: object) => void;
   verificationPolicy: VerificationPolicy;
   repeatObservationCount?: number;
+  verificationDatabase?: VerificationDatabase;
 }): Promise<StepOutcome> {
-  const { workflowId, ev, registry, ctx, logStep, verificationPolicy } = options;
+  const { workflowId, ev, registry, ctx, logStep, verificationPolicy, verificationDatabase } = options;
   const repeatObservationCount = options.repeatObservationCount ?? 1;
   const evaluatedObservationOrdinal = repeatObservationCount;
   const entry = registry.get(ev.toolId);
@@ -242,7 +240,7 @@ async function verifyToolObservedStepAsync(options: {
 
   const intendedEffect = intendedEffectNarrative(entry, ev.toolId, ev.params);
   const observedExecution = observedExecutionFromParams(ev.params);
-  const resolved = resolveVerificationRequest(entry, ev.params);
+  const resolved = resolveVerificationRequest(entry, ev.params, verificationDatabase);
   if (!resolved.ok) {
     const outcome: StepOutcome = {
       seq: ev.seq,
@@ -286,6 +284,7 @@ function runLogicalStepsVerificationSync(options: {
   db: DatabaseSync;
   logStep: (line: object) => void;
   verificationPolicy: VerificationPolicy;
+  verificationDatabase: VerificationDatabase;
 }): StepOutcome[] {
   const plans = planLogicalSteps(options.events);
   const out: StepOutcome[] = [];
@@ -299,15 +298,16 @@ function runLogicalStepsVerificationSync(options: {
       continue;
     }
     out.push(
-      verifyToolObservedStep({
-        workflowId: options.workflowId,
-        ev: plan.last,
-        registry: options.registry,
-        db: options.db,
-        logStep: options.logStep,
-        verificationPolicy: options.verificationPolicy,
-        repeatObservationCount: n,
-      }),
+        verifyToolObservedStep({
+          workflowId: options.workflowId,
+          ev: plan.last,
+          registry: options.registry,
+          db: options.db,
+          logStep: options.logStep,
+          verificationPolicy: options.verificationPolicy,
+          repeatObservationCount: n,
+          verificationDatabase: options.verificationDatabase,
+        }),
     );
   }
   return out;
@@ -320,6 +320,7 @@ async function runLogicalStepsVerificationAsync(options: {
   ctx: PolicyReconcileContext;
   logStep: (line: object) => void;
   verificationPolicy: VerificationPolicy;
+  verificationDatabase: VerificationDatabase;
 }): Promise<StepOutcome[]> {
   const plans = planLogicalSteps(options.events);
   const out: StepOutcome[] = [];
@@ -341,6 +342,7 @@ async function runLogicalStepsVerificationAsync(options: {
         logStep: options.logStep,
         verificationPolicy: options.verificationPolicy,
         repeatObservationCount: n,
+        verificationDatabase: options.verificationDatabase,
       }),
     );
   }
@@ -396,6 +398,7 @@ export async function verifyRunStateFromEvents(input: VerifyRunStateFromEventsIn
           db,
           logStep: log,
           verificationPolicy,
+          verificationDatabase: database,
         });
       } else {
         const ctx = createSqlitePolicyContext(db);
@@ -406,24 +409,25 @@ export async function verifyRunStateFromEvents(input: VerifyRunStateFromEventsIn
           ctx,
           logStep: log,
           verificationPolicy,
+          verificationDatabase: database,
         });
       }
     } finally {
       db.close();
     }
   } else {
-    let client: Awaited<ReturnType<typeof connectPostgresVerificationClient>>;
+    let target: Awaited<ReturnType<typeof openVerificationSqlTarget>>;
     try {
-      client = await connectPostgresVerificationClient(database.connectionString);
+      target = await openVerificationSqlTarget(database);
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       throw new TruthLayerError(CLI_OPERATIONAL_CODES.POSTGRES_CLIENT_SETUP_FAILED, msg, { cause: e });
     }
-    const backend = createPostgresSqlReadBackend(client);
     const ctx: PolicyReconcileContext = {
-      reconcileRow: (req) => reconcileSqlRowAsync(backend, req),
-      reconcileRowAbsent: (req) => backend.reconcileRowAbsent(req),
-      reconcileRelationalCheck: (check) => reconcileRelationalPostgres(client, check),
+      reconcileRow: (req) => reconcileSqlRowAsync(target.sqlRead, req),
+      reconcileRowAbsent: (req) => target.sqlRead.reconcileRowAbsent(req),
+      reconcileRelationalCheck: (check) => target.reconcileRelationalCheck(check),
+      reconcileStateWitness: reconcileStateWitness,
     };
     try {
       steps = await runLogicalStepsVerificationAsync({
@@ -433,13 +437,10 @@ export async function verifyRunStateFromEvents(input: VerifyRunStateFromEventsIn
         ctx,
         logStep: log,
         verificationPolicy,
+        verificationDatabase: database,
       });
     } finally {
-      try {
-        await client.end();
-      } catch {
-        /* cleanup only */
-      }
+      await target.close();
     }
   }
 

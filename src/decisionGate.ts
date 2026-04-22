@@ -1,4 +1,5 @@
 import path from "node:path";
+import { parseVerificationDatabaseUrl } from "./verificationDatabaseUrl.js";
 import { CLI_OPERATIONAL_CODES, runLevelIssue } from "./failureCatalog.js";
 import {
   buildOutcomeCertificateFromWorkflowResult,
@@ -14,13 +15,9 @@ import { formatDecisionBlockerForHumans } from "./decisionBlocker.js";
 import { DecisionUnsafeError } from "./decisionUnsafeError.js";
 
 const validateEvent = loadSchemaValidator("event");
-const POSTGRES_URL_RE = /^postgres(ql)?:\/\//i;
 
 function verificationDatabaseFromUrl(databaseUrl: string, projectRoot: string): VerificationDatabase {
-  if (POSTGRES_URL_RE.test(databaseUrl)) {
-    return { kind: "postgres", connectionString: databaseUrl };
-  }
-  return { kind: "sqlite", path: path.resolve(projectRoot, databaseUrl) };
+  return parseVerificationDatabaseUrl(databaseUrl, projectRoot);
 }
 
 export type CreateDecisionGateOptions = {

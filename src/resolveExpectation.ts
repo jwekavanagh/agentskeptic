@@ -1,7 +1,15 @@
 import { getPointer } from "./jsonPointer.js";
 import type {
+  HttpWitnessResolvedAssertion,
+  HttpWitnessVerificationRequest,
+  HttpWitnessVerificationSpec,
   IdentityEqPair,
+  MongoDocumentVerificationRequest,
+  MongoDocumentVerificationSpec,
+  ObjectStorageVerificationRequest,
+  ObjectStorageVerificationSpec,
   RelationalExpectSpec,
+  RegistryNumberOrPointerSpec,
   ResolvedEffect,
   ResolvedRelationalCheck,
   RowAbsentVerificationRequest,
@@ -9,6 +17,9 @@ import type {
   SqlRowAbsentVerificationSpec,
   SqlRowVerificationSpec,
   ToolRegistryEntry,
+  VectorDocumentVerificationRequest,
+  VectorDocumentVerificationSpec,
+  VerificationDatabase,
   VerificationRequest,
   VerificationScalar,
 } from "./types.js";
@@ -28,6 +39,10 @@ export type ResolveResult =
   | { ok: true; verificationKind: "sql_row_absent"; request: RowAbsentVerificationRequest }
   | { ok: true; verificationKind: "sql_effects"; effects: ResolvedEffect[] }
   | { ok: true; verificationKind: "sql_relational"; checks: ResolvedRelationalCheck[] }
+  | { ok: true; verificationKind: "vector_document"; request: VectorDocumentVerificationRequest }
+  | { ok: true; verificationKind: "object_storage_object"; request: ObjectStorageVerificationRequest }
+  | { ok: true; verificationKind: "http_witness"; request: HttpWitnessVerificationRequest }
+  | { ok: true; verificationKind: "mongo_document"; request: MongoDocumentVerificationRequest }
   | { ok: false; code: string; message: string };
 
 function resolveStringSpec(
@@ -636,7 +651,329 @@ export function renderIntendedEffect(template: string, params: Record<string, un
   });
 }
 
-export function resolveVerificationRequest(entry: ToolRegistryEntry, params: Record<string, unknown>): ResolveResult {
+function resolveNumberOrPointer(
+  spec: RegistryNumberOrPointerSpec | undefined,
+  params: Record<string, unknown>,
+  label: string,
+  fallback: number | undefined,
+): { ok: true; value: number } | { ok: false; code: string; message: string } {
+  if (spec === undefined) {
+    if (fallback === undefined) {
+      return { ok: false, code: REGISTRY_RESOLVER_CODE.KEY_VALUE_SPEC_INVALID, message: `${label}: missing` };
+    }
+    return { ok: true, value: fallback };
+  }
+  if ("const" in spec && !("pointer" in spec)) {
+    if (typeof spec.const !== "number" || !Number.isFinite(spec.const)) {
+      return { ok: false, code: REGISTRY_RESOLVER_CODE.KEY_VALUE_SPEC_INVALID, message: `${label}: const must be finite number` };
+    }
+    return { ok: true, value: spec.const };
+  }
+  const ptr = (spec as { pointer: string }).pointer;
+  const got = getPointer(params, ptr);
+  if (got === undefined || got === null) {
+    return { ok: false, code: REGISTRY_RESOLVER_CODE.KEY_VALUE_POINTER_MISSING, message: `${label}: missing at ${ptr}` };
+  }
+  if (typeof got !== "number" || !Number.isFinite(got)) {
+    return { ok: false, code: REGISTRY_RESOLVER_CODE.KEY_VALUE_NOT_SCALAR, message: `${label}: expected number at ${ptr}` };
+  }
+  return { ok: true, value: got };
+}
+
+function resolveScalarOrPointerForAssertion(
+  spec: { const: string | number | boolean | null } | { pointer: string },
+  params: Record<string, unknown>,
+  label: string,
+): { ok: true; value: VerificationScalar } | { ok: false; code: string; message: string } {
+  if ("const" in spec && !("pointer" in spec)) {
+    const c = spec.const;
+    if (typeof c === "object" && c !== null) {
+      return { ok: false, code: REGISTRY_RESOLVER_CODE.KEY_VALUE_NOT_SCALAR, message: `${label}: const must be scalar` };
+    }
+    return { ok: true, value: c as VerificationScalar };
+  }
+  const ptr = (spec as { pointer: string }).pointer;
+  const got = getPointer(params, ptr);
+  if (got === undefined) {
+    return { ok: false, code: REGISTRY_RESOLVER_CODE.KEY_VALUE_POINTER_MISSING, message: `${label}: missing at ${ptr}` };
+  }
+  if (typeof got === "object" && got !== null) {
+    return { ok: false, code: REGISTRY_RESOLVER_CODE.KEY_VALUE_NOT_SCALAR, message: `${label}: must be scalar at ${ptr}` };
+  }
+  if (typeof got === "string" || typeof got === "number" || typeof got === "boolean" || got === null) {
+    return { ok: true, value: got };
+  }
+  return { ok: false, code: REGISTRY_RESOLVER_CODE.KEY_VALUE_NOT_SCALAR, message: `${label}: unsupported scalar at ${ptr}` };
+}
+
+function resolveMetadataSubsetAtPointer(
+  params: Record<string, unknown>,
+  pointer: string,
+  labelPrefix: string,
+): { ok: true; metadata: Record<string, VerificationScalar> } | { ok: false; code: string; message: string } {
+  const fieldsRaw = getPointer(params, pointer);
+  if (fieldsRaw === undefined || fieldsRaw === null) {
+    return {
+      ok: false,
+      code: REGISTRY_RESOLVER_CODE.REQUIRED_FIELDS_POINTER_MISSING,
+      message: `${labelPrefix}metadataEq missing at ${pointer}`,
+    };
+  }
+  if (typeof fieldsRaw !== "object" || Array.isArray(fieldsRaw)) {
+    return {
+      ok: false,
+      code: REGISTRY_RESOLVER_CODE.REQUIRED_FIELDS_NOT_OBJECT,
+      message: `${labelPrefix}metadataEq must be object at ${pointer}`,
+    };
+  }
+  const metadata: Record<string, VerificationScalar> = {};
+  for (const k of Object.keys(fieldsRaw as Record<string, unknown>)) {
+    const val = (fieldsRaw as Record<string, unknown>)[k];
+    if (val === undefined) {
+      return {
+        ok: false,
+        code: REGISTRY_RESOLVER_CODE.REQUIRED_FIELDS_VALUE_UNDEFINED,
+        message: `${labelPrefix}metadataEq.${k} must not be undefined`,
+      };
+    }
+    if (typeof val === "object" && val !== null) {
+      return {
+        ok: false,
+        code: REGISTRY_RESOLVER_CODE.REQUIRED_FIELDS_VALUE_NOT_SCALAR,
+        message: `${labelPrefix}metadataEq.${k} must be scalar`,
+      };
+    }
+    if (typeof val === "string" || typeof val === "number" || typeof val === "boolean" || val === null) {
+      metadata[k] = val;
+    } else {
+      return {
+        ok: false,
+        code: REGISTRY_RESOLVER_CODE.REQUIRED_FIELDS_VALUE_NOT_SCALAR,
+        message: `${labelPrefix}metadataEq.${k} must be scalar`,
+      };
+    }
+  }
+  return { ok: true, metadata };
+}
+
+function resolveVectorDocumentSpec(
+  params: Record<string, unknown>,
+  spec: VectorDocumentVerificationSpec,
+  labelPrefix: string,
+): { ok: true; request: VectorDocumentVerificationRequest } | { ok: false; code: string; message: string } {
+  const docId = resolveStringSpec(spec.documentId, params, `${labelPrefix}documentId`);
+  if (!docId.ok) return docId;
+  const indexName = resolveStringSpec(spec.indexName, params, `${labelPrefix}indexName`);
+  if (!indexName.ok) return indexName;
+  let namespace: string | undefined;
+  if (spec.namespace !== undefined) {
+    const ns = resolveStringSpec(spec.namespace, params, `${labelPrefix}namespace`);
+    if (!ns.ok) return ns;
+    namespace = ns.value;
+  }
+  let host: string | undefined;
+  if (spec.host !== undefined) {
+    const h = resolveStringSpec(spec.host, params, `${labelPrefix}host`);
+    if (!h.ok) return h;
+    host = h.value;
+  }
+  let metadataSubset: Record<string, VerificationScalar> | undefined;
+  if (spec.metadataEq !== undefined) {
+    const m = resolveMetadataSubsetAtPointer(params, spec.metadataEq.pointer, labelPrefix);
+    if (!m.ok) return m;
+    metadataSubset = m.metadata;
+  }
+  let expectPayloadSha256: string | undefined;
+  if (spec.expectPayloadSha256 !== undefined) {
+    const sh = resolveStringSpec(spec.expectPayloadSha256, params, `${labelPrefix}expectPayloadSha256`);
+    if (!sh.ok) return sh;
+    expectPayloadSha256 = sh.value;
+  }
+  return {
+    ok: true,
+    request: {
+      kind: "vector_document",
+      provider: spec.provider,
+      documentId: docId.value,
+      indexName: indexName.value,
+      ...(namespace !== undefined ? { namespace } : {}),
+      ...(host !== undefined ? { host } : {}),
+      ...(metadataSubset !== undefined ? { metadataSubset } : {}),
+      ...(expectPayloadSha256 !== undefined ? { expectPayloadSha256 } : {}),
+    },
+  };
+}
+
+function resolveObjectStorageSpec(
+  params: Record<string, unknown>,
+  spec: ObjectStorageVerificationSpec,
+  labelPrefix: string,
+): { ok: true; request: ObjectStorageVerificationRequest } | { ok: false; code: string; message: string } {
+  const bucket = resolveStringSpec(spec.bucket, params, `${labelPrefix}bucket`);
+  if (!bucket.ok) return bucket;
+  const key = resolveStringSpec(spec.key, params, `${labelPrefix}key`);
+  if (!key.ok) return key;
+  let endpoint: string | undefined;
+  if (spec.endpoint !== undefined) {
+    const ep = resolveStringSpec(spec.endpoint, params, `${labelPrefix}endpoint`);
+    if (!ep.ok) return ep;
+    endpoint = ep.value;
+  }
+  let expectSizeBytes: number | undefined;
+  if (spec.expectSizeBytes !== undefined) {
+    const sz = resolveNumberOrPointer(spec.expectSizeBytes, params, `${labelPrefix}expectSizeBytes`, undefined);
+    if (!sz.ok) return sz;
+    if (!Number.isInteger(sz.value) || sz.value < 0) {
+      return {
+        ok: false,
+        code: REGISTRY_RESOLVER_CODE.KEY_VALUE_SPEC_INVALID,
+        message: `${labelPrefix}expectSizeBytes must be non-negative integer`,
+      };
+    }
+    expectSizeBytes = sz.value;
+  }
+  let expectSha256: string | undefined;
+  if (spec.expectSha256 !== undefined) {
+    const h = resolveStringSpec(spec.expectSha256, params, `${labelPrefix}expectSha256`);
+    if (!h.ok) return h;
+    expectSha256 = h.value;
+  }
+  let expectEtag: string | undefined;
+  if (spec.expectEtag !== undefined) {
+    const e = resolveStringSpec(spec.expectEtag, params, `${labelPrefix}expectEtag`);
+    if (!e.ok) return e;
+    expectEtag = e.value;
+  }
+  return {
+    ok: true,
+    request: {
+      kind: "object_storage_object",
+      bucket: bucket.value,
+      key: key.value,
+      ...(endpoint !== undefined ? { endpoint } : {}),
+      ...(expectSizeBytes !== undefined ? { expectSizeBytes } : {}),
+      ...(expectSha256 !== undefined ? { expectSha256 } : {}),
+      ...(expectEtag !== undefined ? { expectEtag } : {}),
+    },
+  };
+}
+
+function resolveHttpWitnessSpec(
+  params: Record<string, unknown>,
+  spec: HttpWitnessVerificationSpec,
+  labelPrefix: string,
+): { ok: true; request: HttpWitnessVerificationRequest } | { ok: false; code: string; message: string } {
+  const url = resolveStringSpec(spec.url, params, `${labelPrefix}url`);
+  if (!url.ok) return url;
+  const method = spec.method ?? "GET";
+  const st = spec.expectedStatus !== undefined ? resolveNumberOrPointer(spec.expectedStatus, params, `${labelPrefix}expectedStatus`, undefined) : { ok: true as const, value: 200 };
+  if (!st.ok) return st;
+  if (!Number.isInteger(st.value) || st.value < 100 || st.value > 599) {
+    return {
+      ok: false,
+      code: REGISTRY_RESOLVER_CODE.KEY_VALUE_SPEC_INVALID,
+      message: `${labelPrefix}expectedStatus must be HTTP status 100–599`,
+    };
+  }
+  const assertions: HttpWitnessResolvedAssertion[] = [];
+  for (let i = 0; i < (spec.assertions?.length ?? 0); i++) {
+    const a = spec.assertions![i]!;
+    const val = resolveScalarOrPointerForAssertion(a.value, params, `${labelPrefix}assertions[${i}].value`);
+    if (!val.ok) return val;
+    assertions.push({ jsonPointer: a.jsonPointer, value: val.value });
+  }
+  return {
+    ok: true,
+    request: {
+      kind: "http_witness",
+      method,
+      url: url.value,
+      expectedStatus: st.value,
+      ...(assertions.length > 0 ? { assertions } : {}),
+    },
+  };
+}
+
+function resolveMongoDocumentSpec(
+  params: Record<string, unknown>,
+  spec: MongoDocumentVerificationSpec,
+  labelPrefix: string,
+): { ok: true; request: MongoDocumentVerificationRequest } | { ok: false; code: string; message: string } {
+  const coll = resolveStringSpec(spec.collection, params, `${labelPrefix}collection`);
+  if (!coll.ok) return coll;
+  const filterRaw = getPointer(params, spec.filterPointer.pointer);
+  if (filterRaw === undefined || filterRaw === null) {
+    return {
+      ok: false,
+      code: REGISTRY_RESOLVER_CODE.REQUIRED_FIELDS_POINTER_MISSING,
+      message: `${labelPrefix}filter missing at ${spec.filterPointer.pointer}`,
+    };
+  }
+  if (typeof filterRaw !== "object" || Array.isArray(filterRaw)) {
+    return {
+      ok: false,
+      code: REGISTRY_RESOLVER_CODE.REQUIRED_FIELDS_NOT_OBJECT,
+      message: `${labelPrefix}filter must be object at ${spec.filterPointer.pointer}`,
+    };
+  }
+  const fieldsRaw = getPointer(params, spec.requiredFields.pointer);
+  if (fieldsRaw === undefined || fieldsRaw === null) {
+    return {
+      ok: false,
+      code: REGISTRY_RESOLVER_CODE.REQUIRED_FIELDS_POINTER_MISSING,
+      message: `${labelPrefix}requiredFields missing at ${spec.requiredFields.pointer}`,
+    };
+  }
+  if (typeof fieldsRaw !== "object" || Array.isArray(fieldsRaw)) {
+    return {
+      ok: false,
+      code: REGISTRY_RESOLVER_CODE.REQUIRED_FIELDS_NOT_OBJECT,
+      message: `${labelPrefix}requiredFields must be object at ${spec.requiredFields.pointer}`,
+    };
+  }
+  const requiredFields: Record<string, VerificationScalar> = {};
+  for (const k of Object.keys(fieldsRaw as Record<string, unknown>)) {
+    const val = (fieldsRaw as Record<string, unknown>)[k];
+    if (val === undefined) {
+      return {
+        ok: false,
+        code: REGISTRY_RESOLVER_CODE.REQUIRED_FIELDS_VALUE_UNDEFINED,
+        message: `${labelPrefix}requiredFields.${k} must not be undefined`,
+      };
+    }
+    if (typeof val === "object" && val !== null) {
+      return {
+        ok: false,
+        code: REGISTRY_RESOLVER_CODE.REQUIRED_FIELDS_VALUE_NOT_SCALAR,
+        message: `${labelPrefix}requiredFields.${k} must be scalar`,
+      };
+    }
+    if (typeof val === "string" || typeof val === "number" || typeof val === "boolean" || val === null) {
+      requiredFields[k] = val;
+    } else {
+      return {
+        ok: false,
+        code: REGISTRY_RESOLVER_CODE.REQUIRED_FIELDS_VALUE_NOT_SCALAR,
+        message: `${labelPrefix}requiredFields.${k} must be scalar`,
+      };
+    }
+  }
+  return {
+    ok: true,
+    request: {
+      kind: "mongo_document",
+      collection: coll.value,
+      filter: filterRaw as Record<string, unknown>,
+      requiredFields,
+    },
+  };
+}
+
+export function resolveVerificationRequest(
+  entry: ToolRegistryEntry,
+  params: Record<string, unknown>,
+  verificationTarget?: VerificationDatabase,
+): ResolveResult {
   const v = entry.verification;
   if (v.kind === "sql_row") {
     const row = resolveSqlRowSpec(params, v, "");
@@ -648,7 +985,34 @@ export function resolveVerificationRequest(entry: ToolRegistryEntry, params: Rec
     if (!absent.ok) return absent;
     return { ok: true, verificationKind: "sql_row_absent", request: absent.request };
   }
+  if (v.kind === "vector_document") {
+    const vec = resolveVectorDocumentSpec(params, v, "");
+    if (!vec.ok) return vec;
+    return { ok: true, verificationKind: "vector_document", request: vec.request };
+  }
+  if (v.kind === "object_storage_object") {
+    const os = resolveObjectStorageSpec(params, v, "");
+    if (!os.ok) return os;
+    return { ok: true, verificationKind: "object_storage_object", request: os.request };
+  }
+  if (v.kind === "http_witness") {
+    const hw = resolveHttpWitnessSpec(params, v, "");
+    if (!hw.ok) return hw;
+    return { ok: true, verificationKind: "http_witness", request: hw.request };
+  }
+  if (v.kind === "mongo_document") {
+    const md = resolveMongoDocumentSpec(params, v, "");
+    if (!md.ok) return md;
+    return { ok: true, verificationKind: "mongo_document", request: md.request };
+  }
   if (v.kind === "sql_relational") {
+    if (verificationTarget?.kind === "bigquery") {
+      return {
+        ok: false,
+        code: REGISTRY_RESOLVER_CODE.RELATIONAL_UNSUPPORTED_DIALECT,
+        message: "sql_relational is not supported for BigQuery verification targets (row checks only in v1)",
+      };
+    }
     const seen = new Set<string>();
     const checks: ResolvedRelationalCheck[] = [];
     for (const item of v.checks) {

@@ -1,4 +1,5 @@
 import path from "node:path";
+import type { VerificationDatabase } from "../types.js";
 
 /**
  * Normalized absolute paths (forward slashes, lowercased) that count as bundled repo examples
@@ -24,9 +25,9 @@ function matchesBundledExample(np: string): boolean {
 export function classifyBatchVerifyWorkload(input: {
   eventsPath: string;
   registryPath: string;
-  database: { kind: "sqlite"; path: string } | { kind: "postgres"; connectionString: string };
+  database: VerificationDatabase;
 }): "bundled_examples" | "non_bundled" {
-  if (input.database.kind === "postgres") return "non_bundled";
+  if (input.database.kind !== "sqlite") return "non_bundled";
   const ev = normalizedAbsolutePath(input.eventsPath);
   const reg = normalizedAbsolutePath(input.registryPath);
   const db = normalizedAbsolutePath(input.database.path);

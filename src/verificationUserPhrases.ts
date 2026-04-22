@@ -36,6 +36,24 @@ export const SQL_VERIFICATION_PHRASES: Record<
   ORPHAN_ROW_DETECTED: "An orphan or unexpected related row was detected.",
   FORBIDDEN_ROWS_STILL_PRESENT_WITHIN_WINDOW:
     "Rows that should have been removed were still present within the verification window.",
+  RELATIONAL_UNSUPPORTED_DIALECT: "This relational verification shape is not supported for the selected database dialect.",
+  STATE_WITNESS_UNAVAILABLE_IN_SQLITE_FILE_MODE:
+    "Vector, object storage, HTTP witness, or Mongo verification requires a remote database URL, not SQLite file mode.",
+  STATE_WITNESS_SETUP_ERROR: "State verification could not run (missing credentials, URL, or provider configuration).",
+  VECTOR_NOT_FOUND: "The vector or document id was not found in the index.",
+  VECTOR_METADATA_MISMATCH: "Vector metadata did not match the expected subset.",
+  VECTOR_PAYLOAD_MISMATCH: "Vector payload or content hash did not match.",
+  VECTOR_PROVIDER_ERROR: "The vector provider returned an error or unusable response.",
+  OBJECT_MISSING: "The object was not found in object storage.",
+  OBJECT_DIGEST_MISMATCH: "Checksum or ETag did not match the stored object.",
+  OBJECT_SIZE_MISMATCH: "Object size did not match the expected Content-Length.",
+  OBJECT_METADATA_MISMATCH: "Object metadata did not match expectations.",
+  OBJECT_TOO_LARGE_FOR_HASH: "The object is too large to hash within verification limits.",
+  HTTP_WITNESS_STATUS_MISMATCH: "HTTP witness response status did not match the expected code.",
+  HTTP_WITNESS_ASSERTION_MISMATCH: "HTTP witness JSON assertion did not match the live response.",
+  HTTP_WITNESS_NETWORK_ERROR: "HTTP witness request failed (network, TLS, or timeout).",
+  MONGO_DOCUMENT_MISSING: "No MongoDB document matched the declared filter.",
+  MONGO_VALUE_MISMATCH: "A required field on the MongoDB document did not match.",
 };
 
 /** Registry resolver failures — short explanations for operators. */
@@ -63,6 +81,7 @@ export const REGISTRY_RESOLVER_PHRASES: Record<
   RELATIONAL_SUM_COLUMN_REQUIRED: "Relational sum check requires a column in the registry.",
   EQUALITY_DUPLICATE_COLUMN: "Duplicate column in an equality spec.",
   FILTER_EQ_OVERLAPS_IDENTITY: "Filter equality overlaps identity columns.",
+  RELATIONAL_UNSUPPORTED_DIALECT: "Relational checks are not supported for this database URL (e.g. BigQuery row-only mode).",
 };
 
 /** Ingest / quick misc (not SQL or registry resolver). */

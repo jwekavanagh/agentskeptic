@@ -414,6 +414,70 @@
         }
       }
     },
+    "verificationRequestVectorDocument": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "provider", "documentId", "indexName"],
+      "properties": {
+        "kind": { "const": "vector_document" },
+        "provider": { "type": "string", "enum": ["pinecone", "weaviate", "chroma"] },
+        "documentId": { "type": "string", "minLength": 1 },
+        "indexName": { "type": "string", "minLength": 1 },
+        "namespace": { "type": "string" },
+        "host": { "type": "string", "minLength": 1 },
+        "metadataSubset": { "type": "object", "additionalProperties": true },
+        "expectPayloadSha256": { "type": "string", "minLength": 1 }
+      }
+    },
+    "verificationRequestObjectStorageObject": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "bucket", "key"],
+      "properties": {
+        "kind": { "const": "object_storage_object" },
+        "bucket": { "type": "string", "minLength": 1 },
+        "key": { "type": "string", "minLength": 1 },
+        "endpoint": { "type": "string", "minLength": 1 },
+        "expectSizeBytes": { "type": "number", "minimum": 0 },
+        "expectSha256": { "type": "string", "minLength": 1 },
+        "expectEtag": { "type": "string", "minLength": 1 }
+      }
+    },
+    "httpWitnessResolvedAssertion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["jsonPointer", "value"],
+      "properties": {
+        "jsonPointer": { "type": "string", "minLength": 1 },
+        "value": { "type": ["string", "number", "boolean", "null"] }
+      }
+    },
+    "verificationRequestHttpWitness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "method", "url"],
+      "properties": {
+        "kind": { "const": "http_witness" },
+        "method": { "type": "string", "enum": ["GET", "POST"] },
+        "url": { "type": "string", "minLength": 1 },
+        "expectedStatus": { "type": "integer", "minimum": 100, "maximum": 599 },
+        "assertions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/httpWitnessResolvedAssertion" }
+        }
+      }
+    },
+    "verificationRequestMongoDocument": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "collection", "filter", "requiredFields"],
+      "properties": {
+        "kind": { "const": "mongo_document" },
+        "collection": { "type": "string", "minLength": 1 },
+        "filter": { "type": "object", "additionalProperties": true },
+        "requiredFields": { "$ref": "#/$defs/requiredFieldsMap" }
+      }
+    },
     "effectOutcome": {
       "type": "object",
       "additionalProperties": false,
@@ -478,7 +542,11 @@
                 { "$ref": "#/$defs/verificationRequestSqlRow" },
                 { "$ref": "#/$defs/verificationRequestSqlRowAbsent" },
                 { "$ref": "#/$defs/verificationRequestSqlEffects" },
-                { "$ref": "#/$defs/verificationRequestSqlRelational" }
+                { "$ref": "#/$defs/verificationRequestSqlRelational" },
+                { "$ref": "#/$defs/verificationRequestVectorDocument" },
+                { "$ref": "#/$defs/verificationRequestObjectStorageObject" },
+                { "$ref": "#/$defs/verificationRequestHttpWitness" },
+                { "$ref": "#/$defs/verificationRequestMongoDocument" }
               ]
             },
             "status": {

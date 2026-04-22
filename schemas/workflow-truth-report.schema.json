@@ -624,6 +624,18 @@
                 },
                 {
                   "$ref": "https://agentskeptic.com/schemas/workflow-engine-result.schema.json#/$defs/verificationRequestSqlRelational"
+                },
+                {
+                  "$ref": "https://agentskeptic.com/schemas/workflow-engine-result.schema.json#/$defs/verificationRequestVectorDocument"
+                },
+                {
+                  "$ref": "https://agentskeptic.com/schemas/workflow-engine-result.schema.json#/$defs/verificationRequestObjectStorageObject"
+                },
+                {
+                  "$ref": "https://agentskeptic.com/schemas/workflow-engine-result.schema.json#/$defs/verificationRequestHttpWitness"
+                },
+                {
+                  "$ref": "https://agentskeptic.com/schemas/workflow-engine-result.schema.json#/$defs/verificationRequestMongoDocument"
                 }
               ]
             }

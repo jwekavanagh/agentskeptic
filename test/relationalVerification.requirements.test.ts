@@ -149,7 +149,7 @@ describe("relationalVerification requirements (fixtures)", () => {
     for (const v of sqlite.values) {
       expect(sqlite.text.includes(v)).toBe(false);
     }
-    const pg = buildRelationalScalarSql("postgres", chk);
+    const pg = buildRelationalScalarSql("postgresql", chk);
     expect(pg.text).toMatch(/\$1/);
     expect(pg.text).toMatch(/\$2/);
     for (const v of pg.values) {
@@ -208,6 +208,7 @@ describe("eventual policy parity (sql_effects vs sql_relational)", () => {
       reasons: [] as { code: string; message: string }[],
       evidenceSummary: {},
     });
+    const witnessOk = absentOk;
 
     let callsE = 0;
     const ctxE = {
@@ -218,6 +219,7 @@ describe("eventual policy parity (sql_effects vs sql_relational)", () => {
       },
       reconcileRowAbsent: absentOk,
       reconcileRelationalCheck: async () => okRow,
+      reconcileStateWitness: witnessOk,
     };
 
     let callsR = 0;
@@ -229,6 +231,7 @@ describe("eventual policy parity (sql_effects vs sql_relational)", () => {
         const wave = Math.floor((callsR - 1) / 2);
         return wave === 0 ? missRel : okRow;
       },
+      reconcileStateWitness: witnessOk,
     };
 
     let t = 0;

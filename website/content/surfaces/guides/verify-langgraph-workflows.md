@@ -10,6 +10,8 @@ route: /guides/verify-langgraph-workflows
 evaluatorLens: false
 ---
 
+For verification against **additional SQL engines and external state stores** (MySQL, BigQuery, SQL Server, vector indexes, S3, HTTP witnesses, MongoDB), see [`docs/verification-state-stores-ssot.md`](https://github.com/jwekavanagh/agentskeptic/blob/main/docs/verification-state-stores-ssot.md).
+
 # Verify LangGraph workflows against your database
 
 **See a verified certificate on-site:** open **[`/examples/langgraph-checkpoint-trust`](/examples/langgraph-checkpoint-trust)** for a captured B-row Outcome Certificate (checkpoint verdicts, `runKind: contract_sql_langgraph_checkpoint_trust`) before reading any GitHub SSOT.

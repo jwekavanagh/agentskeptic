@@ -20,6 +20,7 @@ import type {
   ResolvedEffect,
   ResolvedRelationalCheck,
   RowAbsentVerificationRequest,
+  StateWitnessRequest,
   StepStatus,
   StepVerificationRequest,
   VerificationPolicy,
@@ -48,6 +49,7 @@ export type PolicyReconcileContext = {
   reconcileRow: (req: VerificationRequest) => Promise<ReconcileOutput>;
   reconcileRowAbsent: (req: RowAbsentVerificationRequest) => Promise<ReconcileOutput>;
   reconcileRelationalCheck: (check: ResolvedRelationalCheck) => Promise<ReconcileOutput>;
+  reconcileStateWitness: (req: StateWitnessRequest) => Promise<ReconcileOutput>;
 };
 
 export type PolicyExecutionOutput = {
@@ -367,6 +369,59 @@ function buildUncertainSqlRelationalSingle(
   };
 }
 
+function buildUncertainStateWitness(
+  request: StateWitnessRequest,
+  attempts: number,
+  elapsedMs: number,
+  policy: VerificationPolicy,
+): PolicyExecutionOutput {
+  const { verificationWindowMs, pollIntervalMs } = policy;
+  return {
+    verificationRequest: request,
+    status: "uncertain",
+    reasons: [
+      {
+        code: SQL_VERIFICATION_OUTCOME_CODE.ROW_NOT_OBSERVED_WITHIN_WINDOW,
+        message:
+          "Expected state was not observed within the verification window; replication or processing delay is possible.",
+      },
+    ],
+    evidenceSummary: {
+      attempts,
+      elapsedMs,
+      verificationWindowMs,
+      pollIntervalMs,
+    },
+  };
+}
+
+async function executeStateWitnessEventual(
+  request: StateWitnessRequest,
+  policy: VerificationPolicy,
+  ctx: PolicyReconcileContext,
+  timing: TimingDeps,
+): Promise<PolicyExecutionOutput> {
+  const { verificationWindowMs, pollIntervalMs } = policy;
+  const start = timing.now();
+  let attempts = 0;
+  for (;;) {
+    attempts++;
+    const rec = await ctx.reconcileStateWitness(request);
+    if (rec.status !== "missing") {
+      return {
+        verificationRequest: request,
+        status: rec.status,
+        reasons: rec.reasons,
+        evidenceSummary: rec.evidenceSummary,
+      };
+    }
+    if (timing.now() - start >= verificationWindowMs) {
+      return buildUncertainStateWitness(request, attempts, timing.now() - start, policy);
+    }
+    await timing.sleep(pollIntervalMs);
+  }
+}
+
 async function executeSqlRowEventual(
   request: VerificationRequest,
   policy: VerificationPolicy,
@@ -530,6 +585,25 @@ export function executeVerificationWithPolicySync(
       "executeVerificationWithPolicySync requires strong consistency mode",
     );
   }
+  if (
+    resolved.verificationKind === "vector_document" ||
+    resolved.verificationKind === "object_storage_object" ||
+    resolved.verificationKind === "http_witness" ||
+    resolved.verificationKind === "mongo_document"
+  ) {
+    return {
+      verificationRequest: resolved.request,
+      status: "incomplete_verification",
+      reasons: [
+        {
+          code: SQL_VERIFICATION_OUTCOME_CODE.STATE_WITNESS_UNAVAILABLE_IN_SQLITE_FILE_MODE,
+          message:
+            "State store verification (vector, object storage, HTTP witness, MongoDB) requires the async verification runtime with a remote database URL, not SQLite file mode.",
+        },
+      ],
+      evidenceSummary: { verificationKind: resolved.verificationKind },
+    };
+  }
   if (resolved.verificationKind === "sql_effects") {
     const rolled = rollupMultiEffectsSync(db, resolved.effects);
     return {
@@ -597,6 +671,20 @@ export async function executeVerificationWithPolicyAsync(
         evidenceSummary: out.evidenceSummary,
       };
     }
+    if (
+      resolved.verificationKind === "vector_document" ||
+      resolved.verificationKind === "object_storage_object" ||
+      resolved.verificationKind === "http_witness" ||
+      resolved.verificationKind === "mongo_document"
+    ) {
+      const rec = await ctx.reconcileStateWitness(resolved.request);
+      return {
+        verificationRequest: resolved.request,
+        status: rec.status,
+        reasons: rec.reasons,
+        evidenceSummary: rec.evidenceSummary,
+      };
+    }
     if (resolved.verificationKind === "sql_relational") {
       const checks = resolved.checks;
       if (checks.length === 1) {
@@ -638,6 +726,14 @@ export async function executeVerificationWithPolicyAsync(
   if (resolved.verificationKind === "sql_row_absent") {
     return executeSqlRowAbsentEventual(resolved.request, p, ctx, t);
   }
+  if (
+    resolved.verificationKind === "vector_document" ||
+    resolved.verificationKind === "object_storage_object" ||
+    resolved.verificationKind === "http_witness" ||
+    resolved.verificationKind === "mongo_document"
+  ) {
+    return executeStateWitnessEventual(resolved.request, p, ctx, t);
+  }
   if (resolved.verificationKind === "sql_row") {
     return executeSqlRowEventual(resolved.request, p, ctx, t);
   }
@@ -656,5 +752,16 @@ export function createSqlitePolicyContext(db: DatabaseSync): PolicyReconcileCont
     reconcileRow: (req) => Promise.resolve(reconcileSqlRow(db, req)),
     reconcileRowAbsent: (req) => Promise.resolve(reconcileSqlRowAbsent(db, req)),
     reconcileRelationalCheck: (check) => Promise.resolve(reconcileRelationalSqlite(db, check)),
+    reconcileStateWitness: async () => ({
+      status: "incomplete_verification" as const,
+      reasons: [
+        {
+          code: SQL_VERIFICATION_OUTCOME_CODE.STATE_WITNESS_UNAVAILABLE_IN_SQLITE_FILE_MODE,
+          message:
+            "State store verification is not available in SQLite file mode; use a remote database URL for the verify run.",
+        },
+      ],
+      evidenceSummary: {},
+    }),
   };
 }

@@ -130,6 +130,26 @@ describe("failureDiagnosticForStep", () => {
     }
   });
 
+  it("incomplete state-witness / provider transport codes → verification_setup", () => {
+    for (const code of [
+      "STATE_WITNESS_UNAVAILABLE_IN_SQLITE_FILE_MODE",
+      "STATE_WITNESS_SETUP_ERROR",
+      "VECTOR_PROVIDER_ERROR",
+      "HTTP_WITNESS_NETWORK_ERROR",
+    ] as const) {
+      expect(
+        failureDiagnosticForStep(
+          step({
+            seq: 0,
+            toolId: "t",
+            status: "incomplete_verification",
+            reasons: [{ code, message: "m" }],
+          }),
+        ),
+      ).toBe("verification_setup");
+    }
+  });
+
   it("incomplete with each RESOLVE_FAILURE_CODES representative → verification_setup", () => {
     for (const code of RESOLVE_FAILURE_CODES) {
       expect(

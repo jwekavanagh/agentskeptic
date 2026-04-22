@@ -3,6 +3,7 @@ import { buildRegistryMap, resolveVerificationRequest } from "./resolveExpectati
 import type { ToolRegistryEntry } from "./types.js";
 import { CLI_OPERATIONAL_CODES } from "./failureCatalog.js";
 import { TruthLayerError } from "./truthLayerError.js";
+import { REGISTRY_RESOLVER_CODE } from "./wireReasonCodes.js";
 
 const baseEntry: ToolRegistryEntry = {
   toolId: "t",
@@ -459,6 +460,31 @@ describe("sql_relational", () => {
     expect(r.ok).toBe(false);
     if (!r.ok) {
       expect(r.message).toContain("checks[x].identityEq[0]");
+    }
+  });
+});
+
+describe("resolveVerificationRequest with verificationTarget", () => {
+  it("rejects sql_relational for BigQuery targets at resolve time", () => {
+    const entry: ToolRegistryEntry = {
+      toolId: "rel",
+      effectDescriptionTemplate: "x",
+      verification: {
+        kind: "sql_relational",
+        checks: [
+          {
+            checkKind: "related_exists",
+            id: "a",
+            childTable: { const: "c" },
+            matchEq: [{ column: { const: "k" }, value: { const: "v" } }],
+          },
+        ],
+      },
+    };
+    const r = resolveVerificationRequest(entry, {}, { kind: "bigquery", connectionString: "bigquery://p" });
+    expect(r.ok).toBe(false);
+    if (!r.ok) {
+      expect(r.code).toBe(REGISTRY_RESOLVER_CODE.RELATIONAL_UNSUPPORTED_DIALECT);
     }
   });
 });

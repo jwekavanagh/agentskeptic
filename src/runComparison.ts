@@ -403,11 +403,26 @@ export function logicalStepKeyFromStep(step: StepOutcome): string | null {
     });
     return `sql_relational|${segs.join("")}`;
   }
-  const parts = [...vr.effects].sort((a, b) => compareUtf16Id(a.id, b.id));
-  const segs = parts.map(
-    (ef) => `id|${ef.id}|${ef.table}|${canonicalEqKey(ef.identityEq)}|`,
-  );
-  return `sql_effects|${segs.join("")}`;
+  if (vr.kind === "sql_effects") {
+    const parts = [...vr.effects].sort((a, b) => compareUtf16Id(a.id, b.id));
+    const segs = parts.map(
+      (ef) => `id|${ef.id}|${ef.table}|${canonicalEqKey(ef.identityEq)}|`,
+    );
+    return `sql_effects|${segs.join("")}`;
+  }
+  if (vr.kind === "vector_document") {
+    return `vector_document|${vr.provider}|${vr.indexName}|${vr.documentId}`;
+  }
+  if (vr.kind === "object_storage_object") {
+    return `object_storage_object|${vr.bucket}|${vr.key}`;
+  }
+  if (vr.kind === "http_witness") {
+    return `http_witness|${vr.method}|${vr.url}|${vr.expectedStatus}`;
+  }
+  if (vr.kind === "mongo_document") {
+    return `mongo_document|${vr.collection}|${JSON.stringify(vr.filter)}`;
+  }
+  return null;
 }
 
 export type KeyMapResult = {

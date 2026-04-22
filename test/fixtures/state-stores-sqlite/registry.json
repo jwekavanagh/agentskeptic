@@ -1,0 +1,12 @@
+[
+  {
+    "toolId": "kb.upsert_vector",
+    "effectDescriptionTemplate": "Upsert vector {/docId}",
+    "verification": {
+      "kind": "vector_document",
+      "provider": "pinecone",
+      "documentId": { "pointer": "/docId" },
+      "indexName": { "const": "idx" }
+    }
+  }
+]

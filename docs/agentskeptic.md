@@ -348,7 +348,7 @@ Relational check authoring and the mapping from product vocabulary to registry c
 
 Primary integration: **`createDecisionGate`** from **`decisionGate.ts`** (package export). Call **`appendRunEvent`** after each tool with one [event line](#event-line-schema). Before irreversible work, call **`await assertSafeForIrreversibleAction()`** (throws **`DecisionUnsafeError`** with a six-line human blocker). **`evaluate()`** returns **`WorkflowResult`**; **`evaluateCertificate()`** returns **`OutcomeCertificateV1`**.
 
-**Postgres and SQLite:** pass `databaseUrl` as either a filesystem path (SQLite) or a `postgres://` / `postgresql://` URL. **`consistencyMode: "eventual"`** is supported the same as batch verify.
+**Postgres and SQLite:** pass `databaseUrl` as either a filesystem path (SQLite) or a `postgres://` / `postgresql://` URL. **`consistencyMode: "eventual"`** is supported the same as batch verify. For **MySQL, BigQuery, Microsoft SQL Server**, vector indexes, object storage, HTTP witnesses, and MongoDB verification kinds, see the normative matrix in [`verification-state-stores-ssot.md`](verification-state-stores-ssot.md).
 
 Normative contracts:
 

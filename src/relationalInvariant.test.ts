@@ -24,8 +24,8 @@ describe("buildRelationalScalarSql related_exists matchEq", () => {
     expect(text).toContain("EXISTS");
   });
 
-  it("buildRelationalScalarSql postgres: related_exists matchEq uses $1..$N and binds outside text", () => {
-    const { text, values } = buildRelationalScalarSql("postgres", relatedExistsWithMatchEq);
+  it("buildRelationalScalarSql postgresql: related_exists matchEq uses $1..$N and binds outside text", () => {
+    const { text, values } = buildRelationalScalarSql("postgresql", relatedExistsWithMatchEq);
     expect(values.length).toBe(3);
     for (const v of values) {
       expect(text.includes(v)).toBe(false);

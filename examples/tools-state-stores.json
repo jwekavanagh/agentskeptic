@@ -1,0 +1,43 @@
+[
+  {
+    "toolId": "kb.upsert_vector",
+    "effectDescriptionTemplate": "Upsert vector document {/docId}",
+    "verification": {
+      "kind": "vector_document",
+      "provider": "pinecone",
+      "documentId": { "pointer": "/docId" },
+      "indexName": { "const": "example-index" },
+      "host": { "const": "https://example-index-xxxxx.svc.pinecone.io" }
+    }
+  },
+  {
+    "toolId": "artifacts.put_object",
+    "effectDescriptionTemplate": "Store object s3://{/bucket}/{/key}",
+    "verification": {
+      "kind": "object_storage_object",
+      "bucket": { "pointer": "/bucket" },
+      "key": { "pointer": "/key" },
+      "expectEtag": { "pointer": "/expectEtag" }
+    }
+  },
+  {
+    "toolId": "api.health_witness",
+    "effectDescriptionTemplate": "Witness remote config",
+    "verification": {
+      "kind": "http_witness",
+      "url": { "const": "https://api.example.com/v1/health" },
+      "expectedStatus": { "const": 200 },
+      "assertions": [{ "jsonPointer": "/status", "value": { "const": "ok" } }]
+    }
+  },
+  {
+    "toolId": "mongo.upsert_item",
+    "effectDescriptionTemplate": "Upsert Mongo document",
+    "verification": {
+      "kind": "mongo_document",
+      "collection": { "const": "items" },
+      "filterPointer": { "pointer": "/mongoFilter" },
+      "requiredFields": { "pointer": "/mongoRequiredFields" }
+    }
+  }
+]

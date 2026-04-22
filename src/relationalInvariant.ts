@@ -1,18 +1,21 @@
 import type { DatabaseSync } from "node:sqlite";
+import type { Pool as Mysql2Pool } from "mysql2/promise";
+import sql from "mssql";
 import { formatOperationalMessage } from "./failureCatalog.js";
 import { compareUtf16Id } from "./resolveExpectation.js";
 import type { ResolvedRelationalCheck } from "./types.js";
 import { MAX_VERIFICATION_SAMPLE_ROWS } from "./reconciler.js";
 import { SQL_VERIFICATION_OUTCOME_CODE } from "./wireReasonCodes.js";
 import type { ReconcileOutput } from "./reconciler.js";
+import { nextPlaceholderRelational, quoteIdent as quoteIdentDialect, type RelationalSqlDialect } from "./sqlDialect.js";
 
-function quoteIdent(id: string): string {
-  return `"${id.replace(/"/g, '""')}"`;
+function qid(dialect: RelationalSqlDialect, id: string): string {
+  return quoteIdentDialect(dialect, id);
 }
 
 /** Exported for tests: EXISTS SQL shape for `related_exists` (single-column match). */
 export function buildRelatedExistsSql(
-  dialect: "sqlite" | "postgres",
+  dialect: RelationalSqlDialect,
   childTable: string,
   fkColumn: string,
 ): { text: string } {
@@ -25,21 +28,17 @@ export function buildRelatedExistsSql(
   return { text };
 }
 
-function nextPlaceholder(dialect: "sqlite" | "postgres", p: { n: number }): string {
-  return dialect === "postgres" ? `$${p.n++}` : "?";
-}
-
 export function buildRelationalScalarSql(
-  dialect: "sqlite" | "postgres",
+  dialect: RelationalSqlDialect,
   check: ResolvedRelationalCheck,
 ): { text: string; values: string[] } {
   if (check.checkKind === "related_exists") {
-    const t = quoteIdent(check.childTable);
+    const t = qid(dialect, check.childTable);
     const conds: string[] = [];
     const values: string[] = [];
-    const p = { n: 1 };
+    let pn = 1;
     for (const w of check.matchEq) {
-      conds.push(`${t}.${quoteIdent(w.column)} = ${nextPlaceholder(dialect, p)}`);
+      conds.push(`${t}.${qid(dialect, w.column)} = ${nextPlaceholderRelational(dialect, pn++)}`);
       values.push(w.value);
     }
     const text = `SELECT EXISTS (SELECT 1 FROM ${t} WHERE ${conds.join(" AND ")} LIMIT 1) AS v`;
@@ -47,19 +46,19 @@ export function buildRelationalScalarSql(
   }
 
   if (check.checkKind === "anti_join") {
-    const at = quoteIdent(check.anchorTable);
-    const lt = quoteIdent(check.lookupTable);
+    const at = qid(dialect, check.anchorTable);
+    const lt = qid(dialect, check.lookupTable);
     const condsOn: string[] = [];
     const values: string[] = [];
-    const p = { n: 1 };
-    condsOn.push(`A.${quoteIdent(check.anchorColumn)} = L.${quoteIdent(check.lookupColumn)}`);
+    let pn = 1;
+    condsOn.push(`A.${qid(dialect, check.anchorColumn)} = L.${qid(dialect, check.lookupColumn)}`);
     for (const w of check.filterEqLookup) {
-      condsOn.push(`L.${quoteIdent(w.column)} = ${nextPlaceholder(dialect, p)}`);
+      condsOn.push(`L.${qid(dialect, w.column)} = ${nextPlaceholderRelational(dialect, pn++)}`);
       values.push(w.value);
     }
-    const whereParts: string[] = [`L.${quoteIdent(check.lookupPresenceColumn)} IS NULL`];
+    const whereParts: string[] = [`L.${qid(dialect, check.lookupPresenceColumn)} IS NULL`];
     for (const w of check.filterEqAnchor) {
-      whereParts.push(`A.${quoteIdent(w.column)} = ${nextPlaceholder(dialect, p)}`);
+      whereParts.push(`A.${qid(dialect, w.column)} = ${nextPlaceholderRelational(dialect, pn++)}`);
       values.push(w.value);
     }
     const text = `SELECT COUNT(*) AS v FROM ${at} AS A LEFT JOIN ${lt} AS L ON ${condsOn.join(" AND ")} WHERE ${whereParts.join(" AND ")}`;
@@ -67,7 +66,7 @@ export function buildRelationalScalarSql(
   }
 
   if (check.checkKind === "aggregate") {
-    const tbl = quoteIdent(check.table);
+    const tbl = qid(dialect, check.table);
     let selectPart: string;
     if (check.fn === "COUNT_STAR") {
       selectPart = `SELECT COUNT(*) AS v FROM ${tbl}`;
@@ -76,14 +75,15 @@ export function buildRelationalScalarSql(
       if (!col) {
         throw new Error("SUM requires sumColumn");
       }
-      selectPart = `SELECT COALESCE(SUM(${quoteIdent(col)}), 0) AS v FROM ${tbl}`;
+      selectPart = `SELECT COALESCE(SUM(${qid(dialect, col)}), 0) AS v FROM ${tbl}`;
     }
     if (check.whereEq.length === 0) {
       return { text: selectPart, values: [] };
     }
-    const conds = check.whereEq.map((w, i) => {
-      const ph = dialect === "postgres" ? `$${i + 1}` : "?";
-      return `${tbl}.${quoteIdent(w.column)} = ${ph}`;
+    let pn = 1;
+    const conds = check.whereEq.map((w) => {
+      const ph = nextPlaceholderRelational(dialect, pn++);
+      return `${tbl}.${qid(dialect, w.column)} = ${ph}`;
     });
     return {
       text: `${selectPart} WHERE ${conds.join(" AND ")}`,
@@ -92,17 +92,18 @@ export function buildRelationalScalarSql(
   }
 
   if (check.checkKind === "join_count") {
-    const lt = quoteIdent(check.leftTable);
-    const rt = quoteIdent(check.rightTable);
+    const lt = qid(dialect, check.leftTable);
+    const rt = qid(dialect, check.rightTable);
     const base =
-      `SELECT COUNT(*) AS v FROM ${lt} AS L INNER JOIN ${rt} AS R ON L.${quoteIdent(check.leftJoinColumn)} = R.${quoteIdent(check.rightJoinColumn)}`;
+      `SELECT COUNT(*) AS v FROM ${lt} AS L INNER JOIN ${rt} AS R ON L.${qid(dialect, check.leftJoinColumn)} = R.${qid(dialect, check.rightJoinColumn)}`;
     if (check.whereEq.length === 0) {
       return { text: base, values: [] };
     }
-    const conds = check.whereEq.map((w, i) => {
-      const ph = dialect === "postgres" ? `$${i + 1}` : "?";
+    let pn = 1;
+    const conds = check.whereEq.map((w) => {
+      const ph = nextPlaceholderRelational(dialect, pn++);
       const alias = w.side === "left" ? "L" : "R";
-      return `${alias}.${quoteIdent(w.column)} = ${ph}`;
+      return `${alias}.${qid(dialect, w.column)} = ${ph}`;
     });
     return {
       text: `${base} WHERE ${conds.join(" AND ")}`,
@@ -116,28 +117,28 @@ export function buildRelationalScalarSql(
 
 /** Sample SELECT for anti_join failures (anchor columns only). */
 export function buildAntiJoinSampleSql(
-  dialect: "sqlite" | "postgres",
+  dialect: RelationalSqlDialect,
   check: ResolvedRelationalCheck & { checkKind: "anti_join" },
 ): { text: string; values: string[] } {
-  const at = quoteIdent(check.anchorTable);
-  const lt = quoteIdent(check.lookupTable);
+  const at = qid(dialect, check.anchorTable);
+  const lt = qid(dialect, check.lookupTable);
   const condsOn: string[] = [];
   const values: string[] = [];
-  const p = { n: 1 };
-  condsOn.push(`A.${quoteIdent(check.anchorColumn)} = L.${quoteIdent(check.lookupColumn)}`);
+  let pn = 1;
+  condsOn.push(`A.${qid(dialect, check.anchorColumn)} = L.${qid(dialect, check.lookupColumn)}`);
   for (const w of check.filterEqLookup) {
-    condsOn.push(`L.${quoteIdent(w.column)} = ${nextPlaceholder(dialect, p)}`);
+    condsOn.push(`L.${qid(dialect, w.column)} = ${nextPlaceholderRelational(dialect, pn++)}`);
     values.push(w.value);
   }
-  const whereParts: string[] = [`L.${quoteIdent(check.lookupPresenceColumn)} IS NULL`];
+  const whereParts: string[] = [`L.${qid(dialect, check.lookupPresenceColumn)} IS NULL`];
   for (const w of check.filterEqAnchor) {
-    whereParts.push(`A.${quoteIdent(w.column)} = ${nextPlaceholder(dialect, p)}`);
+    whereParts.push(`A.${qid(dialect, w.column)} = ${nextPlaceholderRelational(dialect, pn++)}`);
     values.push(w.value);
   }
   const anchorColSet = new Set<string>([check.anchorColumn]);
   for (const w of check.filterEqAnchor) anchorColSet.add(w.column);
   const proj = [...anchorColSet].sort((a, b) => compareUtf16Id(a, b));
-  const selectList = proj.map((c) => `A.${quoteIdent(c)}`).join(", ");
+  const selectList = proj.map((c) => `A.${qid(dialect, c)}`).join(", ");
   const text = `SELECT ${selectList} FROM ${at} AS A LEFT JOIN ${lt} AS L ON ${condsOn.join(" AND ")} WHERE ${whereParts.join(" AND ")} LIMIT ${MAX_VERIFICATION_SAMPLE_ROWS}`;
   return { text, values };
 }
@@ -350,15 +351,16 @@ export function reconcileRelationalSqlite(db: DatabaseSync, check: ResolvedRelat
   }
 }
 
-type PgClientLike = { query: (text: string, values: string[]) => Promise<{ rows: Record<string, unknown>[] }> };
+type RowsQuery = (text: string, values: string[]) => Promise<{ rows: Record<string, unknown>[] }>;
 
-export async function reconcileRelationalPostgres(
-  client: PgClientLike,
+export async function reconcileRelationalQuery(
+  dialect: RelationalSqlDialect,
+  query: RowsQuery,
   check: ResolvedRelationalCheck,
 ): Promise<ReconcileOutput> {
-  const { text, values } = buildRelationalScalarSql("postgres", check);
+  const { text, values } = buildRelationalScalarSql(dialect, check);
   try {
-    const r = await client.query(text, values);
+    const r = await query(text, values);
     const row0 = r.rows[0];
     const lowered =
       row0 === undefined
@@ -370,8 +372,8 @@ export async function reconcileRelationalPostgres(
       out.status === "inconsistent" &&
       out.reasons[0]?.code === SQL_VERIFICATION_OUTCOME_CODE.ORPHAN_ROW_DETECTED
     ) {
-      const { text: st, values: sv } = buildAntiJoinSampleSql("postgres", check);
-      const sr = await client.query(st, sv);
+      const { text: st, values: sv } = buildAntiJoinSampleSql(dialect, check);
+      const sr = await query(st, sv);
       const sampleRows = sr.rows.map((row) =>
         Object.fromEntries(Object.entries(row).map(([k, v]) => [k.toLowerCase(), v])),
       );
@@ -391,4 +393,36 @@ export async function reconcileRelationalPostgres(
       evidenceSummary: { checkId: check.id, checkKind: check.checkKind, error: true },
     };
   }
+}
+
+type PgClientLike = { query: (text: string, values: string[]) => Promise<{ rows: Record<string, unknown>[] }> };
+
+export async function reconcileRelationalPostgres(
+  client: PgClientLike,
+  check: ResolvedRelationalCheck,
+): Promise<ReconcileOutput> {
+  return reconcileRelationalQuery("postgresql", (t, v) => client.query(t, v), check);
+}
+
+export async function reconcileRelationalMysql2(pool: Mysql2Pool, check: ResolvedRelationalCheck): Promise<ReconcileOutput> {
+  return reconcileRelationalQuery("mysql", async (t, v) => {
+    const [rows] = await pool.query(t, v);
+    return { rows: rows as Record<string, unknown>[] };
+  }, check);
+}
+
+type MssqlConnectionPool = Awaited<ReturnType<typeof sql.connect>>;
+
+export async function reconcileRelationalMssql(
+  pool: MssqlConnectionPool,
+  check: ResolvedRelationalCheck,
+): Promise<ReconcileOutput> {
+  return reconcileRelationalQuery("mssql", async (t, v) => {
+    const req = pool.request();
+    for (let i = 0; i < v.length; i++) {
+      req.input(`p${i + 1}`, sql.NVarChar(sql.MAX), v[i]!);
+    }
+    const res = await req.query(t);
+    return { rows: res.recordset };
+  }, check);
 }

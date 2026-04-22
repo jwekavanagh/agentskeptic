@@ -49,6 +49,14 @@ function failureDiagnosticForIncompleteVerification(reasons: Reason[]): FailureD
   ) {
     return "verification_setup";
   }
+  if (
+    C.has("STATE_WITNESS_UNAVAILABLE_IN_SQLITE_FILE_MODE") ||
+    C.has("STATE_WITNESS_SETUP_ERROR") ||
+    C.has("VECTOR_PROVIDER_ERROR") ||
+    C.has("HTTP_WITNESS_NETWORK_ERROR")
+  ) {
+    return "verification_setup";
+  }
   throw new Error(
     `Unreachable incomplete_verification classification; add mapping for codes: ${[...C].sort().join(", ")}`,
   );
@@ -121,13 +129,30 @@ export function formatVerificationTargetSummary(req: StepVerificationRequest): s
     if (line.length <= max) return line;
     return `${line.slice(0, max - 3)}...`;
   }
-  const parts = [...req.effects]
-    .sort((a, b) => compareUtf16Id(a.id, b.id))
-    .map((e) => `${e.id}:${sanitizeOneLine(e.table)} identity=[${identityEqOneLine(e.identityEq)}]`);
-  const line = `sql_effects count=${req.effects.length} ` + parts.join("; ");
-  const max = OPERATIONAL_MESSAGE_MAX_CHARS;
-  if (line.length <= max) return line;
-  return `${line.slice(0, max - 3)}...`;
+  if (req.kind === "sql_effects") {
+    const parts = [...req.effects]
+      .sort((a, b) => compareUtf16Id(a.id, b.id))
+      .map((e) => `${e.id}:${sanitizeOneLine(e.table)} identity=[${identityEqOneLine(e.identityEq)}]`);
+    const line = `sql_effects count=${req.effects.length} ` + parts.join("; ");
+    const maxEf = OPERATIONAL_MESSAGE_MAX_CHARS;
+    if (line.length <= maxEf) return line;
+    return `${line.slice(0, maxEf - 3)}...`;
+  }
+  if (req.kind === "vector_document") {
+    return formatOperationalMessage(
+      `vector_document provider=${req.provider} index=${sanitizeOneLine(req.indexName)} id=${sanitizeOneLine(req.documentId)}`,
+    );
+  }
+  if (req.kind === "object_storage_object") {
+    return formatOperationalMessage(`object_storage bucket=${sanitizeOneLine(req.bucket)} key=${sanitizeOneLine(req.key)}`);
+  }
+  if (req.kind === "http_witness") {
+    return formatOperationalMessage(`http_witness ${req.method} ${sanitizeOneLine(req.url)} expect=${req.expectedStatus}`);
+  }
+  if (req.kind === "mongo_document") {
+    return formatOperationalMessage(`mongo_document collection=${sanitizeOneLine(req.collection)}`);
+  }
+  return null;
 }
 
 /**

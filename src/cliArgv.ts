@@ -1,6 +1,7 @@
 import { CLI_OPERATIONAL_CODES } from "./cliOperationalCodes.js";
 import { TruthLayerError } from "./truthLayerError.js";
 import type { VerificationDatabase, VerificationPolicy } from "./types.js";
+import { parseVerificationDatabaseUrl } from "./verificationDatabaseUrl.js";
 import { resolveVerificationPolicyInput } from "./verificationPolicy.js";
 
 export function argValue(args: string[], name: string): string | undefined {
@@ -147,13 +148,14 @@ export function parseBatchVerifyCliArgs(args: string[]): ParsedBatchVerifyCli {
     );
   }
 
+  const projectRoot = process.cwd();
   return {
     workflowId,
     eventsPath,
     registryPath,
     database: postgresUrl
-      ? { kind: "postgres", connectionString: postgresUrl }
-      : { kind: "sqlite", path: dbPath! },
+      ? parseVerificationDatabaseUrl(postgresUrl, projectRoot)
+      : parseVerificationDatabaseUrl(dbPath!, projectRoot),
     verificationPolicy,
     noHumanReport,
     writeRunBundleDir,
