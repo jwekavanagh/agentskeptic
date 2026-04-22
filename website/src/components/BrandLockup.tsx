@@ -1,13 +1,15 @@
 import Image from "next/image";
 import Link from "next/link";
 
+import brandMark from "../../public/brand/mark.png";
+
 export function BrandLockup() {
   return (
     <Link href="/" className="site-logo" data-testid="brand-lockup" aria-label="AgentSkeptic home">
       <span className="brand-lockup-inner">
         <Image
           className="brand-mark"
-          src="/brand/mark.png"
+          src={brandMark}
           width={40}
           height={40}
           alt=""

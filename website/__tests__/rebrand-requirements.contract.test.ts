@@ -70,7 +70,8 @@ describe("rebrand requirements R1–R5", () => {
     expect(src).toContain("TRUST REALITY, NOT TRACES.");
     expect(src).toContain("brand-wordmark-agent");
     expect(src).toContain("brand-wordmark-skeptic");
-    expect(src).toContain('src="/brand/mark.png"');
+    expect(src).toContain('import brandMark from "../../public/brand/mark.png"');
+    expect(src).toContain("src={brandMark}");
     expect(src).toContain(">Agent</span>");
     expect(src).toContain(">Skeptic</span>");
   });
