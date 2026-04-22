@@ -1,20 +1,29 @@
 /**
- * Minimal LangGraph run: one node writes one tool_observed NDJSON line for wf_partner (partner quickstart contract).
+ * Minimal LangGraph run: one node writes one v3 tool_observed NDJSON line for wf_partner (partner quickstart contract).
  * Usage: node run.mjs <path-to-output.ndjson>
  */
+import { randomUUID } from "node:crypto";
 import { writeFileSync } from "node:fs";
 import { Annotation, StateGraph, START, END } from "@langchain/langgraph";
 
+const runEventId = randomUUID();
+
 const ndjsonLine =
   JSON.stringify({
-    schemaVersion: 1,
+    schemaVersion: 3,
     workflowId: "wf_partner",
-    seq: 0,
+    runEventId,
     type: "tool_observed",
+    seq: 0,
     toolId: "crm.upsert_contact",
     params: {
       recordId: "partner_1",
       fields: { name: "You", status: "active" },
+    },
+    langgraphCheckpoint: {
+      threadId: "lg-ref-thread",
+      checkpointNs: "",
+      checkpointId: "lg-ref-cp",
     },
   }) + "\n";
 

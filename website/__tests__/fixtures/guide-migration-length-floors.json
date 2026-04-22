@@ -1,12 +1,12 @@
 {
-  "verify-langgraph-workflows": 1377,
-  "trace-green-postgres-row-missing": 1377,
+  "verify-langgraph-workflows": 650,
+  "trace-green-postgres-row-missing": 1200,
   "tool-loop-success-crm-state-wrong": 1312,
   "ci-green-logs-row-absent": 1200,
   "pre-production-read-only-sql-gate": 1196,
   "ai-agent-wrong-crm-data": 857,
   "automation-success-database-mismatch": 818,
-  "debug-postgres-after-langgraph": 793,
+  "debug-postgres-after-langgraph": 720,
   "stripe-webhook-database-alignment": 846,
   "ci-green-missing-database-side-effect": 878
 }

@@ -1,0 +1,220 @@
+import path from "node:path";
+import { CLI_OPERATIONAL_CODES, runLevelIssue } from "./failureCatalog.js";
+import { formatDecisionBlockerForHumans } from "./decisionBlocker.js";
+import { isToolObservedRunEvent } from "./executionTrace.js";
+import { LangGraphCheckpointTrustUnsafeError } from "./langGraphCheckpointTrustUnsafeError.js";
+import { loadSchemaValidator } from "./schemaLoad.js";
+import { resolveVerificationPolicyInput } from "./verificationPolicy.js";
+import { TruthLayerError } from "./truthLayerError.js";
+import { trustDecisionFromCertificate } from "./trustDecision.js";
+import type { Reason, RunEvent, ToolObservedEvent, VerificationDatabase, VerificationPolicy, WorkflowResult } from "./types.js";
+import {
+  buildIneligibleLangGraphCheckpointTrustCertificate,
+  buildOutcomeCertificateLangGraphCheckpointTrustFromWorkflowResult,
+  type OutcomeCertificateV1,
+} from "./outcomeCertificate.js";
+import { verifyRunStateFromBufferedRunEvents } from "./verifyRunStateFromBufferedRunEvents.js";
+
+const validateEvent = loadSchemaValidator("event");
+const POSTGRES_URL_RE = /^postgres(ql)?:\/\//i;
+
+function verificationDatabaseFromUrl(databaseUrl: string, projectRoot: string): VerificationDatabase {
+  if (POSTGRES_URL_RE.test(databaseUrl)) {
+    return { kind: "postgres", connectionString: databaseUrl };
+  }
+  return { kind: "sqlite", path: path.resolve(projectRoot, databaseUrl) };
+}
+
+export type LangGraphCheckpointTrustEligibility =
+  | { eligible: true }
+  | { eligible: false; certificateReasons: Reason[] };
+
+/**
+ * Shared eligibility for LangGraph checkpoint trust (CLI + runtime gate).
+ * Preconditions: `toolObservedEvents` are schema-valid `tool_observed` for the target workflow only.
+ */
+export function classifyLangGraphCheckpointTrustEligibility(input: {
+  runLevelReasons: Reason[];
+  toolObservedEvents: ToolObservedEvent[];
+}): LangGraphCheckpointTrustEligibility {
+  if (input.runLevelReasons.length > 0) {
+    return { eligible: false, certificateReasons: [...input.runLevelReasons] };
+  }
+  if (input.toolObservedEvents.length === 0) {
+    return { eligible: false, certificateReasons: [runLevelIssue("NO_STEPS_FOR_WORKFLOW")] };
+  }
+  if (input.toolObservedEvents.some((t) => t.schemaVersion !== 3)) {
+    return {
+      eligible: false,
+      certificateReasons: [runLevelIssue("LANGGRAPH_CHECKPOINT_TRUST_NON_V3_TOOL_OBSERVED")],
+    };
+  }
+  return { eligible: true };
+}
+
+/**
+ * LangGraph production wedge: succeeds only on terminal row **B** (matches + all checkpoint verdicts verified).
+ */
+export function assertLangGraphCheckpointProductionGate(certificate: OutcomeCertificateV1): void {
+  if (certificate.runKind !== "contract_sql_langgraph_checkpoint_trust") {
+    throw new Error(
+      "assertLangGraphCheckpointProductionGate: certificate.runKind must be contract_sql_langgraph_checkpoint_trust",
+    );
+  }
+  const verdicts = certificate.checkpointVerdicts;
+  const rowB =
+    verdicts !== undefined &&
+    verdicts.length > 0 &&
+    verdicts.every((r) => r.verdict === "verified") &&
+    certificate.stateRelation === "matches_expectations" &&
+    certificate.highStakesReliance === "permitted" &&
+    trustDecisionFromCertificate(certificate) === "safe";
+  if (rowB) return;
+  const { lines } = formatDecisionBlockerForHumans(certificate);
+  throw new LangGraphCheckpointTrustUnsafeError(certificate, lines);
+}
+
+export type CreateLangGraphCheckpointTrustGateOptions = {
+  workflowId: string;
+  registryPath: string;
+  databaseUrl: string;
+  projectRoot?: string;
+  verificationPolicy?: VerificationPolicy;
+  logStep?: (line: object) => void;
+  truthReport?: (report: string) => void;
+};
+
+export type LangGraphCheckpointTrustGate = {
+  appendRunEvent(value: unknown): void;
+  toNdjsonUtf8(): Buffer;
+  evaluate(): Promise<WorkflowResult>;
+  evaluateCertificate(): Promise<OutcomeCertificateV1>;
+  assertLangGraphCheckpointProductionGate(): Promise<void>;
+};
+
+export function createLangGraphCheckpointTrustGate(
+  options: CreateLangGraphCheckpointTrustGateOptions,
+): LangGraphCheckpointTrustGate {
+  const projectRoot = path.resolve(options.projectRoot ?? process.cwd());
+  const registryPath = path.resolve(projectRoot, options.registryPath);
+  const verificationPolicy = resolveVerificationPolicyInput(options.verificationPolicy);
+  const database = verificationDatabaseFromUrl(options.databaseUrl, projectRoot);
+  const logStep = options.logStep ?? (() => {});
+  const truthReport = options.truthReport ?? (() => {});
+
+  const bufferedRunEvents: RunEvent[] = [];
+  const runLevelReasons: Reason[] = [];
+
+  const api = {} as LangGraphCheckpointTrustGate;
+
+  api.appendRunEvent = (value: unknown): void => {
+    if (typeof value !== "object" || value === null) {
+      runLevelReasons.push(runLevelIssue("MALFORMED_EVENT_LINE"));
+      return;
+    }
+    if (!validateEvent(value)) {
+      runLevelReasons.push(runLevelIssue("MALFORMED_EVENT_LINE"));
+      return;
+    }
+    const ev = value as RunEvent;
+    if (ev.workflowId !== options.workflowId) {
+      return;
+    }
+    bufferedRunEvents.push(ev);
+  };
+
+  api.toNdjsonUtf8 = (): Buffer => {
+    const parts: string[] = [];
+    for (const ev of bufferedRunEvents) {
+      parts.push(`${JSON.stringify(ev)}\n`);
+    }
+    return Buffer.from(parts.join(""), "utf8");
+  };
+
+  api.evaluate = async (): Promise<WorkflowResult> => {
+    if (!bufferedRunEvents.length && !runLevelReasons.length) {
+      throw new TruthLayerError(
+        CLI_OPERATIONAL_CODES.CLI_USAGE,
+        "LangGraphCheckpointTrustGate.evaluate requires at least one buffered run event for the workflow.",
+      );
+    }
+    const toolObservedEvents = bufferedRunEvents.filter(isToolObservedRunEvent) as ToolObservedEvent[];
+    const eligibility = classifyLangGraphCheckpointTrustEligibility({
+      runLevelReasons,
+      toolObservedEvents,
+    });
+    if (!eligibility.eligible) {
+      return verifyRunStateFromBufferedRunEvents({
+        workflowId: options.workflowId,
+        registryPath,
+        database,
+        projectRoot,
+        bufferedRunEvents: [],
+        runLevelReasons: eligibility.certificateReasons,
+        verificationPolicy,
+        logStep,
+        truthReport,
+      });
+    }
+    return verifyRunStateFromBufferedRunEvents({
+      workflowId: options.workflowId,
+      registryPath,
+      database,
+      projectRoot,
+      bufferedRunEvents,
+      runLevelReasons,
+      verificationPolicy,
+      logStep,
+      truthReport,
+    });
+  };
+
+  api.evaluateCertificate = async (): Promise<OutcomeCertificateV1> => {
+    const toolObservedEvents = bufferedRunEvents.filter(isToolObservedRunEvent) as ToolObservedEvent[];
+    const eligibility = classifyLangGraphCheckpointTrustEligibility({
+      runLevelReasons,
+      toolObservedEvents,
+    });
+    if (!eligibility.eligible) {
+      const certificate = buildIneligibleLangGraphCheckpointTrustCertificate(
+        options.workflowId,
+        eligibility.certificateReasons,
+      );
+      const validateCert = loadSchemaValidator("outcome-certificate-v1");
+      if (!validateCert(certificate)) {
+        throw new TruthLayerError(
+          CLI_OPERATIONAL_CODES.WORKFLOW_RESULT_SCHEMA_INVALID,
+          JSON.stringify(validateCert.errors ?? []),
+        );
+      }
+      return certificate;
+    }
+    const result = await verifyRunStateFromBufferedRunEvents({
+      workflowId: options.workflowId,
+      registryPath,
+      database,
+      projectRoot,
+      bufferedRunEvents,
+      runLevelReasons,
+      verificationPolicy,
+      logStep,
+      truthReport,
+    });
+    const certificate = buildOutcomeCertificateLangGraphCheckpointTrustFromWorkflowResult(result);
+    const validateCert = loadSchemaValidator("outcome-certificate-v1");
+    if (!validateCert(certificate)) {
+      throw new TruthLayerError(
+        CLI_OPERATIONAL_CODES.WORKFLOW_RESULT_SCHEMA_INVALID,
+        JSON.stringify(validateCert.errors ?? []),
+      );
+    }
+    return certificate;
+  };
+
+  api.assertLangGraphCheckpointProductionGate = async (): Promise<void> => {
+    const certificate = await api.evaluateCertificate();
+    assertLangGraphCheckpointProductionGate(certificate);
+  };
+
+  return api;
+}

@@ -7,6 +7,8 @@ import {
   cliErrorEnvelope,
   formatOperationalMessage,
 } from "../failureCatalog.js";
+import { runLangGraphCheckpointTrustBatchVerifyToTerminalResult } from "../langGraphCheckpointTrustBatch.js";
+import { eventsFileHasSchemaV3ToolObservedForWorkflow } from "../loadEvents.js";
 import { verifyWorkflow } from "../pipeline.js";
 import { TruthLayerError } from "../truthLayerError.js";
 import type { WorkflowResult } from "../types.js";
@@ -55,6 +57,19 @@ export async function runBatchVerifyWithTelemetrySubcommand(
       process.exit(3);
     }
     throw e;
+  }
+
+  if (
+    !parsedBatch.langgraphCheckpointTrust &&
+    eventsFileHasSchemaV3ToolObservedForWorkflow(parsedBatch.eventsPath, parsedBatch.workflowId)
+  ) {
+    writeCliError(
+      CLI_OPERATIONAL_CODES.LANGGRAPH_CHECKPOINT_TRUST_GENERIC_MODE_CONFLICT,
+      formatOperationalMessage(
+        "Events contain schemaVersion 3 tool_observed for this workflow. Use --langgraph-checkpoint-trust for LangGraph checkpoint trust mode, or emit schemaVersion 1/2 only for generic verify.",
+      ),
+    );
+    process.exit(3);
   }
 
   const batchActivationRunId =
@@ -114,15 +129,29 @@ export async function runBatchVerifyWithTelemetrySubcommand(
   try {
     const { certificate, workflowResult } = await runStandardVerifyWorkflowCliToTerminalResult({
       shareReportOrigin: parsedBatch.shareReportOrigin,
-      runVerify: () =>
-        verifyWorkflow({
-          workflowId: parsedBatch.workflowId,
-          eventsPath: parsedBatch.eventsPath,
-          registryPath: parsedBatch.registryPath,
-          database: parsedBatch.database,
-          verificationPolicy: parsedBatch.verificationPolicy,
-          truthReport: () => {},
-        }),
+      runVerify: parsedBatch.langgraphCheckpointTrust
+        ? undefined
+        : () =>
+            verifyWorkflow({
+              workflowId: parsedBatch.workflowId,
+              eventsPath: parsedBatch.eventsPath,
+              registryPath: parsedBatch.registryPath,
+              database: parsedBatch.database,
+              verificationPolicy: parsedBatch.verificationPolicy,
+              truthReport: () => {},
+            }),
+      runVerifyWithCertificate: parsedBatch.langgraphCheckpointTrust
+        ? () =>
+            runLangGraphCheckpointTrustBatchVerifyToTerminalResult({
+              workflowId: parsedBatch.workflowId,
+              eventsPath: parsedBatch.eventsPath,
+              registryPath: parsedBatch.registryPath,
+              database: parsedBatch.database,
+              verificationPolicy: parsedBatch.verificationPolicy,
+              truthReport: () => {},
+              logStep: () => {},
+            })
+        : undefined,
       maybeWriteBundle:
         parsedBatch.writeRunBundleDir === undefined
           ? undefined

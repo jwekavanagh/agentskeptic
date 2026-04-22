@@ -2,9 +2,9 @@
 surfaceKind: guide
 guideJob: problem
 title: Verify LangGraph workflows against your database — AgentSkeptic
-description: Map LangGraph-style structured tool activity to NDJSON events, run read-only SQL verification, and understand ROW_ABSENT when traces look green.
+description: LangGraph checkpoint trust mode maps structured tool activity to v3 NDJSON, read-only SQL verification, and checkpoint-scoped Outcome Certificates.
 intent: Teams running LangGraph or similar graphs who need Postgres or SQLite rows to match structured tool parameters at verification time.
-valueProposition: You get a concrete separation between trace success flags and read-only SELECT results, with stable bundled examples for ROW_ABSENT.
+valueProposition: Checkpoint trust mode gives one approval-grade stdout contract and separates trace success from database truth.
 primaryCta: integrate
 route: /guides/verify-langgraph-workflows
 evaluatorLens: false
@@ -12,19 +12,14 @@ evaluatorLens: false
 
 # Verify LangGraph workflows against your database
 
-LangGraph runs produce structured tool parameters; traces and success flags do not prove the Postgres or SQLite row exists with the values your graph implied at verification time.
+**Authoritative behavior** for LangGraph checkpoint trust (v3 wire, CLI flag, terminal rows A1–D, production gate, shared kernel with the decision gate) lives in the repository SSOT **[`docs/langgraph-checkpoint-trust-ssot.md`](https://github.com/jwekavanagh/agentskeptic/blob/main/docs/langgraph-checkpoint-trust-ssot.md)** — this page is a **stub** so guides stay navigable without duplicating normative tables.
 
-AgentSkeptic compares that **declared** activity to **observed** SQLite or Postgres rows using read-only `SELECT`s—not trace success flags.
+**Emitter + copy-paste commands:** [examples/langgraph-reference/README.md](https://github.com/jwekavanagh/agentskeptic/blob/main/examples/langgraph-reference/README.md) and generated **[`docs/partner-quickstart-commands.md`](https://github.com/jwekavanagh/agentskeptic/blob/main/docs/partner-quickstart-commands.md)** (LangGraph reference section).
 
-Read the LangGraph reference README for integrator-owned emitter guidance: [examples/langgraph-reference/README.md](https://github.com/jwekavanagh/agentskeptic/blob/main/examples/langgraph-reference/README.md).
-
-Export or capture **structured tool activity** (JSON or NDJSON) from your graph run—the same shapes you would feed to Quick Verify or contract verification (see `/integrate` for activation commands below). Maintain a **tools registry** mapping `toolId` to SQL row checks for contract mode, or start with Quick Verify for inferred checks. Run `agentskeptic verify` or `agentskeptic quick` locally. To publish a **private** HTML artifact for Slack or tickets, pass `--share-report-origin https://agentskeptic.com` (replace with your deployment origin when self-hosting). Those `/r/…` URLs are **noindex** by design so they are not used for organic discovery. For **indexable** discovery pages that explain the trace-vs-database gap, use [`/guides#bundled-proof`](/guides#bundled-proof) (bundled proof examples), the Learn hub at [`/guides`](/guides), and the acquisition page at [`/database-truth-vs-traces`](/database-truth-vs-traces)—not `/r/` links.
-
-Normative contracts: [docs/shareable-verification-reports.md](https://github.com/jwekavanagh/agentskeptic/blob/main/docs/shareable-verification-reports.md).
+**Documentation boundaries** (what belongs in which doc): [`docs/langgraph-reference-boundaries-ssot.md`](https://github.com/jwekavanagh/agentskeptic/blob/main/docs/langgraph-reference-boundaries-ssot.md).
 
 ## What to do next
 
 - Run first-run on your database via [`/integrate`](/integrate).
 - Open pricing when you need metered commercial usage at [`/pricing`](/pricing).
-- Compare bundled envelopes at [`/examples/wf-complete`](/examples/wf-complete) and [`/examples/wf-missing`](/examples/wf-missing).
 - Read trust boundaries on [`/security`](/security).

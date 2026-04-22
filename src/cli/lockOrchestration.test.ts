@@ -39,6 +39,7 @@ const sampleParsed: ParsedBatchVerifyCli = {
   shareReportOrigin: undefined,
   writeRunBundleDir: undefined,
   signPrivateKeyPath: undefined,
+  langgraphCheckpointTrust: false,
 };
 
 const sampleResult = {

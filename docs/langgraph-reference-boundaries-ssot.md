@@ -1,8 +1,8 @@
 # Langgraph reference documentation boundaries
 
-This document is the **SSOT** for **where LangGraph-shaped integrator material may live** and **which tests enforce emitter vs CLI ordering**. It is **not** product positioning—that remains in [`verification-product-ssot.md`](verification-product-ssot.md).
+This document is the **SSOT** for **where LangGraph-shaped integrator material may live** and **which tests enforce emitter vs CLI ordering**. It is **not** product positioning—that remains in [`verification-product-ssot.md`](verification-product-ssot.md). **Checkpoint trust terminal behavior** (v3 wire, `--langgraph-checkpoint-trust`, A1–D table, production gate) is authoritative only in [`langgraph-checkpoint-trust-ssot.md`](langgraph-checkpoint-trust-ssot.md)—do not duplicate that table here.
 
-Canonical integrator **primacy** for LangGraph-shaped orchestration is the repository [`examples/langgraph-reference/README.md`](../examples/langgraph-reference/README.md) plus the generated shell in [`partner-quickstart-commands.md`](partner-quickstart-commands.md). Full-machine validation (emitter contract, happy path, negative `ROW_ABSENT`) runs from [`scripts/langgraph-reference-verify.mjs`](../scripts/langgraph-reference-verify.mjs) during root **`npm test`**.
+Canonical integrator **primacy** for LangGraph-shaped orchestration is the repository [`examples/langgraph-reference/README.md`](../examples/langgraph-reference/README.md) plus the generated shell in [`partner-quickstart-commands.md`](partner-quickstart-commands.md). Full-machine validation (emitter contract, happy path, negative `ROW_ABSENT`) runs from [`scripts/langgraph-reference-verify.mjs`](../scripts/langgraph-reference-verify.mjs) during root **`npm test`**, followed by [`scripts/assert-no-langgraph-v1-product-path.mjs`](../scripts/assert-no-langgraph-v1-product-path.mjs).
 
 | Boundary | Authoritative location | Notes |
 |----------|------------------------|-------|

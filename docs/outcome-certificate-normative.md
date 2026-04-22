@@ -13,7 +13,8 @@ This document is the **sole product authority** for the **Outcome Certificate**:
 |-------|---------|
 | `schemaVersion` | Wire version; must be `1` for this document. |
 | `workflowId` | Workflow under verification. |
-| `runKind` | `contract_sql` (registry-backed) or `quick_preview` (inferred). |
+| `runKind` | `contract_sql` (registry-backed), `contract_sql_langgraph_checkpoint_trust` (LangGraph checkpoint trust; v3 wire only), or `quick_preview` (inferred). |
+| `checkpointVerdicts` | Optional; present on eligible LangGraph checkpoint trust runs after SQL. Omitted for ineligible LangGraph (A2). |
 | `stateRelation` | `matches_expectations` \| `does_not_match` \| `not_established` — SQL vs expectations only. |
 | `highStakesReliance` | `permitted` \| `prohibited` — may this artifact gate ship / bill / compliance decisions. |
 | `relianceRationale` | One mandatory human string explaining `highStakesReliance`. |
@@ -32,6 +33,9 @@ Materialized `highStakesReliance` **must** equal `derive(runKind, stateRelation)
 | `contract_sql` | `matches_expectations` | `permitted` |
 | `contract_sql` | `does_not_match` | `prohibited` |
 | `contract_sql` | `not_established` | `prohibited` |
+| `contract_sql_langgraph_checkpoint_trust` | `matches_expectations` | `permitted` |
+| `contract_sql_langgraph_checkpoint_trust` | `does_not_match` | `prohibited` |
+| `contract_sql_langgraph_checkpoint_trust` | `not_established` | `prohibited` |
 
 ## Mapping from engine `WorkflowResult` (contract)
 

@@ -24,7 +24,27 @@ export type ToolObservedEventV2 = {
   timestamp?: string;
 };
 
-export type ToolObservedEvent = ToolObservedEventV1 | ToolObservedEventV2;
+/** LangGraph checkpoint trust wire: v2 graph ids plus required checkpoint identity. */
+export type LanggraphCheckpointRef = {
+  threadId: string;
+  checkpointNs: string;
+  checkpointId: string;
+};
+
+export type ToolObservedEventV3 = {
+  schemaVersion: 3;
+  workflowId: string;
+  runEventId: string;
+  parentRunEventId?: string;
+  type: "tool_observed";
+  seq: number;
+  toolId: string;
+  params: Record<string, unknown>;
+  timestamp?: string;
+  langgraphCheckpoint: LanggraphCheckpointRef;
+};
+
+export type ToolObservedEvent = ToolObservedEventV1 | ToolObservedEventV2 | ToolObservedEventV3;
 
 export type ModelTurnRunEvent = {
   schemaVersion: 2;
@@ -312,6 +332,8 @@ export type StepOutcome = {
   evaluatedObservationOrdinal: number;
   /** Required when status is not verified; must be absent when status is verified. */
   failureDiagnostic?: FailureDiagnostic;
+  /** Present when source `tool_observed` was schemaVersion 3 (LangGraph checkpoint trust wire). */
+  langgraphCheckpointKey?: string;
 };
 
 export type WorkflowStatus = "complete" | "incomplete" | "inconsistent";
@@ -329,7 +351,7 @@ export type VerificationRunContextLastEvent = {
 
 /** Digest of v2 run graph + tool_observed positions; built at verify time from `runEvents`. */
 export type VerificationRunContext = {
-  maxWireSchemaVersion: 1 | 2;
+  maxWireSchemaVersion: 1 | 2 | 3;
   retrievalEvents: Array<{
     ingestIndex: number;
     runEventId: string | null;
@@ -725,7 +747,7 @@ export type ExecutionTraceVerificationLink = {
 export type ExecutionTraceNode = {
   ingestIndex: number;
   runEventId: string;
-  wireSchemaVersion: 1 | 2;
+  wireSchemaVersion: 1 | 2 | 3;
   wireType: RunEvent["type"];
   parentRunEventId: string | null;
   traceStepKind: TraceStepKind;

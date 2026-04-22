@@ -6,8 +6,11 @@ This document is the **single source of truth** for in-process verification, tru
 
 All paths that produce a **`WorkflowResult`** from persisted tool observations share **`verifyRunStateFromEvents`** in `pipeline.ts` (also used by **`verifyWorkflow`** on NDJSON files). There is no second reconciliation engine for the same inputs.
 
+Buffered in-process paths share **`verifyRunStateFromBufferedRunEvents`** in `verifyRunStateFromBufferedRunEvents.ts`: **`createDecisionGate.evaluate()`** / **`evaluateCertificate()`** call it after buffering (no duplicate `prepareWorkflowEvents` + verify sequence elsewhere).
+
 - **Batch / CI:** `await verifyWorkflow({ workflowId, eventsPath, registryPath, database, … })`.
 - **Runtime:** `createDecisionGate({ workflowId, registryPath, databaseUrl, … })` → **`appendRunEvent`** per tool → **`await gate.evaluate()`** (or **`evaluateCertificate()`**).
+- **LangGraph checkpoint trust (runtime):** `createLangGraphCheckpointTrustGate` — same shared **`verifyRunStateFromBufferedRunEvents`** on the eligible path; **`evaluateCertificate()`** always uses **`runKind: "contract_sql_langgraph_checkpoint_trust"`** (including ineligible A2). Irreversible production gating for that contract uses **`assertLangGraphCheckpointProductionGate`** (throws **`LangGraphCheckpointTrustUnsafeError`** when not row B). See [`langgraph-checkpoint-trust-ssot.md`](langgraph-checkpoint-trust-ssot.md).
 
 **Parity expectation:** For the same `workflowId`, registry bytes, database, verification policy, and ordered `tool_observed` events, **`gate.evaluate()`** must match **`verifyWorkflow`** on an NDJSON file containing exactly those lines in the same order (modulo non-`tool_observed` lines, which the gate ignores for SQL verification the same way batch preparation does).
 

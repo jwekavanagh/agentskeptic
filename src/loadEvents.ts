@@ -104,3 +104,33 @@ export function loadEventsForWorkflow(
     },
   };
 }
+
+/**
+ * True when the events file contains at least one schema-valid `tool_observed` for `workflowId`
+ * with `schemaVersion === 3` (generic batch verify must refuse without `--langgraph-checkpoint-trust`).
+ */
+export function eventsFileHasSchemaV3ToolObservedForWorkflow(
+  eventsFilePath: string,
+  workflowId: string,
+): boolean {
+  let raw: string;
+  try {
+    raw = readFileSync(eventsFilePath, "utf8");
+  } catch {
+    return false;
+  }
+  for (const line of raw.split(/\r?\n/)) {
+    if (line.trim().length === 0) continue;
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(line) as unknown;
+    } catch {
+      continue;
+    }
+    if (!validateEvent(parsed)) continue;
+    const ev = parsed as RunEvent;
+    if (ev.type !== "tool_observed" || ev.workflowId !== workflowId) continue;
+    if (ev.schemaVersion === 3) return true;
+  }
+  return false;
+}

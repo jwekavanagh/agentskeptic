@@ -14,10 +14,14 @@ export {
 export {
   buildOutcomeCertificateFromWorkflowResult,
   buildOutcomeCertificateFromQuickReport,
+  buildOutcomeCertificateLangGraphCheckpointTrustFromWorkflowResult,
+  buildIneligibleLangGraphCheckpointTrustCertificate,
+  computeCheckpointVerdictsFromWorkflowResult,
   deriveHighStakesReliance,
   assertOutcomeCertificateInvariants,
   formatOutcomeCertificateHuman,
   workflowResultToStateRelation,
+  LANGGRAPH_CHECKPOINT_TRUST_INELIGIBLE_HEADLINE,
 } from "./outcomeCertificate.js";
 export type {
   OutcomeCertificateV1,
@@ -26,12 +30,24 @@ export type {
   OutcomeCertificateHighStakesReliance,
   OutcomeCertificateStep,
   OutcomeCertificateExplanationDetail,
+  OutcomeCertificateCheckpointVerdict,
   BuildQuickOutcomeCertificateOptions,
 } from "./outcomeCertificate.js";
 export { verifyWorkflow, loadToolsRegistry, verifyRunStateFromEvents } from "./pipeline.js";
 export type { VerifyRunStateFromEventsInput } from "./pipeline.js";
 export { createDecisionGate } from "./decisionGate.js";
 export type { CreateDecisionGateOptions, DecisionGate } from "./decisionGate.js";
+export {
+  assertLangGraphCheckpointProductionGate,
+  classifyLangGraphCheckpointTrustEligibility,
+  createLangGraphCheckpointTrustGate,
+} from "./langGraphCheckpointTrustGate.js";
+export type {
+  CreateLangGraphCheckpointTrustGateOptions,
+  LangGraphCheckpointTrustEligibility,
+  LangGraphCheckpointTrustGate,
+} from "./langGraphCheckpointTrustGate.js";
+export { LangGraphCheckpointTrustUnsafeError } from "./langGraphCheckpointTrustUnsafeError.js";
 export { trustDecisionFromCertificate } from "./trustDecision.js";
 export type { TrustDecision } from "./trustDecision.js";
 export { formatDecisionBlockerForHumans } from "./decisionBlocker.js";
@@ -74,7 +90,7 @@ export {
   isToolObservedRunEvent,
 } from "./executionTrace.js";
 export type { BuildExecutionTraceViewInput } from "./executionTrace.js";
-export { loadEventsForWorkflow } from "./loadEvents.js";
+export { loadEventsForWorkflow, eventsFileHasSchemaV3ToolObservedForWorkflow } from "./loadEvents.js";
 export { formatNoStepsForWorkflowMessage, enrichNoStepsRunLevelReasons } from "./noStepsMessage.js";
 export { TruthLayerError } from "./truthLayerError.js";
 export {

@@ -39,7 +39,7 @@ function assertEmitterContract(eventsPath) {
   }
   const lines = raw.split(/\n/).filter((l) => l.length > 0);
   if (lines.length !== 1) {
-    throw new Error("langgraph-reference-verify: EMITTER_CONTRACT: expected exactly one NDJSON line");
+    throw new Error("langgraph-reference-verify: EMITTER_CONTRACT: emitter must output exactly one non-empty NDJSON line");
   }
   let ev;
   try {
@@ -47,14 +47,23 @@ function assertEmitterContract(eventsPath) {
   } catch {
     throw new Error("langgraph-reference-verify: EMITTER_CONTRACT: invalid JSON");
   }
-  const requiredTop = ["schemaVersion", "workflowId", "seq", "type", "toolId", "params"];
+  const requiredTop = [
+    "schemaVersion",
+    "workflowId",
+    "runEventId",
+    "seq",
+    "type",
+    "toolId",
+    "params",
+    "langgraphCheckpoint",
+  ];
   for (const k of requiredTop) {
     if (!(k in ev)) {
       throw new Error(`langgraph-reference-verify: EMITTER_CONTRACT: missing top-level key ${k}`);
     }
   }
-  if (ev.schemaVersion !== 1) {
-    throw new Error("langgraph-reference-verify: EMITTER_CONTRACT: schemaVersion");
+  if (ev.schemaVersion !== 3) {
+    throw new Error("langgraph-reference-verify: EMITTER_CONTRACT: schemaVersion must be 3");
   }
   if (ev.type !== "tool_observed") {
     throw new Error("langgraph-reference-verify: EMITTER_CONTRACT: type");
@@ -74,7 +83,7 @@ function assertEmitterContract(eventsPath) {
   }
   const pKeys = Object.keys(p).sort();
   if (pKeys.join(",") !== "fields,recordId") {
-    throw new Error("langgraph-reference-verify: EMITTER_CONTRACT: params keys must be exactly recordId,fields");
+    throw new Error("langgraph-reference-verify: EMITTER_CONTRACT: params keys must be exactly fields,recordId");
   }
   if (p.recordId !== "partner_1") {
     throw new Error("langgraph-reference-verify: EMITTER_CONTRACT: recordId");
@@ -89,6 +98,15 @@ function assertEmitterContract(eventsPath) {
   }
   if (f.name !== "You" || f.status !== "active") {
     throw new Error("langgraph-reference-verify: EMITTER_CONTRACT: fields values");
+  }
+  const ck = ev.langgraphCheckpoint;
+  if (ck === null || typeof ck !== "object") {
+    throw new Error("langgraph-reference-verify: EMITTER_CONTRACT: langgraphCheckpoint");
+  }
+  for (const k of ["threadId", "checkpointNs", "checkpointId"]) {
+    if (!(k in ck)) {
+      throw new Error(`langgraph-reference-verify: EMITTER_CONTRACT: langgraphCheckpoint.${k}`);
+    }
   }
 }
 
@@ -140,15 +158,22 @@ function assertVerifiedStdout(stdout) {
           JSON.stringify(obj.stateRelation),
       );
     }
-    if (obj.runKind !== "contract_sql") {
+    if (obj.runKind !== "contract_sql_langgraph_checkpoint_trust") {
       throw new Error(
-        "langgraph-reference-verify: OPERATIONAL: expected certificate runKind contract_sql, got " +
+        "langgraph-reference-verify: OPERATIONAL: expected certificate runKind contract_sql_langgraph_checkpoint_trust, got " +
           JSON.stringify(obj.runKind),
       );
     }
     const step0 = obj.steps?.[0];
     if (!step0) {
       throw new Error("langgraph-reference-verify: OPERATIONAL: expected at least one certificate step");
+    }
+    const cvs = obj.checkpointVerdicts;
+    if (!Array.isArray(cvs) || cvs.length < 1) {
+      throw new Error("langgraph-reference-verify: OPERATIONAL: expected non-empty checkpointVerdicts");
+    }
+    if (!cvs.every((r) => r && r.verdict === "verified")) {
+      throw new Error("langgraph-reference-verify: OPERATIONAL: expected all checkpointVerdicts verified");
     }
     return;
   }
@@ -290,6 +315,7 @@ export function executeLanggraphReferencePipeline(options = {}) {
       registryPath,
       "--db",
       dbFile,
+      "--langgraph-checkpoint-trust",
     ],
     pipelineRoot,
   );
@@ -321,14 +347,20 @@ export function executeLanggraphReferencePipeline(options = {}) {
   const badPath = path.join(tmpdir(), `lg-bad-${randomUUID()}.ndjson`);
   const badLine =
     JSON.stringify({
-      schemaVersion: 1,
+      schemaVersion: 3,
       workflowId: "wf_partner",
-      seq: 0,
+      runEventId: randomUUID(),
       type: "tool_observed",
+      seq: 0,
       toolId: "crm.upsert_contact",
       params: {
         recordId: "wrong_id",
         fields: { name: "You", status: "active" },
+      },
+      langgraphCheckpoint: {
+        threadId: "lg-ref-thread-neg",
+        checkpointNs: "",
+        checkpointId: "lg-ref-cp-neg",
       },
     }) + "\n";
   writeFileSync(badPath, badLine, "utf8");
@@ -364,6 +396,7 @@ export function executeLanggraphReferencePipeline(options = {}) {
       registryPath,
       "--db",
       db2,
+      "--langgraph-checkpoint-trust",
     ],
     pipelineRoot,
   );

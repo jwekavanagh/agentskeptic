@@ -35,6 +35,12 @@ describe("outcomeCertificate", () => {
     expect(deriveHighStakesReliance("contract_sql", "matches_expectations")).toBe("permitted");
     expect(deriveHighStakesReliance("contract_sql", "does_not_match")).toBe("prohibited");
     expect(deriveHighStakesReliance("contract_sql", "not_established")).toBe("prohibited");
+    expect(deriveHighStakesReliance("contract_sql_langgraph_checkpoint_trust", "matches_expectations")).toBe(
+      "permitted",
+    );
+    expect(deriveHighStakesReliance("contract_sql_langgraph_checkpoint_trust", "not_established")).toBe(
+      "prohibited",
+    );
   });
 
   it("wf_complete certificate passes schema and invariants", async () => {

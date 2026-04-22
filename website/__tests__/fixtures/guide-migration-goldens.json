@@ -1,25 +1,25 @@
 {
   "verify-langgraph-workflows": {
     "requiredSubstrings": [
-      "Verify LangGraph workflows against your database LangGraph runs produce structured tool parameters; traces and success flags do not prove the Postgres or SQLite row exists with the values your graph implied at verification time.",
-      "AgentSkeptic compares that declared activity to observed SQLite or Postgres rows using read-only SELECTs—not trace success flags.",
-      "Read the LangGraph reference README for integrator-owned emitter guidance: examples/langgraph-reference/README.md.",
-      "Export or capture structured tool activity (JSON or NDJSON) from your graph run—the same shapes you would feed to Quick Verify or contract verification (see /integrate for activation commands below).",
-      "Maintain a tools registry mapping toolId to SQL row checks for contract mode, or start with Quick Verify for inferred checks.",
-      "Run agentskeptic verify or agentskeptic quick locally.",
-      "To publish a private HTML artifact for Slack or tickets, pass --share-report-origin https://agentskeptic.com (replace with your deployment origin when self-hosting).",
-      "Those /r/… URLs are noindex by design so they are not used for organic discovery."
+      "Verify LangGraph workflows against your database Authoritative behavior for LangGraph checkpoint trust (v3 wire, CLI flag, terminal rows A1–D, production gate, shared kernel with the decision gate) lives in the repository SSOT",
+      "docs/langgraph-checkpoint-trust-ssot.md",
+      "this page is a stub so guides stay navigable without duplicating normative tables",
+      "Emitter + copy-paste commands: examples/langgraph-reference/README.md",
+      "docs/partner-quickstart-commands.md",
+      "LangGraph reference section",
+      "Documentation boundaries (what belongs in which doc): docs/langgraph-reference-boundaries-ssot.md",
+      "Run first-run on your database via /integrate."
     ]
   },
   "trace-green-postgres-row-missing": {
     "requiredSubstrings": [
-      "Green trace, missing Postgres row Green LangGraph or agent trace but wrong or missing Postgres row When your graph finishes with a green step list, you still need a read-only check that the row your business logic cares about is present in Postgres with the expected columns.",
+      "Green trace, missing Postgres row LangGraph checkpoint trust contracts (v3 wire, CLI flag, terminal table) are defined in docs/langgraph-checkpoint-trust-ssot.md; this guide stays symptom-first.",
+      "Green LangGraph or agent trace but wrong or missing Postgres row",
+      "When your graph finishes with a green step list, you still need a read-only check that the row your business logic cares about is present in Postgres with the expected columns.",
       "Traces record what the runtime believed happened; they do not substitute for SELECT results at verification time.",
       "AgentSkeptic ingests structured tool activity as NDJSON or JSON, derives expected row identity from your registry, and runs read-only SQL.",
       "A missing row surfaces as inconsistent with reason ROW_ABSENT even when the trace narrative looked successful.",
       "Use this pattern after LangGraph runs, before you treat outcomes as safe for customers or downstream automation.",
-      "Start from the bundled demo contrast (wf_complete vs wf_missing), then wire your own tool IDs and tables.",
-      "First-run on your database is documented at /integrate; contract mode with a registry is the audit-grade path when you need explicit per-tool expectations rather than inferred checks from Quick Verify.",
       "Operational teams often discover this gap only after a silent failure: the ticket never moved, the contact never landed, or analytics disagrees with CRM."
     ]
   },
@@ -85,14 +85,14 @@
   },
   "debug-postgres-after-langgraph": {
     "requiredSubstrings": [
-      "Debug Postgres after LangGraph runs Debugging Postgres after a LangGraph run requires row-level truth at verification time beyond trace completion flags alone for customer-facing data.",
+      "Debug Postgres after LangGraph runs For LangGraph checkpoint trust mode (approval-grade stdout,",
+      "docs/langgraph-checkpoint-trust-ssot.md",
+      "Debugging Postgres after a LangGraph run requires row-level truth at verification time beyond trace completion flags alone for customer-facing data.",
       "LangGraph gives rich traces; AgentSkeptic adds read-only SQL truth for the rows your graph implied—still a snapshot at verification time, not proof a tool executed.",
       "Use /integrate to mirror the bundled demo on your Postgres instance, exporting the same NDJSON shapes your graph already produces for tools.",
       "Export structured tool parameters from the graph run you are debugging.",
       "Compare them with read-only SELECTs via contract verification so missing rows surface as ROW_ABSENT instead of silent drift.",
-      "What to do next Mirror commands from /integrate on your Postgres instance.",
-      "Compare ROW_ABSENT language on /examples/wf-missing.",
-      "Revisit the Learn hub at /guides for LangGraph-specific guides."
+      "What to do next Mirror commands from /integrate on your Postgres instance."
     ]
   },
   "stripe-webhook-database-alignment": {

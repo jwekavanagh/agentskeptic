@@ -47,7 +47,7 @@ function lastEventSummary(
  * Deterministic digest of run events for one workflow (capture order = array index).
  */
 export function buildVerificationRunContext(runEvents: RunEvent[]): VerificationRunContext {
-  let maxWire = 1 as 1 | 2;
+  let maxWire = 1 as 1 | 2 | 3;
   const retrievalEvents: VerificationRunContext["retrievalEvents"] = [];
   const controlEvents: VerificationRunContext["controlEvents"] = [];
   const modelTurnEvents: VerificationRunContext["modelTurnEvents"] = [];
@@ -61,6 +61,9 @@ export function buildVerificationRunContext(runEvents: RunEvent[]): Verification
     const sv = ev.schemaVersion;
     if (sv === 2) {
       maxWire = 2;
+    }
+    if (sv === 3) {
+      maxWire = 3;
     }
 
     if (ev.type === "retrieval" && ev.schemaVersion === 2) {

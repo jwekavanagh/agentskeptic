@@ -82,6 +82,28 @@ describe("npm scripts contract (test / test:ci)", () => {
     assert.equal((s.match(/node scripts\/langgraph-reference-verify\.mjs/g) || []).length, 1);
   });
 
+  it("scripts.test runs assert-no-langgraph-v1-product-path immediately after langgraph-reference-verify", () => {
+    const s = pkg.scripts.test;
+    const a = s.indexOf("node scripts/langgraph-reference-verify.mjs");
+    const b = s.indexOf("node scripts/assert-no-langgraph-v1-product-path.mjs");
+    assert.ok(a !== -1 && b !== -1 && a < b);
+    assert.ok(!s.slice(a, b).includes("node scripts/partner-quickstart-verify.mjs"));
+  });
+
+  it("scripts.test:ci runs assert-no-langgraph-v1-product-path immediately after langgraph-reference-verify", () => {
+    const s = pkg.scripts["test:ci"];
+    const a = s.indexOf("node scripts/langgraph-reference-verify.mjs");
+    const b = s.indexOf("node scripts/assert-no-langgraph-v1-product-path.mjs");
+    assert.ok(a !== -1 && b !== -1 && a < b);
+  });
+
+  it("scripts.test includes exactly one assert-no-langgraph-v1-product-path invocation", () => {
+    assert.equal(
+      (pkg.scripts.test.match(/node scripts\/assert-no-langgraph-v1-product-path\.mjs/g) || []).length,
+      1,
+    );
+  });
+
   it("scripts.test and test:ci include exactly one epistemic contract structure check after build", () => {
     const token = "npm run check:epistemic-contract-structure";
     for (const key of ["test", "test:ci"]) {

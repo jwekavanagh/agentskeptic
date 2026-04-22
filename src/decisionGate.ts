@@ -1,23 +1,14 @@
 import path from "node:path";
-import { isToolObservedRunEvent } from "./executionTrace.js";
 import { CLI_OPERATIONAL_CODES, runLevelIssue } from "./failureCatalog.js";
 import {
   buildOutcomeCertificateFromWorkflowResult,
   type OutcomeCertificateV1,
 } from "./outcomeCertificate.js";
-import { loadToolsRegistry, verifyRunStateFromEvents } from "./pipeline.js";
-import { prepareWorkflowEvents } from "./prepareWorkflowEvents.js";
+import { verifyRunStateFromBufferedRunEvents } from "./verifyRunStateFromBufferedRunEvents.js";
 import { loadSchemaValidator } from "./schemaLoad.js";
 import { resolveVerificationPolicyInput } from "./verificationPolicy.js";
 import { TruthLayerError } from "./truthLayerError.js";
-import type {
-  Reason,
-  RunEvent,
-  ToolObservedEvent,
-  VerificationDatabase,
-  VerificationPolicy,
-  WorkflowResult,
-} from "./types.js";
+import type { Reason, RunEvent, VerificationDatabase, VerificationPolicy, WorkflowResult } from "./types.js";
 import { trustDecisionFromCertificate } from "./trustDecision.js";
 import { formatDecisionBlockerForHumans } from "./decisionBlocker.js";
 import { DecisionUnsafeError } from "./decisionUnsafeError.js";
@@ -97,49 +88,13 @@ export function createDecisionGate(options: CreateDecisionGateOptions): Decision
         "DecisionGate.evaluate requires at least one buffered run event for the workflow.",
       );
     }
-    if (!bufferedRunEvents.length) {
-      const registry = loadToolsRegistry(registryPath);
-      return verifyRunStateFromEvents({
-        workflowId: options.workflowId,
-        events: [],
-        runEvents: [],
-        runLevelReasons: [...runLevelReasons],
-        eventSequenceIntegrity: { kind: "normal" },
-        eventFileAggregateCounts: {
-          eventFileNonEmptyLines: 0,
-          schemaValidEvents: 0,
-          toolObservedForRequestedWorkflowId: 0,
-          toolObservedForOtherWorkflowIds: 0,
-        },
-        registry,
-        database,
-        verificationPolicy,
-        logStep,
-        truthReport,
-      });
-    }
-    const toolCandidates: ToolObservedEvent[] = [];
-    for (const ev of bufferedRunEvents) {
-      if (isToolObservedRunEvent(ev)) {
-        toolCandidates.push(ev);
-      }
-    }
-    const { eventsSorted, eventSequenceIntegrity } = prepareWorkflowEvents(toolCandidates);
-    const registry = loadToolsRegistry(registryPath);
-    return verifyRunStateFromEvents({
+    return verifyRunStateFromBufferedRunEvents({
       workflowId: options.workflowId,
-      events: eventsSorted,
-      runEvents: bufferedRunEvents,
-      runLevelReasons: [...runLevelReasons],
-      eventSequenceIntegrity,
-      eventFileAggregateCounts: {
-        eventFileNonEmptyLines: 0,
-        schemaValidEvents: 0,
-        toolObservedForRequestedWorkflowId: toolCandidates.length,
-        toolObservedForOtherWorkflowIds: 0,
-      },
-      registry,
+      registryPath,
       database,
+      projectRoot,
+      bufferedRunEvents,
+      runLevelReasons,
       verificationPolicy,
       logStep,
       truthReport,

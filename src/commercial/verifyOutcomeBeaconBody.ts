@@ -27,6 +27,7 @@ export function buildVerifyOutcomeBeaconBodyV2(input: {
     schema_version: 2,
     run_id: input.run_id,
     workflow_id: input.certificate.workflowId.slice(0, 512),
+    outcome_certificate_run_kind: input.certificate.runKind,
     trust_decision: trustDecisionFromCertificate(input.certificate),
     reason_codes: sortedReasonCodesFromCertificate(input.certificate, 8),
     terminal_status: input.terminal_status,

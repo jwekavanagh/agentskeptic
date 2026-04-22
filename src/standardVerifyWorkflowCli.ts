@@ -8,10 +8,10 @@ import {
   buildOutcomeCertificateFromWorkflowResult,
   type OutcomeCertificateV1,
 } from "./outcomeCertificate.js";
+import type { WorkflowResult } from "./types.js";
 import { loadSchemaValidator } from "./schemaLoad.js";
 import { postPublicVerificationReport } from "./shareReport/postPublicVerificationReport.js";
 import { TruthLayerError } from "./truthLayerError.js";
-import type { WorkflowResult } from "./types.js";
 
 /**
  * Run batch verification and validate emitted WorkflowResult against schema.
@@ -107,7 +107,12 @@ function abortVerifyCli(
  * On failure, writes CLI error, calls `io.exit(3)`, then throws `CLI_EXITED_AFTER_ERROR` if the process continues.
  */
 export async function runStandardVerifyWorkflowCliToTerminalResult(options: {
-  runVerify: () => Promise<WorkflowResult>;
+  runVerify?: () => Promise<WorkflowResult>;
+  /** When set, used instead of `runVerify` + default contract certificate builder (e.g. LangGraph checkpoint trust). */
+  runVerifyWithCertificate?: () => Promise<{
+    workflowResult: WorkflowResult;
+    certificate: OutcomeCertificateV1;
+  }>;
   maybeWriteBundle?: (result: WorkflowResult) => void;
   /** When set, human stderr is deferred until after a successful POST to this origin. */
   shareReportOrigin?: string;
@@ -121,9 +126,34 @@ export async function runStandardVerifyWorkflowCliToTerminalResult(options: {
   let certificate: OutcomeCertificateV1;
   let workflowResult: WorkflowResult;
   try {
-    const pair = await runBatchVerifyToValidatedCertificate(options.runVerify);
-    workflowResult = pair.workflowResult;
-    certificate = pair.certificate;
+    if (options.runVerifyWithCertificate) {
+      const pair = await options.runVerifyWithCertificate();
+      workflowResult = pair.workflowResult;
+      certificate = pair.certificate;
+      const validateWf = loadSchemaValidator("workflow-result");
+      if (!validateWf(workflowResult)) {
+        throw new TruthLayerError(
+          CLI_OPERATIONAL_CODES.WORKFLOW_RESULT_SCHEMA_INVALID,
+          JSON.stringify(validateWf.errors ?? []),
+        );
+      }
+      const validateCert = loadSchemaValidator("outcome-certificate-v1");
+      if (!validateCert(certificate)) {
+        throw new TruthLayerError(
+          CLI_OPERATIONAL_CODES.WORKFLOW_RESULT_SCHEMA_INVALID,
+          JSON.stringify(validateCert.errors ?? []),
+        );
+      }
+    } else if (options.runVerify) {
+      const pair = await runBatchVerifyToValidatedCertificate(options.runVerify);
+      workflowResult = pair.workflowResult;
+      certificate = pair.certificate;
+    } else {
+      throw new TruthLayerError(
+        CLI_OPERATIONAL_CODES.INTERNAL_ERROR,
+        formatOperationalMessage("runStandardVerifyWorkflowCliToTerminalResult: missing runVerify"),
+      );
+    }
   } catch (e) {
     if (e instanceof TruthLayerError) {
       abortVerifyCli(io, writeCliError, e.code, e.message);

@@ -22,6 +22,8 @@ export const RUN_LEVEL_MESSAGES = {
   MALFORMED_EVENT_LINE:
     "Event line was missing, invalid JSON, or failed schema validation for a tool observation.",
   NO_STEPS_FOR_WORKFLOW: "No tool_observed events for this workflow id after filtering.",
+  LANGGRAPH_CHECKPOINT_TRUST_NON_V3_TOOL_OBSERVED:
+    "LangGraph checkpoint trust requires every tool_observed line for this workflow to use schemaVersion 3 with langgraphCheckpoint.",
 } as const;
 
 export function runLevelIssue(code: keyof typeof RUN_LEVEL_MESSAGES): Reason {

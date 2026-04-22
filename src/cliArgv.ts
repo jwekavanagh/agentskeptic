@@ -105,6 +105,8 @@ export type ParsedBatchVerifyCli = {
   writeRunBundleDir: string | undefined;
   signPrivateKeyPath: string | undefined;
   shareReportOrigin: string | undefined;
+  /** When true, batch verify emits the LangGraph checkpoint trust Outcome Certificate contract (v3 wire only). */
+  langgraphCheckpointTrust: boolean;
 };
 
 /**
@@ -135,6 +137,7 @@ export function parseBatchVerifyCliArgs(args: string[]): ParsedBatchVerifyCli {
 
   const verificationPolicy = verificationPolicyFromCliArgs(args);
   const noHumanReport = args.includes("--no-human-report");
+  const langgraphCheckpointTrust = args.includes("--langgraph-checkpoint-trust");
   const writeRunBundleDir = argValue(args, "--write-run-bundle");
   const signPrivateKeyPath = argValue(args, "--sign-ed25519-private-key");
   if (signPrivateKeyPath !== undefined && writeRunBundleDir === undefined) {
@@ -156,6 +159,7 @@ export function parseBatchVerifyCliArgs(args: string[]): ParsedBatchVerifyCli {
     writeRunBundleDir,
     signPrivateKeyPath,
     shareReportOrigin: parseOptionalShareReportOrigin(args),
+    langgraphCheckpointTrust,
   };
 }
 

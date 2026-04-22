@@ -576,4 +576,13 @@ export const OPERATIONAL_DISPOSITION = {
     recommendedAction: "fix_cli_usage",
     automationSafe: false,
   },
+  [CLI_OPERATIONAL_CODES.LANGGRAPH_CHECKPOINT_TRUST_GENERIC_MODE_CONFLICT]: {
+    origin: "inputs",
+    summary:
+      "Generic contract verify was invoked without --langgraph-checkpoint-trust while the events file contains schemaVersion 3 tool_observed lines for the workflow.",
+    actionableCategory: "bad_input",
+    actionableSeverity: "low",
+    recommendedAction: "fix_cli_usage",
+    automationSafe: false,
+  },
 } as const satisfies Record<OperationalCode, OperationalDispositionRow>;

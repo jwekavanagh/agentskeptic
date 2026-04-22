@@ -1,9 +1,12 @@
 import type { QuickVerifyReport } from "./quickVerify/runQuickVerify.js";
 import { formatQuickVerifyHumanReport } from "./quickVerify/formatQuickVerifyHumanReport.js";
-import type { WorkflowResult, WorkflowTruthStep } from "./types.js";
+import type { Reason, StepOutcome, WorkflowResult, WorkflowTruthStep } from "./types.js";
 import { formatWorkflowTruthReportStruct } from "./workflowTruthReport.js";
 
-export type OutcomeCertificateRunKind = "contract_sql" | "quick_preview";
+export type OutcomeCertificateRunKind =
+  | "contract_sql"
+  | "contract_sql_langgraph_checkpoint_trust"
+  | "quick_preview";
 
 export type OutcomeCertificateStateRelation =
   | "matches_expectations"
@@ -25,6 +28,13 @@ export type OutcomeCertificateStep = {
   observedOutcome: string;
 };
 
+export type OutcomeCertificateCheckpointVerdict = {
+  checkpointKey: string;
+  verdict: "verified" | "inconsistent" | "incomplete";
+  seqs: number[];
+  productionMeaning: string;
+};
+
 /** Public verification artifact (v1). Normative: docs/outcome-certificate-normative.md */
 export type OutcomeCertificateV1 = {
   schemaVersion: 1;
@@ -40,6 +50,7 @@ export type OutcomeCertificateV1 = {
   };
   steps: OutcomeCertificateStep[];
   humanReport: string;
+  checkpointVerdicts?: OutcomeCertificateCheckpointVerdict[];
 };
 
 export function deriveHighStakesReliance(
@@ -75,6 +86,15 @@ function buildRelianceRationale(
   if (runKind === "quick_preview") {
     return "Quick preview uses inferred, provisional checks. It is never sufficient as the sole basis for high-stakes ship, bill, compliance, or audit-final decisions—even when state appears to match.";
   }
+  if (runKind === "contract_sql_langgraph_checkpoint_trust") {
+    if (highStakesReliance === "permitted") {
+      return "Contract verification used your registry and read-only SQL; every captured step matched declared expectations under the configured rules, and every LangGraph checkpoint rollup verdict is verified. You may treat this artifact as decision-grade for those steps, subject to your own scope and retention policy.";
+    }
+    if (stateRelation === "does_not_match") {
+      return "At least one step failed verification against the database (missing row, wrong values, or partial multi-effect failure), or a LangGraph checkpoint rollup verdict is inconsistent. Do not treat this run as meeting its intended persisted outcome.";
+    }
+    return "LangGraph checkpoint trust mode did not establish a single approved production snapshot (ineligible wire, incomplete verification, incomplete checkpoint rollup, or sequence integrity). Do not treat absence of a mismatch as proof of success.";
+  }
   if (highStakesReliance === "permitted") {
     return "Contract verification used your registry and read-only SQL; every captured step matched declared expectations under the configured rules. You may treat this artifact as decision-grade for those steps, subject to your own scope and retention policy.";
   }
@@ -100,6 +120,138 @@ function buildExplanationFromWorkflowResult(result: WorkflowResult): OutcomeCert
     truth.failureAnalysis?.summary ??
     (fe !== null ? `${fe.divergence} — expected: ${fe.expected}; observed: ${fe.observed}` : truth.trustSummary);
   return { headline, details };
+}
+
+function rollupCheckpointGroupVerdict(outcomes: StepOutcome[]): OutcomeCertificateCheckpointVerdict["verdict"] {
+  if (outcomes.some((o) => o.status === "incomplete_verification")) return "incomplete";
+  if (
+    outcomes.some(
+      (o) =>
+        o.status === "missing" || o.status === "inconsistent" || o.status === "partially_verified",
+    )
+  ) {
+    return "inconsistent";
+  }
+  if (outcomes.every((o) => o.status === "verified")) return "verified";
+  return "incomplete";
+}
+
+function checkpointProductionMeaning(
+  verdict: OutcomeCertificateCheckpointVerdict["verdict"],
+): string {
+  if (verdict === "verified") {
+    return "Production may advance under this checkpoint identity.";
+  }
+  if (verdict === "inconsistent") {
+    return "Do not advance production for this checkpoint identity until traces and database agree.";
+  }
+  return "Verification is incomplete for this checkpoint identity; production gate remains closed.";
+}
+
+export function computeCheckpointVerdictsFromWorkflowResult(
+  result: WorkflowResult,
+): OutcomeCertificateCheckpointVerdict[] {
+  const byKey = new Map<string, { seqs: number[]; outcomes: StepOutcome[] }>();
+  for (const s of result.steps) {
+    if (s.langgraphCheckpointKey === undefined) continue;
+    const g = byKey.get(s.langgraphCheckpointKey) ?? { seqs: [], outcomes: [] };
+    g.seqs.push(s.seq);
+    g.outcomes.push(s);
+    byKey.set(s.langgraphCheckpointKey, g);
+  }
+  const keys = [...byKey.keys()].sort((a, b) => {
+    const ea = byKey.get(a)!;
+    const eb = byKey.get(b)!;
+    const minA = Math.min(...ea.seqs);
+    const minB = Math.min(...eb.seqs);
+    return minA - minB || a.localeCompare(b);
+  });
+  return keys.map((key) => {
+    const { seqs, outcomes } = byKey.get(key)!;
+    const sortedSeqs = [...new Set(seqs)].sort((x, y) => x - y);
+    const verdict = rollupCheckpointGroupVerdict(outcomes);
+    return {
+      checkpointKey: key,
+      verdict,
+      seqs: sortedSeqs,
+      productionMeaning: checkpointProductionMeaning(verdict),
+    };
+  });
+}
+
+/** Exact stderr headline for LangGraph ineligible (A2) terminal contract. */
+export const LANGGRAPH_CHECKPOINT_TRUST_INELIGIBLE_HEADLINE =
+  "LangGraph checkpoint trust: ineligible" as const;
+
+export function buildIneligibleLangGraphCheckpointTrustCertificate(
+  workflowId: string,
+  runLevelReasons: Reason[],
+): OutcomeCertificateV1 {
+  const runKind = "contract_sql_langgraph_checkpoint_trust";
+  const stateRelation: OutcomeCertificateStateRelation = "not_established";
+  const highStakesReliance = deriveHighStakesReliance(runKind, stateRelation);
+  const ineligibleHeadline = LANGGRAPH_CHECKPOINT_TRUST_INELIGIBLE_HEADLINE;
+  const details: OutcomeCertificateExplanationDetail[] =
+    runLevelReasons.length > 0
+      ? runLevelReasons.map((r) => ({ code: r.code, message: r.message }))
+      : [
+          {
+            code: "LANGGRAPH_INELIGIBLE",
+            message:
+              "No schema-valid schemaVersion 3 tool_observed lines for this workflow in LangGraph checkpoint trust mode.",
+          },
+        ];
+  const humanReport =
+    runLevelReasons.length > 0
+      ? `${ineligibleHeadline}\n${runLevelReasons.map((r) => `${r.code}: ${r.message}`).join("\n")}`
+      : `${ineligibleHeadline}\n${details[0]!.code}: ${details[0]!.message}`;
+  const cert: OutcomeCertificateV1 = {
+    schemaVersion: 1,
+    workflowId,
+    runKind,
+    stateRelation,
+    highStakesReliance,
+    relianceRationale: buildRelianceRationale(runKind, stateRelation, highStakesReliance),
+    intentSummary: ineligibleHeadline,
+    explanation: { headline: ineligibleHeadline, details },
+    steps: [],
+    humanReport,
+  };
+  assertOutcomeCertificateInvariants(cert);
+  return cert;
+}
+
+export function buildOutcomeCertificateLangGraphCheckpointTrustFromWorkflowResult(
+  result: WorkflowResult,
+): OutcomeCertificateV1 {
+  const runKind = "contract_sql_langgraph_checkpoint_trust";
+  const stateRelation = workflowResultToStateRelation(result);
+  const highStakesReliance = deriveHighStakesReliance(runKind, stateRelation);
+  const truth = result.workflowTruthReport;
+  const steps = truth.steps.map(truthStepToCertificateStep);
+  const checkpointVerdicts = computeCheckpointVerdictsFromWorkflowResult(result);
+  const baseHuman = formatWorkflowTruthReportStruct(truth);
+  const humanReport =
+    checkpointVerdicts.length === 0
+      ? baseHuman
+      : `${baseHuman}\n\nlanggraph_checkpoint_verdicts:\n${checkpointVerdicts
+          .map((c) => `${c.checkpointKey}\t${c.verdict}\t${c.productionMeaning}`)
+          .join("\n")}`;
+  const cert: OutcomeCertificateV1 = {
+    schemaVersion: 1,
+    workflowId: result.workflowId,
+    runKind,
+    stateRelation,
+    highStakesReliance,
+    relianceRationale: buildRelianceRationale(runKind, stateRelation, highStakesReliance),
+    intentSummary: truth.trustSummary,
+    explanation: buildExplanationFromWorkflowResult(result),
+    steps,
+    humanReport,
+    checkpointVerdicts,
+  };
+  assertOutcomeCertificateInvariants(cert);
+  return cert;
 }
 
 /**

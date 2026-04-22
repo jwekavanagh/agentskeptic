@@ -25,7 +25,7 @@ export function assertValidRunEventParentGraph(runEvents: RunEvent[]): void {
   const idToIndex = new Map<string, number>();
   for (let i = 0; i < runEvents.length; i++) {
     const ev = runEvents[i]!;
-    if (ev.schemaVersion !== 2) continue;
+    if (ev.schemaVersion !== 2 && ev.schemaVersion !== 3) continue;
     const id = ev.runEventId;
     if (idToIndex.has(id)) {
       throw new TruthLayerError(
@@ -37,7 +37,7 @@ export function assertValidRunEventParentGraph(runEvents: RunEvent[]): void {
   }
   for (let i = 0; i < runEvents.length; i++) {
     const ev = runEvents[i]!;
-    if (ev.schemaVersion !== 2) continue;
+    if (ev.schemaVersion !== 2 && ev.schemaVersion !== 3) continue;
     const p = ev.parentRunEventId;
     if (p === undefined) continue;
     const pi = idToIndex.get(p);
@@ -223,7 +223,7 @@ export function buildExecutionTraceView(input: BuildExecutionTraceViewInput): Ex
       hasWr,
     );
     const wireType = ev.type;
-    const wireSchemaVersion = ev.schemaVersion as 1 | 2;
+    const wireSchemaVersion = ev.schemaVersion as 1 | 2 | 3;
     let toolSeq: number | null = null;
     let toolId: string | null = null;
     if (wireType === "tool_observed") {

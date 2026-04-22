@@ -67,7 +67,7 @@ EVENTS="$(mktemp)"
 node examples/langgraph-reference/run.mjs "$EVENTS"
 DB="$(mktemp).db"
 sqlite3 "$DB" < examples/partner-quickstart/partner.seed.sql
-node dist/cli.js --workflow-id wf_partner --events "$EVENTS" --registry examples/partner-quickstart/partner.tools.json --db "$DB"
+node dist/cli.js --workflow-id wf_partner --events "$EVENTS" --registry examples/partner-quickstart/partner.tools.json --db "$DB" --langgraph-checkpoint-trust
 \`\`\`
 
 Postgres (same \`PARTNER_POSTGRES_URL\` contract as above; apply the seed with your usual SQL client, then verify against the emitted file):
@@ -76,7 +76,7 @@ Postgres (same \`PARTNER_POSTGRES_URL\` contract as above; apply the seed with y
 npm ci --prefix examples/langgraph-reference
 EVENTS="$(mktemp)"
 node examples/langgraph-reference/run.mjs "$EVENTS"
-node dist/cli.js --workflow-id wf_partner --events "$EVENTS" --registry examples/partner-quickstart/partner.tools.json --postgres-url "$PARTNER_POSTGRES_URL"
+node dist/cli.js --workflow-id wf_partner --events "$EVENTS" --registry examples/partner-quickstart/partner.tools.json --postgres-url "$PARTNER_POSTGRES_URL" --langgraph-checkpoint-trust
 \`\`\`
 
 ## Integrator-owned gate

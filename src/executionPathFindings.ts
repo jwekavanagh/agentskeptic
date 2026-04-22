@@ -145,7 +145,7 @@ export function buildExecutionPathFindings(engine: WorkflowEngineResult): Execut
   }
 
   if (
-    ctx.maxWireSchemaVersion === 2 &&
+    (ctx.maxWireSchemaVersion === 2 || ctx.maxWireSchemaVersion === 3) &&
     ctx.retrievalEvents.length === 0 &&
     ctx.firstToolObservedIngestIndex !== null
   ) {
@@ -271,7 +271,7 @@ export function buildExecutionPathFindings(engine: WorkflowEngineResult): Execut
   }
 
   if (
-    ctx.maxWireSchemaVersion === 2 &&
+    (ctx.maxWireSchemaVersion === 2 || ctx.maxWireSchemaVersion === 3) &&
     ctx.firstToolObservedIngestIndex !== null &&
     !ctx.hasRunCompletedControl
   ) {
@@ -325,7 +325,7 @@ const SUMMARY_V2_CLEAR = "No execution-path concerns detected under current rule
 
 export function buildExecutionPathSummary(
   findings: ExecutionPathFinding[],
-  maxWireSchemaVersion: 1 | 2,
+  maxWireSchemaVersion: 1 | 2 | 3,
 ): string {
   if (findings.length === 0) {
     return maxWireSchemaVersion === 1 ? SUMMARY_V1_NO_CONCERNS : SUMMARY_V2_CLEAR;

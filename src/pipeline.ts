@@ -65,6 +65,19 @@ function observedExecutionFromParams(params: Record<string, unknown>): ObservedE
   return { paramsCanonical: canonicalJsonForParams(params) };
 }
 
+/** Stable rollup key for LangGraph checkpoint trust (v3 `tool_observed` only). */
+export function langgraphCheckpointKeyFromToolObserved(ev: ToolObservedEvent): string | undefined {
+  if (ev.schemaVersion !== 3) return undefined;
+  const c = ev.langgraphCheckpoint;
+  return `${c.threadId}\u001f${c.checkpointNs}\u001f${c.checkpointId}`;
+}
+
+function withOptionalLanggraphCheckpointKey<T extends StepOutcome>(outcome: T, ev: ToolObservedEvent): T {
+  const key = langgraphCheckpointKeyFromToolObserved(ev);
+  if (key === undefined) return outcome;
+  return { ...outcome, langgraphCheckpointKey: key };
+}
+
 function intendedEffectNarrative(
   entry: ToolRegistryEntry | undefined,
   toolId: string,
@@ -83,23 +96,26 @@ function buildDivergentStepOutcome(
   const last = plan.last;
   const n = plan.repeatObservationCount;
   const entry = registry.get(last.toolId);
-  return {
-    seq: plan.seq,
-    toolId: last.toolId,
-    intendedEffect: intendedEffectNarrative(entry, last.toolId, last.params),
-    observedExecution: observedExecutionFromParams(last.params),
-    verificationRequest: null,
-    status: "incomplete_verification",
-    reasons: [
-      {
-        code: SQL_VERIFICATION_OUTCOME_CODE.RETRY_OBSERVATIONS_DIVERGE,
-        message: RETRY_OBSERVATIONS_DIVERGE_MESSAGE,
-      },
-    ],
-    evidenceSummary: {},
-    repeatObservationCount: n,
-    evaluatedObservationOrdinal: n,
-  };
+  return withOptionalLanggraphCheckpointKey(
+    {
+      seq: plan.seq,
+      toolId: last.toolId,
+      intendedEffect: intendedEffectNarrative(entry, last.toolId, last.params),
+      observedExecution: observedExecutionFromParams(last.params),
+      verificationRequest: null,
+      status: "incomplete_verification",
+      reasons: [
+        {
+          code: SQL_VERIFICATION_OUTCOME_CODE.RETRY_OBSERVATIONS_DIVERGE,
+          message: RETRY_OBSERVATIONS_DIVERGE_MESSAGE,
+        },
+      ],
+      evidenceSummary: {},
+      repeatObservationCount: n,
+      evaluatedObservationOrdinal: n,
+    },
+    last,
+  );
 }
 
 function logStepOutcome(
@@ -149,7 +165,7 @@ export function verifyToolObservedStep(options: {
       repeatObservationCount,
       evaluatedObservationOrdinal,
     };
-    const finalized = withFailureDiagnostic(outcome);
+    const finalized = withOptionalLanggraphCheckpointKey(withFailureDiagnostic(outcome), ev);
     logStepOutcome(logStep, workflowId, finalized);
     return finalized;
   }
@@ -170,7 +186,7 @@ export function verifyToolObservedStep(options: {
       repeatObservationCount,
       evaluatedObservationOrdinal,
     };
-    const finalized = withFailureDiagnostic(outcome);
+    const finalized = withOptionalLanggraphCheckpointKey(withFailureDiagnostic(outcome), ev);
     logStepOutcome(logStep, workflowId, finalized);
     return finalized;
   }
@@ -188,7 +204,7 @@ export function verifyToolObservedStep(options: {
     repeatObservationCount,
     evaluatedObservationOrdinal,
   };
-  const finalized = withFailureDiagnostic(outcome);
+  const finalized = withOptionalLanggraphCheckpointKey(withFailureDiagnostic(outcome), ev);
   logStepOutcome(logStep, workflowId, finalized);
   return finalized;
 }
@@ -219,7 +235,7 @@ async function verifyToolObservedStepAsync(options: {
       repeatObservationCount,
       evaluatedObservationOrdinal,
     };
-    const finalized = withFailureDiagnostic(outcome);
+    const finalized = withOptionalLanggraphCheckpointKey(withFailureDiagnostic(outcome), ev);
     logStepOutcome(logStep, workflowId, finalized);
     return finalized;
   }
@@ -240,7 +256,7 @@ async function verifyToolObservedStepAsync(options: {
       repeatObservationCount,
       evaluatedObservationOrdinal,
     };
-    const finalized = withFailureDiagnostic(outcome);
+    const finalized = withOptionalLanggraphCheckpointKey(withFailureDiagnostic(outcome), ev);
     logStepOutcome(logStep, workflowId, finalized);
     return finalized;
   }
@@ -258,7 +274,7 @@ async function verifyToolObservedStepAsync(options: {
     repeatObservationCount,
     evaluatedObservationOrdinal,
   };
-  const finalized = withFailureDiagnostic(outcome);
+  const finalized = withOptionalLanggraphCheckpointKey(withFailureDiagnostic(outcome), ev);
   logStepOutcome(logStep, workflowId, finalized);
   return finalized;
 }

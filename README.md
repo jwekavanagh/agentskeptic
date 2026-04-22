@@ -325,6 +325,7 @@ Everything beyond core contract verification lives in **[`docs/agentskeptic.md`]
 | [`docs/reconciliation-vocabulary-ssot.md`](docs/reconciliation-vocabulary-ssot.md) | Reconciliation dimension IDs and UI mapping |
 | [`docs/verification-operational-notes.md`](docs/verification-operational-notes.md) | First-run runbooks, TTFV, export vs replay coverage |
 | [`docs/langgraph-reference-boundaries-ssot.md`](docs/langgraph-reference-boundaries-ssot.md) | LangGraph reference path: emitter/CLI boundaries and test chain |
+| [`docs/langgraph-checkpoint-trust-ssot.md`](docs/langgraph-checkpoint-trust-ssot.md) | LangGraph checkpoint trust: v3 wire, terminal contract, shared kernel, production gate |
 | [`docs/relational-verification.md`](docs/relational-verification.md) | Relational verification semantics |
 | [`docs/ci-enforcement.md`](docs/ci-enforcement.md) | CI enforcement and lock fixtures |
 | [`docs/correctness-definition-normative.md`](docs/correctness-definition-normative.md) | Correctness and limits (normative) |

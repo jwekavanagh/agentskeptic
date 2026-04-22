@@ -12,6 +12,8 @@ evaluatorLens: false
 
 # Green trace, missing Postgres row
 
+LangGraph **checkpoint trust** contracts (v3 wire, CLI flag, terminal table) are defined in [`docs/langgraph-checkpoint-trust-ssot.md`](https://github.com/jwekavanagh/agentskeptic/blob/main/docs/langgraph-checkpoint-trust-ssot.md); this guide stays symptom-first.
+
 Green LangGraph or agent trace but wrong or missing Postgres row
 
 When your graph finishes with a green step list, you still need a read-only check that the row your business logic cares about is present in Postgres with the expected columns. Traces record what the runtime believed happened; they do not substitute for SELECT results at verification time.

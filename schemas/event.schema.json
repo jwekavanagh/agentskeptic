@@ -35,6 +35,41 @@
     {
       "type": "object",
       "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "workflowId",
+        "runEventId",
+        "type",
+        "seq",
+        "toolId",
+        "params",
+        "langgraphCheckpoint"
+      ],
+      "properties": {
+        "schemaVersion": { "const": 3 },
+        "workflowId": { "type": "string", "minLength": 1 },
+        "runEventId": { "type": "string", "minLength": 1 },
+        "parentRunEventId": { "type": "string", "minLength": 1 },
+        "type": { "const": "tool_observed" },
+        "seq": { "type": "integer", "minimum": 0 },
+        "toolId": { "type": "string", "minLength": 1 },
+        "params": { "type": "object" },
+        "timestamp": { "type": "string" },
+        "langgraphCheckpoint": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["threadId", "checkpointNs", "checkpointId"],
+          "properties": {
+            "threadId": { "type": "string", "minLength": 1 },
+            "checkpointNs": { "type": "string" },
+            "checkpointId": { "type": "string", "minLength": 1 }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
       "required": ["schemaVersion", "workflowId", "runEventId", "type", "status"],
       "properties": {
         "schemaVersion": { "const": 2 },

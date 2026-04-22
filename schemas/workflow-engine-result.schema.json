@@ -81,7 +81,7 @@
         "lastRunEvent"
       ],
       "properties": {
-        "maxWireSchemaVersion": { "type": "integer", "enum": [1, 2] },
+        "maxWireSchemaVersion": { "type": "integer", "enum": [1, 2, 3] },
         "retrievalEvents": {
           "type": "array",
           "items": {
@@ -502,6 +502,7 @@
             },
             "repeatObservationCount": { "type": "integer", "minimum": 1 },
             "evaluatedObservationOrdinal": { "type": "integer", "minimum": 1 },
+            "langgraphCheckpointKey": { "type": "string", "minLength": 1 },
             "failureDiagnostic": {
               "type": "string",
               "enum": [

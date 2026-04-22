@@ -429,7 +429,7 @@ export const productCopy = {
   },
 
   /** Primary outbound CTA on /guides/verify-langgraph-workflows (LangGraph reference README). */
-  langgraphGuidePrimaryCtaLabel: "Open the LangGraph reference README (emit, then verify)",
+  langgraphGuidePrimaryCtaLabel: "Open the LangGraph reference README (v3 emit, checkpoint-trust verify)",
 
   scenario: {
     title: "Concrete scenario",
