@@ -19,15 +19,15 @@ const DOCS_SECTION_NEEDLES: Record<string, readonly string[]> = {
     "account",
   ],
   "### Operator: post-change verification": ["verify:web-marketing-copy"],
-  "### Ownership: primary marketing JSON vs productCopy.ts": [
-    "primary-marketing.json",
+  "### Ownership: marketing.json vs productCopy.ts": [
+    "marketing.json",
     "productCopy.ts",
     "llms.txt",
   ],
-  "### Marketing copy and primary-marketing sync": [
+  "### Marketing copy and marketing.json sync": [
     "emit-primary-marketing",
     "verify:web-marketing-copy",
-    "primary-marketing.json",
+    "marketing.json",
     "productCopy.ts",
   ],
 };
@@ -77,7 +77,7 @@ describe("docs marketing contract", () => {
 
   it("public-distribution-ssot mandated section contains needles", () => {
     const doc = readFileSync(join(root, "docs", "public-distribution-ssot.md"), "utf8");
-    const h = "### Ownership: primary marketing JSON vs productCopy.ts";
+    const h = "### Ownership: marketing.json vs productCopy.ts";
     const body = sectionAfterHeader(doc, h);
     for (const n of DOCS_SECTION_NEEDLES[h]) {
       expect(body, `public-distribution-ssot.md § ${h} missing ${n}`).toContain(n);
@@ -86,7 +86,7 @@ describe("docs marketing contract", () => {
 
   it("CONTRIBUTING mandated section contains needles", () => {
     const doc = readFileSync(join(root, "CONTRIBUTING.md"), "utf8");
-    const h = "### Marketing copy and primary-marketing sync";
+    const h = "### Marketing copy and marketing.json sync";
     const body = sectionAfterHeader(doc, h);
     for (const n of DOCS_SECTION_NEEDLES[h]) {
       expect(body, `CONTRIBUTING.md § ${h} missing ${n}`).toContain(n);

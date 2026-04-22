@@ -1,54 +1,48 @@
 import { DiscoveryArticleJsonLd } from "@/components/discovery/DiscoveryArticleJsonLd";
-import { productCopy } from "@/content/productCopy";
-import discoveryAcquisition from "@/lib/discoveryAcquisition";
+import marketing from "@/lib/marketing";
 import { indexableGuideCanonical } from "@/lib/indexableGuides";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: discoveryAcquisition.pageMetadata.title,
-  description: `${discoveryAcquisition.pageMetadata.description} Includes shareable demo transcript and evaluator proof.`,
-  alternates: { canonical: indexableGuideCanonical(discoveryAcquisition.slug) },
+  title: marketing.pageMetadata.title,
+  description: marketing.pageMetadata.description,
+  alternates: { canonical: indexableGuideCanonical(marketing.slug) },
   robots: { index: true, follow: true },
 };
 
 export default function DatabaseTruthVsTracesPage() {
-  const { why, what, when } = productCopy.homepageHeroNarrative;
-  const visitorParagraphs = discoveryAcquisition.visitorProblemAnswer.split(/\n\n+/).filter(Boolean);
+  const { visitorProblemAnswer, shareableTerminalDemo, heroTitle, heroSubtitle, briefSections } = marketing;
 
   return (
     <main className="integrate-main">
       <DiscoveryArticleJsonLd
-        headline={discoveryAcquisition.heroTitle}
-        description={discoveryAcquisition.pageMetadata.description}
-        path={discoveryAcquisition.slug}
+        headline={heroTitle}
+        description={marketing.pageMetadata.description}
+        path={marketing.slug}
       />
-      <h1 data-testid="acquisition-hero-title">{discoveryAcquisition.heroTitle}</h1>
+      <h1 data-testid="acquisition-hero-title">{heroTitle}</h1>
+      <p className="lede">{heroSubtitle}</p>
       <div data-testid="visitor-problem-answer">
-        {visitorParagraphs.map((p) => (
+        {visitorProblemAnswer.split(/\n\n+/).filter(Boolean).map((p) => (
           <p key={p.slice(0, 64)} className="lede">
             {p}
           </p>
         ))}
       </div>
-      <p className="lede">{discoveryAcquisition.heroSubtitle}</p>
-      <section className="home-section" data-testid="acquisition-terminal-demo" aria-labelledby="terminal-demo-heading">
-        <h2 id="terminal-demo-heading">{discoveryAcquisition.shareableTerminalDemo.title}</h2>
-        <pre className="truth-report-pre">{discoveryAcquisition.shareableTerminalDemo.transcript}</pre>
+      <section
+        className="home-section"
+        data-testid="acquisition-terminal-demo"
+        aria-labelledby="terminal-demo-heading"
+      >
+        <h2 id="terminal-demo-heading">{shareableTerminalDemo.title}</h2>
+        <pre className="truth-report-pre">{shareableTerminalDemo.transcript}</pre>
       </section>
-      {discoveryAcquisition.sections.map((section) => (
+      {briefSections.map((section) => (
         <section key={section.heading} className="home-section">
           <h2>{section.heading}</h2>
-          {section.paragraphs.map((paragraph) => (
-            <p key={paragraph.slice(0, 64)}>{paragraph}</p>
-          ))}
+          <p>{section.body}</p>
         </section>
       ))}
-      <section className="home-section" aria-labelledby="acquisition-deep-context">
-        <h2 id="acquisition-deep-context">{productCopy.acquisitionDeepContextSectionTitle}</h2>
-        <p className="lede">{why}</p>
-        <p className="lede">{what}</p>
-        <p className="lede">{when}</p>
-      </section>
     </main>
   );
 }

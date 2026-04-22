@@ -1,5 +1,5 @@
 import sitemap from "@/app/sitemap";
-import discoveryAcquisition from "@/lib/discoveryAcquisition";
+import marketing from "@/lib/marketing";
 import { publicProductAnchors } from "@/lib/publicProductAnchors";
 import { listAllSurfaces, listDiscoveryRoutes } from "@/lib/surfaceMarkdown";
 import { describe, expect, it } from "vitest";
@@ -34,7 +34,7 @@ describe("sitemap", () => {
   it("includes acquisition slug from discovery SSOT", async () => {
     const entries = await sitemap();
     const base = publicProductAnchors.productionCanonicalOrigin.replace(/\/$/, "");
-    expect(entries.some((e) => e.url === `${base}${discoveryAcquisition.slug}`)).toBe(true);
+    expect(entries.some((e) => e.url === `${base}${marketing.slug}`)).toBe(true);
   });
 
   it("lists discovery surfaces in route order under markdown corpus", () => {

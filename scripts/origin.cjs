@@ -4,7 +4,7 @@ const { readFileSync } = require("node:fs");
 const { join } = require("node:path");
 
 const ROOT = join(__dirname, "..");
-const PRIMARY_MARKETING_PATH = join(ROOT, "config", "primary-marketing.json");
+const MARKETING_PATH = join(ROOT, "config", "marketing.json");
 
 /**
  * @param {string} s
@@ -27,7 +27,7 @@ function isLoopbackOrigin(raw) {
 }
 
 function readProductionCanonicalOrigin() {
-  const pm = JSON.parse(readFileSync(PRIMARY_MARKETING_PATH, "utf8"));
+  const pm = JSON.parse(readFileSync(MARKETING_PATH, "utf8"));
   return String(pm.productionCanonicalOrigin);
 }
 
@@ -46,5 +46,7 @@ function assertNextPublicOriginParity() {
 module.exports = {
   normalize,
   assertNextPublicOriginParity,
-  PRIMARY_MARKETING_PATH,
+  MARKETING_PATH,
+  /** @deprecated use MARKETING_PATH */
+  PRIMARY_MARKETING_PATH: MARKETING_PATH,
 };

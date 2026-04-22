@@ -1,5 +1,5 @@
 import { productCopy } from "@/content/productCopy";
-import discoveryAcquisition from "@/lib/discoveryAcquisition";
+import marketing from "@/lib/marketing";
 import {
   ensureMarketingSiteRunning,
   getSiteHtml,
@@ -24,14 +24,13 @@ describe("home vs brief exclusive content", { timeout: 180_000 }, () => {
     await ensureMarketingSiteRunning();
   });
 
-  it("matrix A/B/C", async () => {
+  it("matrix: brief has visitor+terminal+sections; home has stakes+tryit", async () => {
     const home = await getSiteHtml("/");
-    const brief = await getSiteHtml(discoveryAcquisition.slug);
+    const brief = await getSiteHtml(marketing.slug);
     const homeText = mainText(home);
     const briefText = mainText(brief);
 
-    const disc = discoveryAcquisition;
-    const visitor = disc.visitorProblemAnswer;
+    const visitor = marketing.visitorProblemAnswer;
     const visitorNorm = normWs(
       visitor
         .split(/\n\n+/)
@@ -40,7 +39,7 @@ describe("home vs brief exclusive content", { timeout: 180_000 }, () => {
     );
     const transcriptNeedle = "### Success (`wf_complete`)";
 
-    for (const h of disc.sections) {
+    for (const h of marketing.briefSections) {
       expect(briefText).toContain(h.heading);
       expect(homeText).not.toContain(h.heading);
     }
@@ -51,18 +50,8 @@ describe("home vs brief exclusive content", { timeout: 180_000 }, () => {
     expect(brief).toContain(transcriptNeedle);
     expect(homeText).not.toContain(transcriptNeedle);
 
-    expect(briefText).toContain(disc.heroSubtitle);
-    expect(homeText).not.toContain(disc.heroSubtitle);
-
-    expect(briefText).toContain(productCopy.acquisitionDeepContextSectionTitle);
-    expect(homeText).not.toContain(productCopy.acquisitionDeepContextSectionTitle);
-
-    expect(briefText).toContain(disc.homepageHero.why);
-    expect(briefText).toContain(disc.homepageHero.what);
-    expect(briefText).toContain(disc.homepageHero.when);
-    expect(homeText).not.toContain(disc.homepageHero.why);
-    expect(homeText).not.toContain(disc.homepageHero.what);
-    expect(homeText).not.toContain(disc.homepageHero.when);
+    expect(briefText).toContain(marketing.heroSubtitle);
+    expect(homeText).not.toContain(marketing.heroSubtitle);
 
     expect(home).toContain('data-testid="home-try-it"');
     expect(brief).not.toContain('data-testid="home-try-it"');

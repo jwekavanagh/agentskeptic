@@ -1,6 +1,6 @@
 import { siteMetadata } from "@/content/siteMetadata";
 import { COMMERCIAL_SITE_CSP_NONCE_HEADER } from "@/lib/httpSecurityHeaders";
-import discoveryAcquisition from "@/lib/discoveryAcquisition";
+import marketing from "@/lib/marketing";
 import { publicProductAnchors } from "@/lib/publicProductAnchors";
 import { Analytics } from "@vercel/analytics/react";
 import { Inter } from "next/font/google";
@@ -22,7 +22,7 @@ const productJsonLd = {
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
   name: "AgentSkeptic",
-  description: discoveryAcquisition.pageMetadata.description,
+  description: marketing.siteDefaultMetadata.description,
   url: publicProductAnchors.productionCanonicalOrigin,
   sameAs: [publicProductAnchors.gitRepositoryUrl, publicProductAnchors.npmPackageUrl],
 };
@@ -30,13 +30,13 @@ const productJsonLd = {
 export const metadata: Metadata = {
   metadataBase: new URL(publicProductAnchors.productionCanonicalOrigin),
   title: {
-    default: discoveryAcquisition.pageMetadata.title,
+    default: marketing.siteDefaultMetadata.title,
     template: "%s — AgentSkeptic",
   },
-  description: discoveryAcquisition.pageMetadata.description,
+  description: marketing.siteDefaultMetadata.description,
   openGraph: {
-    title: discoveryAcquisition.pageMetadata.title,
-    description: discoveryAcquisition.pageMetadata.description,
+    title: marketing.siteDefaultMetadata.title,
+    description: marketing.siteDefaultMetadata.description,
     type: "website",
     images: [
       {
@@ -49,8 +49,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: discoveryAcquisition.pageMetadata.title,
-    description: discoveryAcquisition.pageMetadata.description,
+    title: marketing.siteDefaultMetadata.title,
+    description: marketing.siteDefaultMetadata.description,
     images: [siteMetadata.openGraphImage.path],
   },
 };

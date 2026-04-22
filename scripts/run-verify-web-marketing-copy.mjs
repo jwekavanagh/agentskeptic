@@ -2,7 +2,7 @@
 /**
  * Runs `npm run verify:web-marketing-copy` steps with `NEXT_PUBLIC_APP_URL` pinned to
  * `productionCanonicalOrigin` so `next build` inlines the same public URLs CI expects
- * (distribution-graph, OpenAPI hrefs) even when `website/.env` uses loopback for dev.
+ * (OpenAPI / marketing URL parity) even when `website/.env` uses loopback for dev.
  */
 import { readFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
@@ -13,7 +13,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, "..");
 
 const anchors = JSON.parse(
-  readFileSync(path.join(root, "config", "primary-marketing.json"), "utf8"),
+  readFileSync(path.join(root, "config", "marketing.json"), "utf8"),
 );
 const canonical = new URL(String(anchors.productionCanonicalOrigin).trim()).origin;
 

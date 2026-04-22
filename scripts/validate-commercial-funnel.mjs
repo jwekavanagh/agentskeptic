@@ -175,7 +175,7 @@ if (
 }
 
 const websiteDir = path.join(root, "website");
-const anchorsRaw = readFileSync(path.join(root, "config", "primary-marketing.json"), "utf8");
+const anchorsRaw = readFileSync(path.join(root, "config", "marketing.json"), "utf8");
 const anchors = JSON.parse(anchorsRaw);
 const { normalize } = require("./emit-primary-marketing.cjs");
 

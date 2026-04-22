@@ -1,8 +1,6 @@
 /** Single source for homepage, pricing recap, sign-in framing, and test ids. */
 
-import primaryMarketing from "@/lib/primaryMarketing";
-import { EPISTEMIC_CONTRACT_INTEGRATOR_SNIPPET } from "@/generated/epistemicContractIntegrator";
-import { DECISION_READY_PRODUCTION_COMPLETE_ADOPTION_BLOB_URL } from "@/lib/githubHeadingSlug";
+import marketing from "@/lib/marketing";
 import {
   METERING_CLARIFIER,
   SECURITY_QUICK_VS_CONTRACT_BULLET,
@@ -139,11 +137,11 @@ export const pricingTrustBandBeforeGrid = {
   ],
 } as const satisfies PricingTrustBandBeforeGrid;
 
-/** Above-the-fold `/pricing` hero (title, stakes, subhead) — from primary-marketing.json. */
+/** Above-the-fold `/pricing` hero (title, stakes, subhead) — from `config/marketing.json`. */
 export const pricingHero = {
-  title: primaryMarketing.site.pricing.heroTitle,
-  positioning: primaryMarketing.site.pricing.positioning,
-  subtitle: primaryMarketing.site.pricing.subtitle,
+  title: marketing.site.pricing.heroTitle,
+  positioning: marketing.site.pricing.positioning,
+  subtitle: marketing.site.pricing.subtitle,
 } as const;
 
 export const pricingHeroExample = {
@@ -186,86 +184,13 @@ export const securityQuickFacts = {
   ],
 } as const satisfies SecurityQuickFacts;
 
-/** Static copy for `/integrate` activation (no embedded docs on this route). */
-export const integrateActivation = {
-  decisionReadyProductionCompleteAdoptionBlobUrl: DECISION_READY_PRODUCTION_COMPLETE_ADOPTION_BLOB_URL,
-  crossingPrimaryHeading: "Cross the boundary (canonical path)",
-  crossingPrimaryLead:
-    "Install the published CLI, then run exactly one agentskeptic crossing command (bootstrap-led or pack-led). Full I/O contract and semantics: docs/crossing-normative.md.",
-  crossingBootstrapLedLabel: "Bootstrap-led (BootstrapPackInput JSON + read-only SQLite or Postgres URL):",
-  crossingBootstrapLedBlock: `npx agentskeptic crossing --bootstrap-input ./path/to/bootstrap-input.json --pack-out ./path/to/pack-dir --db ./path/to/readable.sqlite
-
-# Postgres: use --postgres-url instead of --db.`,
-  crossingPackLedLabel: "Pack-led (NDJSON events + registry JSON you already own):",
-  crossingPackLedBlock: `npx agentskeptic crossing --workflow-id YOUR_WORKFLOW_ID --events ./path/to/events.ndjson --registry ./path/to/tools.json --db ./path/to/readable.sqlite`,
-  whyHeading: "Why this matters",
-  whyParagraphs: [
-    "Traces can look successful while the database is wrong—missing rows, wrong values, or writes that never landed.",
-    "AgentSkeptic runs read-only SQL at verification time and compares what actually exists with what your tools reported they did, so you get database truth instead of narrative or trace color alone.",
-  ],
-  icp: "If you build workflows, agents, or systems that write to a database, this shows end to end how verification compares declared tool activity to the database state that actually exists.",
-  integrateRequirementsHeading: "Requirements",
-  integrateRequirements: [
-    "Node.js 22.13 or newer (or Docker if you only use the optional clone spine below).",
-    "Git and npm when using the optional full-repo spine.",
-    "Structured tool activity you can export or emit as NDJSON (not arbitrary log search—see verification-product SSOT).",
-    "A SQLite or Postgres database you can query read-only for verification.",
-    "Alignment with what verification proves: observed SQL state vs expectations from that activity—not proof a specific HTTP call ran.",
-    "PatternComplete checklist pointers include AC-TRUST-01 and AC-OPS-01 (see first-run-integration.md).",
-  ],
-  optionalSpineSummary:
-    "Optional: full repo clone spine (IntegrateSpineComplete — not crossing success)",
-  optionalSpineLead:
-    "Crossing success is exit 0 from `agentskeptic crossing` in bootstrap-led or pack-led mode. Bootstrap exit 0 alone, IntegrateSpineComplete alone, and PatternComplete alone are not crossing success and are not substitutes for it.",
-  hypothesisLabel: "Verification hypothesis (one line)",
-  hypothesisHelper:
-    "State the database mismatch you are checking for. Allowed: ASCII printable except single or double quotes; length 1–240 after trim. Required before Copy.",
-  hypothesisInvalid: "Enter 1–240 allowed characters (ASCII printable; no quotes).",
-  copyActivationBlockLabel: "Copy activation commands",
-  spineCheckpointHeading: "Mechanical spine checkpoint (not product completion)",
-  spineCheckpointIntro:
-    "When the copied script exits 0 after the guard, you have reached IntegrateSpineComplete: pedagogical demo, AdoptionComplete_PatternComplete-shaped mid segment, then bootstrap plus crossing (pack-led) on your prepared AGENTSKEPTIC_VERIFY_DB using the fixed pack under examples/integrate-your-db. That is still not ProductionComplete on your own emitters.",
-  spineCheckpointBullets: [
-    "After the demo segment you see PatternComplete-style contract verify on temp paths (human report on stderr, Outcome Certificate JSON on stdout for the temp DB path).",
-    "The final line in the script is crossing pack-led for wf_integrate_spine on the generated pack under $OUT2 and your AGENTSKEPTIC_VERIFY_DB; final-phase telemetry matches verify_integrator_owned and bundled example triples stay rejected.",
-    "When your DB matches examples/integrate-your-db/bootstrap-input.json and required-sqlite-state.sql, stderr shows the human report and stdout one Outcome Certificate JSON with stateRelation matches_expectations for wf_integrate_spine.",
-    "If the script stops after the demo with a message about AGENTSKEPTIC_VERIFY_DB, set that variable to a readable SQLite file prepared per docs/first-run-integration.md (Integrate spine) and rerun from a fresh directory.",
-  ],
-  productCompletionHeading: "Product completion: Step 4 on your emitters",
-  productCompletionIntro:
-    "Use Decision-ready artifacts when a human decision depends on the run (adoption SSOT). The normative crossing command is the default integrator path; the optional spine below is mechanical proof only.",
-  productCompletionBullets: [
-    "Canonical crossing contract: https://github.com/jwekavanagh/agentskeptic/blob/main/docs/crossing-normative.md",
-    "Decision-ready ProductionComplete checklist: https://github.com/jwekavanagh/agentskeptic/blob/main/docs/adoption-epistemics-ssot.md#decision-ready-productioncomplete-normative",
-  ],
-  provedHeading: "What you proved",
-  proved: EPISTEMIC_CONTRACT_INTEGRATOR_SNIPPET,
-  nextHeading: "Authoritative details",
-  nextLead:
-    "Crossing SSOT first; deeper runbook, L0/L0.5 bytes, funnel semantics, and trust boundary live in the linked docs.",
-  nextSteps: [
-    {
-      title: "Crossing (SSOT)",
-      body: "Normative stdout/stderr, exit codes, bootstrap-led vs pack-led, and anti-substitution rules for IntegrateSpineComplete vs crossing success.",
-      href: "https://github.com/jwekavanagh/agentskeptic/blob/main/docs/crossing-normative.md",
-      linkLabel: "Open crossing-normative.md",
-    },
-    {
-      title: "First-run integration (SSOT)",
-      body: "Optional clone spine (L0), PatternComplete tables, common mistakes, and deep links after crossing.",
-      href: "https://github.com/jwekavanagh/agentskeptic/blob/main/docs/first-run-integration.md#grounded-integrator-owned-output-primary-path",
-      linkLabel: "Open first-run-integration.md",
-    },
-  ],
-} as const;
-
 export const homeHeroCtaLabels = {
   demo: HOME_HERO_DEMO_CTA_LABEL,
 } as const satisfies HomeHeroCtaLabels;
 
 export const productCopy = {
   links: {
-    cliQuickstart: `${primaryMarketing.gitRepositoryUrl}#try-it-about-one-minute`,
+    cliQuickstart: `${marketing.gitRepositoryUrl}#try-it-about-one-minute`,
     /** Relative to site origin — pair with NEXT_PUBLIC_APP_URL in prose docs. */
     openapiCommercial: "/openapi-commercial-v1.yaml",
     commercialPlansApi: "/api/v1/commercial/plans",
@@ -285,28 +210,16 @@ export const productCopy = {
   },
 
   hero: {
-    title: primaryMarketing.heroTitle,
-    subtitle: primaryMarketing.heroSubtitle,
+    title: marketing.heroTitle,
+    subtitle: marketing.heroSubtitle,
   },
 
-  /**
-   * Homepage hero only: one line under `homepageDecisionFraming`. Must not equal
-   * `primaryMarketing.heroSubtitle` (that string is brief-only after IA split).
-   */
-  homeHeroShortTagline: primaryMarketing.site.home.heroShortTagline,
-
-  /** SSOT: outcome framing before mechanism (`hero.subtitle`). */
-  homepageHeroNarrative: {
-    why: primaryMarketing.homepageHero.why,
-    what: primaryMarketing.homepageHero.what,
-    when: primaryMarketing.homepageHero.when,
-  },
-
-  /** SSOT: single above-the-fold paragraph on `/` (“when to use / is this for me”). */
-  homepageDecisionFraming: primaryMarketing.homepageDecisionFraming,
-
-  /** Acquisition page closing section title (UI-only). */
-  acquisitionDeepContextSectionTitle: "How this fits the problem",
+  /** Homepage hero: outcome line (SSOT: `config/marketing.json` `heroOutcome`). */
+  heroOutcome: marketing.heroOutcome,
+  /** Homepage hero: one-line mechanism. */
+  heroMechanism: marketing.heroMechanism,
+  /** Muted footnote under hero: read-only, non-causal, link. */
+  guaranteeFootnote: marketing.guaranteeFootnote,
 
   /** Learn hub (`/guides`) first line under H1 (UI-only). */
   learnHubPrimaryLede: "Short reads for runs that looked fine until you checked the database.",
@@ -352,11 +265,11 @@ export const productCopy = {
     compareApproachesLabel: "Compare approaches",
   },
 
-  /** `/problems` metadata (UI-only; list body comes from `primary-marketing.json` `problemIndex`). */
+  /** `/problems` metadata (UI-only; list body comes from `config/marketing.json` `problemIndex`). */
   problemsPageMetadata: {
     title: "Problems the product routes to — AgentSkeptic",
     description:
-      "Buyer moments from `config/primary-marketing.json` `problemIndex` in publication order—each with a primary guide and related paths for first-run, pricing, or the product brief.",
+      "Buyer moments from `config/marketing.json` `problemIndex`—each row links to a guide and related site paths.",
   },
 
   /** Visible text around the `/compare` link on `/problems`. */
@@ -366,25 +279,21 @@ export const productCopy = {
   problemsHubIntroTrail: ".",
 
   homeWhatCatches: {
-    sectionTitle: primaryMarketing.homeWhatCatches.sectionTitle,
-    bullets: primaryMarketing.homeWhatCatches.bullets as unknown as readonly string[],
+    sectionTitle: marketing.homeWhatCatches.sectionTitle,
+    bullets: marketing.homeWhatCatches.bullets as unknown as readonly string[],
   },
 
   homeClosing: {
-    sectionTitle: "Next: verify on your data",
-    subtitle: "Read-only SQL at verification time—not trace color alone—before you ship or gate CI.",
+    sectionTitle: marketing.homeClosing.sectionTitle,
+    subtitle: marketing.homeClosing.subtitle,
     integratorLinksCaption: "Docs & integration",
   },
 
   homeStakes: {
-    sectionTitle: "When the database tells a different story",
-    stakesTagline: "This is how bugs pass CI, billing breaks, and compliance fails.",
-    tensionBullets: [
-      "Trace says success.",
-      "Database is wrong.",
-      "You ship anyway.",
-    ],
-    stakesBullets: ["Money lost.", "Compliance broken.", "Bugs reach production."],
+    sectionTitle: marketing.homeStakes.sectionTitle,
+    stakesTagline: marketing.homeStakes.stakesTagline,
+    tensionBullets: [...marketing.homeStakes.tensionBullets],
+    stakesBullets: [...marketing.homeStakes.stakesBullets],
   },
 
   fitAndLimits: {
@@ -392,8 +301,8 @@ export const productCopy = {
   },
 
   homepageAcquisitionCta: {
-    href: primaryMarketing.slug,
-    label: primaryMarketing.homepageAcquisitionCtaLabel,
+    href: marketing.slug,
+    label: marketing.homepageAcquisitionCtaLabel,
     testId: "homepage-acquisition-cta" as const,
   },
 
@@ -416,8 +325,8 @@ export const productCopy = {
       },
     ],
     docLinks: {
-      verificationProductSsot: `${primaryMarketing.gitRepositoryUrl}/blob/main/docs/verification-product-ssot.md`,
-      commercialSsot: `${primaryMarketing.gitRepositoryUrl}/blob/main/docs/commercial-ssot.md`,
+      verificationProductSsot: `${marketing.gitRepositoryUrl}/blob/main/docs/verification-product-ssot.md`,
+      commercialSsot: `${marketing.gitRepositoryUrl}/blob/main/docs/commercial-ssot.md`,
     },
   },
 
@@ -434,15 +343,15 @@ export const productCopy = {
   },
 
   mechanism: {
-    title: primaryMarketing.mechanism.title,
-    intro: primaryMarketing.mechanism.intro,
-    items: [...primaryMarketing.mechanism.items],
-    notObservability: primaryMarketing.mechanism.notObservability,
+    title: marketing.mechanism.title,
+    intro: marketing.mechanism.intro,
+    items: [...marketing.mechanism.items],
+    notObservability: marketing.mechanism.notObservability,
   },
 
-  forYou: primaryMarketing.buyerFit.forYou as unknown as readonly string[],
+  forYou: marketing.buyerFit.forYou as unknown as readonly string[],
 
-  notForYou: primaryMarketing.buyerFit.notForYou as unknown as readonly string[],
+  notForYou: marketing.buyerFit.notForYou as unknown as readonly string[],
 
   guarantees: {
     title: "What is guaranteed (and what is not)",

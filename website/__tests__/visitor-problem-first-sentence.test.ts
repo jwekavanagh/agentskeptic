@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import discoveryAcquisition from "@/lib/discoveryAcquisition";
+import marketing from "@/lib/marketing";
 import { visitorProblemFirstSentence } from "@/lib/visitorProblemFirstSentence";
 
 describe("visitorProblemFirstSentence", () => {
   it("returns the first sentence of discovery visitorProblemAnswer", () => {
-    const full = discoveryAcquisition.visitorProblemAnswer;
+    const full = marketing.visitorProblemAnswer;
     const first = visitorProblemFirstSentence();
     expect(full.startsWith(first)).toBe(true);
     expect(first).toMatch(/[.!?]$/);

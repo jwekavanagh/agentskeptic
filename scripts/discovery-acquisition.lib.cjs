@@ -2,8 +2,6 @@
 
 const { existsSync, readFileSync, readdirSync } = require("node:fs");
 const { join } = require("node:path");
-const Ajv = require("ajv");
-const addFormats = require("ajv-formats");
 
 const PLACEHOLDER_KEYS = [
   ["{{ORIGIN}}", "ORIGIN"],
@@ -20,8 +18,7 @@ const PLACEHOLDER_KEYS = [
  */
 function discoveryPaths(root) {
   return {
-    jsonPath: join(root, "config", "primary-marketing.json"),
-    schemaPath: join(root, "config", "primary-marketing.schema.json"),
+    jsonPath: join(root, "config", "marketing.json"),
   };
 }
 
@@ -177,16 +174,10 @@ function appendDiscoveryLlmsAppendix(baseLlms, discovery, canonicalOrigin) {
  * @param {string} root
  */
 function validateDiscoveryAcquisition(root) {
-  const { jsonPath, schemaPath } = discoveryPaths(root);
+  const { jsonPath } = discoveryPaths(root);
+  const { validateMarketing } = require("./validate-marketing.cjs");
+  validateMarketing(root);
   const discovery = JSON.parse(readFileSync(jsonPath, "utf8"));
-  const schema = JSON.parse(readFileSync(schemaPath, "utf8"));
-  const ajv = new Ajv({ allErrors: true, strict: true });
-  addFormats(ajv);
-  const validate = ajv.compile(schema);
-  if (!validate(discovery)) {
-    const msg = ajv.errorsText(validate.errors, { separator: "\n" });
-    throw new Error(`primary-marketing: schema validation failed:\n${msg}`);
-  }
   const { normalize } = require("./origin.cjs");
   const origin = normalize(String(discovery.productionCanonicalOrigin));
   buildDiscoveryFoldBody(discovery, origin);

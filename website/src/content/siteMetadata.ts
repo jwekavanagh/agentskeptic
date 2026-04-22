@@ -1,9 +1,9 @@
-import primaryMarketing from "@/lib/primaryMarketing";
+import marketing from "@/lib/marketing";
 
 export const siteMetadata = {
-  integrate: primaryMarketing.site.integrate,
-  openGraphImage: primaryMarketing.site.openGraph.image,
-  security: primaryMarketing.site.security,
-  support: primaryMarketing.site.support,
-  claim: primaryMarketing.site.claim,
+  integrate: marketing.site.integrate,
+  openGraphImage: marketing.site.openGraph.image,
+  security: marketing.site.security,
+  support: marketing.site.support,
+  claim: marketing.site.claim,
 } as const;

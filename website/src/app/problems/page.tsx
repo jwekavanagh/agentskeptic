@@ -1,6 +1,6 @@
 import { DiscoveryArticleJsonLd } from "@/components/discovery/DiscoveryArticleJsonLd";
 import { productCopy } from "@/content/productCopy";
-import discoveryAcquisition from "@/lib/discoveryAcquisition";
+import marketing from "@/lib/marketing";
 import { indexableGuideCanonical } from "@/lib/indexableGuides";
 import { readSurfaceFile } from "@/lib/surfaceMarkdown";
 import type { Metadata } from "next";
@@ -34,7 +34,7 @@ function linkLabelForRoute(route: string): string {
 }
 
 export default function ProblemsPage() {
-  const rows = discoveryAcquisition.problemIndex;
+  const rows = marketing.problemIndex;
   return (
     <main className="integrate-main">
       <DiscoveryArticleJsonLd

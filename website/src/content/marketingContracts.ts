@@ -1,12 +1,10 @@
 /**
  * Contract-tested marketing copy: pricing comparison table, commercial terms bullets,
- * homepage evaluator/adoption block, metering clarifier (sign-in + homepage), security quick-fact line.
+ * metering clarifier (sign-in + homepage), security quick-fact line.
  * Plan metadata stays in config/commercial-plans.json; numeric caps in the table must match that file
  * (see website/__tests__/pricing-comparison-numeric-parity.contract.test.ts).
  */
 import { publicProductAnchors } from "@/lib/publicProductAnchors";
-import primaryMarketing from "@/lib/primaryMarketing";
-
 /** GitHub anchor for docs/commercial-ssot.md — keep in sync with heading text in that file. */
 export const COMMERCIAL_SSOT_PROGRAMMATIC_VS_CLI_ANCHOR = "programmatic-verification-vs-licensed-cli";
 
@@ -103,19 +101,3 @@ export const PRICING_FEATURE_COMPARISON = {
 export const SECURITY_QUICK_VS_CONTRACT_BULLET =
   "Quick verify is a preview path; contract verification with an Outcome Certificate is what the engine treats as decision-grade for matches—see outcome-certificate-normative on GitHub for highStakesReliance rules.";
 
-const ev = primaryMarketing.evaluator;
-export const EVALUATOR_TRUTH_AND_ADOPTION = {
-  sectionTitle: ev.sectionTitle,
-  whatWeCheckHeading: ev.whatWeCheckHeading,
-  whatWeCheck: ev.whatWeCheck,
-  whatEvidenceHeading: ev.whatEvidenceHeading,
-  whatEvidence: ev.whatEvidence,
-  whatWeDoNotProveHeading: ev.whatWeDoNotProveHeading,
-  whatWeDoNotProve: ev.whatWeDoNotProve,
-  quickVsContract: ev.quickVsContract,
-  crossingCanonicalSentence: ev.crossingCanonicalSentence,
-  antiSubstitutionOneLiner: ev.antiSubstitutionOneLiner,
-  frameworkMaturity: primaryMarketing.r2.frameworkMaturity,
-  integrateCtaLabel: ev.integrateCtaLabel,
-  integrateHref: ev.integrateHref,
-} as const;

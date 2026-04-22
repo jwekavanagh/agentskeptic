@@ -3,7 +3,6 @@ export const HOME_SECTION_ORDER = [
   "hero",
   "homeWhatCatches",
   "homeStakes",
-  "evaluatorTruthAndAdoption",
   "howItWorks",
   "fitAndLimits",
   "homeClosing",

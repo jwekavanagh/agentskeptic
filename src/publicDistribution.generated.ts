@@ -7,9 +7,8 @@ export const PUBLIC_CANONICAL_SITE_ORIGIN = "https://agentskeptic.com";
 export const AGENTSKEPTIC_CLI_SEMVER = "1.1.0";
 
 export function formatDistributionFooter(): string {
-  return "TRUST REALITY, NOT TRACES. More context (green trace vs database): https://agentskeptic.com/database-truth-vs-traces\n"
-    + "First-run on your database: https://agentskeptic.com/integrate\n"
-    + "PatternComplete checklist (SSOT): https://github.com/jwekavanagh/agentskeptic/blob/main/docs/first-run-integration.md#adoptioncomplete_patterncomplete-normative\n"
-    + "Canonical site: https://agentskeptic.com/\n"
+  return "Context: https://agentskeptic.com/database-truth-vs-traces\n"
+    + "https://agentskeptic.com/integrate\n"
+    + "https://agentskeptic.com/\n"
     + "Distribution contract (SSOT): https://github.com/jwekavanagh/agentskeptic/blob/main/docs/public-distribution-ssot.md\n";
 }

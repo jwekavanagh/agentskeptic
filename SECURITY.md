@@ -51,6 +51,6 @@ Pull requests are expected to pass the **`codeql`** job in [`.github/workflows/c
 
 Inline suppressions use the line-before **`// codeql[js/<rule-id>]: …`** form described in [GitHub CodeQL PR #11723](https://github.com/github/codeql/pull/11723).
 
-URL-substring, stack-trace, and double-escaping findings are addressed primarily by **test and runtime refactors**. For example, HTML normalization in [`website/__tests__/distribution-graph.test.ts`](website/__tests__/distribution-graph.test.ts) uses **JSDOM** parsing instead of manual entity replacement, which avoids **`js/double-escaping`** alerts without a suppression.
+URL-substring, stack-trace, and double-escaping findings are addressed primarily by **test and runtime refactors**. For example, HTML normalization in [`website/__tests__/marketing-public-routes.dom.test.ts`](website/__tests__/marketing-public-routes.dom.test.ts) uses **JSDOM** parsing instead of manual entity replacement, which avoids **`js/double-escaping`** alerts without a suppression.
 
 The **only** inline suppression in this repository documents a scanner false positive where the rule does not match the intended threat model: **`js/insufficient-password-hash`** on the SHA-256 lookup fingerprint in [`website/src/lib/apiKeyCrypto.ts`](website/src/lib/apiKeyCrypto.ts) (indexed lookup only; possession is verified with **scrypt** in **`verifyApiKey`**).

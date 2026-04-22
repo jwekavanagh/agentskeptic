@@ -1,6 +1,6 @@
 import { auth } from "@/auth";
 import { productCopy } from "@/content/productCopy";
-import discoveryAcquisition from "@/lib/discoveryAcquisition";
+import marketing from "@/lib/marketing";
 import { publicProductAnchors } from "@/lib/publicProductAnchors";
 import { buildSiteHeaderPrimaryLinks } from "@/lib/siteChrome";
 import { BrandLockup } from "@/components/BrandLockup";
@@ -20,7 +20,7 @@ export async function SiteHeader() {
   const primaryLinks = buildSiteHeaderPrimaryLinks({
     anchors,
     acquisitionHref: productCopy.homepageAcquisitionCta.href,
-    acquisitionLabel: discoveryAcquisition.homepageAcquisitionCtaLabel,
+    acquisitionLabel: marketing.homepageAcquisitionCtaLabel,
   });
 
   return (
@@ -32,7 +32,7 @@ export async function SiteHeader() {
             if (link.key === "acquisition") {
               return (
                 <Link key={link.key} href={productCopy.homepageAcquisitionCta.href}>
-                  {discoveryAcquisition.homepageAcquisitionCtaLabel}
+                  {marketing.homepageAcquisitionCtaLabel}
                 </Link>
               );
             }

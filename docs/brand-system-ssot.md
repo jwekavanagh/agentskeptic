@@ -46,8 +46,8 @@ Ghost framing utility:
 
 | Audience / surface | Source file | Fields |
 |--------------------|-------------|--------|
-| Homepage hero title, README fold hero, `llms.txt` (via sync) | `config/primary-marketing.json` | `heroTitle`, `readmeTitle`, `heroSubtitle`, `visitorProblemAnswer`, `homepageDecisionFraming`, `pageMetadata`, `cliFollowupLines`, … |
-| `llms.txt` summary line after adoption fence, OpenAPI package line, discovery payload (same file) | `config/primary-marketing.json` | `identityOneLiner` |
+| Homepage hero title, README fold hero, `llms.txt` (via sync) | `config/marketing.json` | `heroTitle`, `readmeTitle`, `heroSubtitle`, `visitorProblemAnswer`, `homepageDecisionFraming`, `pageMetadata`, `cliFollowupLines`, … |
+| `llms.txt` summary line after adoption fence, OpenAPI package line, discovery payload (same file) | `config/marketing.json` | `identityOneLiner` |
 | Site chrome tagline only | `website/src/components/BrandLockup.tsx` | Literal `TRUST REALITY, NOT TRACES.` (not in discovery JSON) |
 | npm `package.json` `description` | Sync from discovery | `pageMetadata.description` |
 

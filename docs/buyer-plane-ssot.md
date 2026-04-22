@@ -6,7 +6,7 @@ Normative **write path** and **ownership** for buyer-plane work: acquisition met
 
 | Surface | Owner |
 |---------|--------|
-| Homepage + layout default SERP (`title.default`, default `description`, Open Graph / Twitter defaults, root `SoftwareApplication` description) | [`config/primary-marketing.json`](../config/primary-marketing.json) via [`website/src/lib/primaryMarketing.ts`](../website/src/lib/primaryMarketing.ts) (also re-exported as [`discoveryAcquisition`](../website/src/lib/discoveryAcquisition.ts)) |
+| Homepage + layout default SERP (`title.default`, default `description`, Open Graph / Twitter defaults, root `SoftwareApplication` description) | [`config/marketing.json`](../config/marketing.json) via [`website/src/lib/marketing.ts`](../website/src/lib/marketing.ts) |
 | Homepage route metadata (`/`) | Same fields, set in [`website/src/app/page.tsx`](../website/src/app/page.tsx) from discovery (not `siteMetadata` globals) |
 | `/integrate`, `/security`, `/support`, `/claim` route-only metadata | [`website/src/content/siteMetadata.ts`](../website/src/content/siteMetadata.ts) — **must not** include top-level `title`, `description`, or `openGraph` that duplicate discovery for the whole site |
 
@@ -14,7 +14,7 @@ Root [`website/src/app/layout.tsx`](../website/src/app/layout.tsx) must **not** 
 
 ## `problemIndex`
 
-Single ordered array in `config/primary-marketing.json` `problemIndex`. Each item: `moment` (display line), `primaryRoute` (must match `/guides|/examples|/compare` slug path), optional `relatedRoutes` (may include `/integrate`, `/pricing`, `/database-truth-vs-traces`, etc.).
+Single ordered array in `config/marketing.json` `problemIndex`. Each item: `moment` (display line), `primaryRoute` (must match `/guides|/examples|/compare` slug path), optional `relatedRoutes` (may include `/integrate`, `/pricing`, `/database-truth-vs-traces`, etc.).
 
 Drives [`/problems`](../website/src/app/problems/page.tsx) row order and the `llms.txt` “When this hurts” appendix (via sync).
 
@@ -42,7 +42,7 @@ User-visible `href="/compare"` must appear in served HTML for:
 
 ## Rendered link-graph tests
 
-Use [`website/__tests__/helpers/siteTestServer.ts`](../website/__tests__/helpers/siteTestServer.ts) (`ensureMarketingSiteRunning`, `getSiteHtml`) like [`website/__tests__/distribution-graph.test.ts`](../website/__tests__/distribution-graph.test.ts): `DATABASE_URL`, `TELEMETRY_DATABASE_URL`, `next build` + `next start` on `127.0.0.1:34100`, long timeout, teardown.
+Use [`website/__tests__/helpers/siteTestServer.ts`](../website/__tests__/helpers/siteTestServer.ts) (`ensureMarketingSiteRunning`, `getSiteHtml`) like [`website/__tests__/marketing-surfaces.contract.test.ts`](../website/__tests__/marketing-surfaces.contract.test.ts): `DATABASE_URL`, `TELEMETRY_DATABASE_URL`, `next build` + `next start` on `127.0.0.1:34100`, long timeout, teardown.
 
 Do **not** maintain a hand-frozen adjacency graph; derive links from fetched HTML (JSDOM).
 

@@ -10,9 +10,9 @@ import {
 
 registerMarketingSiteTeardown();
 
-type Pm = {
+type M = {
   heroTitle: string;
-  pageMetadata: { description: string };
+  siteDefaultMetadata: { description: string };
   site: {
     integrate: { title: string; description: string };
     pricing: { heroTitle: string; positioning: string };
@@ -20,47 +20,47 @@ type Pm = {
   r2: { frameworkMaturity: string };
 };
 
-function loadPrimaryMarketing(): Pm {
+function loadMarketingConfig(): M {
   const root = getRepoRoot();
-  return JSON.parse(readFileSync(join(root, "config", "primary-marketing.json"), "utf8")) as Pm;
+  return JSON.parse(readFileSync(join(root, "config", "marketing.json"), "utf8")) as M;
 }
 
 function collapseWs(s: string): string {
   return s.replace(/\s+/g, " ").trim();
 }
 
-describe("primary marketing surface parity (HTML includes JSON needles)", { timeout: 180_000 }, () => {
-  let pm: Pm;
+describe("marketing surface parity (HTML includes JSON needles)", { timeout: 180_000 }, () => {
+  let m: M;
 
   beforeAll(async () => {
-    pm = loadPrimaryMarketing();
+    m = loadMarketingConfig();
     await ensureMarketingSiteRunning();
   });
 
-  it("home `/` includes hero and default page description from primary-marketing.json", async () => {
+  it("home `/` includes hero title and default site description", async () => {
     const html = await getSiteHtml("/");
     const flat = collapseWs(html);
-    expect(flat).toContain(collapseWs(pm.heroTitle));
-    expect(flat).toContain(collapseWs(pm.pageMetadata.description));
+    expect(flat).toContain(collapseWs(m.heroTitle));
+    expect(flat).toContain(collapseWs(m.siteDefaultMetadata.description));
   });
 
   it("`/integrate` includes integrate title and description from JSON", async () => {
     const html = await getSiteHtml("/integrate");
     const flat = collapseWs(html);
-    expect(flat).toContain(collapseWs(pm.site.integrate.title));
-    expect(flat).toContain(collapseWs(pm.site.integrate.description));
+    expect(flat).toContain(collapseWs(m.site.integrate.title));
+    expect(flat).toContain(collapseWs(m.site.integrate.description));
   });
 
   it("`/pricing` includes pricing hero copy from JSON", async () => {
     const html = await getSiteHtml("/pricing");
     const flat = collapseWs(html);
-    expect(flat).toContain(collapseWs(pm.site.pricing.heroTitle));
-    expect(flat).toContain(collapseWs(pm.site.pricing.positioning));
+    expect(flat).toContain(collapseWs(m.site.pricing.heroTitle));
+    expect(flat).toContain(collapseWs(m.site.pricing.positioning));
   });
 
   it("home includes r2 framework maturity (buyer line)", async () => {
     const html = await getSiteHtml("/");
     const flat = collapseWs(html);
-    expect(flat).toContain(collapseWs(pm.r2.frameworkMaturity));
+    expect(flat).toContain(collapseWs(m.r2.frameworkMaturity));
   });
 });

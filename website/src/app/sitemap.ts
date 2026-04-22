@@ -1,4 +1,4 @@
-import discoveryAcquisition from "@/lib/discoveryAcquisition";
+import marketing from "@/lib/marketing";
 import { listDiscoveryRoutes } from "@/lib/surfaceMarkdown";
 import { publicProductAnchors } from "@/lib/publicProductAnchors";
 import type { MetadataRoute } from "next";
@@ -12,7 +12,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const discoveryPaths = listDiscoveryRoutes();
   const paths = [
     "/",
-    discoveryAcquisition.slug,
+    marketing.slug,
     ...discoveryPaths,
     "/integrate",
     "/guides",

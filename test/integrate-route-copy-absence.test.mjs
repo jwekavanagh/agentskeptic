@@ -23,8 +23,8 @@ const matrix = [
     forbidden: ["successHeading", "successIntro", "successBullets"],
   },
   {
-    file: join(root, "website", "src", "components", "IntegrateActivationBlock.tsx"),
-    forbidden: ["successHeading"],
+    file: join(root, "config", "marketing.json"),
+    forbidden: ["successHeading", "What success looks like"],
   },
   {
     file: join(root, "website", "src", "content", "siteMetadata.ts"),

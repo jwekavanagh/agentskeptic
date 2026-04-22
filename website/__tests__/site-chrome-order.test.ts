@@ -3,7 +3,7 @@ import { describe, expect, beforeAll, it } from "vitest";
 import { productCopy } from "@/content/productCopy";
 import { publicProductAnchors } from "@/lib/publicProductAnchors";
 import { buildSiteHeaderPrimaryLinks } from "@/lib/siteChrome";
-import discoveryAcquisition from "@/lib/discoveryAcquisition";
+import marketing from "@/lib/marketing";
 import {
   ensureMarketingSiteRunning,
   getSiteHtml,
@@ -25,7 +25,7 @@ describe("site chrome header primary order (R1)", { timeout: 180_000 }, () => {
         bugsUrl: publicProductAnchors.bugsUrl,
       },
       acquisitionHref: productCopy.homepageAcquisitionCta.href,
-      acquisitionLabel: discoveryAcquisition.homepageAcquisitionCtaLabel,
+      acquisitionLabel: marketing.homepageAcquisitionCtaLabel,
     }).map((l) => l.href);
 
     const html = await getSiteHtml("/");

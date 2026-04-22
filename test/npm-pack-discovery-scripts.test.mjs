@@ -17,8 +17,8 @@ const REQUIRED = [
   "scripts/discovery-acquisition.lib.cjs",
   "scripts/emit-primary-marketing.cjs",
   "scripts/origin.cjs",
-  "config/primary-marketing.json",
-  "config/primary-marketing.schema.json",
+  "config/marketing.json",
+  "scripts/validate-marketing.cjs",
   "scripts/render-discovery-ci.mjs",
 ];
 

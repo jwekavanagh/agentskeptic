@@ -9,16 +9,15 @@ const require = createRequire(import.meta.url);
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const lib = require(join(root, "scripts", "discovery-acquisition.lib.cjs"));
 const { normalize } = require(join(root, "scripts", "public-product-anchors.cjs"));
-const Ajv = require("ajv");
-const addFormats = require("ajv-formats");
+const { validateMarketingValue } = require(join(root, "scripts", "validate-marketing.cjs"));
 
-test("discovery JSON validates against schema", () => {
+test("discovery JSON validates (marketing + discovery invariants)", () => {
   lib.validateDiscoveryAcquisition(root);
 });
 
 test("README discovery fold body matches buildDiscoveryFoldBody", () => {
   const discovery = lib.loadDiscoveryAcquisition(root);
-  const anchors = JSON.parse(readFileSync(join(root, "config", "primary-marketing.json"), "utf8"));
+  const anchors = JSON.parse(readFileSync(join(root, "config", "marketing.json"), "utf8"));
   const origin = normalize(anchors.productionCanonicalOrigin);
   const expected = lib.buildDiscoveryFoldBody(discovery, origin);
   const readme = readFileSync(join(root, "README.md"), "utf8");
@@ -46,117 +45,21 @@ test("README discovery-readme-title matches readmeTitle", () => {
   assert.equal(inner, `# ${discovery.readmeTitle}`);
 });
 
-test("invalid visitorProblemAnswer fails schema (negative)", () => {
-  const schemaPath = join(root, "config", "primary-marketing.schema.json");
-  const schema = JSON.parse(readFileSync(schemaPath, "utf8"));
-  const ajv = new Ajv({ allErrors: true, strict: true });
-  addFormats(ajv);
-  const validate = ajv.compile(schema);
-  const bad = {
-    schemaVersion: 1,
-    slug: "/database-truth-vs-traces",
-    visitorProblemAnswer: "x".repeat(50),
-    heroTitle: "t",
-    heroSubtitle: "t",
-    homepageAcquisitionCtaLabel: "1234567890",
-    pageMetadata: { title: "t", description: "t" },
-    sections: [
-      { heading: "a", paragraphs: ["p"] },
-      { heading: "b", paragraphs: ["p"] },
-      { heading: "c", paragraphs: ["p"] },
-      { heading: "d", paragraphs: ["p"] },
-    ],
-    llms: {
-      intentPhrases: ["1", "2", "3", "4", "5"],
-      notFor: ["1", "2", "3"],
-      relatedQueries: ["1", "2", "3", "4", "5"],
-    },
-    readmeFold: { templateLines: ["x"] },
-    shareableTerminalDemo: {
-      title: "Pasteable terminal proof (bundled demo)",
-      transcript:
-        "wf_complete wf_missing ROW_ABSENT " +
-        "x".repeat(120) +
-        "Teams ship agent workflows where traces look green while the database row is wrong. AgentSkeptic compares structured tool activity to read-only SQL against SQLite at verification time.",
-    },
-  };
-  assert.equal(validate(bad), false);
+test("invalid visitorProblemAnswer fails validate-marketing (causality)", () => {
+  const base = JSON.parse(readFileSync(join(root, "config", "marketing.json"), "utf8"));
+  const bad = { ...base, visitorProblemAnswer: `${base.visitorProblemAnswer} causality` };
+  assert.throws(() => validateMarketingValue(bad), /causality/);
 });
 
-test("invalid pageMetadata.description fails schema (negative)", () => {
-  const schemaPath = join(root, "config", "primary-marketing.schema.json");
-  const schema = JSON.parse(readFileSync(schemaPath, "utf8"));
-  const ajv = new Ajv({ allErrors: true, strict: true });
-  addFormats(ajv);
-  const validate = ajv.compile(schema);
-  const bad = {
-    schemaVersion: 1,
-    slug: "/database-truth-vs-traces",
-    visitorProblemAnswer:
-      "Teams ship agent workflows where traces look green while the database row is wrong. AgentSkeptic compares structured tool activity to read-only SQL against SQLite at verification time: it tells you whether observed state matched expectations—not proof of execution.",
-    heroTitle: "Your workflow said it worked. Did the database actually change?",
-    heroSubtitle:
-      "AgentSkeptic answers with read-only SQL at verification time—not with trace success flags or chat narratives.",
-    homepageAcquisitionCtaLabel: "Why traces are not database truth",
-    readmeTitle: "AgentSkeptic — trust database rows, not trace color",
-    homepageHero: {
-      what: "You shipped an agent run and the trace says success. This product runs read-only SQL to check rows.",
-      why: "Traces do not prove the row exists with the right values. That gap ships silent failures.",
-      when: "Use it after a workflow when you need ground truth before customer-facing actions or a CI gate.",
-    },
-    pageMetadata: {
-      title: "Database truth vs traces — AgentSkeptic",
-      description: "Too short, missing required length and product-law patterns for registry metadata.",
-    },
-    sections: [
-      { heading: "a", paragraphs: ["p"] },
-      { heading: "b", paragraphs: ["p"] },
-      { heading: "c", paragraphs: ["p"] },
-      { heading: "d", paragraphs: ["p"] },
-    ],
-    problemIndex: [
-      {
-        moment: "Green LangGraph trace but wrong Postgres row",
-        primaryRoute: "/guides/trace-green-postgres-row-missing",
-      },
-      {
-        moment: "Tool loop reported success; CRM state does not match",
-        primaryRoute: "/guides/tool-loop-success-crm-state-wrong",
-      },
-      {
-        moment: "CI passed on logs; database side effect never showed up",
-        primaryRoute: "/guides/ci-green-logs-row-absent",
-      },
-    ],
-    cliFollowupLines: ["More context: {{ACQUISITION_URL}}"],
-    llms: {
-      intentPhrases: ["1", "2", "3", "4", "5"],
-      notFor: ["1", "2", "3"],
-      relatedQueries: ["1", "2", "3", "4", "5"],
-    },
-    readmeFold: { templateLines: ["x"] },
-    shareableTerminalDemo: {
-      title: "Pasteable terminal proof (bundled demo)",
-      transcript:
-        "wf_complete wf_missing ROW_ABSENT " +
-        "x".repeat(120) +
-        "Teams ship agent workflows where traces look green while the database row is wrong. AgentSkeptic compares structured tool activity to read-only SQL against SQLite at verification time.",
-    },
-  };
-  assert.equal(validate(bad), false);
-});
-
-test("shareableTerminalDemo transcript containing markdown fence fails schema", () => {
-  const schemaPath = join(root, "config", "primary-marketing.schema.json");
-  const schema = JSON.parse(readFileSync(schemaPath, "utf8"));
-  const ajv = new Ajv({ allErrors: true, strict: true });
-  addFormats(ajv);
-  const validate = ajv.compile(schema);
+test("shareableTerminalDemo transcript containing markdown fence fails validate-marketing", () => {
   const discovery = lib.loadDiscoveryAcquisition(root);
   const bad = structuredClone(discovery);
   bad.shareableTerminalDemo = {
     title: "Pasteable terminal proof (bundled demo)",
     transcript: `${discovery.shareableTerminalDemo.transcript}\n\`\`\`\n`,
   };
-  assert.equal(validate(bad), false);
+  assert.throws(
+    () => validateMarketingValue(bad),
+    /transcript must not contain/,
+  );
 });

@@ -6,8 +6,8 @@ function repoRoot(): string {
   return path.join(__dirname, "..", "..");
 }
 
-function loadPrimaryMarketing(root: string) {
-  return JSON.parse(readFileSync(path.join(root, "config", "primary-marketing.json"), "utf8")) as {
+function loadMarketingConfig(root: string) {
+  return JSON.parse(readFileSync(path.join(root, "config", "marketing.json"), "utf8")) as {
     heroTitle: string;
     readmeTitle: string;
     pageMetadata: { description: string };
@@ -20,7 +20,7 @@ function loadPrimaryMarketing(root: string) {
 describe("rebrand requirements R1–R5", () => {
   it("R1 primary marketing + README acquisition fold + llms + identity", () => {
     const root = repoRoot();
-    const pm = loadPrimaryMarketing(root);
+    const pm = loadMarketingConfig(root);
     const idLine = pm.identityOneLiner;
 
     const llms = readFileSync(path.join(root, "llms.txt"), "utf8");
@@ -76,14 +76,14 @@ describe("rebrand requirements R1–R5", () => {
 
   it("R5 package description parity + OG alt + /og.png path", () => {
     const root = repoRoot();
-    const pm = loadPrimaryMarketing(root);
+    const pm = loadMarketingConfig(root);
     const pkg = JSON.parse(readFileSync(path.join(root, "package.json"), "utf8")) as { description: string };
     expect(pkg.description).toBe(pm.pageMetadata.description);
 
     const metaPath = path.join(__dirname, "..", "src", "content", "siteMetadata.ts");
     const metaSrc = readFileSync(metaPath, "utf8");
-    expect(metaSrc).toContain("primaryMarketing");
-    expect(metaSrc).toContain("openGraphImage: primaryMarketing.site.openGraph.image");
+    expect(metaSrc).toContain("marketing");
+    expect(metaSrc).toContain("openGraphImage: marketing.site.openGraph.image");
 
     const layout = readFileSync(path.join(__dirname, "..", "src", "app", "layout.tsx"), "utf8");
     expect(layout).toContain("siteMetadata.openGraphImage.path");

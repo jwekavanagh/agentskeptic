@@ -2,7 +2,7 @@
 
 const { readFileSync, writeFileSync, mkdirSync } = require("node:fs");
 const { join, dirname } = require("node:path");
-const { normalize, assertNextPublicOriginParity, PRIMARY_MARKETING_PATH } = require("./origin.cjs");
+const { normalize, assertNextPublicOriginParity, MARKETING_PATH } = require("./origin.cjs");
 
 const ROOT = join(__dirname, "..");
 
@@ -275,7 +275,7 @@ function validateForCheck() {
   const discoveryLib = require("./discovery-acquisition.lib.cjs");
   discoveryLib.validateDiscoveryAcquisition(ROOT);
   validateOpenapiTemplate();
-  const pm = JSON.parse(readFileSync(PRIMARY_MARKETING_PATH, "utf8"));
+  const pm = JSON.parse(readFileSync(MARKETING_PATH, "utf8"));
   const required = [
     "identityOneLiner",
     "productionCanonicalOrigin",
@@ -287,11 +287,11 @@ function validateForCheck() {
   ];
   for (const k of required) {
     if (pm[k] === undefined || pm[k] === null) {
-      throw new Error(`primary-marketing: missing ${k}`);
+      throw new Error(`marketing: missing ${k}`);
     }
   }
   if (!Array.isArray(pm.keywords) || pm.keywords.length === 0) {
-    throw new Error("primary-marketing: keywords must be a non-empty array");
+    throw new Error("marketing: keywords must be a non-empty array");
   }
 }
 

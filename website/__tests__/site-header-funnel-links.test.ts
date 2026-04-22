@@ -16,7 +16,7 @@ describe("SiteHeader funnel links", () => {
     expect(siteChromeSrc).toContain('label: "Compare"');
     expect(siteChromeSrc).toContain('label: "Get started"');
     expect(src).toContain("href={productCopy.homepageAcquisitionCta.href}");
-    expect(src).toContain("{discoveryAcquisition.homepageAcquisitionCtaLabel}");
+    expect(src).toContain("{marketing.homepageAcquisitionCtaLabel}");
     expect(siteChromeSrc).toContain('href: "/integrate"');
     expect(siteChromeSrc).toContain('href: "/pricing"');
     expect(src).toContain('href="/auth/signin?callbackUrl=%2Faccount"');

@@ -1,4 +1,4 @@
-/** Shared assertions for OpenAPI commercial distribution shape (derived disk vs served YAML) to prevent drift between openapi-commercial.contract and distribution-graph tests. */
+/** Shared assertions for OpenAPI commercial distribution shape (derived disk vs served YAML) to prevent drift between openapi-commercial.contract and marketing URL tests. */
 import { expect } from "vitest";
 import type { PublicProductAnchors } from "./distributionGraphHelpers";
 

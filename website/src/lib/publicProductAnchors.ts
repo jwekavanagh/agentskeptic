@@ -1,4 +1,4 @@
-import primaryMarketing from "./primaryMarketing";
+import marketing from "./marketing";
 
-/** Same object as `primary-marketing.json` (URLs, identity, keywords). */
-export const publicProductAnchors = primaryMarketing;
+/** Same object as `config/marketing.json` (URLs, identity, keywords). */
+export const publicProductAnchors = marketing;

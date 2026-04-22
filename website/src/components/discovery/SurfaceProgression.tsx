@@ -1,4 +1,4 @@
-import discoveryAcquisition from "@/lib/discoveryAcquisition";
+import marketing from "@/lib/marketing";
 import Link from "next/link";
 
 export type SurfacePrimaryCta = "integrate" | "demo" | "pricing";
@@ -14,7 +14,7 @@ type Props = {
 };
 
 export function SurfaceProgression({ primaryCta }: Props) {
-  const acquisitionPath = discoveryAcquisition.slug;
+  const acquisitionPath = marketing.slug;
   const markedHref = primaryHref[primaryCta];
   const items: { href: string; label: string }[] = [
     { href: "/integrate", label: "Integrate" },

@@ -1,8 +1,7 @@
 import { HeroTerminalHighlighted } from "@/components/HeroTerminalHighlighted";
 import { productCopy } from "@/content/productCopy";
 import { siteMetadata } from "@/content/siteMetadata";
-import discoveryAcquisition from "@/lib/discoveryAcquisition";
-import { visitorProblemFirstSentence } from "@/lib/visitorProblemFirstSentence";
+import marketing from "@/lib/marketing";
 import { indexableGuideCanonical } from "@/lib/indexableGuides";
 import { publicProductAnchors } from "@/lib/publicProductAnchors";
 import type { Metadata } from "next";
@@ -10,17 +9,16 @@ import { shareableTerminalFailureExcerpt } from "@/lib/shareableTerminalFailureE
 import { buildHomeTrustStripLinks, openapiHrefFromProcessEnv } from "@/lib/siteChrome";
 import Link from "next/link";
 import { Fragment } from "react";
-import { EvaluatorTruthAndAdoptionSection } from "./home/EvaluatorTruthAndAdoptionSection";
 import { TryItSection } from "./home/TryItSection";
 import { HOME_SECTION_ORDER, type HomeSectionId } from "./page.sections";
 
 export const metadata: Metadata = {
-  title: discoveryAcquisition.heroTitle,
-  description: discoveryAcquisition.heroSubtitle,
+  title: marketing.siteDefaultMetadata.title,
+  description: marketing.siteDefaultMetadata.description,
   alternates: { canonical: indexableGuideCanonical("/") },
   openGraph: {
-    title: discoveryAcquisition.heroTitle,
-    description: discoveryAcquisition.heroSubtitle,
+    title: marketing.heroTitle,
+    description: marketing.siteDefaultMetadata.description,
     type: "website",
     images: [
       {
@@ -56,7 +54,7 @@ export default function HomePage() {
   });
 
   const heroTerminalExcerpt = shareableTerminalFailureExcerpt(
-    discoveryAcquisition.shareableTerminalDemo.transcript,
+    marketing.shareableTerminalDemo.transcript,
   );
 
   const sectionRenderers: Record<HomeSectionId, React.ReactNode> = {
@@ -70,11 +68,8 @@ export default function HomePage() {
         <div className="home-hero-grid">
           <div className="home-hero-copy">
             <h1 id="hero-heading">{productCopy.hero.title}</h1>
-            <p className="lede" data-testid="home-visitor-problem-first-sentence">
-              {visitorProblemFirstSentence()}
-            </p>
-            <p className="lede">{productCopy.homepageDecisionFraming}</p>
-            <p className="lede">{productCopy.homeHeroShortTagline}</p>
+            <p className="lede">{productCopy.heroOutcome}</p>
+            <p className="lede">{productCopy.heroMechanism}</p>
             <p className="home-cta-row" data-testid="home-hero-cta-row">
               <a className="btn" href="#try-it" data-testid="home-hero-demo-cta">
                 {productCopy.homeHeroCtaLabels.demo}
@@ -86,6 +81,9 @@ export default function HomePage() {
               >
                 {productCopy.homepageAcquisitionCta.label}
               </Link>
+            </p>
+            <p className="muted" data-testid="home-guarantee-footnote">
+              {productCopy.guaranteeFootnote}
             </p>
           </div>
           <div className="home-hero-terminal" data-testid="home-hero-terminal">
@@ -140,11 +138,6 @@ export default function HomePage() {
         </ul>
       </section>
     ),
-    evaluatorTruthAndAdoption: (
-      <Fragment key="evaluatorTruthAndAdoption">
-        <EvaluatorTruthAndAdoptionSection />
-      </Fragment>
-    ),
     howItWorks: (
       <section
         key="howItWorks"
@@ -153,6 +146,7 @@ export default function HomePage() {
         aria-labelledby="how-it-works-heading"
       >
         <h2 id="how-it-works-heading">{productCopy.howItWorks.sectionTitle}</h2>
+        <p className="lede">{productCopy.mechanism.intro}</p>
         <ol className="mechanism-list home-how-tight">
           {productCopy.mechanism.items.map((item) => (
             <li key={item.slice(0, 48)}>{item}</li>
@@ -161,7 +155,7 @@ export default function HomePage() {
         <p className="muted">
           <Link href="/examples/wf-missing">{productCopy.howItWorks.exampleWfMissingLabel}</Link>
           {" · "}
-          <Link href={discoveryAcquisition.slug}>{productCopy.howItWorks.acquisitionDepthLinkLabel}</Link>
+          <Link href={marketing.slug}>{productCopy.howItWorks.acquisitionDepthLinkLabel}</Link>
           {" · "}
           <Link href="/security">Security & Trust</Link>
           {" · "}
