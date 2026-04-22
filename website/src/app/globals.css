@@ -677,6 +677,14 @@ main {
   margin: 0 auto;
   padding: 2rem 1rem;
 }
+.integrate-benefit-lede {
+  font-size: 1.125rem;
+  margin-top: 0.25rem;
+  margin-bottom: 0.5rem;
+}
+.integrate-benefit-lede strong {
+  font-weight: 650;
+}
 .integrate-prose h1,
 .integrate-prose h2,
 .integrate-prose h3 {

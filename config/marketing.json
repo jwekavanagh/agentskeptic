@@ -54,7 +54,7 @@
   "site": {
     "integrate": {
       "title": "Get started",
-      "description": "Node 22+, stores, NDJSON, tools.json; one /integrate command."
+      "description": "See the truth behind the green trace — in one command."
     },
     "openGraph": {
       "image": {
@@ -84,18 +84,16 @@
     }
   },
   "integratePage": {
-    "packLedCommand": "npx agentskeptic crossing --workflow-id YOUR_WORKFLOW_ID --events ./path/to/events.ndjson --registry ./path/to/tools.json --db ./path/to/readable.sqlite",
-    "proofLine": "Matched read-only state for that run.",
+    "packLedCommand": "npx agentskeptic crossing \\\n  --workflow-id YOUR_WORKFLOW_ID \\\n  --events ./path/to/events.ndjson \\\n  --registry ./path/to/tools.json \\\n  --db ./path/to/readable.sqlite",
     "githubDeepLink": "https://github.com/jwekavanagh/agentskeptic/blob/main/docs/crossing-normative.md",
     "githubFirstRunLink": "https://github.com/jwekavanagh/agentskeptic/blob/main/docs/first-run-integration.md",
     "requirements": [
-      "Node 22+",
-      "Read-only access to a queryable store",
-      "NDJSON + tools.json",
-      "Not causal; read-only verify only"
+      "Node.js 22 or newer",
+      "Read-only access to at least one queryable store (SQL, vectors, S3, Mongo, HTTP, etc.)",
+      "Ability to emit or export structured tool activity as NDJSON"
     ]
   },
-  "briefProblem": "Claims vs read-only; ROW_ABSENT. See Product brief page.",
+  "briefProblem": "Claims vs read-only; ROW_ABSENT.",
   "briefSections": [],
   "homeWhatCatches": {
     "sectionTitle": "What it catches",
