@@ -58,9 +58,6 @@ describe("home vs brief exclusive content", { timeout: 180_000 }, () => {
     expect(brief).toContain(transcriptNeedle);
     expect(homeText).not.toContain(transcriptNeedle);
 
-    expect(briefText).toContain(marketing.heroSubtitle);
-    expect(homeText).not.toContain(marketing.heroSubtitle);
-
     expect(home).toContain('data-testid="home-try-it"');
     expect(brief).not.toContain('data-testid="home-try-it"');
 

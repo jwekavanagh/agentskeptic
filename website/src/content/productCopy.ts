@@ -264,8 +264,7 @@ export const productBriefPage = {
   terminal: {
     beforeTitle: "Terminal proof: success vs failure",
     intro: [
-      "Here are the exact outputs from the bundled demo (`wf_complete` and `wf_missing`).",
-      "Your own runs use the same verification engine.",
+      "Here are the exact outputs from the bundled demo (`wf_complete` and `wf_missing`). Your own runs use the same verification engine.",
     ],
   },
   disclaimer: "**Read-only at verification time** — not proof of which call caused a specific write.",

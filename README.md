@@ -5,7 +5,7 @@
 <!-- discovery-acquisition-fold:start -->
 ## Trust reality, not traces.
 
-Compare tool claims to read-only stores—not trace color alone.
+Declared tool effects vs read-only store facts.
 
 Traces say success.
 

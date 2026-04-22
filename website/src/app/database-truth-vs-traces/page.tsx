@@ -44,7 +44,7 @@ function splitDemoSuccessFailure(transcript: string): { success: string; failure
 }
 
 export default function DatabaseTruthVsTracesPage() {
-  const { visitorProblemAnswer, shareableTerminalDemo, heroTitle, heroSubtitle } = marketing;
+  const { visitorProblemAnswer, shareableTerminalDemo, heroTitle } = marketing;
   const pb = productBriefPage;
   const [sProblem, sHow, sScenarios, sWho] = pb.sections;
   const { success: successBlock, failure: failureBlock } = splitDemoSuccessFailure(shareableTerminalDemo.transcript);
@@ -61,7 +61,6 @@ export default function DatabaseTruthVsTracesPage() {
       />
       <h1 data-testid="acquisition-hero-title">{pb.h1}</h1>
       <p className="lede product-brief-tagline">{heroTitle}</p>
-      <p className="lede muted">{heroSubtitle}</p>
       <div data-testid="visitor-problem-answer">
         {visitorProblemAnswer.split(/\n\n+/).filter(Boolean).map((p) => (
           <p key={p.slice(0, 64)} className="lede">

@@ -10,7 +10,7 @@
   "keywords": ["agentskeptic", "verification", "database", "read-only", "agent", "workflow"],
   "readmeTitle": "AgentSkeptic — state vs trace",
   "heroTitle": "Trust reality, not traces.",
-  "heroSubtitle": "Compare tool claims to read-only stores—not trace color alone.",
+  "heroSubtitle": "Declared tool effects vs read-only store facts.",
   "visitorProblemAnswer": "Traces say success.\n\nYour actual data often disagrees.\n\nRead-only checks at verification time compare what your tools claimed against what actually exists in your stores — before you ship, bill, or hand off to customers.",
   "heroOutcome": "Traces say success. Your actual data does not.",
   "heroMechanism": "Read-only verify: claims vs stored state at verify time.",
