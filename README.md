@@ -5,11 +5,13 @@
 <!-- discovery-acquisition-fold:start -->
 ## Trust reality, not traces.
 
-Read-only checks at verification time match tool claims to real stored state — before you ship, bill, or hand off to customers.
+Compare tool claims to read-only stores—not trace color alone.
 
-Green runs are not the same as correct data.
+Traces say success.
 
-Read-only checks at verify time align tool claims to stored state.
+Your actual data often disagrees.
+
+Read-only checks at verification time compare what your tools claimed against what actually exists in your stores — before you ship, bill, or hand off to customers.
 
 ### Bundled terminal proof
 

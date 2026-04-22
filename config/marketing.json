@@ -10,8 +10,8 @@
   "keywords": ["agentskeptic", "verification", "database", "read-only", "agent", "workflow"],
   "readmeTitle": "AgentSkeptic — state vs trace",
   "heroTitle": "Trust reality, not traces.",
-  "heroSubtitle": "Read-only checks at verification time match tool claims to real stored state — before you ship, bill, or hand off to customers.",
-  "visitorProblemAnswer": "Green runs are not the same as correct data.\n\nRead-only checks at verify time align tool claims to stored state.",
+  "heroSubtitle": "Compare tool claims to read-only stores—not trace color alone.",
+  "visitorProblemAnswer": "Traces say success.\n\nYour actual data often disagrees.\n\nRead-only checks at verification time compare what your tools claimed against what actually exists in your stores — before you ship, bill, or hand off to customers.",
   "heroOutcome": "Traces say success. Your actual data does not.",
   "heroMechanism": "Read-only verify: claims vs stored state at verify time.",
   "guaranteeFootnote": "Read-only verify; not which call wrote.",
@@ -54,7 +54,7 @@
   "site": {
     "integrate": {
       "title": "Get started",
-      "description": "Node 22+, store access, NDJSON, tools.json. One command on /integrate."
+      "description": "Node 22+, stores, NDJSON, tools.json; one /integrate command."
     },
     "openGraph": {
       "image": {
@@ -85,14 +85,14 @@
   },
   "integratePage": {
     "packLedCommand": "npx agentskeptic crossing --workflow-id YOUR_WORKFLOW_ID --events ./path/to/events.ndjson --registry ./path/to/tools.json --db ./path/to/readable.sqlite",
-    "proofLine": "Activity and read-only state matched for that run.",
+    "proofLine": "Matched read-only state for that run.",
     "githubDeepLink": "https://github.com/jwekavanagh/agentskeptic/blob/main/docs/crossing-normative.md",
     "githubFirstRunLink": "https://github.com/jwekavanagh/agentskeptic/blob/main/docs/first-run-integration.md",
     "requirements": [
       "Node 22+",
       "Read-only access to a queryable store",
       "NDJSON + tools.json",
-      "Not causal proof; read-only verify only"
+      "Not causal; read-only verify only"
     ]
   },
   "briefProblem": "Claims vs read-only; ROW_ABSENT. See Product brief page.",
@@ -113,7 +113,7 @@
       "Map tool IDs in `tools.json` to your registries and stores.",
       "Run read-only verification: JSON or exit code—not trace color."
     ],
-    "notObservability": "State vs. claims; not log search or APM."
+    "notObservability": "State vs claims; not logs or APM."
   },
   "homeStakes": {
     "sectionTitle": "The cost of the gap",
@@ -132,7 +132,7 @@
   "buyerFit": {
     "forYou": [
       "You emit structured tool output.",
-      "You have store-backed systems: SQL, S3, vectors, Mongo, HTTP, and similar.",
+      "Store-backed: SQL, S3, vectors, Mongo, HTTP, similar.",
       "Green has hidden bad state before."
     ],
     "notForYou": [

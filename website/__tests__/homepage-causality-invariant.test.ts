@@ -52,8 +52,15 @@ describe("homepage causality invariant", { timeout: 180_000 }, () => {
     const paragraphs = disc.visitorProblemAnswer.split(/\n\n+/).filter(Boolean);
     if (paragraphs.length > 1) {
       const secondPara = paragraphs[1] ?? "";
-      expect(secondPara.length).toBeGreaterThan(40);
-      expect(visible.includes(secondPara.slice(0, 120))).toBe(false);
+      const tailPara = paragraphs[paragraphs.length - 1] ?? "";
+      // Short middle paragraphs are allowed (e.g. a one-line hook); guard leaks using the last long block.
+      if (secondPara.length <= 40 && paragraphs.length >= 3) {
+        expect(tailPara.length).toBeGreaterThan(40);
+        expect(visible.includes(tailPara.slice(0, 120))).toBe(false);
+      } else {
+        expect(secondPara.length).toBeGreaterThan(40);
+        expect(visible.includes(secondPara.slice(0, 120))).toBe(false);
+      }
     }
 
     const mech = productCopy.mechanism.notObservability;

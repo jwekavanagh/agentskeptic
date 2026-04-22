@@ -204,7 +204,7 @@ export const productBriefPage = {
   h1: "Product brief",
   /** Placed after the `visitorProblemAnswer` block. */
   introParagraphs: [
-    "On this page you will see the full picture: the real problem in production, how verification works, what it catches in practice, and the exact success and failure outputs bundled with the product (your own runs use the same engine against your data).",
+    "This page shows the complete picture: why the gap matters in production, how verification works in one simple gate, what real failures it catches, and the exact success/failure outputs your own runs will produce.",
   ],
   sections: [
     {
@@ -212,8 +212,9 @@ export const productBriefPage = {
       title: "The problem",
       paragraphs: [
         "Agents and workflows look successful in traces and logs. The tool reported “done.” The step completed. The graph finished.",
-        "Yet the customer record is missing, the ledger is off, the vector metadata is stale, or the ticket status never updated.",
-        "Traces stop at “the tool said it worked.” Your stored data is what actually matters—and that is where silent failures hide.",
+        "Yet the customer record is missing, the ledger is off, the vector is stale, or the ticket never updated.",
+        "Traces stop at “the tool said it worked.”",
+        "Your stored data is what actually matters — and that’s exactly where silent failures hide.",
       ],
     },
     {
@@ -222,18 +223,18 @@ export const productBriefPage = {
       intro: "One simple gate you control:",
       steps: [
         "Emit structured tool activity (usually NDJSON) for the actions and side effects you care about.",
-        "Map those tool IDs to your real stores in a lightweight `tools.json` registry (and the rest of your registry) for this run.",
-        "Run **verification** against a read-only snapshot of your data.",
+        "Map those tool IDs to your real stores in a lightweight `tools.json` registry.",
+        "Run verification against a read-only snapshot of your data.",
       ],
       outro:
-        "You get a clear JSON outcome and a human-readable report, or a non-zero exit. The check happens at verification time, not from trace color.",
+        "You get a clear JSON outcome and human-readable report — or a non-zero exit code. The check happens at verification time, not from trace color.",
     },
     {
       id: "scenarios" as const,
       title: "What it catches in production",
       bullets: [
-        "**LangGraph and agent workflows**: The trace looks healthy, but the persisted row or vector is missing or wrong when the handoff happens.",
-        "**CRM and ticket systems**: The agent “closed the ticket,” but the CRM still shows the old state or the record never landed.",
+        "**LangGraph and agent workflows**: The trace looks healthy, but the persisted row or vector is missing or wrong at handoff.",
+        "**CRM and ticket systems**: The agent says the ticket is closed, but the CRM still shows the old state or the record never landed.",
         "**CI and deploy gates**: Pipelines pass on logs, but the required side effect never appeared in the target store.",
         "**Webhooks and ledgers** (Stripe-style flows): The external callback succeeded, but your internal ledger or reconciliation is inconsistent.",
       ],
@@ -247,15 +248,15 @@ export const productBriefPage = {
         items: [
           "You emit structured tool output.",
           "You have queryable stores (SQL, vectors, S3, Mongo, HTTP-accessible data, and similar).",
-          "You have seen green traces that still left bad or missing data behind.",
+          "You've seen green traces that still left bad or missing data behind.",
         ],
       },
       notForYou: {
         label: "Not the right fit when",
         items: [
           "You only have unstructured logs with nothing to query.",
-          "You need proof that one specific call caused a write, not a read-only match to expectations at verify time.",
-          "You are looking for a full APM or log analytics replacement.",
+          "You need proof that one specific call caused a write.",
+          "You're looking for a full APM or log analytics replacement.",
         ],
       },
     },
@@ -263,7 +264,8 @@ export const productBriefPage = {
   terminal: {
     beforeTitle: "Terminal proof: success vs failure",
     intro: [
-      "Here are the exact blocks from the bundled demo transcript (`wf_complete` and `wf_missing`). Your own runs use the same verification engine: structured steps, `trust` / `workflow_status`, human lines, a schema-versioned JSON envelope, and `ROW_ABSENT` when a declared effect is not present in the read-only check.",
+      "Here are the exact outputs from the bundled demo (`wf_complete` and `wf_missing`).",
+      "Your own runs use the same verification engine.",
     ],
   },
   disclaimer: "**Read-only at verification time** — not proof of which call caused a specific write.",

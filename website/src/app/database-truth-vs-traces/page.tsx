@@ -159,7 +159,7 @@ export default function DatabaseTruthVsTracesPage() {
         className="product-brief-cta-wrap"
         data-testid={pb.testIds.cta}
         role="group"
-        aria-label="Get started and try the demo on the homepage"
+        aria-label="Get started; try the demo (no account) on the homepage"
       >
         <Link className="btn" href={productCopy.homeHeroSecondaryCta.href}>
           {productCopy.homeHeroSecondaryCta.label}
