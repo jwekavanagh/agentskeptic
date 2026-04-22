@@ -1,5 +1,5 @@
 {
-  "verify-langgraph-workflows": 650,
+  "verify-langgraph-workflows": 700,
   "trace-green-postgres-row-missing": 1200,
   "tool-loop-success-crm-state-wrong": 1312,
   "ci-green-logs-row-absent": 1200,
