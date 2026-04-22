@@ -4,10 +4,10 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 /** Update in the same commit as `website/public/brand/mark.png` changes. */
-const MARK_PNG_SHA256 = "ce39de4b85df9f6cbc76e7cb43e435d57332eac4387538f7f7a32956bc79a47c";
+const MARK_PNG_SHA256 = "744155f71d0a59159786425813e1097aec2bb72ac663f9f3ffa45f2ea2440f91";
 
 /** Update in the same commit as `website/public/og.png` changes. */
-const OG_PNG_SHA256 = "e4471153e2bb07dac6f84ed363a8299bc5c31b80b0b81f50fd76d3c1675aa51e";
+const OG_PNG_SHA256 = "94f33be81b76543ecfa7791ee0139b63304d4b36a21144595292ce617aa5f858";
 
 function sha256Hex(buf: Buffer): string {
   return createHash("sha256").update(buf).digest("hex");
