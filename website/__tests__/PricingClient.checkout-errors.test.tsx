@@ -107,7 +107,7 @@ describe("PricingClient checkout — no silent failures on bad responses", () =>
           method: "POST",
           credentials: "same-origin",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ plan: "individual" }),
+          body: JSON.stringify({ plan: "individual", interval: "monthly" }),
         }),
       );
     });

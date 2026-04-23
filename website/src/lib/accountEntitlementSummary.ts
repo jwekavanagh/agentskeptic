@@ -80,6 +80,10 @@ function assertMatchesResolver(
     throw new Error(`accountEntitlementSummary drift: ${key} expected unavailable copy`);
   }
   if (vOk !== eOk) {
+    if (planId === "starter") {
+      // Matches resolveCommercialEntitlement: verify may proceed on free tier; enforce is paid-only.
+      return;
+    }
     throw new Error(`accountEntitlementSummary: asymmetric verify/enforce at ${key}`);
   }
 }
