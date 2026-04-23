@@ -18,9 +18,12 @@ describe("normalizeFunnelSurfaceAttribution", () => {
     ).toEqual({ utm_source: "x", landing_path: "/p?q=1" });
   });
 
-  it("rejects ://", () => {
+  it("rejects hierarchical URL schemes and protocol-relative", () => {
     expect(() =>
       normalizeFunnelSurfaceAttribution({ utm_source: "http://evil" }),
+    ).toThrow();
+    expect(() =>
+      normalizeFunnelSurfaceAttribution({ utm_source: "//evil.com/x" }),
     ).toThrow();
   });
 

@@ -1,3 +1,4 @@
+import { INTEGRATE_ACTIVATION_SHELL_BODY } from "@/generated/integrateActivationShellStatic";
 import marketing from "@/lib/marketing";
 import { siteMetadata } from "@/content/siteMetadata";
 import { indexableGuideCanonical } from "@/lib/indexableGuides";
@@ -22,12 +23,21 @@ export default function IntegratePage() {
       <p className="lede">
         Run a single verification that compares what your agents and tools claimed against your actual stored state.
       </p>
-      <p className="lede">
-        Get a clear, binary verdict before you ship, bill, or hand off to customers.
-      </p>
+      <p className="lede">Get a clear, binary verdict before you ship, bill, or hand off to customers.</p>
 
-      <h2>Fastest path (pack-led)</h2>
-      <pre className="integrate-pack-command">{p.packLedCommand}</pre>
+      <h2>Cross the boundary (canonical path)</h2>
+      <p>
+        <code>agentskeptic crossing</code> is the one-shot pack-led entry: NDJSON tool lines, a registry, and
+        read-only state in one pass. Normative behavior is documented in the crossing contract below.
+      </p>
+      <pre className="integrate-pack-command" data-testid="integrate-crossing-commands">
+        {p.packLedCommand}
+      </pre>
+      <p>
+        <a href={p.githubDeepLink} rel="noopener noreferrer" target="_blank" data-testid="integrate-gh-deep-link">
+          Crossing contract
+        </a>
+      </p>
       <p>This one command does three things:</p>
       <ul>
         <li>Reads your structured tool activity (NDJSON)</li>
@@ -50,7 +60,14 @@ export default function IntegratePage() {
         ))}
       </ul>
 
-      <h2>What success looks like</h2>
+      <h2>Product completion: Step 4 on your emitters</h2>
+      <p>
+        Wire your tool and workflow code so it emits the NDJSON and registry this command consumes. The mechanical
+        spine (clone, build, first-run) is an optional on-ramp in the details below—product completion is your
+        emitters and stores matching the expected shape.
+      </p>
+
+      <h2>What a green run shows</h2>
       <p>You&apos;ll see output like the bundled demo:</p>
       <ul>
         <li>
@@ -62,6 +79,18 @@ export default function IntegratePage() {
         If anything is wrong, you get an immediate, actionable failure (e.g. <code>ROW_ABSENT</code>) — no more
         silent green traces hiding bad data.
       </p>
+
+      <details className="integrate-optional-spine">
+        <summary>Mechanical spine (optional, for full end-to-end validation)</summary>
+        <h3>Mechanical spine checkpoint (not product completion)</h3>
+        <p>
+          Long-form bash template for local machines and CI. This is not a substitute for wiring your own emitters—the
+          crossing command above is the product-shaped gate.
+        </p>
+        <pre className="integrate-activation-commands" data-testid="integrator-activation-commands">
+          {INTEGRATE_ACTIVATION_SHELL_BODY}
+        </pre>
+      </details>
 
       <h2>Next steps</h2>
       <ol>
@@ -76,14 +105,14 @@ export default function IntegratePage() {
 
       <h2>Full documentation</h2>
       <p>
-        <a href={p.githubDeepLink} rel="noopener noreferrer" target="_blank" data-testid="integrate-gh-deep-link">
+        <a href={p.githubDeepLink} rel="noopener noreferrer" target="_blank">
           Crossing contract
         </a>{" "}
         ·{" "}
         <a href={p.githubFirstRunLink} rel="noopener noreferrer" target="_blank" data-testid="integrate-gh-first-run">
           First-run integration
         </a>{" "}
-        · <Link href="/guides">Learn hub</Link>
+        · <Link href="/guides">Learn hub</Link> · <Link href="/pricing">Pricing</Link>
       </p>
     </main>
   );

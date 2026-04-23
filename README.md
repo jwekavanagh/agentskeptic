@@ -7,11 +7,7 @@
 
 Declared tool effects vs read-only store facts.
 
-Traces say success.
-
-Your actual data often disagrees.
-
-Read-only checks at verification time compare what your tools claimed against what actually exists in your stores — before you ship, bill, or hand off to customers.
+Traces say success. Your data often disagrees. Read-only checks at verify time compare tool claims to stored state—before you ship or bill.
 
 ### Bundled terminal proof
 

@@ -34,8 +34,14 @@ function hasControlChar(s: string): boolean {
   return false;
 }
 
+/** Match hierarchical URLs (`scheme://...`) with a well-formed scheme token (not bare `://` substring). */
+const SCHEME_HIERARCHICAL_RE = /[a-z][a-z0-9+.\-]*:\/\//i;
+
 function assertNoProtocol(s: string): void {
-  if (s.includes("://")) {
+  if (s.startsWith("//")) {
+    throw new Error("ATTRIBUTION_PROTOCOL");
+  }
+  if (SCHEME_HIERARCHICAL_RE.test(s)) {
     throw new Error("ATTRIBUTION_PROTOCOL");
   }
 }

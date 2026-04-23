@@ -194,6 +194,9 @@ export default function HomePage() {
       >
         <h2 id="home-closing-heading">{productCopy.homeClosing.sectionTitle}</h2>
         <p className="lede">{productCopy.homeClosing.subtitle}</p>
+        <p className="muted" data-testid="home-framework-maturity">
+          {marketing.r2.frameworkMaturity}
+        </p>
         <p className="muted home-closing-links-caption">{productCopy.homeClosing.integratorLinksCaption}</p>
         <ul className="home-trust-strip-list">
           {trustLinks.map((item) => (
