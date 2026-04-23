@@ -33,7 +33,7 @@ describe("indexed examples", () => {
     const { container } = render(<GuidesHubPage />);
     const bundled = container.querySelector("#bundled-proof");
     expect(bundled).toBeTruthy();
-    const links = bundled!.querySelectorAll("ul.mechanism-list a[href]");
+    const links = bundled!.querySelectorAll("ul.mechanism-list.guide-hub-list a[href]");
     expect(links.length).toBe(examples.length);
     for (const e of examples) {
       expect(bundled!.querySelector(`a[href="${e.route}"]`)).toBeTruthy();
