@@ -2,6 +2,7 @@
 
 import { LiveStatus } from "@/components/LiveStatus";
 import { productCopy } from "@/content/productCopy";
+import type { PlanRow } from "@/lib/commercialNarrative";
 import type { PlanId } from "@/lib/plans";
 import Link from "next/link";
 import { useState } from "react";
@@ -11,18 +12,7 @@ const PRICING_SIGNIN_HREF = "/auth/signin?callbackUrl=%2Fpricing";
 
 export type BillingInterval = "monthly" | "yearly";
 
-export type PlanRow = {
-  id: PlanId;
-  checkoutPlanId: PlanId | null;
-  headline: string;
-  displayPrice: string;
-  displayPriceYearly: string | null;
-  overageDisplayLabel: string | null;
-  includedMonthly: number | null;
-  audience: string;
-  valueUnlock: string;
-  recommended: boolean;
-};
+export type { PlanRow } from "@/lib/commercialNarrative";
 
 function paidCheckoutCtaLabel(plan: PlanId): string {
   const ctas = productCopy.pricingPlanCtas;
@@ -165,16 +155,12 @@ export function PricingClient({
               <p className="pricing-card-price" data-testid={`pricing-card-price-${p.id}`}>
                 {displayPriceThis}
               </p>
-              {!(
-                p.id === "starter" && productCopy.pricingCardStarterPaidQuotaCaption.length === 0
-              ) && (
-                <p
-                  className="pricing-card-quota muted"
-                  data-included-monthly={p.includedMonthly ?? "custom"}
-                >
-                  {formatIncludedLine(p)}
-                </p>
-              )}
+              <p
+                className="pricing-card-quota muted"
+                data-included-monthly={p.includedMonthly ?? "custom"}
+              >
+                {formatIncludedLine(p)}
+              </p>
               {p.overageDisplayLabel && p.id !== "starter" && p.id !== "enterprise" ? (
                 <p className="pricing-card-overage muted" data-testid={`pricing-overage-${p.id}`}>
                   {p.overageDisplayLabel}

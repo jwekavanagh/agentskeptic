@@ -8,10 +8,10 @@ describe("pricing page", () => {
     "utf8",
   );
 
-  it("imports productCopy for pricing hero and marketingContracts for commercial terms", () => {
+  it("imports commercialNarrative for the pricing view model and productCopy for remaining chrome", () => {
     expect(src).toContain('from "@/content/productCopy"');
-    expect(src).toContain('from "@/content/marketingContracts"');
-    expect(src).toContain("productCopy.pricingHero");
-    expect(src).toContain("PRICING_COMMERCIAL_TERMS_BULLETS");
+    expect(src).toContain('from "@/lib/commercialNarrative"');
+    expect(src).toContain("getPricingPageViewModelFromConfig");
+    expect(src).toContain("vm.termsBullets");
   });
 });

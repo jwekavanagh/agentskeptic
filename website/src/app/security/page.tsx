@@ -1,5 +1,6 @@
 import { productCopy } from "@/content/productCopy";
 import { siteMetadata } from "@/content/siteMetadata";
+import { getSecurityQuickFacts } from "@/lib/commercialNarrative";
 import { indexableGuideCanonical } from "@/lib/indexableGuides";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -12,6 +13,7 @@ export const metadata: Metadata = {
 };
 
 export default function SecurityPage() {
+  const quickFacts = getSecurityQuickFacts();
   const st = productCopy.securityTrust;
   return (
     <main className="integrate-main">
@@ -31,13 +33,13 @@ export default function SecurityPage() {
           <Link href="/problems">Problems</Link>
         </li>
         <li>
-          <Link href="/compare">{productCopy.commercialSurface.compareApproachesLabel}</Link>
+          <Link href="/compare">{productCopy.homeCommercialCompareApproachesLabel}</Link>
         </li>
       </ul>
       <section data-testid="security-quick-facts" aria-labelledby="security-quick-facts-title">
-        <h2 id="security-quick-facts-title">{productCopy.securityQuickFacts.title}</h2>
+        <h2 id="security-quick-facts-title">{quickFacts.title}</h2>
         <ul>
-          {productCopy.securityQuickFacts.bullets.map((t, i) => (
+          {quickFacts.bullets.map((t, i) => (
             <li key={`sq-${i}`}>{t}</li>
           ))}
         </ul>

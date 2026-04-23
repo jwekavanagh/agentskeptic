@@ -1,62 +1,47 @@
-import { PRICING_COMMERCIAL_TERMS_BULLETS } from "@/content/marketingContracts";
 import { productCopy } from "@/content/productCopy";
 import { enterpriseMailtoHref } from "@/lib/contactSalesEmail";
+import { getPricingPageViewModelFromConfig } from "@/lib/commercialNarrative";
 import { indexableGuideCanonical } from "@/lib/indexableGuides";
 import type { Metadata } from "next";
-import { loadCommercialPlans, planHasSelfServeCheckout, type PlanId } from "@/lib/plans";
 import Link from "next/link";
-import { PricingClient, type PlanRow } from "./PricingClient";
+import { PricingClient } from "./PricingClient";
 import { PricingCompareTable } from "./PricingCompareTable";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Pricing — AgentSkeptic",
-  description: `${productCopy.pricingHero.positioning} ${productCopy.pricingHero.subtitle} ${productCopy.pricingHero.subtitleSecondary}`,
-  alternates: { canonical: indexableGuideCanonical("/pricing") },
-  robots: { index: true, follow: true },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const vm = getPricingPageViewModelFromConfig();
+  return {
+    title: "Pricing — AgentSkeptic",
+    description: vm.metadataDescription,
+    alternates: { canonical: indexableGuideCanonical("/pricing") },
+    robots: { index: true, follow: true },
+  };
+}
 
 export default function PricingPage() {
-  const commercial = loadCommercialPlans();
-  const raw = commercial.plans;
-  const order: PlanId[] = ["starter", "individual", "team", "business", "enterprise"];
-  const recommendedPlanId = commercial.recommendedPlanId;
-  const plans: PlanRow[] = order.map((id) => {
-    const p = raw[id];
-    return {
-      id,
-      checkoutPlanId: planHasSelfServeCheckout(p) ? id : null,
-      headline: p.marketingHeadline,
-      displayPrice: p.displayPrice,
-      displayPriceYearly: p.displayPriceYearly,
-      overageDisplayLabel: p.overageDisplayLabel,
-      includedMonthly: p.includedMonthly,
-      audience: p.audience,
-      valueUnlock: p.valueUnlock,
-      recommended: id === recommendedPlanId,
-    };
-  });
+  const vm = getPricingPageViewModelFromConfig();
   const enterpriseMailto = enterpriseMailtoHref();
-  const hero = productCopy.pricingHero;
   const paid = productCopy.pricingWhatYouGetPaidPlans;
   const billing = productCopy.pricingBillingAndQuestionsBand;
 
   return (
     <main className="pricing-page">
-      <h1 className="pricing-hero-title">{hero.title}</h1>
-      <p className="pricing-positioning">{hero.positioning}</p>
+      <h1 className="pricing-hero-title">{vm.heroTitle}</h1>
+      <p className="pricing-positioning">{vm.heroPositioning}</p>
       <section className="pricing-hero-block" data-testid="pricing-hero-recap" aria-label="Pricing summary">
         <p className="pricing-hero-subtitle" data-testid="pricing-plan-choice-guide">
-          {hero.subtitle}
+          {vm.heroSubtitle}
         </p>
-        {hero.subtitleSecondary.length > 0 ? (
-          <p className="pricing-hero-subtitle pricing-hero-subtitle-secondary">{hero.subtitleSecondary}</p>
+        {vm.heroSubtitleSecondary.length > 0 ? (
+          <p className="pricing-hero-subtitle pricing-hero-subtitle-secondary">
+            {vm.heroSubtitleSecondary}
+          </p>
         ) : null}
       </section>
 
       <h2 className="pricing-plans-heading">{productCopy.pricingPlansSectionTitle}</h2>
-      <PricingClient plans={plans} enterpriseMailto={enterpriseMailto} />
+      <PricingClient plans={vm.planRows} enterpriseMailto={enterpriseMailto} />
 
       <section
         className="pricing-example"
@@ -72,11 +57,11 @@ export default function PricingPage() {
           ))}
         </ul>
         <p className="pricing-risk muted" data-testid="pricing-risk-reassurance">
-          {productCopy.pricingLocalVerificationFreeFootnote}
+          {vm.localVerificationFootnote}
         </p>
       </section>
 
-      <PricingCompareTable />
+      <PricingCompareTable featureComparison={vm.featureComparison} />
 
       <section data-testid="pricing-trust-band" aria-labelledby="pricing-trust-band-title">
         <h2 id="pricing-trust-band-title">{billing.billingTitle}</h2>
@@ -104,7 +89,7 @@ export default function PricingPage() {
           {productCopy.pricingCommercialTermsDetailsSummary}
         </summary>
         <ul aria-label="Commercial terms" className="muted pricing-commercial-terms">
-          {PRICING_COMMERCIAL_TERMS_BULLETS.map((row) => (
+          {vm.termsBullets.map((row) => (
             <li key={row.lead}>
               <strong>{row.lead}</strong> {row.body}
             </li>

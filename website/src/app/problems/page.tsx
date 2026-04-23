@@ -46,7 +46,7 @@ export default function ProblemsPage() {
       <h1>Problems</h1>
       <p className="lede">
         {productCopy.problemsHubIntroLead}{" "}
-        <Link href="/compare">{productCopy.commercialSurface.compareApproachesLabel}</Link>
+        <Link href="/compare">{productCopy.homeCommercialCompareApproachesLabel}</Link>
         {productCopy.problemsHubIntroTrail}
       </p>
       <ol className="mechanism-list">

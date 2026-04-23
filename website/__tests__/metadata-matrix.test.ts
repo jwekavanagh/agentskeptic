@@ -11,7 +11,7 @@ import { metadata as guidesHubMetadata } from "@/app/guides/page";
 import { generateMetadata as generateGuideSlugMetadata } from "@/app/guides/[slug]/page";
 import { metadata as integrateMetadata } from "@/app/integrate/page";
 import { metadata as homeMetadata } from "@/app/page";
-import { metadata as pricingMetadata } from "@/app/pricing/page";
+import { generateMetadata as generatePricingMetadata } from "@/app/pricing/page";
 import { metadata as privacyMetadata } from "@/app/privacy/page";
 import { metadata as securityMetadata } from "@/app/security/page";
 import { metadata as supportMetadata } from "@/app/support/page";
@@ -52,7 +52,7 @@ describe("metadata matrix (merge gate)", () => {
     };
 
     add("/", homeMetadata);
-    add("/pricing", pricingMetadata);
+    add("/pricing", await generatePricingMetadata());
     add("/privacy", privacyMetadata);
     add("/terms", termsMetadata);
     add("/integrate", integrateMetadata);

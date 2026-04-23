@@ -4,7 +4,7 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import { Suspense } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import SignInPage from "@/app/auth/signin/page";
-import { METERING_CLARIFIER } from "@/content/marketingContracts";
+import { getMeteringClarifier } from "@/lib/commercialNarrative";
 
 vi.mock("next/navigation", () => ({
   useSearchParams: () => new URLSearchParams(),
@@ -26,13 +26,13 @@ describe("sign-in page copy", () => {
     expect(within(list).getByText(/Team/i)).toBeTruthy();
   });
 
-  it("shows the metering clarifier verbatim from marketingContracts", async () => {
+  it("shows the metering clarifier from commercialNarrative", async () => {
     render(
       <Suspense fallback={null}>
         <SignInPage />
       </Suspense>,
     );
     const clarifier = await screen.findByTestId("signin-metering-clarifier");
-    expect(clarifier).toHaveTextContent(METERING_CLARIFIER);
+    expect(clarifier).toHaveTextContent(getMeteringClarifier());
   });
 });

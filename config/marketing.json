@@ -66,9 +66,7 @@
     },
     "pricing": {
       "heroTitle": "Verify before you ship.",
-      "positioning": "Catch bad or missing state in CI before it reaches customers, compliance, or revenue.",
-      "subtitle": "Local and open-source verification is always free.",
-      "subtitleSecondary": "Paid plans unlock CI enforcement"
+      "positioning": "Catch bad or missing state in CI before it reaches customers, compliance, or revenue."
     },
     "home": {},
     "security": {

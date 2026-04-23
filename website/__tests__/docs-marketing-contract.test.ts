@@ -23,6 +23,7 @@ const DOCS_SECTION_NEEDLES: Record<string, readonly string[]> = {
     "marketing.json",
     "productCopy.ts",
     "llms.txt",
+    "commercialNarrative",
   ],
   "### Marketing copy and marketing.json sync": [
     "emit-primary-marketing",

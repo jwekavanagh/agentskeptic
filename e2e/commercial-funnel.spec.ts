@@ -2,7 +2,8 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { test, expect } from "@playwright/test";
-import { readCommercialPricingLines } from "../test/lib/readCommercialPricingLines.mjs";
+import { getNormativePolicySurfaceLines } from "../website/src/lib/commercialNarrative";
+import type { CommercialPlansFile } from "../website/src/lib/plans";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -25,8 +26,10 @@ test.describe("commercial funnel", () => {
     }
   });
 
-  test("pricing shows normative commercial lines from policy doc", async ({ page }) => {
-    const lines = readCommercialPricingLines(repoRoot);
+  test("pricing shows normative commercial lines (commercialNarrative + catalog)", async ({ page }) => {
+    const plansPath = path.join(repoRoot, "config", "commercial-plans.json");
+    const catalog = JSON.parse(readFileSync(plansPath, "utf8")) as CommercialPlansFile;
+    const lines = getNormativePolicySurfaceLines(catalog);
     await page.goto("/pricing");
     const terms = page.getByRole("list", { name: "Commercial terms" });
     for (const line of lines) {

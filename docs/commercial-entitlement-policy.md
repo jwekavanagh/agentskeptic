@@ -28,9 +28,4 @@ When `RESERVE_EMERGENCY_ALLOW=1` on the server, the **subscription check for pai
 
 ## Pricing surface (normative user-visible lines)
 
-The `/pricing` page must show the following two lines **verbatim** (drift is caught by `test/commercial-pricing-policy-parity.test.mjs` and Playwright).
-
-<!-- commercial-pricing-lines-begin -->
-Starter includes 1,000 published npm CLI verifications per month (hard cap, no overage). Individual, Team, and Business include higher monthly amounts plus pay-as-you-go overage; an active subscription is required (trial counts).
-CI locks, the enforce command, and quick verify with lock flags require a paid plan (not Starter) and the same active subscription and metering model.
-<!-- commercial-pricing-lines-end -->
+**Machine strings:** the first two list items under **Commercial terms** on `/pricing` are the same lines returned by `getNormativePolicySurfaceLines(catalog)` in [`website/src/lib/commercialNarrative.ts`](../website/src/lib/commercialNarrative.ts), with `catalog` from [`config/commercial-plans.json`](../config/commercial-plans.json) (no duplicate numerics in Markdown). Drift is caught by `website/__tests__/commercial-narrative.contract.test.ts` and the Playwright `e2e/commercial-funnel.spec.ts` suite.

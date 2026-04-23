@@ -1,7 +1,6 @@
-/** Single source for homepage, pricing recap, sign-in framing, and test ids. */
+/** Single source for most site chrome, a11y, and test ids. Public commercial + contract copy lives in `@/lib/commercialNarrative` + `config/commercial-plans.json`. */
 
 import marketing from "@/lib/marketing";
-import { METERING_CLARIFIER, SECURITY_QUICK_VS_CONTRACT_BULLET } from "@/content/marketingContracts";
 
 export type InternalHref =
   | "/security"
@@ -19,11 +18,6 @@ export type PricingBillingAndQuestionsBand = {
   enterpriseCtaLabel: string;
   enterpriseCtaHref: "/contact";
   secondaryLinks: readonly [{ label: string; href: "/security" }, { label: string; href: "/support" }];
-};
-
-export type SecurityQuickFacts = {
-  title: string;
-  bullets: readonly [string, string, string, string];
 };
 
 export type SupportPage = {
@@ -222,14 +216,6 @@ export const pricingBillingAndQuestionsBand = {
   ],
 } as const satisfies PricingBillingAndQuestionsBand;
 
-/** Above-the-fold `/pricing` hero (title, stakes, subhead) — from `config/marketing.json`. */
-export const pricingHero = {
-  title: marketing.site.pricing.heroTitle,
-  positioning: marketing.site.pricing.positioning,
-  subtitle: marketing.site.pricing.subtitle,
-  subtitleSecondary: marketing.site.pricing.subtitleSecondary,
-} as const;
-
 export const pricingWhatYouGetPaidPlans = {
   title: "What paid plans unlock",
   bullets: [
@@ -247,12 +233,6 @@ export const pricingPlansSectionTitle = "Plans";
 /** `<summary>` for expandable commercial terms on `/pricing`. */
 export const pricingCommercialTermsDetailsSummary = "Full commercial terms (expand)";
 
-export const pricingLocalVerificationFreeFootnote =
-  "Local OSS verification remains free forever.";
-
-/** `/pricing` Starter card: optional line under price when `includedMonthly` is 0 (hidden when empty). */
-export const pricingCardStarterPaidQuotaCaption = "";
-
 /** Truthful guidance without implying existing customer mix. */
 export const pricingRecommendedPill = "For production CI";
 
@@ -267,16 +247,6 @@ export const pricingPlanCtas = {
   business: { signInLabel: "Scale across services", checkoutLabel: "Continue to checkout" },
   enterprise: { label: "Contact sales" },
 } as const;
-
-export const securityQuickFacts = {
-  title: "Quick facts for buyers",
-  bullets: [
-    "CLI and verification engine run in your infrastructure against databases you configure; the homepage demo runs bundled fixtures on this server for evaluation only.",
-    "Structured tool activity is compared to database query results at verification time; that check does not prove a specific network call caused a row.",
-    SECURITY_QUICK_VS_CONTRACT_BULLET,
-    "For the on-site buyer trust summary, use the trust buyer guide on this site; full normative verification semantics stay in verification-product-ssot.md on GitHub.",
-  ],
-} as const satisfies SecurityQuickFacts;
 
 export const homeHeroCtaLabels = {
   demo: HOME_HERO_DEMO_CTA_LABEL,
@@ -653,30 +623,13 @@ export const productCopy = {
     magicLinkSent: "Check your email for the sign-in link.",
   },
 
-  commercialSurface: {
-    title: "What paid plans unlock",
-    lead: METERING_CLARIFIER,
-    /**
-     * Homepage: outcome-focused, no license URLs; sign-in and contracts still use `lead` (METERING_CLARIFIER).
-     */
-    homeStrip:
-      "Run verification in CI, enforce before deploy, and scale with included monthly quota. Local and open-source use stays free. In-process library use never calls the usage API.",
-    compareApproachesLabel: "Compare approaches",
-  },
+  /** One-word / short labels only: commercial prose comes from `commercialNarrative`. */
+  homeCommercialCompareApproachesLabel: "Compare approaches" as const,
 
-  /** Retained for SSOT strings; `/pricing` renders `pricingHero` instead. */
-  pricingRecap: pricingHero.subtitle,
-
-  /** Retained for SSOT strings; `/pricing` uses `pricingHero.subtitle` in plan-choice testid slot. */
-  pricingPlanChoiceGuide: pricingHero.subtitle,
-
-  pricingHero,
   pricingWhatYouGetPaidPlans,
-  pricingHeroExample,
+  pricingHeroExample: pricingWhatYouGetPaidPlans,
   pricingPlansSectionTitle,
   pricingCommercialTermsDetailsSummary,
-  pricingLocalVerificationFreeFootnote,
-  pricingCardStarterPaidQuotaCaption,
   pricingRecommendedPill,
   pricingTeamFootnote,
   pricingPlanCtas,
@@ -717,7 +670,6 @@ export const productCopy = {
   homeHeroCtaLabels,
   homeHeroSecondaryCta,
   pricingBillingAndQuestionsBand,
-  securityQuickFacts,
   learnBundledProofLedes,
   learnBundledProofIntegrateLede,
   adoptionCompleteChecklistTokenRefs,

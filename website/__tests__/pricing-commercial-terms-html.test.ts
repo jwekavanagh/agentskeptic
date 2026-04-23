@@ -1,7 +1,11 @@
 import * as cheerio from "cheerio";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, beforeAll, it } from "vitest";
-import { PRICING_COMMERCIAL_TERMS_BULLETS } from "@/content/marketingContracts";
+import { getPricingCommercialTermsBullets } from "@/lib/commercialNarrative";
 import { productCopy } from "@/content/productCopy";
+import type { CommercialPlansFile } from "@/lib/plans";
+import { getRepoRoot } from "./helpers/distributionGraphHelpers";
 import {
   ensureMarketingSiteRunning,
   getSiteHtml,
@@ -9,6 +13,11 @@ import {
 } from "./helpers/siteTestServer";
 
 registerMarketingSiteTeardown();
+
+const catalog: CommercialPlansFile = JSON.parse(
+  readFileSync(join(getRepoRoot(), "config", "commercial-plans.json"), "utf8"),
+) as CommercialPlansFile;
+const PRICING_COMMERCIAL_TERMS_BULLETS = getPricingCommercialTermsBullets(catalog);
 
 describe("pricing commercial terms HTML", { timeout: 180_000 }, () => {
   beforeAll(async () => {

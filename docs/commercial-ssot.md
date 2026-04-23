@@ -236,4 +236,4 @@ API keys are verified with **Node `crypto.scrypt`** (parameters fixed in website
 
 ## Roadmap (v1.1+)
 
-- Metered overage ($0.01/run Team, volume Business) via Stripe **after** a dedicated design pass.
+- (Reserved for future product work.) Metered overage after included quota is **live** in [`config/commercial-plans.json`](../config/commercial-plans.json) and Stripe; buyer-visible rates are built from that file in [`website/src/lib/commercialNarrative.ts`](../website/src/lib/commercialNarrative.ts).

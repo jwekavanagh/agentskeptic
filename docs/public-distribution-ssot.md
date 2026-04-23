@@ -11,8 +11,8 @@ Single place for **public identity**, **anchor sync**, **CI / Vitest public orig
 | Source | Role |
 |--------|------|
 | **`config/marketing.json`** | Single hand-edited SSOT: acquisition fold, public anchors (origin, git/npm, keywords, `identityOneLiner`), visitor answer, hero copy, CTA, site route shells, `r2.frameworkMaturity`, and machine-readable inputs consumed by sync and the Next.js app. |
-| **`website/src/content/marketingContracts.ts`** | Contract-tested marketing copy: `/pricing` feature comparison grid + commercial terms bullets; metering clarifier (sign-in + homepage commercial strip); security quick-fact line consumed via `productCopy` composition. |
-| **`website/src/content/productCopy.ts`** | Site-only strings (account, integrate shell, a11y, pricing hero recap, etc.) **excluding** the pricing grid and commercial terms bullets (see **`marketingContracts.ts`**). |
+| **`config/commercial-plans.json` + `website/src/lib/commercialNarrative.ts`** | **Data + derived copy** for all buyer-facing commercial strings: pricing hero/recap, plan feature table, “Commercial terms” list, sign-in/home metering text, and security “quick facts” (see `getSecurityQuickFacts`). |
+| **`website/src/content/productCopy.ts`** | Site-only strings: account, integrate shell, a11y, CTA labels, and non-pricing UI chrome—**not** the commercial table, terms, or pricing subtitles (see **`commercialNarrative.ts`**). |
 | **`llms.txt`** | Committed root agent surface (byte-synced with the site after **`npm run emit-primary-marketing`** or **`npm run sync:public-product-anchors`**, the alias). |
 
 ### Artifact ownership
@@ -43,7 +43,7 @@ Single place for **public identity**, **anchor sync**, **CI / Vitest public orig
 | `website/public/openapi-commercial-v1.yaml` | Derived (gitignored); `servers[0].url` and self-URL use effective public origin | No |
 | Root `package.json` | **`description`** from **`config/marketing.json` → `pageMetadata.description`**; **`repository`**, **`bugs`**, **`keywords`**, and **`homepage`** via sync (same file) | No (those fields) |
 | `README.md` | Regions between `<!-- discovery-readme-title:start/end -->`, `<!-- discovery-acquisition-fold:start/end -->`, and `<!-- public-product-anchors:start/end -->` | No inside markers (all are sync-written) |
-| `website/src/content/marketingContracts.ts` | Hand-authored marketing strings under Vitest contract: `/pricing` comparison grid + commercial terms bullets, metering clarifier, security quick-fact fragment | Yes |
+| `website/src/lib/commercialNarrative.ts` | All site commercial / contract test strings derived from `commercial-plans.json` (no parallel hand-edited grid) | Yes (templates + `npm run test:vitest`) |
 
 ### Maintainer sync (normative)
 

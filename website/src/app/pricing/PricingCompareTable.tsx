@@ -1,7 +1,11 @@
-import { PRICING_FEATURE_COMPARISON } from "@/content/marketingContracts";
+import type { PricingFeatureComparison } from "@/lib/commercialNarrative";
 
-export function PricingCompareTable() {
-  const compare = PRICING_FEATURE_COMPARISON;
+export function PricingCompareTable({
+  featureComparison,
+}: {
+  featureComparison: PricingFeatureComparison;
+}) {
+  const compare = featureComparison;
   return (
     <section
       className="pricing-compare"

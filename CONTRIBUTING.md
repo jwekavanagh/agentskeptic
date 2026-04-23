@@ -44,7 +44,7 @@ Thanks for helping improve **agentskeptic**.
 ### Marketing copy and marketing.json sync
 
 - **Marketing SSOT:** edit **`config/marketing.json`** (**`node scripts/validate-marketing.cjs`**; **`npm run check:primary-marketing`** or **`check:discovery-acquisition`** runs discovery + marketing validation).
-- **Site-only copy:** edit **`website/src/content/productCopy.ts`** for non-JSON UI strings (for example commercial terms list items, account copy, a11y).
+- **Site-only copy:** edit **`website/src/content/productCopy.ts`** for non-JSON UI strings (account, integrate shell, a11y, short labels). **Public commercial and pricing text** lives in **`website/src/lib/commercialNarrative.ts`** with numerics in **`config/commercial-plans.json`** (not duplicated in `productCopy`).
 - **Site IA (nav, Learn hub, sitemap, redirect):** canonical rules live in **`docs/website-product-experience.md`** and must stay consistent with **`website/src/lib/siteChrome.ts`** and **`website/src/app/sitemap.ts`**. The **`/guides`** Learn hub is **indexable** and listed in the sitemap; **`GET /examples`** (hub path only) **308** redirects to **`/guides`**.
 - **Sync:** after changing marketing JSON, run **`npm run emit-primary-marketing`** (or **`sync:public-product-anchors`**) from repo root and commit the regenerated artifacts listed in [`docs/public-distribution-ssot.md`](docs/public-distribution-ssot.md).
 - **Gate:** before merging marketing changes, run **`npm run verify:web-marketing-copy`** so validation, visitor-outcome node tests, the website build, **`marketing-*.contract` tests**, and the full website Vitest suite (including **`docs-marketing-contract`**) all pass.

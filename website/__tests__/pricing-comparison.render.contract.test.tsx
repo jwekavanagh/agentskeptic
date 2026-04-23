@@ -1,13 +1,22 @@
 /** @vitest-environment jsdom */
 
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { PricingCompareTable } from "@/app/pricing/PricingCompareTable";
-import { PRICING_FEATURE_COMPARISON, type PlanColumn } from "@/content/marketingContracts";
+import { getPricingFeatureComparison, type PlanColumn } from "@/lib/commercialNarrative";
+import type { CommercialPlansFile } from "@/lib/plans";
+
+const repoConfigPath = join(process.cwd(), "..", "config", "commercial-plans.json");
+const catalog: CommercialPlansFile = JSON.parse(
+  readFileSync(repoConfigPath, "utf8"),
+) as CommercialPlansFile;
+const PRICING_FEATURE_COMPARISON = getPricingFeatureComparison(catalog);
 
 describe("PricingCompareTable contract", () => {
   it("renders every comparison cell exactly as authored", () => {
-    render(<PricingCompareTable />);
+    render(<PricingCompareTable featureComparison={PRICING_FEATURE_COMPARISON} />);
     const region = screen.getByTestId("pricing-compare-section");
     const table = within(region).getByRole("table");
 

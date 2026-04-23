@@ -6,6 +6,7 @@ import { indexableGuideCanonical } from "@/lib/indexableGuides";
 import { publicProductAnchors } from "@/lib/publicProductAnchors";
 import type { Metadata } from "next";
 import { shareableTerminalFailureExcerpt } from "@/lib/shareableTerminalFailureExcerpt";
+import { getHomeCommercialSectionFromConfig } from "@/lib/commercialNarrative";
 import { buildHomeTrustStripLinks, openapiHrefFromProcessEnv } from "@/lib/siteChrome";
 import Link from "next/link";
 import { Fragment } from "react";
@@ -38,6 +39,7 @@ const anchors = {
 };
 
 export default function HomePage() {
+  const homeCommercial = getHomeCommercialSectionFromConfig();
   const trustLinks = buildHomeTrustStripLinks({
     anchors,
     openapiHref: openapiHrefFromProcessEnv(),
@@ -220,14 +222,17 @@ export default function HomePage() {
         data-testid={productCopy.uiTestIds.commercialSurface}
         aria-labelledby="commercial-surface-heading"
       >
-        <h2 id="commercial-surface-heading">{productCopy.commercialSurface.title}</h2>
-        <p data-testid="home-commercial-metering">{productCopy.commercialSurface.homeStrip}</p>
+        <h2 id="commercial-surface-heading">{homeCommercial.title}</h2>
+        <p className="muted" data-testid="home-commercial-lead">
+          {homeCommercial.lead}
+        </p>
+        <p data-testid="home-commercial-metering">{homeCommercial.strip}</p>
         <p className="commercial-links">
           <Link href="/pricing">Pricing</Link>
           {" · "}
           <Link href="/account">Account</Link>
           {" · "}
-          <Link href="/compare">{productCopy.commercialSurface.compareApproachesLabel}</Link>
+          <Link href="/compare">{productCopy.homeCommercialCompareApproachesLabel}</Link>
           {" · "}
           <a href={productCopy.links.openapiCommercial}>OpenAPI</a>
         </p>

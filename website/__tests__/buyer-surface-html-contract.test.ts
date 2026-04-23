@@ -1,6 +1,7 @@
 import * as cheerio from "cheerio";
 import { describe, expect, beforeAll, it } from "vitest";
 import { productCopy } from "@/content/productCopy";
+import { getSecurityQuickFacts } from "@/lib/commercialNarrative";
 import { publicProductAnchors } from "@/lib/publicProductAnchors";
 import { buildSiteFooterLegalLinks, buildSiteFooterProductLinks } from "@/lib/siteChrome";
 import {
@@ -62,14 +63,15 @@ describe("buyer-surface HTML contracts (R2–R6)", { timeout: 180_000 }, () => {
     );
   });
 
-  it("/security quick facts match productCopy (R5)", async () => {
+  it("/security quick facts match commercialNarrative (R5)", async () => {
+    const qf = getSecurityQuickFacts();
     const html = await getSiteHtml("/security");
     expect(html).toContain('data-testid="security-quick-facts"');
     const $ = cheerio.load(html);
     const sec = $('[data-testid="security-quick-facts"]');
-    expect(sec.find("h2").first().text().trim()).toBe(productCopy.securityQuickFacts.title);
+    expect(sec.find("h2").first().text().trim()).toBe(qf.title);
     const bullets = sec.find("li").toArray().map((el) => $(el).text().trim());
-    for (const b of productCopy.securityQuickFacts.bullets) {
+    for (const b of qf.bullets) {
       expect(bullets).toContain(b);
     }
   });
