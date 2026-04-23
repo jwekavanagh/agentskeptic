@@ -162,7 +162,7 @@ export function PricingClient({
                 {productCopy.pricingPlanCtas.enterprise.label}
               </a>
             )}
-            {p.id === "team" && (
+            {p.id === "team" && productCopy.pricingTeamFootnote.length > 0 && (
               <p className="pricing-team-footnote muted" data-testid="pricing-team-footnote">
                 {productCopy.pricingTeamFootnote}
               </p>

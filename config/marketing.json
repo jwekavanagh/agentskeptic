@@ -65,9 +65,10 @@
       }
     },
     "pricing": {
-      "heroTitle": "Stop shipping bad state.",
-      "positioning": "Verify real stored state in CI — before it costs you revenue, compliance issues, or production incidents.",
-      "subtitle": "Local and open-source verification is always free. Paid plans unlock CI enforcement, usage quotas, and team scaling."
+      "heroTitle": "Verify before you ship.",
+      "positioning": "Catch bad or missing state in CI — before it reaches customers, breaks compliance, or costs you money.",
+      "subtitle": "Local and open-source verification is always free.",
+      "subtitleSecondary": "Paid plans add CI enforcement, usage quotas, and team scaling."
     },
     "home": {},
     "security": {

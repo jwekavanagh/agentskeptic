@@ -213,6 +213,11 @@ main {
   line-height: 1.45;
   color: var(--fg);
 }
+.pricing-page .pricing-hero-subtitle-secondary {
+  margin-top: -0.35rem;
+  margin-bottom: 0.65rem;
+  color: var(--fg);
+}
 .pricing-page .pricing-plans-heading {
   font-size: 1.2rem;
   margin: 1.35rem 0 0.65rem;
@@ -223,11 +228,29 @@ main {
   max-width: 42rem;
   line-height: 1.45;
 }
-.pricing-page .pricing-billing-notes {
-  margin: 0.5rem 0 0;
-  padding-left: 1.2rem;
+.pricing-page .pricing-billing-prose {
   max-width: 42rem;
-  line-height: 1.45;
+  line-height: 1.5;
+}
+.pricing-page .pricing-billing-prose p {
+  margin: 0.35rem 0 0;
+}
+.pricing-page .pricing-billing-prose p:first-child {
+  margin-top: 0.25rem;
+}
+.pricing-page .pricing-commercial-details {
+  margin: 1.5rem 0 0;
+  max-width: 42rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.5rem 0.85rem 0.85rem;
+  background: var(--surface);
+}
+.pricing-page .pricing-commercial-details-summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--fg);
+  padding: 0.15rem 0;
 }
 .pricing-page .pricing-questions-lead {
   margin: 1rem 0 0.35rem;
@@ -295,6 +318,9 @@ main {
   padding-left: 1.2rem;
   max-width: 42rem;
   line-height: 1.45;
+}
+.pricing-page .pricing-commercial-details .pricing-commercial-terms {
+  margin: 0.65rem 0 0;
 }
 .pricing-page .pricing-commercial-terms li {
   margin: 0.35rem 0;
@@ -1262,4 +1288,21 @@ a.button-link:hover {
 }
 .account-api-key-flow-li {
   margin-bottom: 0.25rem;
+}
+
+.contact-page {
+  max-width: 40rem;
+}
+.contact-page h1 {
+  font-size: 1.75rem;
+  margin: 0 0 0.75rem;
+}
+.contact-lede {
+  font-size: 1.05rem;
+  line-height: 1.45;
+  margin: 0 0 1rem;
+}
+.contact-support-note {
+  margin-top: 1.5rem;
+  font-size: 0.95rem;
 }

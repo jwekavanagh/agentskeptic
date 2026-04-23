@@ -3,13 +3,21 @@
 import marketing from "@/lib/marketing";
 import { METERING_CLARIFIER, SECURITY_QUICK_VS_CONTRACT_BULLET } from "@/content/marketingContracts";
 
-export type InternalHref = "/security" | "/support" | "/pricing" | "/privacy" | "/terms" | "/integrate";
+export type InternalHref =
+  | "/security"
+  | "/support"
+  | "/pricing"
+  | "/privacy"
+  | "/terms"
+  | "/integrate"
+  | "/contact";
 
 export type PricingBillingAndQuestionsBand = {
   billingTitle: string;
-  billingBullets: readonly [string, string, string];
+  billingParagraphs: readonly [string, string, string];
   questionsTitle: string;
   enterpriseCtaLabel: string;
+  enterpriseCtaHref: "/contact";
   secondaryLinks: readonly [{ label: string; href: "/security" }, { label: string; href: "/support" }];
 };
 
@@ -187,14 +195,15 @@ export const learnHub = {
 } as const;
 
 export const pricingBillingAndQuestionsBand = {
-  billingTitle: "Billing notes",
-  billingBullets: [
+  billingTitle: "Billing",
+  billingParagraphs: [
     "Cancel anytime.",
-    "Subscribe via Stripe Checkout and manage everything from your Account page.",
+    "Subscribe with Stripe Checkout and manage your plan from your Account page.",
     "In-process library use never calls the usage API.",
   ],
   questionsTitle: "Questions?",
   enterpriseCtaLabel: "Contact sales for Enterprise",
+  enterpriseCtaHref: "/contact" as const,
   secondaryLinks: [
     { label: "Security & Trust", href: "/security" as const },
     { label: "Support", href: "/support" as const },
@@ -206,14 +215,15 @@ export const pricingHero = {
   title: marketing.site.pricing.heroTitle,
   positioning: marketing.site.pricing.positioning,
   subtitle: marketing.site.pricing.subtitle,
+  subtitleSecondary: marketing.site.pricing.subtitleSecondary,
 } as const;
 
 export const pricingWhatYouGetPaidPlans = {
-  title: "What you get with paid plans",
+  title: "What paid plans unlock",
   bullets: [
-    "Run verification in CI and fail builds on mismatch",
-    "Enforce with locks and the published npm CLI",
-    "Included monthly verification quota (scales with plan)",
+    "Run verification in CI and automatically fail builds on mismatch",
+    "Use locks, enforce, and the published npm CLI",
+    "Included monthly verification quota (scales with your plan)",
     "API keys for licensed features",
   ],
 } as const;
@@ -224,17 +234,17 @@ export const pricingHeroExample = pricingWhatYouGetPaidPlans;
 export const pricingPlansSectionTitle = "Plans";
 
 export const pricingLocalVerificationFreeFootnote =
-  "Local verification and OSS builds remain free forever.";
+  "Local OSS verification remains free forever.";
 
 /** `/pricing` Starter card: `includedMonthly` is 0 (evaluation; no paid CLI allowance). */
 export const pricingCardStarterPaidQuotaCaption =
-  "No included paid verifications—subscribe when you need licensed npm and monthly quota.";
+  "Free tier — upgrade when you want paid CI features and monthly quota.";
 
 /** Truthful guidance without implying existing customer mix. */
 export const pricingRecommendedPill = "For production CI";
 
-/** Microcopy under Team card (positive positioning for the recommended tier). */
-export const pricingTeamFootnote = "The tier most teams choose once CI is shared across the group.";
+/** Microcopy under Team card (optional; omitted from DOM when empty). */
+export const pricingTeamFootnote = "";
 
 /** Primary CTA labels on `/pricing` cards (sign-in still required before checkout). */
 export const pricingPlanCtas = {

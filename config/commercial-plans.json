@@ -7,8 +7,8 @@
       "monthlyUsdCents": 0,
       "displayPrice": "Free",
       "marketingHeadline": "Starter",
-      "audience": "Evaluation and setup",
-      "valueUnlock": "Open-source and local runs stay completely free. Upgrade when you need CI enforcement and quotas.",
+      "audience": "Evaluation and initial setup",
+      "valueUnlock": "Open-source and local runs stay completely free. Upgrade anytime for CI features.",
       "stripePriceEnvKey": null
     },
     "individual": {
@@ -17,7 +17,7 @@
       "displayPrice": "$25/mo",
       "marketingHeadline": "Individual",
       "audience": "Solo engineers running verification in CI",
-      "valueUnlock": "Run verification in CI and fail builds on mismatch, with included monthly quota.",
+      "valueUnlock": "Run verification in CI and automatically fail builds on mismatch, with included monthly quota.",
       "stripePriceEnvKey": "STRIPE_PRICE_INDIVIDUAL"
     },
     "team": {
@@ -26,7 +26,7 @@
       "displayPrice": "$100/mo",
       "marketingHeadline": "Team",
       "audience": "Teams sharing CI pipelines",
-      "valueUnlock": "Same enforcement with headroom for shared pipelines and collaboration.",
+      "valueUnlock": "Enforcement and quota for shared pipelines without constantly hitting the ceiling.",
       "stripePriceEnvKey": "STRIPE_PRICE_TEAM"
     },
     "business": {
@@ -35,7 +35,7 @@
       "displayPrice": "$300/mo",
       "marketingHeadline": "Business",
       "audience": "Multiple services and high-volume workflows",
-      "valueUnlock": "Higher monthly quota for several services and busy verification schedules.",
+      "valueUnlock": "More monthly verifications when you run checks across several services or busy pipelines.",
       "stripePriceEnvKey": "STRIPE_PRICE_BUSINESS"
     },
     "enterprise": {
@@ -43,8 +43,8 @@
       "monthlyUsdCents": null,
       "displayPrice": "Custom",
       "marketingHeadline": "Enterprise",
-      "audience": "Procurement, tailored limits, on-prem, or locked-down environments",
-      "valueUnlock": "Tailored limits, on-prem options, and sales-led onboarding with custom contract terms.",
+      "audience": "Procurement, custom limits, on-prem, or locked-down environments",
+      "valueUnlock": "Sales-led onboarding with tailored contract terms.",
       "stripePriceEnvKey": null
     }
   }

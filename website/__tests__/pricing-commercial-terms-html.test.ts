@@ -41,8 +41,10 @@ describe("pricing commercial terms HTML", { timeout: 180_000 }, () => {
     expect(html).toContain('data-testid="pricing-plan-choice-guide"');
     expect(html).toContain('data-testid="pricing-recommended-pill"');
     expect(html).toContain(productCopy.pricingRecommendedPill);
-    expect(html).toContain('data-testid="pricing-team-footnote"');
-    expect(html).toContain(productCopy.pricingTeamFootnote);
+    if (productCopy.pricingTeamFootnote.length > 0) {
+      expect(html).toContain('data-testid="pricing-team-footnote"');
+      expect(html).toContain(productCopy.pricingTeamFootnote);
+    }
     for (const row of PRICING_COMMERCIAL_TERMS_BULLETS) {
       expect(html).toContain(row.body);
     }

@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Pricing — AgentSkeptic",
-  description: `${productCopy.pricingHero.positioning} ${productCopy.pricingHero.subtitle}`,
+  description: `${productCopy.pricingHero.positioning} ${productCopy.pricingHero.subtitle} ${productCopy.pricingHero.subtitleSecondary}`,
   alternates: { canonical: indexableGuideCanonical("/pricing") },
   robots: { index: true, follow: true },
 };
@@ -48,6 +48,9 @@ export default function PricingPage() {
         <p className="pricing-hero-subtitle" data-testid="pricing-plan-choice-guide">
           {hero.subtitle}
         </p>
+        {hero.subtitleSecondary.length > 0 ? (
+          <p className="pricing-hero-subtitle pricing-hero-subtitle-secondary">{hero.subtitleSecondary}</p>
+        ) : null}
       </section>
 
       <h2 className="pricing-plans-heading">{productCopy.pricingPlansSectionTitle}</h2>
@@ -73,24 +76,27 @@ export default function PricingPage() {
 
       <PricingCompareTable />
 
-      <ul aria-label="Commercial terms" className="muted pricing-commercial-terms">
-        {PRICING_COMMERCIAL_TERMS_BULLETS.map((row) => (
-          <li key={row.lead}>
-            <strong>{row.lead}</strong> {row.body}
-          </li>
-        ))}
-      </ul>
+      <details className="pricing-commercial-details">
+        <summary className="pricing-commercial-details-summary">Commercial entitlement details</summary>
+        <ul aria-label="Commercial terms" className="muted pricing-commercial-terms">
+          {PRICING_COMMERCIAL_TERMS_BULLETS.map((row) => (
+            <li key={row.lead}>
+              <strong>{row.lead}</strong> {row.body}
+            </li>
+          ))}
+        </ul>
+      </details>
 
       <section data-testid="pricing-trust-band" aria-labelledby="pricing-trust-band-title">
         <h2 id="pricing-trust-band-title">{billing.billingTitle}</h2>
-        <ul className="pricing-billing-notes">
-          {billing.billingBullets.map((b) => (
-            <li key={b}>{b}</li>
+        <div className="pricing-billing-prose muted">
+          {billing.billingParagraphs.map((text) => (
+            <p key={text}>{text}</p>
           ))}
-        </ul>
+        </div>
         <p className="pricing-questions-lead">{billing.questionsTitle}</p>
         <p className="pricing-trust-band-links">
-          <a href={enterpriseMailto}>{billing.enterpriseCtaLabel}</a>
+          <Link href={billing.enterpriseCtaHref}>{billing.enterpriseCtaLabel}</Link>
           <span className="pricing-trust-band-links-sep" aria-hidden="true">
             ·
           </span>

@@ -53,9 +53,9 @@ describe("buyer-surface HTML contracts (R2–R6)", { timeout: 180_000 }, () => {
     const $ = cheerio.load(html);
     const band = $('[data-testid="pricing-trust-band"]');
     expect(band.find("h2").first().text().trim()).toBe(productCopy.pricingBillingAndQuestionsBand.billingTitle);
-    const billingItems = band.find("ul.pricing-billing-notes li").toArray().map((el) => $(el).text().trim());
-    for (const b of productCopy.pricingBillingAndQuestionsBand.billingBullets) {
-      expect(billingItems).toContain(b);
+    const billingParas = band.find(".pricing-billing-prose p").toArray().map((el) => $(el).text().trim());
+    for (const b of productCopy.pricingBillingAndQuestionsBand.billingParagraphs) {
+      expect(billingParas).toContain(b);
     }
     expect(band.find(".pricing-questions-lead").first().text().trim()).toBe(
       productCopy.pricingBillingAndQuestionsBand.questionsTitle,

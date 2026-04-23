@@ -42,7 +42,7 @@ export type PricingComparisonRow = {
 } & Record<PlanColumn, string>;
 
 export const PRICING_FEATURE_COMPARISON = {
-  title: "Detailed comparison",
+  title: "Plan comparison",
   columnLabels: ["Capability", "Starter", "Individual", "Team", "Business", "Enterprise"] as const,
   rows: [
     {
@@ -54,7 +54,7 @@ export const PRICING_FEATURE_COMPARISON = {
       enterprise: "Yes",
     },
     {
-      feature: "Fail CI on mismatch (OSS)",
+      feature: "Fail CI on mismatch (OSS build)",
       starter: "Yes",
       individual: "Yes",
       team: "Yes",
