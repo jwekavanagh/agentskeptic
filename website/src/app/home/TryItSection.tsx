@@ -20,7 +20,7 @@ export type TryItSectionProps = {
 };
 
 export function TryItSection({ variant = "page" }: TryItSectionProps) {
-  const [scenarioId, setScenarioId] = useState<DemoScenarioId>("wf_complete");
+  const [scenarioId, setScenarioId] = useState<DemoScenarioId>("wf_missing");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<DemoResponse | null>(null);
 
@@ -122,9 +122,12 @@ export function TryItSection({ variant = "page" }: TryItSectionProps) {
             {result.humanReport}
           </pre>
           <h3 className="try-it-subheading">Outcome certificate (JSON)</h3>
-          <pre className="code-block" data-testid={productCopy.uiTestIds.tryWorkflowJson}>
-            {JSON.stringify(result.certificate, null, 2)}
-          </pre>
+          <details className="try-it-json-details">
+            <summary>Show raw verification JSON</summary>
+            <pre className="code-block" data-testid={productCopy.uiTestIds.tryWorkflowJson}>
+              {JSON.stringify(result.certificate, null, 2)}
+            </pre>
+          </details>
         </div>
       )}
     </>

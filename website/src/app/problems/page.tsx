@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 const routeLinkLabels: Record<string, string> = {
   "/integrate": "Get started",
   "/pricing": "Pricing",
-  "/database-truth-vs-traces": "Product brief",
+  "/database-truth-vs-traces": "How it works",
   "/compare": "Compare",
 };
 

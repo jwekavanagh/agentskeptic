@@ -1066,6 +1066,59 @@ main {
   font-size: 0.85rem;
   margin: 0 0 0.5rem;
 }
+.home-hero-failure-caption {
+  font-size: 0.9rem;
+  line-height: 1.4;
+  margin: 0 0 0.75rem;
+  max-width: 44ch;
+}
+.home-hero-flow {
+  margin: 0.35rem 0 0.85rem;
+  font-size: 0.88rem;
+}
+.home-hero-flow-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.5rem;
+  line-height: 1.4;
+}
+.home-hero-flow-sep {
+  color: var(--muted-fg, color-mix(in srgb, var(--fg) 45%, var(--card)));
+}
+.home-hero-flow-miss {
+  font-weight: 600;
+  color: var(--danger);
+}
+.home-hero-raw-json {
+  margin: 0;
+}
+.home-hero-raw-json summary {
+  cursor: pointer;
+  font-size: 0.88rem;
+  margin: 0 0 0.4rem;
+  color: var(--accent);
+}
+.home-hero-raw-json[open] summary {
+  margin-bottom: 0.5rem;
+}
+.home-guarantee-h2 {
+  margin: 1.75rem 0 0.75rem;
+  font-size: 1.25rem;
+}
+.try-it-json-details {
+  margin: 0.5rem 0 0;
+}
+.try-it-json-details summary {
+  cursor: pointer;
+  font-size: 0.9rem;
+  margin: 0 0 0.4rem;
+  color: var(--accent);
+}
+.home-how-works-with {
+  margin: 0.9rem 0 0;
+  max-width: 52ch;
+}
 .home-hero-verdict {
   margin: 0 0 0.65rem;
   font-size: 0.95rem;

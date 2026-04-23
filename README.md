@@ -50,7 +50,7 @@ steps:
 }
 ```
 
-[Product brief](https://agentskeptic.com/database-truth-vs-traces)
+[How it works](https://agentskeptic.com/database-truth-vs-traces)
 <!-- discovery-acquisition-fold:end -->
 
 <!-- adoption-canonical:start -->

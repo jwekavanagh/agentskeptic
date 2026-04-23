@@ -7,15 +7,16 @@ export const DEMO_SCENARIO_PRESENTATION: Record<
   { label: string; oneLiner: string }
 > = {
   wf_complete: {
-    label: "Happy path — row matches",
+    label: "Happy path — everything matches",
     oneLiner: "Structured tool activity matches the persisted row; workflow completes as verified.",
   },
   wf_missing: {
-    label: "Green trace, missing row",
-    oneLiner: "Trace-shaped success story but the expected row is absent (ROW_ABSENT).",
+    label: "Missing write (recommended first try)",
+    oneLiner:
+      "The agent reported a side effect, but the expected row is still absent under registry rules (ROW_ABSENT).",
   },
   wf_inconsistent: {
-    label: "Row present, values wrong",
-    oneLiner: "A row exists but observed SQL does not match expectations under registry rules.",
+    label: "Stale data — row exists, values wrong",
+    oneLiner: "A row exists but observed data does not match expectations under your registry rules.",
   },
 };

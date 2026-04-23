@@ -20,7 +20,7 @@ export function SurfaceProgression({ primaryCta }: Props) {
     { href: "/integrate", label: "Integrate" },
     { href: "/#try-it", label: "Try demo" },
     { href: "/pricing", label: "Pricing" },
-    { href: acquisitionPath, label: "Product brief" },
+    { href: acquisitionPath, label: "How it works" },
     { href: "/security", label: "Security & Trust" },
   ];
   return (

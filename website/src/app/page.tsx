@@ -5,7 +5,10 @@ import marketing from "@/lib/marketing";
 import { indexableGuideCanonical } from "@/lib/indexableGuides";
 import { publicProductAnchors } from "@/lib/publicProductAnchors";
 import type { Metadata } from "next";
-import { shareableTerminalFailureExcerpt } from "@/lib/shareableTerminalFailureExcerpt";
+import {
+  shareableTerminalFailureExcerpt,
+  shareableTerminalFailureJsonOnly,
+} from "@/lib/shareableTerminalFailureExcerpt";
 import { getHomeCommercialSectionFromConfig } from "@/lib/commercialNarrative";
 import { buildHomeTrustStripLinks, openapiHrefFromProcessEnv } from "@/lib/siteChrome";
 import Link from "next/link";
@@ -45,7 +48,7 @@ export default function HomePage() {
     openapiHref: openapiHrefFromProcessEnv(),
   });
 
-  const heroTerminalExcerpt = shareableTerminalFailureExcerpt(
+  const heroFailureJson = shareableTerminalFailureJsonOnly(
     marketing.shareableTerminalDemo.transcript,
   );
 
@@ -62,6 +65,12 @@ export default function HomePage() {
             <h1 id="hero-heading">{productCopy.hero.title}</h1>
             <p className="lede">{productCopy.heroOutcome}</p>
             <p className="lede">{productCopy.heroMechanism}</p>
+            <p className="lede">
+              <strong>AgentSkeptic</strong>
+              {productCopy.homeHero.valuePropositionBeforeEm}
+              <em>{productCopy.homeHero.valuePropositionEm}</em>
+              {productCopy.homeHero.valuePropositionAfterEm}
+            </p>
             <p className="home-cta-row" data-testid="home-hero-cta-row">
               <a className="btn" href="#try-it" data-testid="home-hero-demo-cta">
                 {productCopy.homeHeroCtaLabels.demo}
@@ -83,16 +92,33 @@ export default function HomePage() {
             </p>
           </div>
           <div className="home-hero-terminal" data-testid="home-hero-terminal">
-            <p className="home-hero-terminal-label muted">Bundled demo output (failure)</p>
+            <p className="home-hero-terminal-label muted">{productCopy.homeHeroExampleLabel}</p>
+            <p className="home-hero-failure-caption muted">{productCopy.homeHeroFailureCaption}</p>
             <p className="home-hero-verdict" aria-hidden="true">
               VERDICT: <span className="home-hero-verdict-failed">FAILED</span>
             </p>
-            <pre
-              className="home-hero-terminal-pre"
-              aria-label="Example verification failure transcript; verdict failed"
-            >
-              <HeroTerminalHighlighted text={heroTerminalExcerpt} />
-            </pre>
+            <div className="home-hero-flow" aria-label="Simplified missing-write flow">
+              <div className="home-hero-flow-row">
+                <span>Agent claimed</span>
+                <span className="home-hero-flow-sep" aria-hidden="true">
+                  →
+                </span>
+                <span>Database check</span>
+                <span className="home-hero-flow-sep" aria-hidden="true">
+                  →
+                </span>
+                <span className="home-hero-flow-miss">Row missing</span>
+              </div>
+            </div>
+            <details className="home-hero-raw-json">
+              <summary>Show raw verification JSON</summary>
+              <pre
+                className="home-hero-terminal-pre"
+                aria-label="Example verification failure JSON; verdict failed"
+              >
+                <HeroTerminalHighlighted text={heroFailureJson} />
+              </pre>
+            </details>
           </div>
         </div>
         <TryItSection variant="heroEmbedded" />
@@ -122,11 +148,13 @@ export default function HomePage() {
       >
         <h2 id="home-stakes-heading">{productCopy.homeStakes.sectionTitle}</h2>
         <p className="lede home-stakes-tagline">{productCopy.homeStakes.stakesTagline}</p>
-        <ul className="home-stakes-tension">
-          {productCopy.homeStakes.tensionBullets.map((t) => (
-            <li key={t}>{t}</li>
-          ))}
-        </ul>
+        {productCopy.homeStakes.tensionBullets.length > 0 ? (
+          <ul className="home-stakes-tension">
+            {productCopy.homeStakes.tensionBullets.map((t) => (
+              <li key={t}>{t}</li>
+            ))}
+          </ul>
+        ) : null}
         {productCopy.homeStakes.stakesBullets.length > 0 ? (
           <ul>
             {productCopy.homeStakes.stakesBullets.map((t) => (
@@ -150,6 +178,7 @@ export default function HomePage() {
             <li key={item.slice(0, 48)}>{item}</li>
           ))}
         </ol>
+        <p className="muted home-how-works-with">{productCopy.mechanism.worksWith}</p>
       </section>
     ),
     fitAndLimits: (
@@ -172,13 +201,15 @@ export default function HomePage() {
             <li key={t}>{t}</li>
           ))}
         </ul>
-        <h3 className="guarantee-sub">Guaranteed</h3>
+        <h2 id="guarantee-heading" className="home-guarantee-h2">
+          {productCopy.guarantees.title}
+        </h2>
         <ul>
           {productCopy.guarantees.guaranteed.map((t) => (
             <li key={t}>{t}</li>
           ))}
         </ul>
-        <h3 className="guarantee-sub">Not guaranteed</h3>
+        <h3 className="guarantee-sub">{productCopy.guarantees.importantLimitationsTitle}</h3>
         <ul>
           {productCopy.guarantees.notGuaranteed.map((t) => (
             <li key={t}>{t}</li>

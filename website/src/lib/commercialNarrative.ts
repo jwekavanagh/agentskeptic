@@ -193,9 +193,12 @@ export function getHomeCommercialSection(catalog: CommercialPlansFile): {
     throw new Error("commercialNarrative: starter.includedMonthly is required for home section");
   }
   return {
-    title: "What paid plans unlock",
-    lead: getMeteringClarifier(),
-    strip: `Run licensed verification in CI: Starter includes ${formatCount(cap)} runs per key per month (no overage); higher tiers add more included volume and pay-as-you-go overage. Local OSS and in-process createDecisionGate stay unmetered. In-process library use never calls the usage API.`,
+    title: "First-run integration",
+    lead:
+      "Open-source CLI (unmetered locally), in-process createDecisionGate for in-code use, and commercial OpenAPI with licensed npm for CI and production.",
+    strip: `${getMeteringClarifier()} Run licensed verification in CI: Starter includes ${formatCount(
+      cap,
+    )} runs per key per month (no overage); higher tiers add more included volume. Local OSS and in-process createDecisionGate stay unmetered. In-process library use never calls the usage API.`,
   };
 }
 

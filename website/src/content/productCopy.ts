@@ -252,26 +252,78 @@ export const homeHeroCtaLabels = {
   demo: HOME_HERO_DEMO_CTA_LABEL,
 } as const satisfies HomeHeroCtaLabels;
 
-/** Hero secondary CTA — distinct from nav “Product brief” (database-truth page). */
+/** Hero secondary CTA — distinct from nav “How it works” (database-truth page). */
 export const homeHeroSecondaryCta = {
   href: "/integrate" as const,
   label: "Get started",
   testId: "home-hero-get-started" as const,
 } as const;
 
+/**
+ * Primary homepage copy (canonical for `/`). Stubs for the same topics remain in
+ * `config/marketing.json` for the prose budget; the site renders this object instead.
+ */
+const homepageDisplay = {
+  homeHero: {
+    valuePropositionBeforeEm: " gives you read-only verification that checks what your AI agents ",
+    valuePropositionEm: "claim",
+    valuePropositionAfterEm: " they did against what actually exists in your databases, APIs, and stores, at the exact moment of verification.",
+  },
+  homeWhatCatches: {
+    sectionTitle: "What AgentSkeptic catches",
+    bullets: [
+      "The agent logged a successful write, but the record is missing or wrong in the database.",
+      "The workflow looks green in your traces, but downstream state is stale, partial, or broken.",
+      "You ship, bill customers, and report success while reality is inconsistent.",
+    ] as const,
+  },
+  homeStakes: {
+    sectionTitle: "The hidden cost",
+    stakesTagline:
+      "These gaps create lost revenue, compliance issues, customer complaints, and painful debugging sessions. Traces alone cannot protect you.",
+    tensionBullets: [] as const,
+    stakesBullets: [] as const,
+  },
+  mechanism: {
+    intro: "Three simple steps — no code changes required:",
+    items: [
+      "Your agents emit structured activity (JSON/NDJSON) as they work.",
+      "You map your tool IDs to the databases, APIs, and other stores they touch (for example via tools.json).",
+      "AgentSkeptic runs a read-only verification and returns a clear verdict, JSON, or a non-zero exit code.",
+    ] as const,
+    worksWith: "Works with SQL, PostgreSQL, MongoDB, S3, HTTP APIs, vector stores, and more.",
+    notObservability: "It compares state to claims, not a full APM, distributed tracing, or log aggregation product.",
+  },
+  homeClosing: {
+    sectionTitle: "Ready to try?",
+    subtitle: "Explore the links below, then run read-only verification on your own data.",
+  },
+  forYou: [
+    "Build with CrewAI, AutoGen, LangGraph, or custom agent frameworks",
+    "Emit structured tool output (or can add it with modest work)",
+    "Have queryable data stores and want confidence before you ship",
+    "Have been surprised by 'it worked in the logs' failures before",
+  ] as const,
+  notForYou: [
+    "Purely unstructured text logs with nothing to query",
+    "Teams that need a full APM, distributed tracing, or log platform replacement",
+    "Use cases that require cryptographic proof that one specific call caused a write",
+  ] as const,
+} as const;
+
 /** Deeper layer after the homepage: `/database-truth-vs-traces` (not in `config/marketing.json` word budget). */
 export const productBriefPage = {
   metadata: {
-    title: "Product brief",
+    title: "How it works",
     titleSuffix: "AgentSkeptic" as const,
     description:
-      "The trace-vs-state gap, how read-only verification works (NDJSON, tools.json, verify run), what it catches, and the bundled wf_complete / wf_missing terminal outputs.",
+      "Read-only verification: how your agents' claims are checked against real database and API state, the trace versus state gap, and bundled demo output.",
   },
-  jsonLdHeadline: "Product brief: read-only checks vs tool-claimed work on your stores",
+  jsonLdHeadline: "How it works: read-only checks for tool-claimed work on your stores",
   testIds: {
     cta: "acquisition-cta-row" as const,
   },
-  h1: "Product brief",
+  h1: "How it works",
   /** Placed after the `visitorProblemAnswer` block. */
   introParagraphs: [
     "This page shows the complete picture: why the gap matters in production, how verification works in one simple gate, what real failures it catches, and the exact success/failure outputs your own runs will produce.",
@@ -370,10 +422,10 @@ export const productCopy = {
   heroOutcome: marketing.heroOutcome,
   /** Homepage hero: one-line mechanism. */
   heroMechanism: marketing.heroMechanism,
-  /** Muted footnote under hero: read-only, non-causal; pair with on-site `Product brief` link in page.tsx. */
+  /** Muted footnote under hero: read-only, non-causal; pair with on-site `How it works` link in page.tsx. */
   guaranteeFootnote: marketing.guaranteeFootnote,
   /** CTA for internal link on `guaranteeFootnote` (no raw GitHub URLs in hero). */
-  guaranteeProductBriefCtaLabel: "Product brief",
+  guaranteeProductBriefCtaLabel: "How it works",
 
   /** Learn hub (`/guides`) first line under H1 (UI-only). */
   learnHubPrimaryLede: "Real problems, real fixes.",
@@ -418,7 +470,7 @@ export const productCopy = {
 
   howItWorks: {
     sectionTitle: "How it works",
-    acquisitionDepthLinkLabel: "Product brief: traces vs database",
+    acquisitionDepthLinkLabel: "How it works: traces and database",
     exampleWfMissingLabel: "Bundled ROW_ABSENT example",
     compareApproachesLabel: "Compare approaches",
   },
@@ -437,27 +489,33 @@ export const productCopy = {
   problemsHubIntroTrail: ".",
 
   homeWhatCatches: {
-    sectionTitle: marketing.homeWhatCatches.sectionTitle,
-    bullets: marketing.homeWhatCatches.bullets as unknown as readonly string[],
+    sectionTitle: homepageDisplay.homeWhatCatches.sectionTitle,
+    bullets: homepageDisplay.homeWhatCatches.bullets as unknown as readonly string[],
   },
 
   homeClosing: {
-    sectionTitle: marketing.homeClosing.sectionTitle,
-    subtitle: marketing.homeClosing.subtitle,
-    integratorLinksCaption: "Docs & integration",
+    sectionTitle: homepageDisplay.homeClosing.sectionTitle,
+    subtitle: homepageDisplay.homeClosing.subtitle,
+    integratorLinksCaption: "GitHub · npm · OpenAPI · documentation",
   },
 
   homeStakes: {
-    sectionTitle: marketing.homeStakes.sectionTitle,
-    stakesTagline: marketing.homeStakes.stakesTagline,
-    tensionBullets: [...marketing.homeStakes.tensionBullets],
-    stakesBullets: [...marketing.homeStakes.stakesBullets],
+    sectionTitle: homepageDisplay.homeStakes.sectionTitle,
+    stakesTagline: homepageDisplay.homeStakes.stakesTagline,
+    tensionBullets: [...homepageDisplay.homeStakes.tensionBullets],
+    stakesBullets: [...homepageDisplay.homeStakes.stakesBullets],
   },
 
+  /** Hero third line (split in page.tsx for emphasis on “claim”). */
+  homeHero: homepageDisplay.homeHero,
+  homeHeroExampleLabel: "Example: Missing Write Failure",
+  homeHeroFailureCaption:
+    "The agent reported a successful CRM contact update, but the row is missing from the database.",
+
   fitAndLimits: {
-    sectionTitle: "Fit and limits",
-    forYouHeading: "Who it's for",
-    notForYouHeading: "Who it's not for",
+    sectionTitle: "Who it's for",
+    forYouHeading: "Best for teams that",
+    notForYouHeading: "Not designed for",
   },
 
   homepageAcquisitionCta: {
@@ -506,33 +564,37 @@ export const productCopy = {
 
   mechanism: {
     title: marketing.mechanism.title,
-    intro: marketing.mechanism.intro,
-    items: [...marketing.mechanism.items],
-    notObservability: marketing.mechanism.notObservability,
+    intro: homepageDisplay.mechanism.intro,
+    items: [...homepageDisplay.mechanism.items],
+    worksWith: homepageDisplay.mechanism.worksWith,
+    notObservability: homepageDisplay.mechanism.notObservability,
   },
 
-  forYou: marketing.buyerFit.forYou as unknown as readonly string[],
+  forYou: homepageDisplay.forYou as unknown as readonly string[],
 
-  notForYou: marketing.buyerFit.notForYou as unknown as readonly string[],
+  notForYou: homepageDisplay.notForYou as unknown as readonly string[],
 
   guarantees: {
-    title: "What is guaranteed (and what is not)",
+    title: "What we guarantee",
+    importantLimitationsTitle: "Important limitations",
     guaranteed: [
-      "Verdicts use read-only checks against your stores at verification time, under your registry rules.",
-      "Same inputs and store snapshot yield the same deterministic result shape (schema-versioned JSON).",
+      "Deterministic, repeatable verdicts from your store state at verification time.",
+      "Read-only checks only. The engine never mutates your data.",
+      "Same inputs and same store snapshot surface the same schema-versioned result shape.",
     ],
     notGuaranteed: [
-      "Not proof a tool caused a specific write—only that observed state did or did not match expectations when checked.",
+      "It verifies state against claims, not a causal link from a single tool call to a specific write.",
+      "It is not a replacement for logs or full end-to-end observability on its own.",
     ],
   },
 
   tryIt: {
-    title: "Try it (no account)",
+    title: "See it in action",
     intro: "Pick a bundled scenario. The server runs the same verification engine as the open-source CLI against demo fixtures.",
-    introHeroEmbed: "Pick a scenario and run—the same verification engine as the open-source CLI, on bundled fixtures.",
+    introHeroEmbed: "Pick a scenario and run the same verification engine as the open-source CLI on bundled fixtures.",
     /** Shown above the run control so failures feel intentional, not random. */
     preButtonFraming:
-      "Tip: use the missing write scenario (wf_missing)—`ROW_ABSENT` when the log implies a write the store does not show.",
+      "Try the Missing write scenario: the agent logged a successful CRM update, but the contact row is nowhere in the database.",
     runButton: HOME_TRY_IT_RUN_BUTTON_LABEL,
     running: "Running…",
     scenarioLabel: "Scenario",

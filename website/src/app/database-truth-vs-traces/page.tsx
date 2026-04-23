@@ -49,7 +49,7 @@ export default function DatabaseTruthVsTracesPage() {
   const [sProblem, sHow, sScenarios, sWho] = pb.sections;
   const { success: successBlock, failure: failureBlock } = splitDemoSuccessFailure(shareableTerminalDemo.transcript);
   if (sHow.id !== "how" || sScenarios.id !== "scenarios") {
-    throw new Error("Product brief sections: expected how then scenarios");
+    throw new Error("How it works page sections: expected how then scenarios");
   }
 
   return (

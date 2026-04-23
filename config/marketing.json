@@ -12,17 +12,17 @@
   "heroTitle": "Trust reality, not traces.",
   "heroSubtitle": "Declared tool effects vs read-only store facts.",
   "visitorProblemAnswer": "Traces say success. Your data often disagrees. Read-only checks at verify time compare tool claims to stored state—before you ship or bill.",
-  "heroOutcome": "Traces say success. Your actual data does not.",
-  "heroMechanism": "Read-only verify: claims vs stored state at verify time.",
-  "guaranteeFootnote": "Read-only verify; not which call wrote.",
+  "heroOutcome": "Your agents say the workflow succeeded.",
+  "heroMechanism": "Your database says otherwise.",
+  "guaranteeFootnote": "Read-only checks; not which call wrote.",
   "siteDefaultMetadata": {
     "title": "AgentSkeptic",
-    "description": "Tool claims vs read-only state."
+    "description": "Read-only verification: what agents claim versus what your databases, warehouses, and APIs show."
   },
-  "homepageAcquisitionCtaLabel": "Product brief",
+  "homepageAcquisitionCtaLabel": "How it works",
   "pageMetadata": {
     "title": "Traces vs state",
-    "description": "Read-only checks: VERIFIED or inconsistent."
+    "description": "Read-only verification: what agents claim versus what your databases, warehouses, and APIs show."
   },
   "readmeFold": {
     "templateLines": [
@@ -49,7 +49,7 @@
     "{{ORIGIN}}/"
   ],
   "r2": {
-    "frameworkMaturity": "CrewAI ready, AutoGen experimental. FRAMEWORK_LOCK.md in repo"
+    "frameworkMaturity": "CrewAI: full support. AutoGen: experimental. Works with any framework that can emit structured activity."
   },
   "site": {
     "integrate": {
@@ -95,47 +95,40 @@
   "briefProblem": "Claims vs read-only; ROW_ABSENT.",
   "briefSections": [],
   "homeWhatCatches": {
-    "sectionTitle": "What it catches",
-    "bullets": [
-      "Tool claimed a write; store missing it or still wrong.",
-      "Green steps; state lags, partial, or wrong.",
-      "You still ship, bill, and report success."
-    ]
+    "sectionTitle": "Homepage body",
+    "bullets": ["See productCopy", "for displayed", "homepage text"]
   },
   "mechanism": {
     "title": "How",
-    "intro": "Three steps each run.",
+    "intro": "Homepage copy lives in productCopy.",
     "items": [
-      "Emit structured tool activity (e.g. NDJSON).",
-      "Map tool IDs in `tools.json` to your registries and stores.",
-      "Run read-only verification: JSON or exit code—not trace color."
+      "Emit (stub).",
+      "Map (stub).",
+      "Verify (stub)."
     ],
-    "notObservability": "State vs claims; not logs or APM."
+    "notObservability": "State vs claims; not a full APM or log product."
   },
   "homeStakes": {
-    "sectionTitle": "The cost of the gap",
-    "stakesTagline": "Revenue, compliance, incidents: wrong when trace and data disagree.",
-    "tensionBullets": [
-      "The run looks successful.",
-      "The store does not back the story.",
-      "Work continues on a bad read."
-    ],
+    "sectionTitle": "Homepage stakes",
+    "stakesTagline": "Stakes lede in productCopy.",
+    "tensionBullets": [],
     "stakesBullets": []
   },
   "homeClosing": {
-    "sectionTitle": "Next",
-    "subtitle": "Verify, then ship."
+    "sectionTitle": "Home closing",
+    "subtitle": "Closing in productCopy."
   },
   "buyerFit": {
     "forYou": [
-      "You emit structured tool output.",
-      "Store-backed: SQL, S3, vectors, Mongo, HTTP, similar.",
-      "Green has hidden bad state before."
+      "a",
+      "b",
+      "c",
+      "d"
     ],
     "notForYou": [
-      "Unstructured logs only, nothing to query.",
-      "You need causal proof of a specific write.",
-      "You want a full APM or log product swap."
+      "x",
+      "y",
+      "z"
     ]
   },
   "problemIndex": [
