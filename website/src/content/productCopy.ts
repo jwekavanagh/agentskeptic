@@ -107,7 +107,7 @@ export const supportPage = {
 } as const satisfies SupportPage;
 
 export const learnBundledProofLedes = {
-  primary: "See real verification outputs without running the CLI:",
+  primary: "See what verification looks like—no CLI required:",
   /** Learn hub omits this line when empty. */
   secondaryMuted: "",
 } as const satisfies LearnBundledProofLedes;
@@ -141,7 +141,7 @@ export const learnHub = {
     {
       href: "/guides/scenario-ci-green-side-effect-missing",
       title: "CI passed, but the side effect is missing",
-      caption: "Green logs don't mean your store actually updated.",
+      caption: "Green logs don't mean your store updated.",
     },
     {
       href: "/guides/tool-loop-success-crm-state-wrong",
@@ -182,11 +182,6 @@ export const learnHub = {
       title: "What a green verdict really means in production",
     },
   ],
-  exampleLinkLabels: {
-    "/examples/wf-complete": "Verified workflow (wf_complete)",
-    "/examples/wf-missing": "Failure with ROW_ABSENT (wf_missing)",
-    "/examples/langgraph-checkpoint-trust": "LangGraph checkpoint trust example",
-  },
 } as const;
 
 export const pricingTrustBandBeforeGrid = {
@@ -384,7 +379,7 @@ export const productCopy = {
 
   /** Learn hub third lede — gate + Get started (UI-only). */
   guidesHubBridgeSentence:
-    "Each short read connects a common symptom to a concrete read-only verification you can add as a gate — then sends you to Get started on your own data.",
+    "Each short read connects a common symptom to a read-only verification you can add as a gate — then sends you straight to Get started on your own data.",
 
   /** Muted line after Learn hub supporting lede — pairs with `/compare`. */
   guidesHubCompareLead: "When you want bundles versus single checks in one view, use",
@@ -403,7 +398,7 @@ export const productCopy = {
 
   /** Learn hub (`/guides`) metadata.description (UI-only); includes bundled proof list. */
   learnHubIndexDescription:
-    "Short, symptom-led guides: read-only verification gates for your stores, bundled public examples, and paths to Get started.",
+    "Symptom-led guides, read-only verification gates for your stores, bundled examples you can skim, and a clear path to Get started.",
 
   /** Shared report view one-liner (UI-only). */
   publicShareReportIntro:

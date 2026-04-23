@@ -531,6 +531,40 @@ button.secondary, .btn.secondary {
   line-height: 1.35;
   max-width: 38rem;
 }
+
+/* Learn hub (`/guides`): align with funnel pages — section rhythm, code in bundled list, CTA band */
+.learn-hub .home-section h2:not(.learn-hub-cta-heading) {
+  margin-top: 0;
+}
+.learn-hub > .home-section:first-of-type {
+  margin-top: 0.75rem;
+}
+.learn-hub-intro-bridge {
+  margin-top: 0.35rem;
+}
+.learn-hub-bundled-lead {
+  margin-bottom: 0.35rem;
+}
+.learn-hub-code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 0.88em;
+  font-weight: 650;
+}
+.learn-hub-cta {
+  margin-bottom: 0;
+}
+.learn-hub .learn-hub-cta h2.learn-hub-cta-heading {
+  font-size: 1.125rem;
+  line-height: 1.35;
+  font-weight: 650;
+  border-bottom: none;
+  padding-bottom: 0;
+  margin-top: 0.25rem;
+  margin-bottom: 0.15rem;
+}
+.learn-hub-cta-links li {
+  margin: 0.4rem 0;
+}
 .guarantee-sub {
   font-size: 1rem;
   margin: 1rem 0 0.35rem;

@@ -3,6 +3,7 @@ import { indexableGuideCanonical } from "@/lib/indexableGuides";
 import { listAllSurfaces } from "@/lib/surfaceMarkdown";
 import type { Metadata } from "next";
 import Link from "next/link";
+import type { ReactNode } from "react";
 
 export const metadata: Metadata = {
   title: "Learn — AgentSkeptic",
@@ -11,7 +12,27 @@ export const metadata: Metadata = {
   alternates: { canonical: indexableGuideCanonical("/guides") },
 };
 
-const exampleLinkLabels = learnHub.exampleLinkLabels as Readonly<Record<string, string>>;
+function bundledExampleLabel(route: string, fallbackTitle: string): ReactNode {
+  switch (route) {
+    case "/examples/wf-complete":
+      return (
+        <>
+          Verified workflow (<code className="learn-hub-code">wf_complete</code>)
+        </>
+      );
+    case "/examples/wf-missing":
+      return (
+        <>
+          Failure with <code className="learn-hub-code">ROW_ABSENT</code> (
+          <code className="learn-hub-code">wf_missing</code>)
+        </>
+      );
+    case "/examples/langgraph-checkpoint-trust":
+      return "LangGraph checkpoint trust example";
+    default:
+      return fallbackTitle;
+  }
+}
 
 export default function GuidesHubPage() {
   const surfaces = listAllSurfaces();
@@ -26,13 +47,15 @@ export default function GuidesHubPage() {
   const bundledMuted = productCopy.learnBundledProofLedes.secondaryMuted.trim();
 
   return (
-    <main className="integrate-main">
+    <main className="integrate-main integrate-prose learn-hub">
       <h1>Learn</h1>
-      <p className="lede">{productCopy.learnHubPrimaryLede}</p>
+      <p className="integrate-benefit-lede">
+        <strong>{productCopy.learnHubPrimaryLede}</strong>
+      </p>
       <p className="lede">{productCopy.guidesHubSupportingSentence}</p>
-      <p className="lede">{productCopy.guidesHubBridgeSentence}</p>
+      <p className="lede muted learn-hub-intro-bridge">{productCopy.guidesHubBridgeSentence}</p>
 
-      <section aria-labelledby="learn-popular-heading">
+      <section className="home-section" aria-labelledby="learn-popular-heading">
         <h2 id="learn-popular-heading">{learnHub.popularHeading}</h2>
         <ul className="mechanism-list guide-hub-list">
           {learnHub.popular.map((g) => (
@@ -46,7 +69,7 @@ export default function GuidesHubPage() {
         </ul>
       </section>
 
-      <section aria-labelledby="learn-debug-heading">
+      <section className="home-section" aria-labelledby="learn-debug-heading">
         <h2 id="learn-debug-heading">{learnHub.debugHeading}</h2>
         <ul className="mechanism-list guide-hub-list">
           {learnHub.debug.map((g) => (
@@ -59,7 +82,7 @@ export default function GuidesHubPage() {
         </ul>
       </section>
 
-      <section aria-labelledby="learn-buyers-heading">
+      <section className="home-section" aria-labelledby="learn-buyers-heading">
         <h2 id="learn-buyers-heading">{learnHub.buyersHeading}</h2>
         <ul className="mechanism-list guide-hub-list">
           {learnHub.buyers.map((g) => (
@@ -74,22 +97,24 @@ export default function GuidesHubPage() {
 
       <section id="bundled-proof" className="home-section" aria-labelledby="bundled-proof-heading">
         <h2 id="bundled-proof-heading">{learnHub.bundledProofHeading}</h2>
-        <p className="lede">{productCopy.learnBundledProofLedes.primary}</p>
+        <p className="lede learn-hub-bundled-lead">{productCopy.learnBundledProofLedes.primary}</p>
         {bundledMuted ? <p className="lede muted">{bundledMuted}</p> : null}
         <ul className="mechanism-list guide-hub-list">
           {examples.map((e) => (
             <li key={e.route}>
               <Link href={e.route} className="guide-hub-link">
-                <span className="guide-hub-link-title">{exampleLinkLabels[e.route] ?? e.title}</span>
+                <span className="guide-hub-link-title">{bundledExampleLabel(e.route, e.title)}</span>
               </Link>
             </li>
           ))}
         </ul>
       </section>
 
-      <section className="home-section" aria-labelledby="learn-closing-heading">
-        <h2 id="learn-closing-heading">{learnHub.closingTitle}</h2>
-        <ul className="mechanism-list guide-hub-list">
+      <section className="home-section learn-hub-cta" aria-labelledby="learn-closing-heading">
+        <h2 id="learn-closing-heading" className="learn-hub-cta-heading">
+          {learnHub.closingTitle}
+        </h2>
+        <ul className="mechanism-list guide-hub-list learn-hub-cta-links">
           <li>
             <Link href="/integrate" className="guide-hub-link">
               <span className="guide-hub-link-title">{learnHub.getStartedCtaLabel}</span>
