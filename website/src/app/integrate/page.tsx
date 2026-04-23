@@ -63,7 +63,7 @@ export default function IntegratePage() {
       <h2>Product completion: Step 4 on your emitters</h2>
       <p>
         Wire your tool and workflow code so it emits the NDJSON and registry this command consumes. The mechanical
-        spine (clone, build, first-run) is an optional on-ramp in the details below—product completion is your
+        spine (clone, build, first-run) is an optional on-ramp in the section below—product completion is your
         emitters and stores matching the expected shape.
       </p>
 
@@ -80,8 +80,13 @@ export default function IntegratePage() {
         silent green traces hiding bad data.
       </p>
 
-      <details className="integrate-optional-spine">
-        <summary>Mechanical spine (optional, for full end-to-end validation)</summary>
+      <section
+        className="integrate-optional-spine"
+        aria-label="Mechanical spine (optional, for full end-to-end validation)"
+      >
+        <p className="integrate-optional-spine-label muted">
+          Mechanical spine (optional, for full end-to-end validation)
+        </p>
         <h3>Mechanical spine checkpoint (not product completion)</h3>
         <p>
           Long-form bash template for local machines and CI. This is not a substitute for wiring your own emitters—the
@@ -90,7 +95,7 @@ export default function IntegratePage() {
         <pre className="integrate-activation-commands" data-testid="integrator-activation-commands">
           {INTEGRATE_ACTIVATION_SHELL_BODY}
         </pre>
-      </details>
+      </section>
 
       <h2>Next steps</h2>
       <ol>

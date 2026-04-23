@@ -146,7 +146,10 @@ components:
           type: string
           enum: [verify, enforce]
           default: verify
-          description: enforce requires paid plan with active subscription; verify requires active subscription on individual/team/business/enterprise
+          description: >
+            enforce requires a paid plan (not Starter) with active subscription; verify is allowed
+            for Starter (free included quota) and for paid plans with active subscription; overage
+            is permitted past included for paid plans with allowOverage in plan catalog
     ReserveAllowed:
       type: object
       required:
@@ -154,6 +157,8 @@ components:
         - plan
         - limit
         - used
+        - included_monthly
+        - overage_count
       properties:
         allowed:
           type: boolean
@@ -163,8 +168,18 @@ components:
           enum: [starter, individual, team, business, enterprise]
         limit:
           type: integer
+          description: Included verifications in the current billing month (not enterprise unlimited sentinel)
         used:
           type: integer
+          description: Total verifications counted this month for this API key
+        included_monthly:
+          oneOf:
+            - type: integer
+            - type: "null"
+          description: Same as limit for finite plans; null for enterprise unlimited
+        overage_count:
+          type: integer
+          description: max(0, used - included_monthly) when the plan has a finite cap
     ReserveError:
       type: object
       properties:
@@ -174,8 +189,8 @@ components:
         code:
           type: string
           description: >
-            Examples BAD_REQUEST, INVALID_KEY, QUOTA_EXCEEDED, VERIFICATION_REQUIRES_SUBSCRIPTION,
-            ENFORCEMENT_REQUIRES_PAID_PLAN, SUBSCRIPTION_INACTIVE, BILLING_PRICE_UNMAPPED, SERVER_ERROR
+            Examples BAD_REQUEST, INVALID_KEY, QUOTA_EXCEEDED, ENFORCEMENT_REQUIRES_PAID_PLAN,
+            SUBSCRIPTION_INACTIVE, BILLING_PRICE_UNMAPPED, SERVER_ERROR
         message:
           type: string
         upgrade_url:
@@ -205,8 +220,26 @@ components:
           oneOf:
             - type: integer
             - type: "null"
+        yearlyUsdCents:
+          oneOf:
+            - type: integer
+            - type: "null"
         displayPrice:
           type: string
+        displayPriceYearly:
+          oneOf:
+            - type: string
+            - type: "null"
+        overageMicrousdPerVerification:
+          oneOf:
+            - type: integer
+            - type: "null"
+        allowOverage:
+          type: boolean
+        overageDisplayLabel:
+          oneOf:
+            - type: string
+            - type: "null"
         marketingHeadline:
           type: string
         audience:

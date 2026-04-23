@@ -6,10 +6,7 @@ export type SubscriptionStatusForEntitlement = "none" | "active" | "inactive";
 
 export type ReserveIntent = "verify" | "enforce";
 
-export type EntitlementDenyCode =
-  | "ENFORCEMENT_REQUIRES_PAID_PLAN"
-  | "SUBSCRIPTION_INACTIVE"
-  | "VERIFICATION_REQUIRES_SUBSCRIPTION";
+export type EntitlementDenyCode = "ENFORCEMENT_REQUIRES_PAID_PLAN" | "SUBSCRIPTION_INACTIVE";
 
 export type EntitlementInput = {
   planId: PlanId;
@@ -27,9 +24,9 @@ function isPaidEnforcementPlan(planId: PlanId): boolean {
 }
 
 /**
- * Pre-quota entitlement only. Quota / idempotency are handled in the reserve route transaction.
- * Commercial npm verify and enforce both require an active subscription on paid-capable plans;
- * Starter cannot use licensed verify or enforce.
+ * Pre-quota entitlement. Quota / idempotency are handled in the reserve route transaction.
+ * Starter: verify proceeds to quota (free tier — included quota in `commercial-plans.json`); enforce remains paid-only.
+ * Paid: verify and enforce need an active subscription (trialing counts as active in Stripe; mapped under subscriptionStatus in DB).
  */
 export function resolveCommercialEntitlement(
   input: EntitlementInput,
@@ -44,10 +41,7 @@ export function resolveCommercialEntitlement(
   }
 
   if (intent === "verify" && planId === "starter") {
-    return {
-      proceedToQuota: false,
-      denyCode: "VERIFICATION_REQUIRES_SUBSCRIPTION",
-    };
+    return { proceedToQuota: true };
   }
 
   let effectiveActive = subscriptionStatus === "active";

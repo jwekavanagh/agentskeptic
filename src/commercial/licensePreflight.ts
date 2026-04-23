@@ -13,7 +13,15 @@ function sleep(ms: number): Promise<void> {
 
 export type LicensePreflightIntent = "verify" | "enforce";
 
-type ReserveOk = { allowed: true; plan: string; limit: number; used: number };
+type ReserveOk = {
+  allowed: true;
+  plan: string;
+  limit: number;
+  used: number;
+  /** Omitted in legacy deployments. */
+  included_monthly?: number | null;
+  overage_count?: number;
+};
 type ReserveDeny = {
   allowed: false;
   code: string;

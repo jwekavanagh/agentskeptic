@@ -30,28 +30,40 @@ export const paidEnforcementPlanIds: readonly PlanId[] = [
   "enterprise",
 ];
 
+export type PlanDefinition = {
+  includedMonthly: number | null;
+  monthlyUsdCents: number | null;
+  /** Annual prepay (self-serve); null if not sold as yearly. */
+  yearlyUsdCents: number | null;
+  displayPrice: string;
+  displayPriceYearly: string | null;
+  /** Micro-USD per verification; 15_000 = $0.015 (overage line after included). */
+  overageMicrousdPerVerification: number | null;
+  allowOverage: boolean;
+  overageDisplayLabel: string | null;
+  marketingHeadline: string;
+  audience: string;
+  valueUnlock: string;
+  stripePriceEnvKeyMonthly: string | null;
+  stripePriceEnvKeyYearly: string | null;
+  stripeOveragePriceEnvKey: string | null;
+};
+
 export type CommercialPlansFile = {
   schemaVersion: number;
   /** Website pricing highlight only; not exposed on public plans API. */
   recommendedPlanId: PlanId;
-  plans: Record<
-    PlanId,
-    {
-      includedMonthly: number | null;
-      monthlyUsdCents: number | null;
-      displayPrice: string;
-      marketingHeadline: string;
-      audience: string;
-      valueUnlock: string;
-      stripePriceEnvKey: string | null;
-    }
-  >;
+  plans: Record<PlanId, PlanDefinition>;
 };
 
 export function loadCommercialPlans(): CommercialPlansFile {
   const dir = resolveConfigDir();
   const p = path.join(dir, "commercial-plans.json");
   return JSON.parse(readFileSync(p, "utf8")) as CommercialPlansFile;
+}
+
+export function planHasSelfServeCheckout(def: PlanDefinition): boolean {
+  return def.stripePriceEnvKeyMonthly !== null;
 }
 
 export function loadLegalMetadata(): { effectiveDate: string; termsVersion: string } {

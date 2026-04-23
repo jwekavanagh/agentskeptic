@@ -15,10 +15,10 @@ export const METERING_CLARIFIER = `In-process library use (createDecisionGate) e
 
 /** Two normative lines from docs/commercial-entitlement-policy.md — commercial-pricing-policy-parity.test.mjs requires these substrings in this file. */
 export const NORMATIVE_PAID_VERIFICATION_LINE =
-  "Licensed verification with the published npm CLI requires an active Individual, Team, Business, or Enterprise subscription (trial counts); monthly quota applies after subscribe.";
+  "Starter includes 1,000 published npm CLI verifications per month (hard cap, no overage). Individual, Team, and Business include higher monthly amounts plus pay-as-you-go overage; an active subscription is required (trial counts).";
 
 export const NORMATIVE_ENFORCEMENT_CI_LINE =
-  "CI locks, the enforce command, and quick verify with lock flags use the same subscription requirement.";
+  "CI locks, the enforce command, and quick verify with lock flags require a paid plan (not Starter) and the same active subscription and metering model.";
 
 export const PRICING_COMMERCIAL_TERMS_BULLETS = [
   {
@@ -62,7 +62,15 @@ export const PRICING_FEATURE_COMPARISON = {
       enterprise: "Yes",
     },
     {
-      feature: "Published npm CLI + API key",
+      feature: "Published npm CLI + API key (licensed / metered)",
+      starter: "1,000 / mo (hard cap, per key)",
+      individual: "Yes + overage",
+      team: "Yes + overage",
+      business: "Yes + overage",
+      enterprise: "Custom",
+    },
+    {
+      feature: "Lock / enforce commands (paid only)",
       starter: "No",
       individual: "Yes",
       team: "Yes",
@@ -70,19 +78,11 @@ export const PRICING_FEATURE_COMPARISON = {
       enterprise: "Yes",
     },
     {
-      feature: "Lock / enforce commands",
-      starter: "No",
-      individual: "Yes",
-      team: "Yes",
-      business: "Yes",
-      enterprise: "Yes",
-    },
-    {
-      feature: "Monthly CI-enforced verifications",
-      starter: "0",
-      individual: "2,000",
-      team: "10,000",
-      business: "50,000",
+      feature: "Included CI verifications (per key; then overage on paid plans)",
+      starter: "1,000",
+      individual: "5,000",
+      team: "20,000",
+      business: "100,000",
       enterprise: "Custom",
     },
   ] as const satisfies readonly PricingComparisonRow[],

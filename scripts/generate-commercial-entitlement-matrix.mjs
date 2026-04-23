@@ -20,10 +20,7 @@ function resolve({ plan, subscriptionStatus, intent, emergencyAllow }) {
     };
   }
   if (intent === "verify" && plan === "starter") {
-    return {
-      expectProceedToQuota: false,
-      expectedDenyCode: "VERIFICATION_REQUIRES_SUBSCRIPTION",
-    };
+    return { expectProceedToQuota: true, expectedDenyCode: null };
   }
   let effectiveActive = subscriptionStatus === "active";
   if (paid.includes(plan) && emergencyAllow) {

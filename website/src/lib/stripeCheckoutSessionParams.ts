@@ -4,7 +4,10 @@ import type { PlanId } from "@/lib/plans";
 export type BuildStripeCheckoutSessionCreateParamsInput = {
   stripeCustomerId: string | null | undefined;
   customerEmail: string;
-  priceId: string;
+  /** Flat recurring (monthly or annual) base price id. */
+  baseRecurringPriceId: string;
+  /** Per-verification overage (metered) price id; second subscription line item. */
+  overagePriceId: string;
   baseUrl: string;
   plan: PlanId;
   userId: string;
@@ -12,6 +15,7 @@ export type BuildStripeCheckoutSessionCreateParamsInput = {
 
 /**
  * Pure params for `stripe.checkout.sessions.create`. Either `customer` or `customer_email`, never both.
+ * Two `line_items`: base licensed recurring + metered overage.
  */
 export function buildStripeCheckoutSessionCreateParams(
   input: BuildStripeCheckoutSessionCreateParamsInput,
@@ -24,7 +28,10 @@ export function buildStripeCheckoutSessionCreateParams(
 
   const common: Stripe.Checkout.SessionCreateParams = {
     mode: "subscription",
-    line_items: [{ price: input.priceId, quantity: 1 }],
+    line_items: [
+      { price: input.baseRecurringPriceId, quantity: 1 },
+      { price: input.overagePriceId },
+    ],
     success_url,
     cancel_url,
     metadata: {

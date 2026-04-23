@@ -68,24 +68,42 @@ describe("buildCommercialAccountStatePayload billingPriceSyncHint", () => {
 });
 
 describe("computeWorstUrgency", () => {
-  it("treats limit 0 as evaluation tier (no at_cap when used is 0)", () => {
-    expect(computeWorstUrgency([{ apiKeyId: "k1", label: "API key", used: 0, limit: 0 }])).toBe("ok");
+  it("under included is ok (free / paid)", () => {
+    expect(
+      computeWorstUrgency(
+        [{ apiKeyId: "k1", label: "API key", used: 50, limit: 1000, overageOnKey: 0 }],
+        false,
+      ),
+    ).toBe("ok");
   });
 
-  it("treats limit 0 as evaluation tier when used is positive (e.g. after downgrade)", () => {
-    expect(computeWorstUrgency([{ apiKeyId: "k1", label: "API key", used: 5, limit: 0 }])).toBe("ok");
+  it("hard cap when over included and no overage (e.g. Starter)", () => {
+    expect(
+      computeWorstUrgency(
+        [{ apiKeyId: "k1", label: "API key", used: 1000, limit: 1000, overageOnKey: 0 }],
+        false,
+      ),
+    ).toBe("at_cap");
   });
 
-  it("still applies at_cap for positive limits", () => {
-    expect(computeWorstUrgency([{ apiKeyId: "k1", label: "API key", used: 10, limit: 10 }])).toBe("at_cap");
+  it("in_overage on paid with metered overage", () => {
+    expect(
+      computeWorstUrgency(
+        [{ apiKeyId: "k1", label: "API key", used: 6000, limit: 5000, overageOnKey: 1000 }],
+        true,
+      ),
+    ).toBe("in_overage");
   });
 
   it("skips null limits (enterprise) and uses positive key limits", () => {
     expect(
-      computeWorstUrgency([
-        { apiKeyId: "k1", label: "API key", used: 0, limit: null },
-        { apiKeyId: "k2", label: "API key", used: 2000, limit: 2000 },
-      ]),
+      computeWorstUrgency(
+        [
+          { apiKeyId: "k1", label: "API key", used: 0, limit: null, overageOnKey: 0 },
+          { apiKeyId: "k2", label: "API key", used: 2000, limit: 2000, overageOnKey: 0 },
+        ],
+        false,
+      ),
     ).toBe("at_cap");
   });
 });

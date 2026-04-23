@@ -3,7 +3,7 @@ import { productCopy } from "@/content/productCopy";
 import { enterpriseMailtoHref } from "@/lib/contactSalesEmail";
 import { indexableGuideCanonical } from "@/lib/indexableGuides";
 import type { Metadata } from "next";
-import { loadCommercialPlans, type PlanId } from "@/lib/plans";
+import { loadCommercialPlans, planHasSelfServeCheckout, type PlanId } from "@/lib/plans";
 import Link from "next/link";
 import { PricingClient, type PlanRow } from "./PricingClient";
 import { PricingCompareTable } from "./PricingCompareTable";
@@ -26,9 +26,11 @@ export default function PricingPage() {
     const p = raw[id];
     return {
       id,
-      checkoutPlanId: p.stripePriceEnvKey !== null ? id : null,
+      checkoutPlanId: planHasSelfServeCheckout(p) ? id : null,
       headline: p.marketingHeadline,
       displayPrice: p.displayPrice,
+      displayPriceYearly: p.displayPriceYearly,
+      overageDisplayLabel: p.overageDisplayLabel,
       includedMonthly: p.includedMonthly,
       audience: p.audience,
       valueUnlock: p.valueUnlock,

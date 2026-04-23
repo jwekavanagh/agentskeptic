@@ -234,8 +234,8 @@ export const pricingWhatYouGetPaidPlans = {
   title: "What paid plans unlock",
   bullets: [
     "Run verification in CI and automatically fail builds on mismatch",
-    "Use locks, enforce, and the published npm CLI",
-    "API keys for licensed features",
+    "Use locks, enforce, the published npm CLI, and pay-as-you-go overage when you exceed included quota",
+    "API keys for licensed features and usage-based billing via Stripe",
   ],
 } as const;
 
@@ -575,27 +575,20 @@ export const productCopy = {
     monthlyQuotaHeading: "Verification quota (this billing month)",
     monthlyQuotaYearMonth: (ym: string) => `Billing month: ${ym} (UTC).`,
     monthlyQuotaKeyLine: (used: number, limitLabel: string) =>
-      `${used} used · limit: ${limitLabel}`,
-    /** Starter plan: `includedMonthly` is 0; show reserve count without implying a paid allowance. */
-    monthlyQuotaStarterKeyLine: (used: number) =>
-      `${used} reservation event(s) this UTC month on this key · Starter has no included paid verification quota—subscribe from Pricing for licensed npm and monthly allowance.`,
+      `${used} used · included: ${limitLabel} (UTC month)`,
     monthlyQuotaUnlimited: "Unlimited",
     monthlyQuotaDistinctDays: (n: number) => `Verification days this month: ${n}.`,
     /** Shown as `title` on the verification-days line (UTC / quota nuance). */
     monthlyQuotaDistinctDaysTitle:
       "Each count is a separate UTC calendar day this billing month when you ran paid verification against your allowance.",
     quotaUrgencyCopy: {
-      ok: "Usage is comfortably below your plan limit.",
-      notice: "You have used at least 75% of your included verifications for this month.",
-      warning: "You have used at least 90% of your included verifications for this month.",
-      at_cap: "You have reached your included verifications for this month. Upgrade or wait for the next billing month.",
+      ok: "Usage is comfortably below your included verifications (per API key) for this month.",
+      notice: "You have used at least 75% of your included verifications (per key) for this month.",
+      warning: "You have used at least 90% of your included verifications, or you are at the top of the included amount before overage.",
+      in_overage:
+        "You are past the included amount on at least one key. Metered overage is billed; see the estimate above and your Stripe invoice.",
+      at_cap: "You have reached the hard cap (Starter) or a limit that blocks new runs. Upgrade or wait for the next month.",
     } as const,
-    /** Starter: prior paid usage on key after downgrade—do not imply an active paid allowance. */
-    quotaUrgencyStarterPriorUsage:
-      "This key may show usage from a prior paid plan. Starter has no included paid verification quota—subscribe from Pricing to run licensed npm verification again.",
-    /** Starter: activity signal without prior key usage (edge); still no paid allowance. */
-    quotaUrgencyStarterNoIncludedQuota:
-      "Starter does not include paid licensed verification quota. Subscribe from Pricing when you need API-keyed runs and a monthly allowance.",
     /** Shown instead of `quotaUrgencyCopy.ok` when there is no usage yet this month. */
     quotaUrgencyZeroUsage: "No verification usage recorded for this billing month yet.",
     a11yApiKeyReady: "API key generated. Copy it from the page and store it safely.",

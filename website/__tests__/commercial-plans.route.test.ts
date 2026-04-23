@@ -13,14 +13,19 @@ describe("GET /api/v1/commercial/plans", () => {
           displayPrice: string;
           marketingHeadline: string;
           includedMonthly: number | null;
+          allowOverage?: boolean;
+          overageMicrousdPerVerification?: number | null;
         }
       >;
     };
-    expect(j.schemaVersion).toBe(1);
+    expect(j.schemaVersion).toBe(2);
     expect(j.plans.starter?.marketingHeadline).toBe("Starter");
-    expect(j.plans.starter?.includedMonthly).toBe(0);
-    expect(j.plans.individual?.displayPrice).toBe("$25/month");
-    expect(j.plans.team?.displayPrice).toBe("$100/month");
+    expect(j.plans.starter?.includedMonthly).toBe(1000);
+    expect(j.plans.starter?.allowOverage).toBe(false);
+    expect(j.plans.individual?.displayPrice).toBe("$19/month");
+    expect(j.plans.team?.displayPrice).toBe("$79/month");
+    expect(j.plans.individual?.allowOverage).toBe(true);
+    expect(j.plans.individual?.overageMicrousdPerVerification).toBe(15000);
     const raw = JSON.stringify(j);
     expect(raw).not.toMatch(/stripePriceEnvKey|STRIPE_PRICE/i);
   });

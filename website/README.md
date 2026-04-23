@@ -62,7 +62,7 @@ Architecture, contracts, and operator checklist: **[`docs/website-product-experi
 
 ## Commercial operator env (Stripe, webhooks, account APIs)
 
-Required for the licensed website surface: **`DATABASE_URL`**, **`STRIPE_SECRET_KEY`**, **`STRIPE_WEBHOOK_SECRET`**, **`STRIPE_PRICE_*`** keys referenced from [`config/commercial-plans.json`](../config/commercial-plans.json), **`NEXT_PUBLIC_APP_URL`**, **`AUTH_SECRET`**, **`CONTACT_SALES_EMAIL`** (bare email — `website/.env.example`).
+Required for the licensed website surface: **`DATABASE_URL`**, **`STRIPE_SECRET_KEY`**, **`STRIPE_WEBHOOK_SECRET`**, all **`STRIPE_PRICE_*`** (monthly + yearly base) and **`STRIPE_OVERAGE_*`** (metered) keys listed in [`config/commercial-plans.json`](../config/commercial-plans.json), optional **`CRON_SECRET`** (overage usage report route), **`NEXT_PUBLIC_APP_URL`**, **`AUTH_SECRET`**, **`CONTACT_SALES_EMAIL`** (bare email — `website/.env.example`). Use **`../scripts/stripe-bootstrap.mjs`** to print env lines in Stripe test mode.
 
 Forward Stripe webhooks to **`/api/webhooks/stripe`** (local: `stripe listen --forward-to <BASE_URL>/api/webhooks/stripe`; use the printed secret as **`STRIPE_WEBHOOK_SECRET`**).
 

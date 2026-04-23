@@ -42,6 +42,7 @@ describe("POST /api/checkout — JSON error contract", () => {
       user: { id: "user-checkout-errors", email: "checkout-errors@example.com", name: null },
     } as never);
     vi.stubEnv("STRIPE_PRICE_TEAM", "price_checkout_errors_team");
+    vi.stubEnv("STRIPE_OVERAGE_TEAM", "price_checkout_errors_overage");
   });
 
   afterEach(() => {

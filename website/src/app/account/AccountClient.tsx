@@ -279,18 +279,10 @@ export function AccountClient({
     commercial.monthlyQuota.distinctReserveUtcDaysThisMonth === 0 &&
     (commercial.monthlyQuota.keys.length === 0 ||
       commercial.monthlyQuota.keys.every((k) => k.used === 0));
-  const starterAnyKeyUsed =
-    commercial.plan === "starter" && commercial.monthlyQuota.keys.some((k) => k.used > 0);
   const quotaUrgencyLine =
-    commercial.plan === "starter"
-      ? starterAnyKeyUsed
-        ? productCopy.account.quotaUrgencyStarterPriorUsage
-        : noQuotaConsumptionThisMonth
-          ? productCopy.account.quotaUrgencyZeroUsage
-          : productCopy.account.quotaUrgencyStarterNoIncludedQuota
-      : commercial.monthlyQuota.worstUrgency === "ok" && noQuotaConsumptionThisMonth
-        ? productCopy.account.quotaUrgencyZeroUsage
-        : productCopy.account.quotaUrgencyCopy[commercial.monthlyQuota.worstUrgency];
+    commercial.monthlyQuota.worstUrgency === "ok" && noQuotaConsumptionThisMonth
+      ? productCopy.account.quotaUrgencyZeroUsage
+      : productCopy.account.quotaUrgencyCopy[commercial.monthlyQuota.worstUrgency];
 
   return (
     <div className="card u-mt-1">
@@ -519,15 +511,26 @@ export function AccountClient({
             commercial.monthlyQuota.keys.map((k) => (
               <p key={k.apiKeyId}>
                 <strong>{k.label}:</strong>{" "}
-                {commercial.plan === "starter" && k.limit === 0
-                  ? productCopy.account.monthlyQuotaStarterKeyLine(k.used)
-                  : productCopy.account.monthlyQuotaKeyLine(
-                      k.used,
-                      k.limit === null ? productCopy.account.monthlyQuotaUnlimited : String(k.limit),
-                    )}
+                {productCopy.account.monthlyQuotaKeyLine(
+                  k.used,
+                  k.limit === null ? productCopy.account.monthlyQuotaUnlimited : String(k.limit),
+                )}
+                {k.overageOnKey > 0 ? (
+                  <span className="muted"> — {k.overageOnKey.toLocaleString()} overage (metered)</span>
+                ) : null}
               </p>
             ))
           )}
+          {commercial.monthlyQuota.overageProjectedLine ? (
+            <p className="muted" data-testid="overage-projected">
+              {commercial.monthlyQuota.overageProjectedLine}
+            </p>
+          ) : null}
+          {commercial.monthlyQuota.overageUpgradeNudge ? (
+            <p className="muted" data-testid="overage-nudge">
+              {commercial.monthlyQuota.overageUpgradeNudge}
+            </p>
+          ) : null}
           <p
             className="muted"
             title={productCopy.account.monthlyQuotaDistinctDaysTitle}

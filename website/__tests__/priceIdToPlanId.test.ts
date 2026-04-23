@@ -1,6 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   checkoutStripePriceFromEnvKey,
+  flatPriceIdFromSubscription,
+  overagePriceIdToPlanId,
   priceIdToPlanId,
   primarySubscriptionPriceId,
   stripePriceEnvCandidates,
@@ -22,13 +24,17 @@ describe("priceIdToPlanId", () => {
     expect(priceIdToPlanId("  price_ind_x  ")).toBe("individual");
   });
 
-  it("maps env-configured price ids to plan", () => {
+  it("maps env-configured monthly and yearly base price ids to plan", () => {
     vi.stubEnv("STRIPE_PRICE_INDIVIDUAL", "price_ind_x");
+    vi.stubEnv("STRIPE_PRICE_INDIVIDUAL_YEARLY", "price_ind_y_l");
     vi.stubEnv("STRIPE_PRICE_TEAM", "price_team_x");
+    vi.stubEnv("STRIPE_PRICE_TEAM_YEARLY", "price_team_y_l");
     vi.stubEnv("STRIPE_PRICE_BUSINESS", "price_bus_x");
+    vi.stubEnv("STRIPE_PRICE_BUSINESS_YEARLY", "price_bus_y_l");
     expect(priceIdToPlanId("price_ind_x")).toBe("individual");
+    expect(priceIdToPlanId("price_ind_y_l")).toBe("individual");
     expect(priceIdToPlanId("price_team_x")).toBe("team");
-    expect(priceIdToPlanId("price_bus_x")).toBe("business");
+    expect(priceIdToPlanId("price_bus_y_l")).toBe("business");
   });
 
   it("returns null for unknown price id", () => {
@@ -48,6 +54,18 @@ describe("priceIdToPlanId", () => {
   });
 });
 
+describe("overagePriceIdToPlanId", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("maps metered overage price to plan", () => {
+    vi.stubEnv("STRIPE_OVERAGE_INDIVIDUAL", "price_ov_i");
+    expect(overagePriceIdToPlanId("price_ov_i")).toBe("individual");
+    expect(overagePriceIdToPlanId("price_other")).toBeNull();
+  });
+});
+
 describe("stripePriceEnvCandidates", () => {
   it("parses comma and whitespace lists", () => {
     expect(stripePriceEnvCandidates(" a , b  c ")).toEqual(["a", "b", "c"]);
@@ -60,25 +78,41 @@ describe("stripePriceEnvCandidates", () => {
   });
 });
 
-describe("primarySubscriptionPriceId", () => {
-  it("reads first item price id", () => {
-    expect(
-      primarySubscriptionPriceId({
-        items: { data: [{ price: { id: "price_abc" } }] },
-      }),
-    ).toBe("price_abc");
+describe("flatPriceIdFromSubscription", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
   });
 
-  it("handles expanded price as string", () => {
-    expect(
-      primarySubscriptionPriceId({
-        items: { data: [{ price: "price_str" }] },
-      }),
-    ).toBe("price_str");
+  it("ignores shuffled line order: metered overage first, then base", () => {
+    vi.stubEnv("STRIPE_OVERAGE_TEAM", "price_overage_team");
+    vi.stubEnv("STRIPE_PRICE_TEAM", "price_flat_team");
+    const sub = {
+      items: {
+        data: [
+          { price: { id: "price_overage_team", recurring: { usage_type: "metered" } } },
+          { price: { id: "price_flat_team", recurring: { usage_type: "licensed" } } },
+        ],
+      },
+    };
+    expect(flatPriceIdFromSubscription(sub)).toBe("price_flat_team");
   });
 
-  it("returns null when missing", () => {
-    expect(primarySubscriptionPriceId({ items: { data: [] } })).toBeNull();
-    expect(primarySubscriptionPriceId({})).toBeNull();
+  it("identifies overage by env mapping when price is a bare id", () => {
+    vi.stubEnv("STRIPE_OVERAGE_BUSINESS", "price_ov_b");
+    vi.stubEnv("STRIPE_PRICE_BUSINESS", "price_f_b");
+    const sub = {
+      items: {
+        data: [{ price: "price_ov_b" }, { price: "price_f_b" }],
+      },
+    };
+    expect(flatPriceIdFromSubscription(sub)).toBe("price_f_b");
+  });
+});
+
+/** Guard: do not reintroduce items[0]-only for plan mapping. */
+describe("primarySubscriptionPriceId (alias)", () => {
+  it("delegates to flat price resolution", () => {
+    const sub = { items: { data: [{ price: { id: "price_only" } }] } };
+    expect(primarySubscriptionPriceId(sub)).toBe("price_only");
   });
 });

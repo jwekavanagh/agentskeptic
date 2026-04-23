@@ -25,7 +25,7 @@ describe("/integrate completion semantics (RTL)", () => {
     vi.clearAllMocks();
   });
 
-  it("crossing is primary h2; spine checkpoint is h3 inside closed details; activation commands nest under details; main omits forbidden phrases", () => {
+  it("crossing is primary h2; spine checkpoint is h3 inside optional spine section; activation commands nest there; main omits forbidden phrases", () => {
     const { container } = render(<IntegratePage />);
     const main = screen.getByRole("main");
     const headings = within(main).getAllByRole("heading", { level: 2 });
@@ -34,11 +34,11 @@ describe("/integrate completion semantics (RTL)", () => {
     expect(within(main).queryByRole("heading", { level: 2, name: EXPECT_SPINE_CHECKPOINT_H3 })).toBeNull();
     expect(within(main).getByRole("heading", { level: 3, name: EXPECT_SPINE_CHECKPOINT_H3 })).toBeTruthy();
 
-    const details = container.querySelector("details.integrate-optional-spine");
-    expect(details).toBeTruthy();
+    const spine = container.querySelector("section.integrate-optional-spine");
+    expect(spine).toBeTruthy();
     const activation = container.querySelector('[data-testid="integrator-activation-commands"]');
     expect(activation).toBeTruthy();
-    expect(details?.contains(activation)).toBe(true);
+    expect(spine?.contains(activation)).toBe(true);
 
     const aggregate = main.textContent ?? "";
     for (const bad of FORBIDDEN_IN_MAIN) {

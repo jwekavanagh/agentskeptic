@@ -41,17 +41,18 @@ describe("marketing public route DOM invariants", { timeout: 180_000 }, () => {
     expect(BANNED.test(text)).toBe(false);
   });
 
-  it("integrate has pack-led pre, optional spine in details, and GitHub doc links", async () => {
+  it("integrate has pack-led pre, optional spine section, and GitHub doc links", async () => {
     const html = await getSiteHtml("/integrate");
     const $ = cheerio.load(html);
     const $main = $("main.integrate-main");
-    // Page includes a second <pre> inside <details> (activation shell); O1 crossing command is this node only.
+    // Page includes a second <pre> inside the optional spine section (activation shell); O1 crossing command is this node only.
     const $packPre = $main.find('[data-testid="integrate-crossing-commands"]');
     expect($packPre.length).toBe(1);
     const packNorm = $packPre.text().replace(/\s+/g, " ");
     const cmdNorm = marketing.integratePage.packLedCommand.replace(/\s+/g, " ").trim();
     expect(packNorm).toContain(cmdNorm);
-    expect($main.find("details").length).toBe(1);
+    expect($main.find("section.integrate-optional-spine").length).toBe(1);
+    expect($main.find("details").length).toBe(0);
     expect($main.find('[data-testid="integrator-activation-commands"]').length).toBe(1);
     const gh = $main.find('a[href^="https://github.com/"]');
     expect(gh.length).toBeGreaterThanOrEqual(1);

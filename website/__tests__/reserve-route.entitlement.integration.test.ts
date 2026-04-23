@@ -1,6 +1,6 @@
 /** Server-side counterpart to OSS CLI enforce gate — see docs/commercial-enforce-gate-normative.md */
 import { NextRequest } from "next/server";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 const LOOKUP = "test_key_lookup_sha256_hex_64_chars________________________________";
 
@@ -85,6 +85,9 @@ vi.mock("@/db/client", () => ({
 }));
 
 describe("POST /api/v1/usage/reserve entitlement", () => {
+  beforeAll(async () => {
+    await import("@/app/api/v1/usage/reserve/route");
+  });
   beforeEach(() => {
     entState.plan = "starter";
     entState.subscriptionStatus = "none";
@@ -119,13 +122,12 @@ describe("POST /api/v1/usage/reserve entitlement", () => {
     expect(j.upgrade_url).toBe("http://127.0.0.1:3000/pricing");
   });
 
-  it("starter + verify → 403 VERIFICATION_REQUIRES_SUBSCRIPTION + upgrade_url", async () => {
+  it("starter + verify → 200 allowed (free included quota; commercial-plans v2)", async () => {
     const res = await postReserve({ intent: "verify" });
-    expect(res.status).toBe(403);
+    expect(res.status).toBe(200);
     const j = (await res.json()) as Record<string, unknown>;
-    expect(j.allowed).toBe(false);
-    expect(j.code).toBe("VERIFICATION_REQUIRES_SUBSCRIPTION");
-    expect(j.upgrade_url).toBe("http://127.0.0.1:3000/pricing");
+    expect(j.allowed).toBe(true);
+    expect(j.overage_count).toBe(0);
   });
 
   it("team + inactive + verify → 403 SUBSCRIPTION_INACTIVE", async () => {

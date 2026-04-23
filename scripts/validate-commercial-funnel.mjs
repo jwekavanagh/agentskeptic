@@ -189,8 +189,17 @@ const websiteTestEnv = {
   STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY ?? "sk_test_placeholder",
   STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET ?? "whsec_placeholder",
   STRIPE_PRICE_INDIVIDUAL: process.env.STRIPE_PRICE_INDIVIDUAL ?? "price_individual_placeholder",
+  STRIPE_PRICE_INDIVIDUAL_YEARLY:
+    process.env.STRIPE_PRICE_INDIVIDUAL_YEARLY ?? "price_individual_y_placeholder",
   STRIPE_PRICE_TEAM: process.env.STRIPE_PRICE_TEAM ?? "price_team_placeholder",
+  STRIPE_PRICE_TEAM_YEARLY: process.env.STRIPE_PRICE_TEAM_YEARLY ?? "price_team_y_placeholder",
   STRIPE_PRICE_BUSINESS: process.env.STRIPE_PRICE_BUSINESS ?? "price_business_placeholder",
+  STRIPE_PRICE_BUSINESS_YEARLY:
+    process.env.STRIPE_PRICE_BUSINESS_YEARLY ?? "price_business_y_placeholder",
+  STRIPE_OVERAGE_INDIVIDUAL: process.env.STRIPE_OVERAGE_INDIVIDUAL ?? "price_overage_i_placeholder",
+  STRIPE_OVERAGE_TEAM: process.env.STRIPE_OVERAGE_TEAM ?? "price_overage_t_placeholder",
+  STRIPE_OVERAGE_BUSINESS: process.env.STRIPE_OVERAGE_BUSINESS ?? "price_overage_b_placeholder",
+  CRON_SECRET: process.env.CRON_SECRET ?? "x".repeat(32),
 };
 
 websiteTestEnv.NEXT_PUBLIC_APP_URL = normalize(anchors.productionCanonicalOrigin);

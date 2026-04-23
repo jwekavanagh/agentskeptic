@@ -5,16 +5,16 @@ Regenerate with `node scripts/sync-commercial-entitlement-doc.mjs`.
 
 | plan | subscriptionStatus | intent | emergencyAllow | expectProceedToQuota | expectedDenyCode |
 |------|------------------|--------|----------------|----------------------|------------------|
-| starter | none | verify | false | false | VERIFICATION_REQUIRES_SUBSCRIPTION |
-| starter | none | verify | true | false | VERIFICATION_REQUIRES_SUBSCRIPTION |
+| starter | none | verify | false | true | null |
+| starter | none | verify | true | true | null |
 | starter | none | enforce | false | false | ENFORCEMENT_REQUIRES_PAID_PLAN |
 | starter | none | enforce | true | false | ENFORCEMENT_REQUIRES_PAID_PLAN |
-| starter | active | verify | false | false | VERIFICATION_REQUIRES_SUBSCRIPTION |
-| starter | active | verify | true | false | VERIFICATION_REQUIRES_SUBSCRIPTION |
+| starter | active | verify | false | true | null |
+| starter | active | verify | true | true | null |
 | starter | active | enforce | false | false | ENFORCEMENT_REQUIRES_PAID_PLAN |
 | starter | active | enforce | true | false | ENFORCEMENT_REQUIRES_PAID_PLAN |
-| starter | inactive | verify | false | false | VERIFICATION_REQUIRES_SUBSCRIPTION |
-| starter | inactive | verify | true | false | VERIFICATION_REQUIRES_SUBSCRIPTION |
+| starter | inactive | verify | false | true | null |
+| starter | inactive | verify | true | true | null |
 | starter | inactive | enforce | false | false | ENFORCEMENT_REQUIRES_PAID_PLAN |
 | starter | inactive | enforce | true | false | ENFORCEMENT_REQUIRES_PAID_PLAN |
 | individual | none | verify | false | false | SUBSCRIPTION_INACTIVE |

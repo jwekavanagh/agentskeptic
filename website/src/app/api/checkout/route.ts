@@ -6,16 +6,29 @@ import {
   type CheckoutStartedMetadata,
 } from "@/lib/funnelCommercialMetadata";
 import { logFunnelEvent } from "@/lib/funnelEvent";
-import { loadCommercialPlans } from "@/lib/plans";
-import type { PlanId } from "@/lib/plans";
+import { loadCommercialPlans, planHasSelfServeCheckout, type PlanId } from "@/lib/plans";
 import { getCanonicalSiteOrigin } from "@/lib/canonicalSiteOrigin";
-import { checkoutStripePriceFromEnvKey } from "@/lib/priceIdToPlanId";
+import { checkoutBasePriceIdForInterval, checkoutOveragePriceId } from "@/lib/priceIdToPlanId";
 import { isStripeMissingCustomerError } from "@/lib/stripeMissingCustomerError";
 import { buildStripeCheckoutSessionCreateParams } from "@/lib/stripeCheckoutSessionParams";
 import { getStripe } from "@/lib/stripeServer";
 import type Stripe from "stripe";
 import { and, eq } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
+
+export type CheckoutBillingInterval = "monthly" | "yearly";
+
+function parseBody(raw: unknown): { plan: PlanId; interval: CheckoutBillingInterval } | null {
+  if (!raw || typeof raw !== "object") return null;
+  const p = (raw as { plan?: unknown; interval?: unknown }).plan;
+  const intervalRaw = (raw as { interval?: unknown }).interval;
+  if (typeof p !== "string") return null;
+  const plans = loadCommercialPlans();
+  if (!plans.plans[p as PlanId]) return null;
+  const interval: CheckoutBillingInterval =
+    intervalRaw === "yearly" ? "yearly" : "monthly";
+  return { plan: p as PlanId, interval };
+}
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   const session = await auth();
@@ -27,31 +40,50 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const customerEmail = session.user.email;
 
   let plan: PlanId;
-  let envKey: string;
+  let billingInterval: CheckoutBillingInterval;
   try {
-    const j = (await req.json()) as { plan?: unknown };
-    const raw = j.plan;
-    if (typeof raw !== "string") {
+    const j = (await req.json()) as unknown;
+    const parsed = parseBody(j);
+    if (!parsed) {
       return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
     }
     const plans = loadCommercialPlans();
-    const def = plans.plans[raw as PlanId];
-    if (!def) {
-      return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
-    }
-    const key = def.stripePriceEnvKey;
-    if (!key) {
+    const def = plans.plans[parsed.plan];
+    if (!def || !planHasSelfServeCheckout(def)) {
       return NextResponse.json({ error: "Plan not billable" }, { status: 400 });
     }
-    plan = raw as PlanId;
-    envKey = key;
+    if (parsed.interval === "yearly" && def.stripePriceEnvKeyYearly === null) {
+      return NextResponse.json({ error: "Annual checkout not available for this plan" }, { status: 400 });
+    }
+    plan = parsed.plan;
+    billingInterval = parsed.interval;
   } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const priceId = checkoutStripePriceFromEnvKey(envKey);
-  if (!priceId) {
-    return NextResponse.json({ error: "Missing Stripe price env" }, { status: 500 });
+  const basePrice = checkoutBasePriceIdForInterval(plan, billingInterval);
+  if (basePrice.priceId === null) {
+    return NextResponse.json(
+      {
+        error: "CONFIG",
+        message:
+          basePrice.envKey && basePrice.error === "not_configured"
+            ? `Missing Stripe base price: set process.env.${basePrice.envKey} to a Price id.`
+            : "Missing Stripe base price for this plan.",
+      },
+      { status: 500 },
+    );
+  }
+
+  const over = checkoutOveragePriceId(plan);
+  if (!over.priceId || !over.envKey) {
+    return NextResponse.json(
+      {
+        error: "CONFIG",
+        message: "Missing overage (metered) Stripe price. Set the STRIPE_OVERAGE_* environment variable for this plan.",
+      },
+      { status: 500 },
+    );
   }
 
   const base = getCanonicalSiteOrigin();
@@ -77,7 +109,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const sessionParams = buildStripeCheckoutSessionCreateParams({
     stripeCustomerId: urow?.stripeCustomerId,
     customerEmail,
-    priceId,
+    baseRecurringPriceId: basePrice.priceId,
+    overagePriceId: over.priceId,
     baseUrl: base,
     plan,
     userId,
@@ -114,7 +147,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       const fallbackParams = buildStripeCheckoutSessionCreateParams({
         stripeCustomerId: null,
         customerEmail,
-        priceId,
+        baseRecurringPriceId: basePrice.priceId,
+        overagePriceId: over.priceId!,
         baseUrl: base,
         plan,
         userId,

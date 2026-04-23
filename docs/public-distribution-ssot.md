@@ -84,9 +84,7 @@ API semantics remain in **`docs/commercial-ssot.md`**.
 
 ### CI (`jobs.commercial.env`)
 
-Exactly **eight** variables (names only; values match `.github/workflows/ci.yml`):
-
-`DATABASE_URL`, `AUTH_SECRET`, `CONTACT_SALES_EMAIL`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_INDIVIDUAL`, `STRIPE_PRICE_TEAM`, `STRIPE_PRICE_BUSINESS`
+Core variables (names; values in `.github/workflows/ci.yml`) include: `DATABASE_URL`, `AUTH_SECRET`, `CONTACT_SALES_EMAIL`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, base **`STRIPE_PRICE_*`** (monthly and yearly per plan), metered **`STRIPE_OVERAGE_*`**, and **`CRON_SECRET`** for the internal overage report route. See `website/.env.example` and [`config/commercial-plans.json`](../config/commercial-plans.json).
 
 **`NEXT_PUBLIC_APP_URL`** and **`VERCEL_ENV`** are **not** set in YAML. `scripts/validate-commercial-funnel.mjs` sets them from `config/marketing.json` (`normalize(productionCanonicalOrigin)` and `VERCEL_ENV=production`) for Drizzle migrate steps and website Vitest.
 

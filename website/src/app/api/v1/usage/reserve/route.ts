@@ -8,12 +8,11 @@ import {
   type ReserveIntent,
   type SubscriptionStatusForEntitlement,
 } from "@/lib/commercialEntitlement";
-import type { PlanId } from "@/lib/plans";
+import { loadCommercialPlans, paidEnforcementPlanIds, type PlanId } from "@/lib/plans";
 import { buildReserveAllowedMetadata } from "@/lib/funnelCommercialMetadata";
 import { logFunnelEvent } from "@/lib/funnelEvent";
 import { getCanonicalSiteOrigin } from "@/lib/canonicalSiteOrigin";
 import { billingPriceUnmappedMessage } from "@/lib/billingPriceUnmappedMessage";
-import { loadCommercialPlans } from "@/lib/plans";
 import { priceIdToPlanId } from "@/lib/priceIdToPlanId";
 
 function ymNow(): string {
@@ -23,6 +22,43 @@ function ymNow(): string {
 function publicUpgradeUrl(): string {
   const base = getCanonicalSiteOrigin().replace(/\/$/, "");
   return `${base}/pricing`;
+}
+
+/**
+ * @param usedTotal — count after a successful reservation, or count on duplicate (uncharged).
+ * @param included — cap from plan; `null` means unlimited (enterprise).
+ */
+function reserveAllowedPayload(
+  planId: PlanId,
+  usedTotal: number,
+  included: number | null,
+): {
+  allowed: true;
+  plan: PlanId;
+  limit: number;
+  used: number;
+  included_monthly: number | null;
+  overage_count: number;
+} {
+  if (included === null) {
+    return {
+      allowed: true,
+      plan: planId,
+      limit: usedTotal,
+      used: usedTotal,
+      included_monthly: null,
+      overage_count: 0,
+    };
+  }
+  const overage = Math.max(0, usedTotal - included);
+  return {
+    allowed: true,
+    plan: planId,
+    limit: included,
+    used: usedTotal,
+    included_monthly: included,
+    overage_count: overage,
+  };
 }
 
 function parseIntent(raw: unknown): ReserveIntent | null {
@@ -141,7 +177,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
 
   const stripePriceIdRaw = row.user.stripePriceId?.trim();
-  if (stripePriceIdRaw && priceIdToPlanId(stripePriceIdRaw) === null) {
+  const needsMappedStripePrice = (paidEnforcementPlanIds as readonly string[]).includes(planId);
+  if (needsMappedStripePrice && stripePriceIdRaw && priceIdToPlanId(stripePriceIdRaw) === null) {
     const upgrade_url = publicUpgradeUrl();
     console.error(
       JSON.stringify({
@@ -175,9 +212,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     const message =
       ent.denyCode === "ENFORCEMENT_REQUIRES_PAID_PLAN"
         ? "Enforcing correctness in workflows requires a paid plan."
-        : ent.denyCode === "VERIFICATION_REQUIRES_SUBSCRIPTION"
-          ? "Licensed contract verification requires an active subscription. Subscribe (trial available) from pricing, then use your API key with the commercial CLI."
-          : "Subscription is not active for licensed verification or CI enforcement.";
+        : "Subscription is not active for licensed verification or CI enforcement.";
     console.error(
       JSON.stringify({
         kind: "reserve_entitlement_deny",
@@ -198,8 +233,11 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     );
   }
 
-  const limit =
-    planDef.includedMonthly === null ? Number.MAX_SAFE_INTEGER : planDef.includedMonthly;
+  const includedCap =
+    planDef.includedMonthly === null ? null : (planDef.includedMonthly as number);
+  const includedForQuota =
+    includedCap === null ? Number.MAX_SAFE_INTEGER : includedCap;
+  const allowOverage = planDef.allowOverage === true;
 
   const yearMonth = ymNow();
 
@@ -241,12 +279,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
             .for("update");
         }
         const used = c[0]?.count ?? 0;
-        return {
-          allowed: true as const,
-          plan: planId,
-          limit: limit === Number.MAX_SAFE_INTEGER ? used : limit,
-          used,
-        };
+        return { ok: true as const, usedTotal: used, duplicate: true as const };
       }
 
       let locked = await tx
@@ -280,7 +313,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
       const used = locked[0]!.count;
 
-      if (used >= limit) {
+      const atOrOverIncluded = used >= includedForQuota;
+      if (atOrOverIncluded && !allowOverage) {
         return {
           denied: true as const,
           code: "QUOTA_EXCEEDED" as const,
@@ -304,12 +338,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
           ),
         );
 
-      return {
-        allowed: true as const,
-        plan: planId,
-        limit: limit === Number.MAX_SAFE_INTEGER ? newCount : limit,
-        used: newCount,
-      };
+      return { ok: true as const, usedTotal: newCount, duplicate: false as const };
     });
 
     if ("denied" in result && result.denied) {
@@ -319,13 +348,22 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       );
     }
 
+    if (!("ok" in result) || !result.ok) {
+      return NextResponse.json(
+        { allowed: false, code: "SERVER_ERROR", message: "Reservation failed." },
+        { status: 503 },
+      );
+    }
+
+    const body = reserveAllowedPayload(planId, result.usedTotal, includedCap);
+
     await logFunnelEvent({
       event: "reserve_allowed",
       userId: row.user.id,
       metadata: buildReserveAllowedMetadata(intent),
     });
 
-    return NextResponse.json(result);
+    return NextResponse.json(body);
   } catch (e) {
     console.error(e);
     return NextResponse.json(

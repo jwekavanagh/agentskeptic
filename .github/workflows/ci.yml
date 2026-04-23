@@ -111,8 +111,15 @@ jobs:
       STRIPE_SECRET_KEY: sk_test_ci_placeholder
       STRIPE_WEBHOOK_SECRET: whsec_ci_placeholder
       STRIPE_PRICE_INDIVIDUAL: price_ci_individual
+      STRIPE_PRICE_INDIVIDUAL_YEARLY: price_ci_individual_y
       STRIPE_PRICE_TEAM: price_ci_team
+      STRIPE_PRICE_TEAM_YEARLY: price_ci_team_y
       STRIPE_PRICE_BUSINESS: price_ci_business
+      STRIPE_PRICE_BUSINESS_YEARLY: price_ci_business_y
+      STRIPE_OVERAGE_INDIVIDUAL: price_ci_ov_i
+      STRIPE_OVERAGE_TEAM: price_ci_ov_t
+      STRIPE_OVERAGE_BUSINESS: price_ci_ov_b
+      CRON_SECRET: ci_cron_secret_placeholder_32chars_min
       AGENTSKEPTIC_TELEMETRY: "0"
     steps:
       - uses: actions/checkout@v5

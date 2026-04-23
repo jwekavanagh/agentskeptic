@@ -12,7 +12,7 @@ This document is the **narrative SSOT** for the thin commercial layer (website, 
 
 ## Commercial boundary
 
-The **published npm CLI** path for licensed contract **`verify`**, **`quick`** with lock flags, and **`enforce`** requires an **active** Individual, Team, Business, or Enterprise subscription (Stripe **trialing** counts), a valid API key, and a successful **`POST /api/v1/usage/reserve`**. The default **OSS** build from this repository runs contract **`verify`** / **`quick`** without a license server and can emit **`--output-lock`** fixtures; **`--expect-lock`** and **`agentskeptic enforce`** on the published npm package remain **commercial-gated**. **Starter** has **no** included paid verification quota (`includedMonthly` is **0**): it is for evaluation until you subscribe. Full matrix: *Free vs paid boundary (normative v1)* later in this document.
+The **published npm CLI** path for licensed contract **`verify`** and **`quick`** with lock flags uses a valid API key and a successful **`POST /api/v1/usage/reserve`**. **Starter** includes a **finite free** monthly allowance for licensed **`verify`** (see [`config/commercial-plans.json`](../config/commercial-plans.json)); **`enforce`** and **`--expect-lock`** require a **paid** plan with an **active** Individual, Team, Business, or Enterprise subscription (Stripe **trialing** counts). The default **OSS** build runs contract **`verify`** / **`quick`** without a license server and can emit **`--output-lock`** fixtures. **Paid** plans add **metered overage** after the included amount (Stripe subscription has a **base** Price + **metered** overage Price; see `scripts/stripe-bootstrap.mjs`). Full matrix: *Free vs paid boundary* below.
 
 In-process **`createDecisionGate`** in your application evaluates read-only SQL and **does not** call the reserve API; metering applies to the **CLI entry points** that perform license preflight.
 
@@ -26,26 +26,20 @@ Run the mechanical first-run path on the canonical site at **`/integrate`** (clo
 
 ## Approved product scope (v1)
 
-**Original stakeholder narrative (reference):** Starter free (evaluation tier; no paid CLI quota in v1 config); Individual $25/mo (2k included); Team $100/mo (10k included, per-run overage); Business $300/mo (50k + volume); Enterprise custom.
+**Normative numbers and prices** are **only** in [`config/commercial-plans.json`](../config/commercial-plans.json) (`schemaVersion: 2`). Do not duplicate tier tables here—this file explains **behavior**.
 
-**v1 implementation:**
+**Implementation (v2):**
 
-- **Hard monthly caps** per plan from [`config/commercial-plans.json`](../config/commercial-plans.json). **Licensed** npm **`verify`**, **`quick`**, **`enforce`**, and **CI lock flags** on batch/quick require an **active Stripe subscription** on Individual, Team, Business, or Enterprise (including **trialing**), enforced in `POST /api/v1/usage/reserve`. **Starter** cannot pass licensed preflight until the user subscribes. Starter’s numeric `includedMonthly` is **0**: it is **not** a usable licensed allowance (entitlement denies licensed `verify` / `enforce` before quota); paid tiers use positive caps.
-- **Per-run overage billing** ($0.01/run, volume discounts) is **deferred to v1.1+** (documented backlog; do not advertise on the live site until implemented).
+- **Included + overage:** Per-plan monthly **included** verification count and **per-verification overage** rate (micro‑USD in JSON) apply to **paid** self-serve tiers. **`POST /api/v1/usage/reserve`** allows usage past included when `allowOverage` is true; **Starter** has a **hard cap** (no overage). **Enterprise** is unlimited / contract.
+- **Stripe:** Checkout creates two **line items** (licensed **base** + **metered** overage). **`user.stripe_price_id`** stores the **non‑metered** base Price id (`flatPriceIdFromSubscription` in code). Overage quantities are reported to Stripe on a schedule (see `POST /api/internal/usage/overage-reconcile`).
 
 **Enterprise** is **sales-assisted only** (mailto + operator SQL). It is **outside** the self-serve non-negotiable outcome and **outside** the binary `solved` verdict for the commercial funnel.
 
-### Numeric limits (must match JSON)
+### Numeric limits (SSOT)
 
-<!-- commercial-plans-parity: embedded from config/commercial-plans.json — scripts/check-commercial-plans-ssot.mjs validates -->
+**Source of truth:** [`config/commercial-plans.json`](../config/commercial-plans.json) — included amounts, list prices, annual prepay cents, overage microusd/verification, and Stripe env key *names* (not secrets).
 
-| Plan       | Included verifications / month (v1 cap) | Monthly fee (v1) |
-|------------|----------------------------------------|------------------|
-| Starter    | 0                                      | Free             |
-| Individual | 2000                                   | $25/mo           |
-| Team       | 10000                                  | $100/mo          |
-| Business   | 50000                                  | $300/mo          |
-| Enterprise | Custom                                 | Custom           |
+<!-- commercial-plans-parity: included monthly (starter, individual, team, business) = 1000, 5000, 20000, 100000 — scripts/check-commercial-plans-ssot.mjs -->
 
 ### Free vs paid boundary (normative v1)
 
@@ -57,7 +51,7 @@ Single matrix for what the **default OSS artifact** vs **published commercial np
 | **`--output-lock`** on batch / quick | Yes (generates lock fixture; no reserve) | Yes (reserve `intent=verify`) | N/A |
 | **`--expect-lock`** on batch / quick | No (exit `ENFORCE_REQUIRES_COMMERCIAL_BUILD`) | Yes (reserve `intent=enforce` per lock orchestration) | N/A |
 | **`agentskeptic enforce`** | No | Yes (reserve `intent=enforce`) | N/A |
-| Licensed monthly quota consumption | No | Yes, per API key and plan cap | No (entitlement denies before quota; `includedMonthly` is 0) |
+| Licensed monthly quota consumption | No | Yes, per API key; included then overage on paid | Yes, up to Starter **included** cap per key (`includedMonthly` in JSON; no overage) |
 
 **Why this shape:** OSS stays useful for adoption and local experimentation (including generating lock artifacts). **Subscription-backed reliance** for the published npm path—licensed verify, compare against an existing lock in CI, and **`enforce`**—is gated by the license server and Stripe-backed entitlement. Normative CLI split: **[`docs/commercial-enforce-gate-normative.md`](commercial-enforce-gate-normative.md)**; CI recipes: **[`docs/ci-enforcement.md`](ci-enforcement.md)**.
 
@@ -84,15 +78,15 @@ Forks: build with `oss` to omit the gate.
 
 - **Auth:** `Authorization: Bearer <api_key>`
 - **Body:** `{"run_id": string, "issued_at": ISO8601, "intent"?: "verify"|"enforce"}`; reject if `|now - issued_at| > 300` seconds.
-- **200:** `{"allowed":true,"plan","limit","used"}`
+- **200:** `{"allowed":true,"plan","limit","used","included_monthly","overage_count"}` (total `used` may exceed `limit` on paid overage)
 - **401:** invalid/revoked key
-- **403:** `QUOTA_EXCEEDED`, `VERIFICATION_REQUIRES_SUBSCRIPTION`, `ENFORCEMENT_REQUIRES_PAID_PLAN`, `SUBSCRIPTION_INACTIVE`, `BILLING_PRICE_UNMAPPED`, or other entitlement/deny bodies; may include `upgrade_url`
+- **403:** `QUOTA_EXCEEDED`, `ENFORCEMENT_REQUIRES_PAID_PLAN`, `SUBSCRIPTION_INACTIVE`, `BILLING_PRICE_UNMAPPED` (paid plans with a set `user.stripe_price_id` only), or other entitlement/deny bodies; may include `upgrade_url`
 - **400:** bad request
 - **503:** server error
 
-**Emergency:** `RESERVE_EMERGENCY_ALLOW=1` — valid keys on **individual/team/business/enterprise** bypass the **inactive subscription** check for **`verify`** and **`enforce`**. **Starter `verify` and `enforce` remain denied.** **`BILLING_PRICE_UNMAPPED` is never bypassed** (misconfigured `STRIPE_PRICE_*` mapping is a deployment defect, not a subscription pause). **Quota and idempotency unchanged** (still enforced).
+**Emergency:** `RESERVE_EMERGENCY_ALLOW=1` — valid keys on **individual/team/business/enterprise** bypass the **inactive subscription** check for **`verify`** and **`enforce`**. **Starter `enforce` remains denied** (paid-only). **Starter `verify` is not subscription-gated** (free included quota). **`BILLING_PRICE_UNMAPPED` is never bypassed** for **paid** subscriptions when a price id is set. **Quota and idempotency unchanged** (still enforced).
 
-**`BILLING_PRICE_UNMAPPED`:** returned when **`user.stripe_price_id`** is set and the deployment’s **`STRIPE_PRICE_*`** env values do not recognize that Price id. Remediation is **only** to align env with Stripe, redeploy, or contact the operator—**not** the Billing Portal or account UI.
+**`BILLING_PRICE_UNMAPPED`:** returned for **paid** plan users when **`user.stripe_price_id`** is set and the deployment’s **base** `STRIPE_PRICE_*` env values do not recognize that Price id. Remediation: align **monthly, yearly, and overage** `STRIPE_*` envs with Stripe, redeploy, or contact the operator.
 
 ## HTTP — `GET /api/v1/commercial/plans`
 
@@ -105,9 +99,9 @@ Forks: build with `oss` to omit the gate.
 
 ### Stripe → database
 
-- Webhooks: **`checkout.session.completed`**, **`customer.subscription.updated`**, **`customer.subscription.deleted`**. Operator env: **`STRIPE_SECRET_KEY`**, **`STRIPE_WEBHOOK_SECRET`**, **`STRIPE_PRICE_*`** (see *Validation matrix* below for `stripe listen`).
-- **`user.stripe_price_id`:** nullable; stores the primary recurring Stripe **Price** id from the subscription object. Used to compute **`priceMapping`** (`mapped` vs `unmapped`) on the account API without calling Stripe on every page load.
-- **Tier (`user.plan`) for self-serve prices:** derived from that Price id via the same env-backed mapping as [`config/commercial-plans.json`](../config/commercial-plans.json) (`STRIPE_PRICE_*`). Checkout **metadata.plan** is not the long-term authority for tier.
+- Webhooks: **`checkout.session.completed`**, **`customer.subscription.updated`**, **`customer.subscription.deleted`**. Operator env: **`STRIPE_SECRET_KEY`**, **`STRIPE_WEBHOOK_SECRET`**, **`STRIPE_PRICE_*`** (monthly + yearly **base**), **`STRIPE_OVERAGE_*`** (metered), **`CRON_SECRET`** (internal overage report route).
+- **`user.stripe_price_id`:** nullable; stores the **licensed (non‑metered) base** recurring Stripe **Price** id (see `flatPriceIdFromSubscription`). Used to compute **`priceMapping`** on the account API.
+- **Tier (`user.plan`):** derived from that Price id via env-backed mapping in [`config/commercial-plans.json`](../config/commercial-plans.json) (`STRIPE_PRICE_*` monthly and yearly variants). The metered overage line item is **not** used for `user.plan`.
 - **Unknown Price id:** `plan` is left unchanged; `stripe_price_id` still records the id; logs `stripe_price_unmapped`; account shows **`priceMapping: unmapped`** and entitlement copy includes an operator-contact suffix. **`POST /api/v1/usage/reserve`** returns **`403`** with **`BILLING_PRICE_UNMAPPED`** (no quota consumed) until mapping is fixed.
 
 ### Customer Billing Portal and Checkout customer reuse
@@ -182,7 +176,7 @@ The editable OpenAPI “header” and distribution tokens live in [`schemas/open
 
 Retries on 429/502/503/504: **250ms, 750ms, 2250ms** (3 attempts), then exit **3** `LICENSE_USAGE_UNAVAILABLE`.
 
-Operational codes include: `LICENSE_KEY_MISSING`, `LICENSE_DENIED`, `LICENSE_USAGE_UNAVAILABLE`, `ENFORCEMENT_REQUIRES_PAID_PLAN`, `VERIFICATION_REQUIRES_SUBSCRIPTION`, `ENFORCE_REQUIRES_COMMERCIAL_BUILD`.
+Operational codes include: `LICENSE_KEY_MISSING`, `LICENSE_DENIED`, `LICENSE_USAGE_UNAVAILABLE`, `ENFORCEMENT_REQUIRES_PAID_PLAN`, `ENFORCE_REQUIRES_COMMERCIAL_BUILD` (see `src/cliOperationalCodes.ts`). The license preflight may still map a legacy `VERIFICATION_REQUIRES_SUBSCRIPTION` HTTP code for older deployments.
 
 ## Auth email (production vs E2E)
 

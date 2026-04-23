@@ -55,6 +55,7 @@ describe("POST /api/checkout — stale stripe_customer_id", () => {
       user: { id: "user-stale-cus", email: "stale-cus@example.com", name: null },
     } as never);
     vi.stubEnv("STRIPE_PRICE_TEAM", "price_stale_cus_team");
+    vi.stubEnv("STRIPE_OVERAGE_TEAM", "price_stale_cus_overage");
     vi.mocked(logFunnelEvent).mockClear();
   });
 

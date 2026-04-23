@@ -5,7 +5,12 @@ import { loadCommercialPlans } from "@/lib/plans";
 type PublicPlan = {
   includedMonthly: number | null;
   monthlyUsdCents: number | null;
+  yearlyUsdCents: number | null;
   displayPrice: string;
+  displayPriceYearly: string | null;
+  overageMicrousdPerVerification: number | null;
+  allowOverage: boolean;
+  overageDisplayLabel: string | null;
   marketingHeadline: string;
   audience: string;
   valueUnlock: string;
@@ -24,7 +29,12 @@ export async function GET(): Promise<NextResponse> {
       plans[id] = {
         includedMonthly: p.includedMonthly,
         monthlyUsdCents: p.monthlyUsdCents,
+        yearlyUsdCents: p.yearlyUsdCents,
         displayPrice: p.displayPrice,
+        displayPriceYearly: p.displayPriceYearly,
+        overageMicrousdPerVerification: p.overageMicrousdPerVerification,
+        allowOverage: p.allowOverage,
+        overageDisplayLabel: p.overageDisplayLabel,
         marketingHeadline: p.marketingHeadline,
         audience: p.audience,
         valueUnlock: p.valueUnlock,

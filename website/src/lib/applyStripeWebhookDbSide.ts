@@ -4,7 +4,7 @@ import { users } from "@/db/schema";
 import type { AppDbClient } from "@/lib/funnelEvent";
 import { logFunnelEvent } from "@/lib/funnelEvent";
 import type { PlanId } from "@/lib/plans";
-import { primarySubscriptionPriceId, priceIdToPlanId } from "@/lib/priceIdToPlanId";
+import { flatPriceIdFromSubscription, priceIdToPlanId } from "@/lib/priceIdToPlanId";
 import { subscriptionStatusFromStripe } from "@/lib/stripeSubscriptionStatus";
 
 export type StripeWebhookDbContext = {
@@ -16,7 +16,7 @@ function customerIdOf(sub: Stripe.Subscription): string {
 }
 
 function subscriptionPatchFromStripe(sub: Stripe.Subscription, priorPlan: PlanId) {
-  const priceId = primarySubscriptionPriceId(sub);
+  const priceId = flatPriceIdFromSubscription(sub);
   const mappedPlan = priceIdToPlanId(priceId);
   if (mappedPlan === null && priceId) {
     console.error(

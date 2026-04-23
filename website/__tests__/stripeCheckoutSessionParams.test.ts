@@ -4,7 +4,8 @@ import { buildStripeCheckoutSessionCreateParams } from "@/lib/stripeCheckoutSess
 describe("buildStripeCheckoutSessionCreateParams", () => {
   const base = {
     customerEmail: "u@example.com",
-    priceId: "price_123",
+    baseRecurringPriceId: "price_base_123",
+    overagePriceId: "price_overage_456",
     baseUrl: "https://app.example.com",
     plan: "individual" as const,
     userId: "user-1",
@@ -18,7 +19,10 @@ describe("buildStripeCheckoutSessionCreateParams", () => {
     expect(p.customer).toBe("cus_abc");
     expect("customer_email" in p).toBe(false);
     expect(p.mode).toBe("subscription");
-    expect(p.line_items).toEqual([{ price: "price_123", quantity: 1 }]);
+    expect(p.line_items).toEqual([
+      { price: "price_base_123", quantity: 1 },
+      { price: "price_overage_456" },
+    ]);
     expect(p.metadata).toEqual({ userId: "user-1", plan: "individual" });
     expect(p.success_url).toContain("expectedPlan=individual");
     expect(p.cancel_url).toBe("https://app.example.com/pricing");

@@ -69,7 +69,7 @@ describe("openapi-commercial contract", () => {
     expect(t).toContain("createPublicVerificationReport");
     expect(t).toContain("reserveUsage");
     expect(t).toContain("getCommercialPlans");
-    expect(t).toContain("VERIFICATION_REQUIRES_SUBSCRIPTION");
+    expect(t).toContain("included_monthly");
     expect(t).toContain("BILLING_PRICE_UNMAPPED");
     expect(t).toMatch(/enum:\s*\[starter,\s*individual,\s*team,\s*business,\s*enterprise\]/);
   });

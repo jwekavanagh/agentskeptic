@@ -1,4 +1,7 @@
-import { loadMonthlyQuotaForUser, type MonthlyQuotaKeyRow } from "@/lib/accountMonthlyQuota";
+import {
+  loadMonthlyQuotaForUser,
+  type MonthlyQuotaKeyRow,
+} from "@/lib/accountMonthlyQuota";
 import {
   getAccountEntitlementSummary,
   type PriceMapping,
@@ -9,7 +12,7 @@ import {
 } from "@/lib/commercialEntitlement";
 import { db } from "@/db/client";
 import { users } from "@/db/schema";
-import type { PlanId } from "@/lib/plans";
+import { loadCommercialPlans, type PlanId } from "@/lib/plans";
 import { priceIdToPlanId } from "@/lib/priceIdToPlanId";
 import { eq } from "drizzle-orm";
 
@@ -70,13 +73,16 @@ export type BillingPriceSyncHint = {
   supportEmail: string | null;
 };
 
-export type QuotaUrgency = "ok" | "notice" | "warning" | "at_cap";
+export type QuotaUrgency = "ok" | "notice" | "warning" | "in_overage" | "at_cap";
 
 export type MonthlyQuotaPayload = {
   yearMonth: string;
   keys: MonthlyQuotaKeyRow[];
   distinctReserveUtcDaysThisMonth: number;
   worstUrgency: QuotaUrgency;
+  totalOverageVerifications: number;
+  overageProjectedLine: string | null;
+  overageUpgradeNudge: string | null;
 };
 
 export type CommercialAccountStatePayload = {
@@ -100,12 +106,24 @@ export function emptyMonthlyQuotaForTests(): MonthlyQuotaPayload {
     keys: [],
     distinctReserveUtcDaysThisMonth: 0,
     worstUrgency: "ok",
+    totalOverageVerifications: 0,
+    overageProjectedLine: null,
+    overageUpgradeNudge: null,
   };
 }
 
-const rank: Record<QuotaUrgency, number> = { ok: 0, notice: 1, warning: 2, at_cap: 3 };
+const rank: Record<QuotaUrgency, number> = {
+  ok: 0,
+  notice: 1,
+  warning: 2,
+  in_overage: 3,
+  at_cap: 4,
+};
 
-export function computeWorstUrgency(keys: MonthlyQuotaKeyRow[]): QuotaUrgency {
+export function computeWorstUrgency(
+  keys: MonthlyQuotaKeyRow[],
+  allowOverage: boolean,
+): QuotaUrgency {
   if (keys.length === 0) {
     return "ok";
   }
@@ -115,13 +133,13 @@ export function computeWorstUrgency(keys: MonthlyQuotaKeyRow[]): QuotaUrgency {
       continue;
     }
     const L = k.limit;
-    // Starter / evaluation: limit 0 means no paid CLI quota row to consume — not "at cap" for every used >= 0.
-    if (L === 0) {
-      continue;
-    }
     let s: QuotaUrgency = "ok";
-    if (k.used >= L) {
+    if (k.overageOnKey > 0) {
+      s = "in_overage";
+    } else if (k.used >= L && !allowOverage) {
       s = "at_cap";
+    } else if (k.used >= L && allowOverage) {
+      s = "warning";
     } else if (k.used >= Math.ceil(0.9 * L)) {
       s = "warning";
     } else if (k.used >= Math.ceil(0.75 * L)) {
@@ -206,7 +224,9 @@ export async function assembleCommercialAccountState(
   const plan = row.plan as PlanId;
   const subscriptionStatus = normalizeSubscriptionStatusForAccount(row.subscriptionStatus);
   const quotaBlock = await loadMonthlyQuotaForUser(input.userId, plan);
-  const worstUrgency = computeWorstUrgency(quotaBlock.keys);
+  const planDef = loadCommercialPlans().plans[plan];
+  const allowOverage = planDef?.allowOverage === true;
+  const worstUrgency = computeWorstUrgency(quotaBlock.keys, allowOverage);
   return buildCommercialAccountStatePayload({
     plan,
     subscriptionStatus,
@@ -214,6 +234,14 @@ export async function assembleCommercialAccountState(
     stripeCustomerId: row.stripeCustomerId,
     expectedPlan: input.expectedPlan,
     operatorContactEmail: input.operatorContactEmail,
-    monthlyQuota: { ...quotaBlock, worstUrgency },
+    monthlyQuota: {
+      yearMonth: quotaBlock.yearMonth,
+      keys: quotaBlock.keys,
+      distinctReserveUtcDaysThisMonth: quotaBlock.distinctReserveUtcDaysThisMonth,
+      worstUrgency,
+      totalOverageVerifications: quotaBlock.totalOverageVerifications,
+      overageProjectedLine: quotaBlock.overageProjectedLine,
+      overageUpgradeNudge: quotaBlock.overageUpgradeNudge,
+    },
   });
 }
