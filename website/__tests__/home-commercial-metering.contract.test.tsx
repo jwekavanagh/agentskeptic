@@ -2,14 +2,19 @@
 
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { getHomeCommercialSectionFromConfig, getMeteringClarifier } from "@/lib/commercialNarrative";
+import {
+  getHomeCommercialSectionFromConfig,
+  getMeteringClarifier,
+  HOME_COMMERCIAL_LEAD,
+} from "@/lib/commercialNarrative";
 
 describe("homepage commercial strip", () => {
-  it("uses narrative lead, strip, and no raw GitHub URL in the strip (metering in lead)", () => {
+  it("uses short lead, then strip with clarifier, Starter line, and licensed metering copy", () => {
     const section = getHomeCommercialSectionFromConfig();
-    expect(section.lead).toBe(getMeteringClarifier());
+    expect(section.lead).toBe(HOME_COMMERCIAL_LEAD);
+    expect(section.strip.startsWith(getMeteringClarifier())).toBe(true);
     expect(section.strip).toContain("Starter includes");
-    expect(section.strip).not.toMatch(/github\.com/i);
+    expect(section.strip).toMatch(/docs\/commercial-ssot\.md#programmatic-verification-vs-licensed-cli/);
     render(
       <>
         <p data-testid="home-commercial-lead">{section.lead}</p>

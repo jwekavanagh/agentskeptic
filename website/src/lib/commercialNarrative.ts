@@ -40,11 +40,16 @@ function formatCount(n: number): string {
 }
 
 /**
- * In-process library vs licensed CLI; same on sign-in and home commercial `lead` paragraph.
+ * Full in-process vs licensed npm metering clarifier. On the homepage it prefixes the home commercial `strip`
+ * (the short `HOME_COMMERCIAL_LEAD` is the muted lede above it).
  */
 export function getMeteringClarifier(): string {
   return `In-process library use (createDecisionGate) evaluates read-only SQL without calling the license reserve API. The published npm CLI path—contract verify, quick with lock flags, and enforce—requires an API key and POST /api/v1/usage/reserve. Boundary: ${ssotPath}`;
 }
+
+/** Short lede for the home commercial block; `getMeteringClarifier()` and quota copy live in `strip`. */
+export const HOME_COMMERCIAL_LEAD =
+  "Open-source CLI (unmetered locally), in-process createDecisionGate for in-code use, and commercial OpenAPI with licensed npm for CI and production." as const;
 
 /** Security page quick-fact: outcome certificate vs quick verify (index 2 in the four-bullet list). */
 export const outcomeCertificateQuickFactBullet =
@@ -194,8 +199,7 @@ export function getHomeCommercialSection(catalog: CommercialPlansFile): {
   }
   return {
     title: "First-run integration",
-    lead:
-      "Open-source CLI (unmetered locally), in-process createDecisionGate for in-code use, and commercial OpenAPI with licensed npm for CI and production.",
+    lead: HOME_COMMERCIAL_LEAD,
     strip: `${getMeteringClarifier()} Run licensed verification in CI: Starter includes ${formatCount(
       cap,
     )} runs per key per month (no overage); higher tiers add more included volume. Local OSS and in-process createDecisionGate stay unmetered. In-process library use never calls the usage API.`,

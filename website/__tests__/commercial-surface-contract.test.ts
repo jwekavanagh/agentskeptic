@@ -1,9 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { getHomeCommercialSectionFromConfig, getMeteringClarifier } from "@/lib/commercialNarrative";
+import {
+  getHomeCommercialSectionFromConfig,
+  getMeteringClarifier,
+  HOME_COMMERCIAL_LEAD,
+} from "@/lib/commercialNarrative";
 
 describe("commercial surface contract", () => {
-  it("home commercial lead is the full metering clarifier from commercialNarrative", () => {
+  it("home commercial short lead and strip prefix with the metering clarifier (SSOT link in strip)", () => {
     const s = getHomeCommercialSectionFromConfig();
-    expect(s.lead).toBe(getMeteringClarifier());
+    expect(s.lead).toBe(HOME_COMMERCIAL_LEAD);
+    expect(s.strip.startsWith(getMeteringClarifier())).toBe(true);
   });
 });
