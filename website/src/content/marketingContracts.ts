@@ -78,7 +78,7 @@ export const PRICING_FEATURE_COMPARISON = {
       enterprise: "Yes",
     },
     {
-      feature: "Monthly paid verifications",
+      feature: "Monthly CI-enforced verifications",
       starter: "0",
       individual: "2,000",
       team: "10,000",

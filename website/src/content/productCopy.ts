@@ -223,7 +223,6 @@ export const pricingWhatYouGetPaidPlans = {
   bullets: [
     "Run verification in CI and automatically fail builds on mismatch",
     "Use locks, enforce, and the published npm CLI",
-    "Included monthly verification quota (scales with your plan)",
     "API keys for licensed features",
   ],
 } as const;

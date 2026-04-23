@@ -8,7 +8,7 @@
       "displayPrice": "Free",
       "marketingHeadline": "Starter",
       "audience": "Evaluation and initial setup",
-      "valueUnlock": "Open-source and local runs stay completely free. Upgrade when you need CI enforcement and quotas.",
+      "valueUnlock": "Open-source and local runs stay completely free. Upgrade when you need CI enforcement.",
       "stripePriceEnvKey": null
     },
     "individual": {
