@@ -1,17 +1,17 @@
 ---
 surfaceKind: comparison
-title: Offline evals versus database row gates — AgentSkeptic
-description: Compared to offline eval suites, AgentSkeptic row gates compare structured tool parameters to read-only SELECT results on authoritative tables at verification time.
+title: Offline evals vs. real stored-state gates — AgentSkeptic
+description: Offline evals score models in isolation; AgentSkeptic checks that your workflow wrote the expected data to your stores before production relies on it.
 intent: ML platform leads weighing offline scoring against production-aligned verification for agent workflows.
-valueProposition: You separate model quality metrics from whether the workflow actually wrote the rows your business logic requires.
+valueProposition: You separate leaderboard metrics from whether the business-critical state in your stores is actually correct.
 primaryCta: integrate
 route: /compare/evals-vs-row-gates
 evaluatorLens: true
 ---
 
-# Offline evals versus database row gates
+# Offline evals vs. real stored-state gates
 
-Offline eval suites score model outputs in isolation. Database row gates instead verify whether declared tool parameters line up with persisted rows using read-only SQL at verification time—catching ROW_ABSENT even when eval scores look strong.
+Offline evaluations measure model quality on held-out prompts. They do not prove your agent run created the ticket, ledger entry, or entitlement record your operators expect. AgentSkeptic read-only verification compares structured tool activity to your authoritative stores at decision time so gaps surface before customers do.
 
 Use `/integrate` to wire structured NDJSON observations into your environment, then use `/pricing` when you need commercial metering for API-backed verification runs in CI.
 

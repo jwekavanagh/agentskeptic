@@ -1,17 +1,17 @@
 ---
 surfaceKind: comparison
-title: Observability dashboards compared to pre-action verification gates — AgentSkeptic
-description: Compared to observability dashboards alone, pre-action read-only SQL gates fail closed before irreversible customer or money workflows when rows disagree with structured tool activity.
+title: Observability dashboards vs. pre-action gates — AgentSkeptic
+description: Dashboards explain what already ran; AgentSkeptic blocks the line when stored state disagrees with what your workflow claimed—before money or customer impact.
 intent: SRE leaders evaluating whether more dashboards substitute for decisive verification before high-stakes actions.
-valueProposition: You move the decision from lagging indicators to authoritative SELECT snapshots tied to structured tool parameters.
+valueProposition: You move the decision from lagging charts to a binary check tied to the stores you already trust.
 primaryCta: pricing
 route: /compare/observability-vs-preaction-gate
 evaluatorLens: true
 ---
 
-# Observability dashboards compared to pre-action verification gates
+# Observability dashboards vs. pre-action gates
 
-Observability dashboards summarize latency, errors, and throughput—they rarely prove that the specific CRM or ledger row your workflow claimed is present before you act. Pre-action read-only SQL gates instead compare structured tool activity to persisted rows at verification time so ROW_ABSENT blocks irreversible steps.
+Observability stacks excel at latency, errors, and throughput. They rarely certify that the CRM case, payout, or contract record your agent said it touched is truly there before someone acts on it. AgentSkeptic runs at verification time against your stores so missing or mismatched state fails the pipeline instead of shipping silently.
 
 Review `/pricing` when you need commercial enforce fixtures and metering, and use `/integrate` to reproduce the gate locally before you change production alerting budgets alone.
 

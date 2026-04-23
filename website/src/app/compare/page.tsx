@@ -1,35 +1,74 @@
+import { productCopy } from "@/content/productCopy";
 import { indexableGuideCanonical } from "@/lib/indexableGuides";
-import { listAllSurfaces } from "@/lib/surfaceMarkdown";
 import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Compare approaches — AgentSkeptic",
   description:
-    "Evaluation-oriented comparisons between trace-only review, offline evals, observability dashboards, and read-only SQL verification gates.",
+    "Choose the right reliability layer: how read-only verification differs from offline evals, observability dashboards, and trace-only review—grounded in your stores before you ship.",
   robots: { index: true, follow: true },
   alternates: { canonical: indexableGuideCanonical("/compare") },
 };
 
+const SECTIONS = [
+  {
+    id: "compare-hub-offline-evals",
+    href: "/compare/evals-vs-row-gates",
+    title: "Offline evals vs. real stored-state gates",
+    contrast: "Offline evaluations measure model quality.",
+    ours: "AgentSkeptic verifies whether the workflow actually wrote the correct data to your stores.",
+  },
+  {
+    id: "compare-hub-observability",
+    href: "/compare/observability-vs-preaction-gate",
+    title: "Observability dashboards vs. pre-action gates",
+    contrast: "Dashboards show what happened after the fact.",
+    ours: "AgentSkeptic gives you a clear gate before you ship, bill, or hand off to customers.",
+  },
+  {
+    id: "compare-hub-traces",
+    href: "/compare/traces-vs-read-only-sql-verification",
+    title: "Trace-only review vs. read-only verification",
+    contrast: "Traces tell you what the tool said happened.",
+    ours: "AgentSkeptic tells you whether the stored state actually matches those claims.",
+  },
+] as const;
+
 export default function CompareHubPage() {
-  const comparisons = listAllSurfaces().filter((s) => s.surfaceKind === "comparison");
   return (
-    <main className="integrate-main">
+    <main className="integrate-main integrate-prose" data-testid="compare-hub-page">
       <h1>Compare approaches</h1>
-      <p className="lede">
-        Short, evaluator-focused pages that contrast common reliability patterns with read-only SQL verification at
-        decision time.
+      <p className="integrate-benefit-lede">
+        <strong>Choose the right reliability layer.</strong>
       </p>
-      <ul className="mechanism-list guide-hub-list">
-        {comparisons.map((s) => (
-          <li key={s.route}>
-            <Link href={s.route} className="guide-hub-link">
+      <p className="lede">
+        See how read-only verification differs from — and improves upon — common alternatives.
+      </p>
+
+      {SECTIONS.map((s) => (
+        <section key={s.href} className="home-section" aria-labelledby={s.id}>
+          <h2 id={s.id}>
+            <Link href={s.href} className="guide-hub-link">
               <span className="guide-hub-link-title">{s.title}</span>
-              <span className="muted guide-hub-link-caption">{s.valueProposition}</span>
             </Link>
-          </li>
-        ))}
-      </ul>
+          </h2>
+          <p className="lede">{s.contrast}</p>
+          <p className="lede">{s.ours}</p>
+        </section>
+      ))}
+
+      <section className="home-section" aria-labelledby="compare-hub-cta-heading">
+        <h2 id="compare-hub-cta-heading">Ready to see it in action?</h2>
+        <div className="home-cta-row" role="group" aria-label="Try the demo or get started">
+          <a className="btn secondary" href="/#try-it">
+            {productCopy.homeHeroCtaLabels.demo}
+          </a>
+          <Link className="btn" href={productCopy.homeHeroSecondaryCta.href}>
+            {productCopy.homeHeroSecondaryCta.label}
+          </Link>
+        </div>
+      </section>
     </main>
   );
 }
