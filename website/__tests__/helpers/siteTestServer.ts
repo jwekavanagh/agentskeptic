@@ -77,10 +77,12 @@ async function startInternal(): Promise<void> {
     env: process.env,
     stdio: "inherit",
   });
-  // `sync:public-product-anchors` may rewrite `config/marketing.json`. `next.config` calls
-  // `assertNextPublicOriginParity()` (production) — NEXT_PUBLIC must match the file *after* sync
-  // or `next build` exits 1 (seen on CI when NODE_ENV=production and Vitest reuses a stale origin).
-  execSync("npm run sync:public-product-anchors", {
+  // Website `prebuild` runs the full `sync-website-ssot` pipeline (not only
+  // `sync:public-product-anchors`), which can rewrite `config/marketing.json` again.
+  // `next.config` calls `assertNextPublicOriginParity()` during `next build` — the env
+  // we pass must match the on-disk `productionCanonicalOrigin` *after* that same SSOT
+  // materialization, or `next build` exits 1 in CI.
+  execSync("npm run sync-website-ssot", {
     cwd: repoRoot,
     env: process.env,
     stdio: "inherit",
