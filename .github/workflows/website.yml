@@ -66,7 +66,6 @@ jobs:
           echo "only_website=true" >> "$GITHUB_OUTPUT"
 
   # When main changes are website-only, full ci.yml (including Vercel) is skipped; deploy here.
-  # `website/vercel.json` disables auto-deploys for `main` so a push alone does not ship.
   vercel_production:
     name: Vercel production
     if: |
@@ -74,21 +73,7 @@ jobs:
       github.ref == 'refs/heads/main' &&
       needs.should_publish_vercel.outputs.only_website == 'true'
     needs: [build, should_publish_vercel]
-    runs-on: ubuntu-latest
-    timeout-minutes: 45
-    env:
-      AGENTSKEPTIC_TELEMETRY: "0"
-      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-    steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
-        with:
-          node-version: "22"
-      # Build runs on Vercel (not on this runner). `vercel build` in GHA can fail with
-      # `spawn sh ENOENT` when running the project Install Command (e.g. `npm install --prefix ..`) locally.
-      # Run from repo root without `--cwd website`: the linked Vercel project’s Root Directory is `website`
-      # in Project Settings; adding `--cwd website` would resolve to `website/website` and fail.
-      - name: Deploy to Vercel (production, remote build)
-        run: npx -y vercel@52 deploy --prod --yes --logs
+    uses: ./.github/workflows/deploy-vercel.yml
+    with:
+      agentskeptic_telemetry_zero: true
+    secrets: inherit

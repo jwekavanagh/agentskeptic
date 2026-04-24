@@ -25,6 +25,7 @@ describe("GitHub Actions AGENTSKEPTIC_TELEMETRY env", () => {
     assert.equal(jobs.test.env.AGENTSKEPTIC_TELEMETRY, "0");
     assert.equal(jobs.commercial.env.AGENTSKEPTIC_TELEMETRY, "0");
     assert.equal("AGENTSKEPTIC_TELEMETRY" in (jobs.codeql.env ?? {}), false);
+    assert.equal(jobs.vercel_production.uses, "./.github/workflows/deploy-vercel.yml");
     assert.equal("AGENTSKEPTIC_TELEMETRY" in (jobs.vercel_production.env ?? {}), false);
   });
 
@@ -49,6 +50,12 @@ describe("GitHub Actions AGENTSKEPTIC_TELEMETRY env", () => {
     assert.deepEqual(ids, ["build", "should_publish_vercel", "vercel_production"]);
     assert.equal(jobs.build.env.AGENTSKEPTIC_TELEMETRY, "0");
     assert.equal("AGENTSKEPTIC_TELEMETRY" in (jobs.should_publish_vercel.env ?? {}), false);
-    assert.equal(jobs.vercel_production.env.AGENTSKEPTIC_TELEMETRY, "0");
+    assert.equal(jobs.vercel_production.uses, "./.github/workflows/deploy-vercel.yml");
+    assert.equal(jobs.vercel_production.with?.agentskeptic_telemetry_zero, true);
+  });
+
+  it("deploy-vercel.yml has no static AGENTSKEPTIC_TELEMETRY in job env (set via GITHUB_ENV when needed)", () => {
+    const doc = loadWorkflow("deploy-vercel.yml");
+    assert.equal("AGENTSKEPTIC_TELEMETRY" in (doc.jobs.vercel.env ?? {}), false);
   });
 });
