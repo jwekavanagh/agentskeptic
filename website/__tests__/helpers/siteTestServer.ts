@@ -86,8 +86,16 @@ async function startInternal(): Promise<void> {
     existsSync(buildIdPath) &&
     process.env.FORCE_WEBSITE_TEST_BUILD !== "1";
   if (!reuseDist) {
+    // The workspace package `agentskeptic` exports from `../dist` (tsc out). A website-only
+    // `next build` fails in CI (npm ci) when `dist/` is absent, so build the monorepo first.
     execSync("npm run build", {
-      cwd: websiteDir,
+      cwd: repoRoot,
+      env: process.env,
+      stdio: "inherit",
+      shell: true,
+    });
+    execSync("npm run build -w agentskeptic-web", {
+      cwd: repoRoot,
       env: process.env,
       stdio: "inherit",
       shell: true,
