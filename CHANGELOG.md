@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.1
+
+### Changed
+
+- Bumped **agentskeptic** and **agentskeptic-web** to **1.2.1**: `package.json` (root + workspace), `package-lock.json`, Quick Verify spec version (`QUICK_VERIFY_VERSION`, schema, normative doc, golden fixtures, I1 gate tests), `AGENTSKEPTIC_CLI_SEMVER`, Python `pyproject.toml` / `PKG-INFO`, debug corpus `producer.version`, embedded report `workflowVerifierVersion` locks.
+
 ## 1.2.0
 
 ### Changed

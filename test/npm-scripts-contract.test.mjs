@@ -1,5 +1,5 @@
 /**
- * Enforces npm script shape for post-audit single-gate CI (package.json only).
+ * Enforces package.json + scripts/verify.mjs single-orchestrator shape.
  */
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
@@ -10,108 +10,59 @@ import { fileURLToPath } from "node:url";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, "..");
 const pkg = JSON.parse(readFileSync(join(root, "package.json"), "utf8"));
+const verifySrc = readFileSync(join(root, "scripts/verify.mjs"), "utf8");
 
-function countValidateTtfv(s) {
-  return (s.match(/validate-ttfv/g) || []).length;
-}
-
-describe("npm scripts contract (test / test:ci)", () => {
-  it("scripts.test contains exactly one validate-ttfv token", () => {
-    assert.equal(countValidateTtfv(pkg.scripts.test), 1);
+describe("npm scripts contract (test / test:ci → verify.mjs)", () => {
+  it("scripts.test / test:ci are verify one-liners", () => {
+    assert.equal(pkg.scripts.test, "node scripts/verify.mjs --profile=default");
+    assert.equal(pkg.scripts["test:ci"], "node scripts/verify.mjs --profile=ci");
   });
 
-  it("scripts.test:ci contains exactly one validate-ttfv token", () => {
-    assert.equal(countValidateTtfv(pkg.scripts["test:ci"]), 1);
-  });
-
-  it("scripts.test must not reference removed quick-verify-contract or quick-verify-sql-allowlist", () => {
-    assert.equal(pkg.scripts.test.includes("quick-verify-contract"), false);
-    assert.equal(pkg.scripts.test.includes("quick-verify-sql-allowlist"), false);
-  });
-
-  it("scripts.test:ci must not reference removed scripts", () => {
-    assert.equal(pkg.scripts["test:ci"].includes("quick-verify-contract"), false);
-    assert.equal(pkg.scripts["test:ci"].includes("quick-verify-sql-allowlist"), false);
-  });
-
-  it("test:ci must run first-run for CI parity with local onboarding smoke", () => {
-    assert.equal(pkg.scripts["test:ci"].includes("first-run"), true);
-  });
-
-  it("test must still run first-run for local onboarding smoke", () => {
-    assert.equal(pkg.scripts.test.includes("first-run"), true);
-  });
-
-  it("scripts.test runs root vitest before filtered LangGraph primacy website vitest", () => {
-    const s = pkg.scripts.test;
-    const a = s.indexOf("npm run test:vitest");
-    const b = s.indexOf("langgraph-reference-primacy.dom.test.tsx");
-    assert.ok(a !== -1 && b !== -1 && a < b);
-  });
-
-  it("scripts.test:ci runs root vitest before filtered LangGraph primacy website vitest", () => {
-    const s = pkg.scripts["test:ci"];
-    const a = s.indexOf("npm run test:vitest");
-    const b = s.indexOf("langgraph-reference-primacy.dom.test.tsx");
-    assert.ok(a !== -1 && b !== -1 && a < b);
-  });
-
-  it("scripts.test runs partner-quickstart before langgraph-reference-verify driver", () => {
-    const s = pkg.scripts.test;
-    const a = s.indexOf("npm run partner-quickstart");
-    const b = s.indexOf("node scripts/langgraph-reference-verify.mjs");
-    assert.ok(a !== -1 && b !== -1 && a < b);
-  });
-
-  it("scripts.test:ci runs partner-quickstart before langgraph-reference-verify driver", () => {
-    const s = pkg.scripts["test:ci"];
-    const a = s.indexOf("npm run partner-quickstart");
-    const b = s.indexOf("node scripts/langgraph-reference-verify.mjs");
-    assert.ok(a !== -1 && b !== -1 && a < b);
-  });
-
-  it("scripts.test includes exactly one filtered LangGraph primacy vitest and one langgraph driver", () => {
-    const s = pkg.scripts.test;
-    assert.equal((s.match(/langgraph-reference-primacy\.dom\.test\.tsx/g) || []).length, 1);
-    assert.equal((s.match(/node scripts\/langgraph-reference-verify\.mjs/g) || []).length, 1);
-  });
-
-  it("scripts.test:ci includes exactly one filtered LangGraph primacy vitest and one langgraph driver", () => {
-    const s = pkg.scripts["test:ci"];
-    assert.equal((s.match(/langgraph-reference-primacy\.dom\.test\.tsx/g) || []).length, 1);
-    assert.equal((s.match(/node scripts\/langgraph-reference-verify\.mjs/g) || []).length, 1);
-  });
-
-  it("scripts.test runs assert-no-langgraph-v1-product-path immediately after langgraph-reference-verify", () => {
-    const s = pkg.scripts.test;
-    const a = s.indexOf("node scripts/langgraph-reference-verify.mjs");
-    const b = s.indexOf("node scripts/assert-no-langgraph-v1-product-path.mjs");
-    assert.ok(a !== -1 && b !== -1 && a < b);
-    assert.ok(!s.slice(a, b).includes("node scripts/partner-quickstart-verify.mjs"));
-  });
-
-  it("scripts.test:ci runs assert-no-langgraph-v1-product-path immediately after langgraph-reference-verify", () => {
-    const s = pkg.scripts["test:ci"];
-    const a = s.indexOf("node scripts/langgraph-reference-verify.mjs");
-    const b = s.indexOf("node scripts/assert-no-langgraph-v1-product-path.mjs");
-    assert.ok(a !== -1 && b !== -1 && a < b);
-  });
-
-  it("scripts.test includes exactly one assert-no-langgraph-v1-product-path invocation", () => {
+  it("shims delegate to verify --stages", () => {
     assert.equal(
-      (pkg.scripts.test.match(/node scripts\/assert-no-langgraph-v1-product-path\.mjs/g) || []).length,
-      1,
+      pkg.scripts["test:node:sqlite"],
+      "node scripts/verify.mjs --stages=nodeGuards,nodeTestSqlite",
+    );
+    assert.equal(
+      pkg.scripts["test:postgres"],
+      "node scripts/verify.mjs --stages=nodeTestPostgres",
     );
   });
 
-  it("scripts.test and test:ci include exactly one epistemic contract structure check after build", () => {
-    const token = "npm run check:epistemic-contract-structure";
-    for (const key of ["test", "test:ci"]) {
-      const s = pkg.scripts[key];
-      assert.equal((s.match(new RegExp(token.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g")) || []).length, 1, key);
-      const build = s.indexOf("npm run build");
-      const ep = s.indexOf(token);
-      assert.ok(build !== -1 && ep !== -1 && build < ep, `${key}: epistemic check must follow build`);
-    }
+  it("test:workflow-truth-contract is a single verify stage (no mjs in package.json)", () => {
+    assert.equal(
+      pkg.scripts["test:workflow-truth-contract"],
+      "node scripts/verify.mjs --stages=ciWorkflowTruthSingle",
+    );
+  });
+
+  it("verify:decision-readiness uses the JSON gate", () => {
+    assert.equal(
+      pkg.scripts["verify:decision-readiness"],
+      "node scripts/verify.mjs --profile=decision-readiness",
+    );
+  });
+
+  it("verify.mjs: default profile runs commercialEnforce then rebuild; ci runs postgres tail after assurance", () => {
+    const iC = verifySrc.indexOf("const profileDefault = [");
+    const iD = verifySrc.indexOf("const profileCi = [");
+    assert.ok(iC !== -1 && iD !== -1);
+    const defaultBlock = verifySrc.slice(iC, iD);
+    const jAss = defaultBlock.indexOf('"assurance"');
+    const jCom = defaultBlock.indexOf('"commercialEnforce"');
+    const jRe = defaultBlock.indexOf('"rebuildOss"');
+    assert.ok(jAss < jCom && jCom < jRe, "default: assurance → commercialEnforce → rebuildOss");
+    const ciBlock = verifySrc.slice(iD);
+    const aAs = ciBlock.indexOf('"assurance"');
+    const aPo = ciBlock.indexOf('"nodeTestPostgres"');
+    assert.ok(
+      aAs < aPo,
+      "ci: nodeTestPostgres after assurance (no unflagged commercial before postgres)",
+    );
+  });
+
+  it("verify.mjs: each profile includes exactly one validateTtfv stage", () => {
+    const inArrays = (verifySrc.match(/"validateTtfv",/g) || []).length;
+    assert.equal(inArrays, 2, "profileDefault and profileCi should each list validateTtfv");
   });
 });

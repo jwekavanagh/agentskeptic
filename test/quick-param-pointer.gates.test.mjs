@@ -1,7 +1,7 @@
-/* Sole node:test entry for quick-param-pointer CI gates. package.json test:node:sqlite must list test/quick-param-pointer.gates.test.mjs only (not the deleted per-suite filenames). */
+/* Sole node:test entry for quick-param-pointer CI gates. `test/suites.mjs` sqlite list must include test/quick-param-pointer.gates.test.mjs (not the deleted per-suite filenames). */
 /**
  * I0 gate: committed pointer-promotion fixture exists and matches golden path list.
- * I1 gate: Quick Verify spec surface locked to 1.2.0 on four files + normative A.13 golden.
+ * I1 gate: Quick Verify spec surface locked to 1.2.1 on four files + normative A.13 golden.
  * I8: normative + product SSOT mention predicate once; normative includes merge golden; README link + forbidden strings.
  * I9: Vitest negatives, then DB path guard, then no-provider-imports (single node:test entrypoint).
  */
@@ -41,17 +41,17 @@ describe("quick-param-pointer fixtures present", () => {
   });
 });
 
-describe("quick-param-pointer version 1.2.0 surfaces", () => {
+describe("quick-param-pointer version 1.2.1 surfaces", () => {
   it("quickVerifyScope.ts", () => {
     const text = readFileSync(join(root, "src/quickVerify/quickVerifyScope.ts"), "utf8");
-    assert.ok(/^export const QUICK_VERIFY_VERSION = "1\.2\.0" as const;$/m.test(text));
+    assert.ok(/^export const QUICK_VERIFY_VERSION = "1\.2\.1" as const;$/m.test(text));
     assert.equal(/QUICK_VERIFY_VERSION = "1.1.0"/.test(text), false);
   });
 
   it("quick-verify-report.schema.json", () => {
     const utf8 = readFileSync(join(root, "schemas/quick-verify-report.schema.json"), "utf8");
     const parsed = JSON.parse(utf8);
-    assert.strictEqual(parsed.properties.scope.properties.quickVerifyVersion.const, "1.2.0");
+    assert.strictEqual(parsed.properties.scope.properties.quickVerifyVersion.const, "1.2.1");
   });
 
   it("quick-verify-normative.md A.13 + no 1.1.0", () => {
@@ -59,10 +59,10 @@ describe("quick-param-pointer version 1.2.0 surfaces", () => {
     const lines = normative.split(/\r?\n/);
     assert.strictEqual(
       lines[2],
-      "**Spec id:** `quick-verify-spec` **version:** `1.2.0`",
+      "**Spec id:** `quick-verify-spec` **version:** `1.2.1`",
     );
     const goldenRaw = readFileSync(
-      join(root, "test/golden/quick-param-pointer/v1/version-surface/normative-lines-172-173-1-2-0.txt"),
+      join(root, "test/golden/quick-param-pointer/v1/version-surface/normative-lines-172-173-1-2-1.txt"),
       "utf8",
     );
     const golden = goldenRaw.replace(/\r?\n$/, "");
@@ -72,7 +72,7 @@ describe("quick-param-pointer version 1.2.0 surfaces", () => {
 
   it("quick-verify.sqlite.test.mjs literals", () => {
     const text = readFileSync(join(root, "test/quick-verify.sqlite.test.mjs"), "utf8");
-    assert.ok(text.includes("assert.equal(report.scope.quickVerifyVersion, \"1.2.0\");"));
+    assert.ok(text.includes("assert.equal(report.scope.quickVerifyVersion, \"1.2.1\");"));
     assert.strictEqual(/quickVerifyVersion[^\n]*1\.1\.0/.test(text), false);
   });
 });

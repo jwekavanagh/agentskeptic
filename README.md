@@ -332,9 +332,9 @@ Everything beyond core contract verification lives in **[`docs/agentskeptic.md`]
 
 **Why SQLite:** same note as under [Contract path](#contract-path-registry--events) (file-backed demo DB; read-only verification SQL).
 
-Runs build, Vitest, SQLite Node tests, first-run demo, `assurance run`, the commercial enforce test harness (minimal CI enforcement + enforce integration tests), and TTFV validation. No Postgres required.
+**`npm test`** runs `node scripts/verify.mjs --profile=default` (build, tests, first-run, adoption, assurance, commercial harness, TTFV, etc. — no Postgres). Stage order: **[`docs/testing.md`](docs/testing.md)**.
 
-**Full CI parity** (Postgres + Debug Console UI tests): set **`POSTGRES_ADMIN_URL`** and **`POSTGRES_VERIFICATION_URL`**, then **`npm run test:ci`**—see [`.github/workflows/ci.yml`](.github/workflows/ci.yml). Example Postgres: `docker run -d --name etl-pg -p 5432:5432 -e POSTGRES_PASSWORD=postgres postgres:16`.
+**Full CI parity** (Postgres + Playwright for Debug Console): set **`POSTGRES_ADMIN_URL`** and **`POSTGRES_VERIFICATION_URL`**, then **`npm run test:ci`**. See **[`docs/testing.md`](docs/testing.md)**, [`.github/workflows/ci.yml`](.github/workflows/ci.yml), and: `docker run -d --name etl-pg -p 5432:5432 -e POSTGRES_PASSWORD=postgres postgres:16`.
 
 ## Commercial CLI (npm) vs OSS (this repo)
 

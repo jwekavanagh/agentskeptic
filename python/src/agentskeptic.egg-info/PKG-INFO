@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: agentskeptic
-Version: 1.2.0
+Version: 1.2.1
 Summary: Python-native database-truth verification for CrewAI, AutoGen, and LangGraph (AgentSkeptic kernel).
 License: MIT
 Requires-Python: >=3.11

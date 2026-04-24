@@ -1,0 +1,6 @@
+[
+  "./langgraph-reference-primacy.dom.test.tsx",
+  "./oss-claim-client-flow.dom.test.tsx",
+  "./integrate-page-completion-semantics.contract.test.tsx",
+  "./funnel-surface-beacon-keepalive.contract.test.tsx"
+]

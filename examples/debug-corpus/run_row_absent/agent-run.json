@@ -3,7 +3,7 @@
   "workflowId": "wf_missing",
   "producer": {
     "name": "agentskeptic",
-    "version": "1.2.0"
+    "version": "1.2.1"
   },
   "verifiedAt": "2026-04-23T12:00:00.000Z",
   "schemaVersion": 1,

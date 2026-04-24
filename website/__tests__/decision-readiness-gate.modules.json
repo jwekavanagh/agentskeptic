@@ -1,0 +1,6 @@
+[
+  "./githubHeadingSlug.contract.test.ts",
+  "./integrate-page-completion-semantics.contract.test.tsx",
+  "./growth-metrics.contract.test.ts",
+  "./repo-reference-integrity.growth-observability.test.ts"
+]
