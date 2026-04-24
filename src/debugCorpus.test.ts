@@ -30,6 +30,17 @@ describe("debugCorpus", () => {
       5,
       `expected 5 runs under ${corpus}; listCorpusRunIds=[${runIds.join(", ")}] cwd=${process.cwd()}`,
     );
+    const errLines: string[] = [];
+    for (const o of outcomes) {
+      if (o.loadStatus === "error") {
+        errLines.push(`${o.runId}: ${o.error.code} – ${o.error.message}`);
+      }
+    }
+    assert.equal(
+      errLines.length,
+      0,
+      `load failures (integrity/schema/path) under ${corpus}: ${errLines.join(" | ")}`,
+    );
     const ok = outcomes.filter((o) => o.loadStatus === "ok");
     expect(ok).toHaveLength(5);
     const ids = new Set(ok.map((o) => o.runId));
