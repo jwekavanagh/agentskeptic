@@ -15,7 +15,7 @@ const ALLOWED_FILES = new Set([
   "test/fixtures/langgraph-node-oracle/package.json",
 ]);
 const ALLOWED_LOCKFILE = new Set(["root", "example"]);
-const ALLOWED_MATCH = new Set(["everyInstanceExact", "websiteWorkspaceExact"]);
+const ALLOWED_MATCH = new Set(["everyInstanceExact", "websiteWorkspaceExact", "lockKeysExact"]);
 const ALLOWED_FLAGS = new Set(["", "g", "i", "m", "gi", "gm", "im", "gim"]);
 const PATH_KEY = /^[A-Za-z0-9@._/-]+$/;
 const ID_PATTERN = /^[a-z0-9_]+$/;
@@ -58,6 +58,18 @@ test("dependency-security-pins manifest shape (Appendix A)", () => {
     if (!ALLOWED_MATCH.has(r.match)) throw new Error(`PIN_SCHEMA_CONTRACT lockfileAssertions bad match ${r.match}`);
     if (typeof r.exactVersion !== "string" || r.exactVersion.length < 1) {
       throw new Error("PIN_SCHEMA_CONTRACT lockfileAssertions exactVersion");
+    }
+    if (r.match === "lockKeysExact") {
+      if (!Array.isArray(r.lockKeys) || r.lockKeys.length < 1) {
+        throw new Error("PIN_SCHEMA_CONTRACT lockfileAssertions lockKeysExact requires lockKeys array");
+      }
+      for (const k of r.lockKeys) {
+        if (typeof k !== "string" || k.length < 1) {
+          throw new Error("PIN_SCHEMA_CONTRACT lockfileAssertions lockKeys bad entry");
+        }
+      }
+    } else if (r.lockKeys !== undefined) {
+      throw new Error("PIN_SCHEMA_CONTRACT lockfileAssertions lockKeys only allowed for lockKeysExact");
     }
     if (r.allowAbsent !== undefined && typeof r.allowAbsent !== "boolean") {
       throw new Error("PIN_SCHEMA_CONTRACT lockfileAssertions allowAbsent");

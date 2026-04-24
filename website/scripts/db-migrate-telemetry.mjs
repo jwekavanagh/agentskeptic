@@ -9,6 +9,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { assertDestructivePostgresUrlsOrExit } from "../../scripts/assert-destructive-postgres-urls.mjs";
+import { resolveDrizzleKitBin } from "./resolve-website-drizzle-kit-bin.mjs";
 
 const websiteRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const env = { ...process.env };
@@ -52,7 +53,7 @@ if (!env.TELEMETRY_DATABASE_URL?.trim()) {
   process.exit(1);
 }
 
-const drizzleKit = path.join(websiteRoot, "..", "node_modules", "drizzle-kit", "bin.cjs");
+const drizzleKit = resolveDrizzleKitBin(websiteRoot);
 const r = spawnSync(process.execPath, [drizzleKit, "migrate", "--config", "drizzle.telemetry.config.ts"], {
   cwd: websiteRoot,
   env,

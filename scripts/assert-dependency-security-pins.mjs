@@ -50,6 +50,43 @@ function websiteWorkspaceFilter(instances) {
 function assertLockRule(rule, lockfileObj, lockLabel) {
   const { package: pkg, match, exactVersion, allowAbsent = false } = rule;
   const packages = lockfileObj.packages;
+
+  // Pin only the primary (hoisted) lock paths. npm v3 lockfiles can still list nested esbuild
+  // copies (e.g. drizzle-kit -> @esbuild-kit) that the root "overrides" does not always collapse.
+  if (match === "lockKeysExact") {
+    const lockKeys = rule.lockKeys;
+    if (!Array.isArray(lockKeys) || lockKeys.length === 0) {
+      fail("PIN_MANIFEST_SCHEMA lockfileAssertions lockKeysExact requires non-empty lockKeys");
+    }
+    const primaryKey = `node_modules/${pkg}`;
+    if (lockKeys[0] !== primaryKey) {
+      fail(
+        `PIN_MANIFEST_SCHEMA lockfileAssertions lockKeysExact first key must be ${primaryKey} (primary hoisted; got ${String(lockKeys[0])})`,
+      );
+    }
+    const pPrimary = packages[primaryKey];
+    if (!pPrimary) {
+      fail(
+        `PIN_LOCK_MISSING lockfile=${lockLabel} package=${pkg} key=${primaryKey} reason=primary_hoisted_required`,
+      );
+    }
+    if (pPrimary.link) {
+      fail(
+        `PIN_LOCK_MISMATCH lockfile=${lockLabel} package=${pkg} key=${primaryKey} reason=expected_registry_not_link`,
+      );
+    }
+    for (const key of lockKeys) {
+      const p = packages[key];
+      if (!p || p.link) continue;
+      if (p.version !== exactVersion) {
+        fail(
+          `PIN_LOCK_MISMATCH lockfile=${lockLabel} package=${pkg} key=${key} expected=${exactVersion} actual=${String(p.version)}`,
+        );
+      }
+    }
+    return;
+  }
+
   let instances = collectInstances(packages, pkg);
   if (match === "websiteWorkspaceExact") {
     instances = websiteWorkspaceFilter(instances);

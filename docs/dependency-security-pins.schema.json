@@ -40,7 +40,11 @@
         "properties": {
           "lockfile": { "type": "string", "enum": ["root", "example"] },
           "package": { "type": "string", "minLength": 1 },
-          "match": { "type": "string", "enum": ["everyInstanceExact", "websiteWorkspaceExact"] },
+          "match": {
+            "type": "string",
+            "enum": ["everyInstanceExact", "websiteWorkspaceExact", "lockKeysExact"]
+          },
+          "lockKeys": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },
           "exactVersion": { "type": "string", "minLength": 1 },
           "allowAbsent": { "type": "boolean" }
         }
