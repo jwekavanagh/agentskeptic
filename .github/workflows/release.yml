@@ -89,14 +89,14 @@ jobs:
           COMMERCIAL_LICENSE_API_BASE_URL: ${{ vars.COMMERCIAL_LICENSE_API_BASE_URL }}
         run: npx --no -- semantic-release
 
+  # PyPI: only after tag CI; head_branch is the short tag; RE2 = SemVer 2.0.0 with leading v
   publish-pypi:
     name: Publish PyPI
     if: |
       github.event_name == 'workflow_run' &&
       github.event.workflow_run.conclusion == 'success' &&
       github.event.workflow_run.event == 'push' &&
-      startsWith(github.event.workflow_run.head_branch, 'v') &&
-      contains(github.event.workflow_run.head_branch, '.')
+      matches(github.event.workflow_run.head_branch, '^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-([0-9A-Za-z-]+)(\.[0-9A-Za-z-]+)*)?(\+([0-9A-Za-z-]+)(\.[0-9A-Za-z-]+)*)?$')
     runs-on: ubuntu-latest
     env:
       AGENTSKEPTIC_TELEMETRY: "0"
