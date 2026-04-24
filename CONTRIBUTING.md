@@ -49,14 +49,44 @@ Thanks for helping improve **agentskeptic**.
 - **Sync:** after changing marketing JSON, run **`npm run emit-primary-marketing`** (or **`sync:public-product-anchors`**) from repo root and commit the regenerated artifacts listed in [`docs/public-distribution.md`](docs/public-distribution.md).
 - **Gate:** before merging marketing changes, run **`npm run verify:web-marketing-copy`** so validation, visitor-outcome node tests, the website build, **`marketing-*.contract` tests**, and the full website Vitest suite (including **`docs-marketing-contract`**) all pass.
 
+## Conventional Commits (merge gate)
+
+Releases and changelogs are **fully automated** from [Conventional Commits](https://www.conventionalcommits.org/) on `main` via [`semantic-release`](https://github.com/semantic-release/semantic-release) (see the Release workflow below). To keep `main` releasable:
+
+- **`feat:`** → a **minor** release; **`fix:`** or **`perf:`** → **patch**; **`BREAKING CHANGE:`** in the commit body, or a **`!`** after the type/scope (e.g. `feat(api)!: …`) → **major**.
+- Other types (`chore:`, `docs:`, `ci:`, `refactor:`, `test:`, `build:`, …) do **not** trigger a new npm/PyPI version by themselves unless they include a breaking marker.
+- **Local hook:** with `npm install`, [**Husky**](https://typicode.github.io/husky/) runs [**commitlint**](https://github.com/conventional-changelog/commitlint) on the commit message (`.husky/commit-msg` → `commitlint.config.cjs`). Skipping hooks with `--no-verify` is discouraged; CI will still run the same check on pull requests.
+- **IDE-style messages:** short summaries without a `type:` prefix (for example from Cursor) are **allowed**. If a line looks like a Conventional Commit (`chore: …`, `feat(scope): …`, etc.), the full **[@commitlint/config-conventional](https://github.com/conventional-changelog/commitlint/tree/master/%40commitlint/config-conventional)** rules apply; otherwise the hook does not block the commit. For **versioning and changelogs** on `main`, semantic-release still only recognizes conventional commit **types**—use a conventional first line for commits that should drive releases, or **squash-merge** the PR and set the squash title to a conventional message.
+- **CI:** [`ci.yml`](.github/workflows/ci.yml) runs **commitlint** on pull requests (commit range from the base branch to the PR head), with the same rules as the local hook (see `commitlint.config.cjs`).
+
 ## GitHub Actions (operator)
 
 This section is the **normative** single source of truth for CI and release workflows. Workflow YAML header comments are pointers only; behavioral rules must not live only in workflow comments.
 
 ### Default token permissions
 
-- **[`.github/workflows/ci.yml`](.github/workflows/ci.yml)** and **[`.github/workflows/assurance-scheduled.yml`](.github/workflows/assurance-scheduled.yml)** declare workflow-level `permissions: contents: read` so the default `GITHUB_TOKEN` scope does not depend on repository or organization defaults.
-- **Commercial npm publish** ([`.github/workflows/commercial-publish.yml`](.github/workflows/commercial-publish.yml)) uses `permissions: contents: read` and `id-token: write` for npm **Trusted Publishing (OIDC)**. The workflow must not use `NPM_TOKEN`, `NODE_AUTH_TOKEN`, or `registry-url` on `setup-node` for publish auth; publish targets `https://registry.npmjs.org` via the `npm publish` `--registry` flag only.
+- **[`ci.yml`](.github/workflows/ci.yml)** and **[`assurance-scheduled.yml`](.github/workflows/assurance-scheduled.yml)** declare workflow-level `permissions: contents: read` so the default `GITHUB_TOKEN` scope does not depend on repository or organization defaults.
+- **[`release.yml`](.github/workflows/release.yml)** uses `permissions: contents: write`, `id-token: write`, and `issues: write` / `pull-requests: write` (for GitHub Releases). It does not use a long‑lived **npm** token: npm publish uses **Trusted Publishing (OIDC)** like the manual workflow. Do not add `NPM_TOKEN` or `NODE_AUTH_TOKEN` to replace OIDC.
+- The **emergency** [**Commercial npm publish**](.github/workflows/commercial-publish.yml) workflow (manual dispatch) also uses `contents: read` and `id-token: write` for npm (OIDC). Prefer automated releases; use the emergency workflow only when the Release job cannot be fixed quickly.
+
+### Automated release (single repo version: npm + PyPI + changelog)
+
+- **When:** on every **push to `main`** that contains at least one **releasable** Conventional Commit since the last [`v*.*.*`](https://github.com/semver/semver) tag (see semantic-release’s rules), [**`release.yml`**](.github/workflows/release.yml) runs **semantic-release**.
+- **What it does:** updates **[`CHANGELOG.md`](CHANGELOG.md)**, bumps the **one** shared semver in root **[`package.json`](package.json)** and [`python/pyproject.toml`](python/pyproject.toml), syncs the workspace and distribution artifacts via **`node scripts/sync-release-artifacts.mjs`** (including **`node scripts/emit-primary-marketing.cjs`** and lockfile refresh), **commits** those files, **tags** `vX.Y.Z`, creates a **GitHub Release**, and **`npm publish`** the **commercial** CLI (same as today: `prepublishOnly` → `scripts/build-commercial.mjs` with `COMMERCIAL_LICENSE_API_BASE_URL` set from your repository).
+- **PyPI:** when semantic-release **pushes** the `vX.Y.Z` tag, a **second job** in the same workflow (triggered by the tag) builds the wheel from [`python/`](python/) and publishes to PyPI with **Trusted Publishing (OIDC)** via `pypa/gh-action-pypi-publish`. The **old** `py-v*` tag path was **removed**; PyPI is only published from a **`v*.*.*`** tag created by the Release workflow. Register this workflow as a **trusted publisher** for the `agentskeptic` project on [PyPI](https://pypi.org) (and remove or update any publisher entry that only referenced the previous tag-based job).
+
+### One-time and ongoing repository settings
+
+- **Variable (required for releases):** set [**`COMMERCIAL_LICENSE_API_BASE_URL`**](https://docs.github.com/en/actions/concepts/workflows-and-actions/variables) on the **repository** to your **production** app origin (no trailing slash), same value you used as the `commercial_license_api_base_url` input to the old manual commercial publish workflow. The Release job fails fast if it is empty when a real publish runs.
+- **Optional secret:** if **branch protection** on `main` blocks the default **`GITHUB_TOKEN`** from pushing the release commit and tag, add a **fine-grained or classic PAT** with `contents: write` to the `main` branch as the repository secret **`SEMANTIC_RELEASE_GITHUB_TOKEN`**. The workflow uses `secrets.SEMANTIC_RELEASE_GITHUB_TOKEN || secrets.GITHUB_TOKEN` for `checkout` and for semantic-release. If pushes still fail, adjust your ruleset to allow the **`github-actions[bot]`** app to push to `main`, or use the PAT.
+- **First-time git tags:** if no **`v*.*.*`** tag yet exists, semantic-release will infer from history; to align the next automated release with the current npm `latest` line, ensure a tag **`v<current version>`** exists on `main` (one-time) or accept that the first run may normalize the baseline.
+
+### Dry-run and emergency paths
+
+- **Dry-run:** run [**Actions → Release → Run workflow**](.github/workflows/release.yml) with **dry_run** set to the default (true) to run `semantic-release --dry-run` (no version bump, tag, or publish). This does not require `COMMERCIAL_LICENSE_API_BASE_URL`. Alternatively: `npm run release:dry` locally (needs a clean git state and the same `origin` you expect in CI).
+- **Emergency npm only:** if automation is broken, use the documented [**Commercial npm publish**](.github/workflows/commercial-publish.yml) **workflow dispatch** and the same production URL as `COMMERCIAL_LICENSE_API_BASE_URL` would be. This path does not bump the repo, tag, or PyPI; you must follow up with a fix on `main` and align versions manually to avoid split brain.
+
+**Post-release validation (recommended):** run [`assurance-scheduled`](.github/workflows/assurance-scheduled.yml) after a major release, and `npm view agentskeptic version` to confirm the registry.
 
 ### CI concurrency (normative)
 
@@ -69,22 +99,10 @@ This section is the **normative** single source of truth for CI and release work
 
 | Failure | System behavior |
 |---------|------------------|
-| Trusted Publisher / OIDC misconfiguration | `npm publish` fails; there is no token fallback in the workflow. |
-| Registry lag after publish | The verify step retries then fails the job if the version never appears. |
+| Trusted Publisher / OIDC misconfiguration | `npm publish` / PyPI publish fails; there is no long-lived token fallback. |
+| Registry lag after publish | The emergency commercial workflow’s verify step retries; the Release workflow relies on normal registry behavior. |
 | Concurrency cancel on a feature branch | Superseded run is `cancelled`; the latest run owns the gate. |
-
-### Release-validation procedure (single path; all on `main`; no alternate branches)
-
-These steps are required for a commercial release that ships the workflow and version together:
-
-1. **Prepare one PR** into `main` that contains: (a) all workflow edits, (b) CONTRIBUTING edits under this section as needed, (c) **the next semver bump** in [`package.json`](package.json) and matching root entries in [`package-lock.json`](package-lock.json) (patch bump over current `latest` on npm—for example if npm `latest` is `0.1.3`, set `0.1.4`). One PR avoids an extra merge cycle.
-2. **Open the PR and wait for `CI` green** (`test` + `commercial`).
-3. **Merge the PR to `main`** using the repository’s normal merge policy (squash or merge commit). Record the merge SHA if you need an audit trail.
-4. **On `main` after merge**, a maintainer runs **Actions → Commercial npm publish → Run workflow** with the production `commercial_license_api_base_url` input. Do not reconfigure Trusted Publisher or mutate repository secrets as a validation technique.
-5. **On `main` after merge**, a maintainer runs **Actions → Assurance scheduled → Run workflow**.
-6. **Collect validation evidence**: URLs or log excerpts for the Commercial npm publish run (publish and verify steps) and the Assurance run; run `npm view agentskeptic version` to confirm registry `latest` equals the bumped version.
-
-**Repo clean state after validation:** `main` contains merged workflow, this documentation, and the **released** semver. Do not revert the version bump after a successful publish; the bumped version is the released version.
+| Duplicate version on npm / PyPI | Re-publishing the same version fails; there is no double publish for the same tag. If the release commit and tag are pushed but a registry step fails, fix the cause and re-run the failed job, or follow manual recovery. |
 
 **Required checks after merge (non-`main` concurrency):** From `main`, create a **throwaway branch**, push two trivial commits in quick succession on that branch, and confirm the older `CI` run is **`cancelled`** and the newer run **`success`**—proving cancel-in-progress for non-`main` without changing `main`’s concurrency semantics.
 

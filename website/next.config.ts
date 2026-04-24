@@ -1,9 +1,10 @@
 import type { NextConfig } from "next";
-import { createRequire } from "node:module";
 import path from "path";
 import { COMMERCIAL_SITE_SECURITY_HEADERS } from "./src/lib/httpSecurityHeaders";
 import { DEMO_VERIFY_OUTPUT_FILE_TRACING_GLOBS } from "./src/lib/demoVerifyOutputFileTracingGlobs";
 import { REGISTRY_DRAFT_API_FILE_TRACING_GLOBS } from "./src/lib/registryDraft/registryDraftApiFileTracingGlobs";
+
+import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
 require("../scripts/public-product-anchors.cjs").assertNextPublicOriginParity();
@@ -16,25 +17,6 @@ require("../scripts/public-product-anchors.cjs").assertNextPublicOriginParity();
 const vercelLike = process.env.VERCEL === "1" || process.env.VERCEL === "production" || Boolean(process.env.VERCEL);
 const traceRoot =
   vercelLike || process.env.NEXT_CONFIG_TRACE_ROOT === "1" ? path.join(__dirname, "..") : undefined;
-
-/**
- * Pin internal RSC webpack loaders to the resolved `next` package. In some environments
- * (workspace hoisting, skewed installs, or `next` CLI vs app version mismatch) webpack can
- * fail with: Can't resolve 'next-flight-client-entry-loader'. This mirrors Next's own
- * `resolveLoader.alias` mapping in `dist/build/webpack-config.js`.
- */
-function pinNextFlightClientEntryLoader(config: Parameters<NonNullable<NextConfig["webpack"]>>[0]) {
-  const nextDir = path.dirname(require.resolve("next/package.json"));
-  const loaderPath = path.join(nextDir, "dist", "build", "webpack", "loaders", "next-flight-client-entry-loader");
-  const prev = config.resolveLoader as { alias?: Record<string, string> } | undefined;
-  config.resolveLoader = {
-    ...config.resolveLoader,
-    alias: {
-      ...prev?.alias,
-      "next-flight-client-entry-loader": loaderPath,
-    },
-  };
-}
 
 const nextConfig: NextConfig = {
   async redirects() {
@@ -55,10 +37,6 @@ const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
     "/api/demo/verify": [...DEMO_VERIFY_OUTPUT_FILE_TRACING_GLOBS],
     "/api/integrator/registry-draft": [...REGISTRY_DRAFT_API_FILE_TRACING_GLOBS],
-  },
-  webpack: (config) => {
-    pinNextFlightClientEntryLoader(config);
-    return config;
   },
   async headers() {
     return [

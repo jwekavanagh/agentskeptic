@@ -21,7 +21,7 @@ describe("GitHub Actions AGENTSKEPTIC_TELEMETRY env", () => {
     const doc = loadWorkflow("ci.yml");
     const jobs = doc.jobs;
     const ids = Object.keys(jobs).sort();
-    assert.deepEqual(ids, ["codeql", "commercial", "test", "vercel_production"]);
+    assert.deepEqual(ids, ["codeql", "commercial", "commitlint", "test", "vercel_production"]);
     assert.equal(jobs.test.env.AGENTSKEPTIC_TELEMETRY, "0");
     assert.equal(jobs.commercial.env.AGENTSKEPTIC_TELEMETRY, "0");
     assert.equal("AGENTSKEPTIC_TELEMETRY" in (jobs.codeql.env ?? {}), false);
@@ -36,5 +36,14 @@ describe("GitHub Actions AGENTSKEPTIC_TELEMETRY env", () => {
   it("assurance-scheduled.yml assurance job has telemetry env", () => {
     const doc = loadWorkflow("assurance-scheduled.yml");
     assert.equal(doc.jobs.assurance.env.AGENTSKEPTIC_TELEMETRY, "0");
+  });
+
+  it("release.yml jobs match inventory and telemetry env", () => {
+    const doc = loadWorkflow("release.yml");
+    const jobs = doc.jobs;
+    const ids = Object.keys(jobs).sort();
+    assert.deepEqual(ids, ["publish-pypi", "semantic-release"]);
+    assert.equal(jobs["semantic-release"].env.AGENTSKEPTIC_TELEMETRY, "0");
+    assert.equal(jobs["publish-pypi"].env.AGENTSKEPTIC_TELEMETRY, "0");
   });
 });

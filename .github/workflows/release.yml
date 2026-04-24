@@ -1,0 +1,105 @@
+# Automated releases: Conventional Commits on main -> semantic-release -> npm (OIDC) + tag v* -> PyPI (OIDC).
+# See CONTRIBUTING.md (GitHub Actions / releases).
+name: Release
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "If true, run semantic-release --dry-run only (no version bump, no tag, no registry publish)"
+        type: boolean
+        default: true
+      full_run:
+        description: "If true and dry_run is false, run the full release on the checked-out default branch (use sparingly; normal path is push to main)"
+        type: boolean
+        default: false
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  semantic-release:
+    name: semantic-release
+    if: |
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'workflow_dispatch' && (inputs.dry_run == true || (inputs.dry_run == false && inputs.full_run == true)))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+      issues: write
+      pull-requests: write
+    env:
+      GITHUB_TOKEN: ${{ secrets.SEMANTIC_RELEASE_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
+      AGENTSKEPTIC_TELEMETRY: "0"
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+          token: ${{ secrets.SEMANTIC_RELEASE_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Upgrade npm (Trusted Publishing / provenance; matches commercial manual workflow)
+        run: npm install -g npm@11.5.1
+
+      - name: Dry-run (no version bump, tag, or publish)
+        if: github.event_name == 'workflow_dispatch' && inputs.dry_run == true
+        run: npx --no -- semantic-release --dry-run
+
+      - name: Assert commercial license base URL
+        if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && inputs.dry_run == false && inputs.full_run == true)
+        env:
+          COMMERCIAL_BASE: ${{ vars.COMMERCIAL_LICENSE_API_BASE_URL }}
+        run: |
+          set -euo pipefail
+          if [ -z "${COMMERCIAL_BASE// }" ]; then
+            echo "Set repository variable COMMERCIAL_LICENSE_API_BASE_URL (production app origin, no trailing slash)."
+            exit 1
+          fi
+
+      - name: Full semantic-release
+        if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && inputs.dry_run == false && inputs.full_run == true)
+        env:
+          WF_BUILD_PROFILE: commercial
+          COMMERCIAL_LICENSE_API_BASE_URL: ${{ vars.COMMERCIAL_LICENSE_API_BASE_URL }}
+        run: npx --no -- semantic-release
+
+  publish-pypi:
+    name: Publish PyPI
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    env:
+      AGENTSKEPTIC_TELEMETRY: "0"
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Build wheel
+        run: |
+          set -e
+          cd python && python -m pip install build -q && python -m build
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: python/dist/

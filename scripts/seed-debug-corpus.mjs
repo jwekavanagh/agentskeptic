@@ -10,7 +10,7 @@ import { writeAgentRunBundle } from "../dist/agentRunBundle.js";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const corpus = join(root, "examples", "debug-corpus");
-const producer = { name: "agentskeptic", version: "1.2.1" };
+const producer = { name: "agentskeptic", version: "1.2.2" };
 const verifiedAt = "2026-04-23T12:00:00.000Z";
 
 function eventsLineBytes(workflowId) {

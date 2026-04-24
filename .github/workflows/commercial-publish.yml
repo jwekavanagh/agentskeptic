@@ -1,4 +1,8 @@
-# Commercial npm publish uses Trusted Publishing (OIDC). Operator details: CONTRIBUTING.md
+# EMERGENCY / MANUAL npm publish only — when Automated Release
+# (`.github/workflows/release.yml` + `semantic-release`) cannot run. Routine releases use
+# Conventional Commits on `main` and the Release workflow; do not use this to bypass them.
+#
+# Original context: Commercial npm uses Trusted Publishing (OIDC). Operator details: CONTRIBUTING.md
 # (GitHub Actions). npm: https://docs.npmjs.com/trusted-publishers
 name: Commercial npm publish
 
