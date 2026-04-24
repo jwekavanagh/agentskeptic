@@ -3,7 +3,7 @@
   "version": "1.2.2",
   "private": true,
   "engines": {
-    "node": "22.x"
+    "node": ">=22.0.0 <26"
   },
   "scripts": {
     "prebuild": "node ../scripts/sync-website-ssot.mjs",
