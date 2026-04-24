@@ -19,21 +19,20 @@ import {
   isDemoScenarioId,
   type DemoScenarioId,
 } from "@/lib/demoScenarios";
+import { buildDemoResultSummary } from "@/lib/demoResultSummary";
 import { shareDemoOutcomeCertificate } from "@/lib/shareDemoPublicReport";
 import { useRouter, useSearchParams } from "next/navigation";
-import { createElement, useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 type DemoResult =
   | { ok: true; humanReport: string; certificate: unknown }
   | { ok: false; title: string; body: string; requestId?: string };
 
 export type TryItSectionProps = {
-  /** Nested under hero `<section>` — render as `div` and `role="region"` (valid HTML). */
-  variant?: "page" | "heroEmbedded";
   initialScenarioId: DemoScenarioId;
 };
 
-export function TryItSection({ variant = "page", initialScenarioId }: TryItSectionProps) {
+export function TryItSection({ initialScenarioId }: TryItSectionProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [scenarioId, setScenarioId] = useState<DemoScenarioId>(initialScenarioId);
@@ -138,14 +137,19 @@ export function TryItSection({ variant = "page", initialScenarioId }: TryItSecti
     }
   }
 
-  const embedded = variant === "heroEmbedded";
-  const rootClassName = embedded ? "home-hero-try-it" : "home-section";
-  const tag = embedded ? "div" : "section";
+  const summary =
+    result?.ok === true ? buildDemoResultSummary(result.certificate, scenarioId) : null;
 
-  const inner = (
-    <>
+  return (
+    <section
+      id="try-it"
+      className="home-section home-try-it"
+      data-testid={productCopy.uiTestIds.tryIt}
+      aria-labelledby="try-it-heading"
+      aria-busy={loading}
+    >
       <h2 id="try-it-heading">{productCopy.tryIt.title}</h2>
-      <p className="muted">{embedded ? productCopy.tryIt.introHeroEmbed : productCopy.tryIt.intro}</p>
+      <p className="muted">{productCopy.tryIt.intro}</p>
       <p className="muted try-it-pre-frame" data-testid="try-it-pre-button-framing">
         {productCopy.tryIt.preButtonFraming}
       </p>
@@ -210,7 +214,26 @@ export function TryItSection({ variant = "page", initialScenarioId }: TryItSecti
         </LiveStatus>
       )}
       {result && result.ok && (
-        <div className="try-it-output">
+        <div className="try-it-output" data-testid="try-it-output">
+          {summary && (
+            <div className="try-it-verdict-card" data-testid="try-it-verdict-card">
+              <h3 className="try-it-subheading">Result at a glance</h3>
+              <ul className="try-it-verdict-bullets">
+                <li>
+                  <span className="try-it-k">Scenario</span> {summary.scenario}
+                </li>
+                <li>
+                  <span className="try-it-k">Reality</span> {summary.reality}
+                </li>
+                <li>
+                  <span className="try-it-k">Verdict</span> {summary.verdictLine}
+                </li>
+                <li>
+                  <span className="try-it-k">Why it matters</span> {summary.whyItMatters}
+                </li>
+              </ul>
+            </div>
+          )}
           <p className="try-it-output-actions">
             <button
               type="button"
@@ -221,32 +244,21 @@ export function TryItSection({ variant = "page", initialScenarioId }: TryItSecti
               {shareLoading ? productCopy.tryIt.running : productCopy.tryIt.shareReportButton}
             </button>
           </p>
-          <h3 className="try-it-subheading">Human report</h3>
-          <pre className="code-block" data-testid={productCopy.uiTestIds.tryTruthReport}>
-            {result.humanReport}
-          </pre>
-          <h3 className="try-it-subheading">Outcome certificate (JSON)</h3>
-          <details className="try-it-json-details">
-            <summary>Show raw verification JSON</summary>
+          <details className="try-it-human-details" data-testid="try-it-human-details">
+            <summary>Full human report</summary>
+            <pre className="code-block" data-testid={productCopy.uiTestIds.tryTruthReport}>
+              {result.humanReport}
+            </pre>
+          </details>
+          <h3 className="try-it-subheading">Raw outcome</h3>
+          <details className="try-it-json-details" data-testid="try-it-raw-outcome">
+            <summary>Full verification JSON</summary>
             <pre className="code-block" data-testid={productCopy.uiTestIds.tryWorkflowJson}>
               {JSON.stringify(result.certificate, null, 2)}
             </pre>
           </details>
         </div>
       )}
-    </>
-  );
-
-  return createElement(
-    tag,
-    {
-      id: "try-it",
-      className: rootClassName,
-      "data-testid": productCopy.uiTestIds.tryIt,
-      "aria-labelledby": "try-it-heading",
-      "aria-busy": loading,
-      ...(embedded ? { role: "region" as const } : {}),
-    },
-    inner,
+    </section>
   );
 }

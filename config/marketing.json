@@ -15,14 +15,15 @@
   "heroOutcome": "Your agents say the workflow succeeded.",
   "heroMechanism": "Your database says otherwise.",
   "guaranteeFootnote": "Read-only checks; not which call wrote.",
+  "heroPositioning": "Post-condition verification for AI-agent workflows.",
   "siteDefaultMetadata": {
     "title": "AgentSkeptic",
-    "description": "Read-only verification: what agents claim versus what your databases, warehouses, and APIs show."
+    "description": "AgentSkeptic compares agent claims with real downstream state — databases, APIs, object stores, and vector stores — and returns a deterministic verdict."
   },
   "homepageAcquisitionCtaLabel": "How it works",
   "pageMetadata": {
     "title": "Traces vs state",
-    "description": "Read-only verification: what agents claim versus what your databases, warehouses, and APIs show."
+    "description": "AgentSkeptic compares agent claims with real downstream state — databases, APIs, object stores, and vector stores — and returns a deterministic verdict."
   },
   "readmeFold": {
     "templateLines": [

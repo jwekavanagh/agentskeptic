@@ -1,3 +1,9 @@
+.first-five-minutes-callout--teaser {
+  margin-top: 2rem;
+  padding: 0.85rem 1rem;
+  max-width: 38rem;
+}
+
 .first-five-minutes-callout {
   margin-top: 1.25rem;
   padding: 1rem 1.25rem;

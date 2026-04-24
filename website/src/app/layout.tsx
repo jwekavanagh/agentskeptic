@@ -7,8 +7,8 @@ import { Inter } from "next/font/google";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import "./globals.css";
+import { FirstFiveMinutesAfterMain, SiteFunnelBeacon } from "@/components/SiteFunnelLayoutParts";
 import { Providers } from "./providers";
-import { SiteFunnelAttribution } from "@/components/SiteFunnelAttribution";
 import { SkipToMainContent } from "@/components/SkipToMainContent";
 import { SiteFooter } from "./SiteFooter";
 import { SiteHeader } from "./SiteHeader";
@@ -73,10 +73,11 @@ export default async function RootLayout({
         <SkipToMainContent />
         <SiteHeader />
         <Providers>
+          <SiteFunnelBeacon />
           <div id="site-main" className="site-main" tabIndex={-1}>
-            <SiteFunnelAttribution />
             {children}
           </div>
+          <FirstFiveMinutesAfterMain />
         </Providers>
         <SiteFooter />
         <Analytics />

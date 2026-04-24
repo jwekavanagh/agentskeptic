@@ -1,10 +1,13 @@
 /** Ordered homepage section ids — validated in Vitest (conversion funnel order). */
 export const HOME_SECTION_ORDER = [
   "hero",
+  "homeFailureExample",
+  "tryIt",
   "homeWhatCatches",
   "homeStakes",
   "howItWorks",
-  "fitAndLimits",
+  "homeWhoFor",
+  "homeGuarantees",
   "homeClosing",
   "commercialSurface",
 ] as const;

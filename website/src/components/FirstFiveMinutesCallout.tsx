@@ -7,10 +7,34 @@ import {
 import Link from "next/link";
 import "./FirstFiveMinutesCallout.css";
 
+export type FirstFiveMinutesCalloutProps = {
+  /** Shorter on `/` so policy detail does not interrupt the product story. */
+  homeTeaser?: boolean;
+};
+
 /**
- * Shown only on routes where the funnel surface beacon fires (same policy as SiteFunnelAttribution).
+ * Shown only on routes where the funnel surface beacon fires
+ * (same allowlist as `FunnelSurfaceBeacon`).
  */
-export function FirstFiveMinutesCallout() {
+export function FirstFiveMinutesCallout({ homeTeaser = false }: FirstFiveMinutesCalloutProps) {
+  if (homeTeaser) {
+    return (
+      <aside
+        id="agentskeptic-first-five-minutes"
+        className="first-five-minutes-callout first-five-minutes-callout--teaser muted"
+        aria-label="First five minutes and optional telemetry"
+      >
+        <h2 className="first-five-minutes-callout-title">First five minutes</h2>
+        <p className="first-five-minutes-lede">{TELEMETRY_ICING_LINE}</p>
+        <p className="first-five-minutes-sub">
+          <Link href="/privacy">Privacy policy</Link>
+          {" · "}
+          <Link href="/integrate#agentskeptic-first-five-minutes">Get started: full checklist and CLI</Link>
+        </p>
+      </aside>
+    );
+  }
+
   return (
     <aside
       id="agentskeptic-first-five-minutes"

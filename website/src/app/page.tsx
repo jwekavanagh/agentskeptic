@@ -5,10 +5,7 @@ import marketing from "@/lib/marketing";
 import { indexableGuideCanonical } from "@/lib/indexableGuides";
 import { publicProductAnchors } from "@/lib/publicProductAnchors";
 import type { Metadata } from "next";
-import {
-  shareableTerminalFailureExcerpt,
-  shareableTerminalFailureJsonOnly,
-} from "@/lib/shareableTerminalFailureExcerpt";
+import { shareableTerminalFailureJsonOnly } from "@/lib/shareableTerminalFailureExcerpt";
 import { getHomeCommercialSectionFromConfig } from "@/lib/commercialNarrative";
 import { buildHomeTrustStripLinks, openapiHrefFromProcessEnv } from "@/lib/siteChrome";
 import { isDemoScenarioId, type DemoScenarioId } from "@/lib/demoScenarios";
@@ -65,6 +62,8 @@ export default async function HomePage({
     marketing.shareableTerminalDemo.transcript,
   );
 
+  const ex = productCopy.homeFailureExample;
+
   const sectionRenderers: Record<HomeSectionId, React.ReactNode> = {
     hero: (
       <section
@@ -76,25 +75,27 @@ export default async function HomePage({
         <div className="home-hero-grid">
           <div className="home-hero-copy">
             <h1 id="hero-heading">{productCopy.hero.title}</h1>
+            <p className="home-hero-positioning lede">{productCopy.heroPositioning}</p>
             <p className="lede">{productCopy.heroOutcome}</p>
             <p className="lede">{productCopy.heroMechanism}</p>
-            <p className="lede">
-              <strong>AgentSkeptic</strong>
-              {productCopy.homeHero.valuePropositionBeforeEm}
-              <em>{productCopy.homeHero.valuePropositionEm}</em>
-              {productCopy.homeHero.valuePropositionAfterEm}
-            </p>
+            <p className="lede">{productCopy.homeValueProposition}</p>
             <p className="home-cta-row" data-testid="home-hero-cta-row">
               <a className="btn" href="/?demo=wf_missing#try-it" data-testid="home-hero-demo-cta">
                 {productCopy.homeHeroCtaLabels.demo}
               </a>
               <Link
                 className="btn secondary"
-                href={productCopy.homeHeroSecondaryCta.href}
-                data-testid={productCopy.homeHeroSecondaryCta.testId}
+                href={productCopy.homePageHeroSecondaryCta.href}
+                data-testid={productCopy.homePageHeroSecondaryCta.testId}
               >
+                {productCopy.homePageHeroSecondaryCta.label}
+              </Link>
+            </p>
+            <p className="muted home-hero-tertiary" data-testid="home-hero-install-cta">
+              <Link className="link-tertiary" href={productCopy.homeHeroSecondaryCta.href}>
                 {productCopy.homeHeroSecondaryCta.label}
               </Link>
+              <span> — npm, CI, and your own data.</span>
             </p>
             <p className="muted" data-testid="home-guarantee-footnote">
               {productCopy.guaranteeFootnote}{" "}
@@ -116,7 +117,7 @@ export default async function HomePage({
                 <span className="home-hero-flow-sep" aria-hidden="true">
                   →
                 </span>
-                <span>Database check</span>
+                <span>Store check</span>
                 <span className="home-hero-flow-sep" aria-hidden="true">
                   →
                 </span>
@@ -124,7 +125,7 @@ export default async function HomePage({
               </div>
             </div>
             <details className="home-hero-raw-json">
-              <summary>Show raw verification JSON</summary>
+              <summary>Example verification details (JSON)</summary>
               <pre
                 className="home-hero-terminal-pre"
                 aria-label="Example verification failure JSON; verdict failed"
@@ -134,10 +135,36 @@ export default async function HomePage({
             </details>
           </div>
         </div>
-        <Suspense fallback={null}>
-          <TryItSection variant="heroEmbedded" initialScenarioId={tryItInitial} />
-        </Suspense>
       </section>
+    ),
+    homeFailureExample: (
+      <section
+        key="homeFailureExample"
+        className="home-section home-failure-example"
+        data-testid={productCopy.uiTestIds.homeFailureExample}
+        aria-labelledby="failure-example-heading"
+      >
+        <h2 id="failure-example-heading">{ex.sectionTitle}</h2>
+        <div className="home-failure-example-card" role="group" aria-label="Concrete missing-write">
+          <p>
+            <strong>Scenario.</strong> {ex.claim}
+          </p>
+          <p>
+            <strong>Reality.</strong> {ex.reality}
+          </p>
+          <p className="home-failure-verdict" data-testid="home-failure-verdict">
+            <strong>Verdict.</strong> {ex.verdict}
+          </p>
+          <p className="muted home-failure-why" data-testid="home-failure-why">
+            {ex.whyItMatters}
+          </p>
+        </div>
+      </section>
+    ),
+    tryIt: (
+      <Suspense key="tryIt" fallback={null}>
+        <TryItSection initialScenarioId={tryItInitial} />
+      </Suspense>
     ),
     homeWhatCatches: (
       <section
@@ -196,14 +223,14 @@ export default async function HomePage({
         <p className="muted home-how-works-with">{productCopy.mechanism.worksWith}</p>
       </section>
     ),
-    fitAndLimits: (
+    homeWhoFor: (
       <section
-        key="fitAndLimits"
+        key="homeWhoFor"
         className="home-section"
-        data-testid={productCopy.uiTestIds.fitAndLimits}
-        aria-labelledby="fit-limits-heading"
+        data-testid={productCopy.uiTestIds.homeWhoFor}
+        aria-labelledby="who-for-heading"
       >
-        <h2 id="fit-limits-heading">{productCopy.fitAndLimits.sectionTitle}</h2>
+        <h2 id="who-for-heading">{productCopy.fitAndLimits.sectionTitle}</h2>
         <h3>{productCopy.fitAndLimits.forYouHeading}</h3>
         <ul>
           {productCopy.forYou.map((t) => (
@@ -216,9 +243,17 @@ export default async function HomePage({
             <li key={t}>{t}</li>
           ))}
         </ul>
-        <h2 id="guarantee-heading" className="home-guarantee-h2">
-          {productCopy.guarantees.title}
-        </h2>
+      </section>
+    ),
+    homeGuarantees: (
+      <section
+        key="homeGuarantees"
+        className="home-section"
+        data-testid={productCopy.uiTestIds.homeGuarantees}
+        aria-labelledby="guarantees-limits-heading"
+      >
+        <h2 id="guarantees-limits-heading">{productCopy.homeGuarantees.sectionTitle}</h2>
+        <h3 className="home-guarantee-h2">{productCopy.guarantees.title}</h3>
         <ul>
           {productCopy.guarantees.guaranteed.map((t) => (
             <li key={t}>{t}</li>
@@ -230,7 +265,6 @@ export default async function HomePage({
             <li key={t}>{t}</li>
           ))}
         </ul>
-        <p className="muted">{productCopy.mechanism.notObservability}</p>
       </section>
     ),
     homeClosing: (
