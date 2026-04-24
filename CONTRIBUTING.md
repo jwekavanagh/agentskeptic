@@ -66,8 +66,7 @@ This section is the **normative** single source of truth for CI and release work
 ### Default token permissions
 
 - **[`ci.yml`](.github/workflows/ci.yml)** and **[`assurance-scheduled.yml`](.github/workflows/assurance-scheduled.yml)** declare workflow-level `permissions: contents: read` so the default `GITHUB_TOKEN` scope does not depend on repository or organization defaults.
-- **[`release.yml`](.github/workflows/release.yml)** uses `permissions: contents: write`, `id-token: write`, and `issues: write` / `pull-requests: write` (for GitHub Releases). It does not use a long‑lived **npm** token: npm publish uses **Trusted Publishing (OIDC)** like the manual workflow. Do not add `NPM_TOKEN` or `NODE_AUTH_TOKEN` to replace OIDC.
-- The **emergency** [**Commercial npm publish**](.github/workflows/commercial-publish.yml) workflow (manual dispatch) also uses `contents: read` and `id-token: write` for npm (OIDC). Prefer automated releases; use the emergency workflow only when the Release job cannot be fixed quickly.
+- **[`release.yml`](.github/workflows/release.yml)** uses `permissions: contents: write`, `id-token: write`, and `issues: write` / `pull-requests: write` (for GitHub Releases). It does not use a long‑lived **npm** token: **`npm publish`** uses **Trusted Publishing (OIDC)**. Do not add `NPM_TOKEN` or `NODE_AUTH_TOKEN` to replace OIDC.
 
 ### Automated release (single repo version: npm + PyPI + changelog)
 
@@ -77,14 +76,14 @@ This section is the **normative** single source of truth for CI and release work
 
 ### One-time and ongoing repository settings
 
-- **Variable (required for releases):** set [**`COMMERCIAL_LICENSE_API_BASE_URL`**](https://docs.github.com/en/actions/concepts/workflows-and-actions/variables) on the **repository** to your **production** app origin (no trailing slash), same value you used as the `commercial_license_api_base_url` input to the old manual commercial publish workflow. The Release job fails fast if it is empty when a real publish runs.
+- **Variable (required for releases):** set [**`COMMERCIAL_LICENSE_API_BASE_URL`**](https://docs.github.com/en/actions/concepts/workflows-and-actions/variables) on the **repository** to your **production** app origin (no trailing slash, e.g. `https://app.example.com`). The Release job fails fast if it is empty when a real publish runs.
+- **npm Trusted Publishing:** in the package settings on [npmjs.com](https://www.npmjs.com), the trusted GitHub Actions workflow must be **[`.github/workflows/release.yml`](.github/workflows/release.yml)** for this repository (the previous manual `commercial-publish.yml` workflow was removed). See [npm: Trusted publishers](https://docs.npmjs.com/trusted-publishers).
 - **Optional secret:** if **branch protection** on `main` blocks the default **`GITHUB_TOKEN`** from pushing the release commit and tag, add a **fine-grained or classic PAT** with `contents: write` to the `main` branch as the repository secret **`SEMANTIC_RELEASE_GITHUB_TOKEN`**. The workflow uses `secrets.SEMANTIC_RELEASE_GITHUB_TOKEN || secrets.GITHUB_TOKEN` for `checkout` and for semantic-release. If pushes still fail, adjust your ruleset to allow the **`github-actions[bot]`** app to push to `main`, or use the PAT.
 - **First-time git tags:** if no **`v*.*.*`** tag yet exists, semantic-release will infer from history; to align the next automated release with the current npm `latest` line, ensure a tag **`v<current version>`** exists on `main` (one-time) or accept that the first run may normalize the baseline.
 
-### Dry-run and emergency paths
+### Dry-run
 
-- **Dry-run:** run [**Actions → Release → Run workflow**](.github/workflows/release.yml) with **dry_run** set to the default (true) to run `semantic-release --dry-run` (no version bump, tag, or publish). This does not require `COMMERCIAL_LICENSE_API_BASE_URL`. Alternatively: `npm run release:dry` locally (needs a clean git state and the same `origin` you expect in CI).
-- **Emergency npm only:** if automation is broken, use the documented [**Commercial npm publish**](.github/workflows/commercial-publish.yml) **workflow dispatch** and the same production URL as `COMMERCIAL_LICENSE_API_BASE_URL` would be. This path does not bump the repo, tag, or PyPI; you must follow up with a fix on `main` and align versions manually to avoid split brain.
+- Run [**Actions → Release → Run workflow**](.github/workflows/release.yml) with **dry_run** set to the default (true) to run `semantic-release --dry-run` (no version bump, tag, or publish). This does not require `COMMERCIAL_LICENSE_API_BASE_URL`. Alternatively: `npm run release:dry` locally (needs a clean git state and the same `origin` you expect in CI).
 
 **Post-release validation (recommended):** run [`assurance-scheduled`](.github/workflows/assurance-scheduled.yml) after a major release, and `npm view agentskeptic version` to confirm the registry.
 
@@ -100,7 +99,7 @@ This section is the **normative** single source of truth for CI and release work
 | Failure | System behavior |
 |---------|------------------|
 | Trusted Publisher / OIDC misconfiguration | `npm publish` / PyPI publish fails; there is no long-lived token fallback. |
-| Registry lag after publish | The emergency commercial workflow’s verify step retries; the Release workflow relies on normal registry behavior. |
+| Registry lag after publish | The registry can be briefly behind after `npm publish`; re-run a failed job if the failure was a transient read. |
 | Concurrency cancel on a feature branch | Superseded run is `cancelled`; the latest run owns the gate. |
 | Duplicate version on npm / PyPI | Re-publishing the same version fails; there is no double publish for the same tag. If the release commit and tag are pushed but a registry step fails, fix the cause and re-run the failed job, or follow manual recovery. |
 

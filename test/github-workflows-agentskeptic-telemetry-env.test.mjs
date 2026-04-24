@@ -28,11 +28,6 @@ describe("GitHub Actions AGENTSKEPTIC_TELEMETRY env", () => {
     assert.equal("AGENTSKEPTIC_TELEMETRY" in (jobs.vercel_production.env ?? {}), false);
   });
 
-  it("commercial-publish.yml publish job has telemetry env", () => {
-    const doc = loadWorkflow("commercial-publish.yml");
-    assert.equal(doc.jobs.publish.env.AGENTSKEPTIC_TELEMETRY, "0");
-  });
-
   it("assurance-scheduled.yml assurance job has telemetry env", () => {
     const doc = loadWorkflow("assurance-scheduled.yml");
     assert.equal(doc.jobs.assurance.env.AGENTSKEPTIC_TELEMETRY, "0");

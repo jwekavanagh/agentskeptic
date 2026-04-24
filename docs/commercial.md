@@ -70,7 +70,7 @@ In-process **`createDecisionGate`** (library embed in your application) evaluate
 
 Codegen: **`node scripts/write-commercial-build-flags.mjs`** writes **`src/generated/commercialBuildFlags.ts`** (gitignored) before `tsc`. **`npm run build`** passes **`--oss`** so the default artifact stays OSS even if **`WF_BUILD_PROFILE`** is set in the shell; **`npm run build:commercial`** invokes the script with **`--commercial`** and requires **`COMMERCIAL_LICENSE_API_BASE_URL`**.
 
-After **`tsc`**, the embedded license API origin is **`LICENSE_API_BASE_URL`** in **`dist/generated/commercialBuildFlags.js`** (not necessarily duplicated inside **`dist/cli.js`**). The **`Commercial npm publish`** workflow asserts the dispatch input URL against that file.
+After **`tsc`**, the embedded license API origin is **`LICENSE_API_BASE_URL`** in **`dist/generated/commercialBuildFlags.js`** (not necessarily duplicated inside **`dist/cli.js`**). CI sets this from the **`COMMERCIAL_LICENSE_API_BASE_URL`** repository variable when [`.github/workflows/release.yml`](.github/workflows/release.yml) runs **semantic-release** and the commercial `prepublishOnly` build.
 
 Forks: build with `oss` to omit the gate.
 
