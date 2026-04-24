@@ -45,7 +45,7 @@ describe("instrumentation register", () => {
     vi.stubEnv("E2E_COMMERCIAL_FUNNEL", "1");
     vi.resetModules();
     const { register } = await import("../instrumentation");
-    expect(() => register()).toThrow(PRODUCTION_COMMERCIAL_GUARD_VIOLATION_MESSAGE);
+    await expect(register()).rejects.toThrow(PRODUCTION_COMMERCIAL_GUARD_VIOLATION_MESSAGE);
   });
 
   it("register throws when production-like and TELEMETRY_DATABASE_URL missing", async () => {
@@ -55,6 +55,6 @@ describe("instrumentation register", () => {
     delete process.env.TELEMETRY_DATABASE_URL;
     vi.resetModules();
     const { register } = await import("../instrumentation");
-    expect(() => register()).toThrow(TELEMETRY_DATABASE_URL_REQUIRED_MESSAGE);
+    await expect(register()).rejects.toThrow(TELEMETRY_DATABASE_URL_REQUIRED_MESSAGE);
   });
 });
