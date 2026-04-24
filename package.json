@@ -94,6 +94,7 @@
     "yaml": "^2.8.3"
   },
   "overrides": {
+    "postcss": "8.5.10",
     "encoding-sniffer": "1.0.2",
     "uuid": "14.0.0",
     "fast-xml-parser": "5.7.1",
