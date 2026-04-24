@@ -20,14 +20,36 @@ const negativeRoot = join(root, "test", "fixtures", "corpus-negative");
 const runOkDir = join(root, "examples", "debug-corpus", "run_ok");
 
 describe("debugCorpus", () => {
-  it("examples/debug-corpus has one sealed run (run_ok)", () => {
+  it("examples/debug-corpus ships the curated demo library (5 sealed ok runs)", () => {
     const corpus = join(root, "examples", "debug-corpus");
     const outcomes = loadAllCorpusRuns(corpus);
-    expect(outcomes).toHaveLength(1);
+    expect(outcomes).toHaveLength(5);
     const ok = outcomes.filter((o) => o.loadStatus === "ok");
-    expect(ok).toHaveLength(1);
-    expect(ok[0]!.runId).toBe("run_ok");
-    expect(ok[0]!.agentRunRecord.workflowId).toBe("wf_complete");
+    expect(ok).toHaveLength(5);
+    const ids = new Set(ok.map((o) => o.runId));
+    for (const id of [
+      "run_ok",
+      "run_value_mismatch",
+      "run_row_absent",
+      "run_path_nonempty",
+      "run_complete_b",
+    ]) {
+      expect(ids.has(id)).toBe(true);
+    }
+    const withFailureEvidence = ok.filter(
+      (o) =>
+        o.workflowResult.workflowTruthReport.failureAnalysis !== null &&
+        o.workflowResult.workflowTruthReport.failureAnalysis.evidence.length > 0,
+    );
+    expect(withFailureEvidence).toHaveLength(2);
+    expect(withFailureEvidence.map((o) => o.runId).sort()).toEqual(["run_row_absent", "run_value_mismatch"]);
+    const pathFindings = ok.filter(
+      (o) => o.workflowResult.workflowTruthReport.executionPathFindings.length > 0,
+    );
+    expect(pathFindings).toHaveLength(1);
+    expect(pathFindings[0]!.runId).toBe("run_path_nonempty");
+    const wfComplete = ok.filter((o) => o.workflowResult.workflowId === "wf_complete");
+    expect(wfComplete.length).toBeGreaterThanOrEqual(3);
   });
 
   it("corpus-negative fixtures produce expected error codes", () => {

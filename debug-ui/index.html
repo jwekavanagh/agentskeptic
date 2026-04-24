@@ -3,13 +3,20 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>workflow-verifier — Debug Console</title>
+    <title>agentskeptic — Debug Console</title>
     <link rel="stylesheet" href="app.css" />
   </head>
   <body>
     <header>
-      <h1>Debug Console</h1>
-      <p class="sub">Local corpus triage (127.0.0.1 only). API provides focus targets; no duplicated linking logic in the browser.</p>
+      <h1>agentskeptic Debug Console</h1>
+      <p class="sub">
+        Local corpus triage (127.0.0.1 only). Focus targets come from the API; this UI links them to trace steps—no duplicated
+        linking rules in the browser.
+      </p>
+      <p class="cli-hint">
+        After running verification from the CLI, explore saved runs here:
+        <code>agentskeptic debug --corpus examples/debug-corpus</code>
+      </p>
     </header>
 
     <nav class="tabs">
@@ -74,6 +81,6 @@
       <div id="detail-body"></div>
     </section>
 
-    <script src="app.js"></script>
+    <script type="module" src="app.js"></script>
   </body>
 </html>

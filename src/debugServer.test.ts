@@ -39,14 +39,14 @@ const DEBUG_API_RUN_DETAIL_OK_KEYS = [
 ];
 
 describe("debugServer HTTP", () => {
-  it("GET /api/runs returns one item for examples corpus", async () => {
+  it("GET /api/runs returns five items for examples corpus", async () => {
     const srv = await startDebugServerOnPort(exampleCorpus, 0);
     try {
       const res = await fetch(`http://127.0.0.1:${srv.port}/api/runs?limit=500`);
       expect(res.ok).toBe(true);
       const data = (await res.json()) as { items: unknown[]; totalMatched: number };
-      expect(data.items).toHaveLength(1);
-      expect(data.totalMatched).toBe(1);
+      expect(data.items).toHaveLength(5);
+      expect(data.totalMatched).toBe(5);
     } finally {
       await srv.close();
     }
@@ -80,7 +80,12 @@ describe("debugServer HTTP", () => {
     const prev = process.env.AGENTSKEPTIC_TEST_THROW_ON_LOAD_EVENTS;
     resetLoadEventsTestThrowInvocationCounter();
     process.env.AGENTSKEPTIC_TEST_THROW_ON_LOAD_EVENTS = "1";
-    const srv = await startDebugServerOnPort(exampleCorpus, 0);
+    const singleRunCorpus = mkdtempSync(join(tmpdir(), "etl-debug-throw-"));
+    mkdirSync(join(singleRunCorpus, "run_ok"), { recursive: true });
+    for (const f of ["events.ndjson", "workflow-result.json", "agent-run.json"] as const) {
+      copyFileSync(join(exampleCorpus, "run_ok", f), join(singleRunCorpus, "run_ok", f));
+    }
+    const srv = await startDebugServerOnPort(singleRunCorpus, 0);
     try {
       const res = await fetch(`http://127.0.0.1:${srv.port}/api/runs/run_ok`);
       expect(res.status).toBe(500);
@@ -98,6 +103,7 @@ describe("debugServer HTTP", () => {
       else process.env.AGENTSKEPTIC_TEST_THROW_ON_LOAD_EVENTS = prev;
       errSpy.mockRestore();
       await srv.close();
+      rmSync(singleRunCorpus, { recursive: true, force: true });
     }
   });
 

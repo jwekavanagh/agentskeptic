@@ -59,7 +59,7 @@ function readBody(req: IncomingMessage): Promise<string> {
   });
 }
 
-const DEBUG_UI_FILES = new Set(["index.html", "app.js", "app.css"]);
+const DEBUG_UI_FILES = new Set(["index.html", "app.js", "app.css", "urlState.js"]);
 
 function serveStatic(
   res: ServerResponse,

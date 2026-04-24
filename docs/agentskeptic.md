@@ -1326,12 +1326,12 @@ After a successful **`agentskeptic`** (verdict exit **0–2**, stdout **`Workflo
 
 ## Debug Console (normative)
 
-On-call **interactive debugging** is supported by a **local-only** web UI served by the CLI subcommand **`agentskeptic debug --corpus <dir> [--port <n>]`**. The server binds **127.0.0.1** only (no LAN exposure in this MVP). **`npm run build`** copies static assets from **`debug-ui/`** to **`dist/debug-ui/`** next to **`dist/cli.js`**.
+On-call **interactive debugging** is supported by a **local-only** web UI served by the CLI subcommand **`agentskeptic debug --corpus <dir> [--port <n>]`**. The server binds **127.0.0.1** only (no LAN exposure in this MVP). **`npm run build`** copies static assets from **`debug-ui/`** (including **`urlState.js`** and the ES-module **`app.js`** entry) to **`dist/debug-ui/`** next to **`dist/cli.js`**.
 
 ### Debug Console audiences
 
 - **Integrator:** Export each run as a **child directory** of the corpus root with the [Agent run record (canonical bundle)](#agent-run-record-canonical-bundle): **`agent-run.json`**, **`workflow-result.json`**, **`events.ndjson`**, and when using signing, **`workflow-result.sig.json`** (fixed names). Optional manifest fields **`customerId`** and **`capturedAt`** (ISO-8601 **`date-time`**) replace the former **`meta.json`** contract.
-- **Operator:** Run **`agentskeptic debug --corpus <path>`**, open the printed **http://127.0.0.1:…/** URL. Use **Runs** (filters + pagination), **Patterns** (corpus-wide aggregates), **Compare** (multi-select). Load-failed artifacts appear as **first-class rows** (not omitted).
+- **Operator:** Run **`agentskeptic debug --corpus <path>`**, open the printed **http://127.0.0.1:…/** URL. Use **Runs** (filters + pagination), **Patterns** (corpus-wide aggregates), **Compare** (multi-select). Load-failed artifacts appear as **first-class rows** (not omitted). **Deep links:** the UI keeps **`tab`**, **`run`** (open run detail), and filter fields in the query string so a copied URL restores the same view after refresh.
 - **Engineer:** Implementation modules are listed in the Engineer table under [Audiences](#audiences) (`debugCorpus.ts`, `debugFocus.ts`, `debugPatterns.ts`, `debugRunFilters.ts`, `debugRunIndex.ts`, `debugServer.ts`). **`recurrenceSignature`** for pattern aggregation is reused from **`runComparison.ts`**.
 
 ### Corpus load outcomes (normative)
@@ -1368,15 +1368,35 @@ If **`agentRunRecord.capturedAt`** parses as a valid date, use that instant. **E
 
 **`GET /api/runs/:runId`** — **`200`** always for a known **`runId`**. **`ok`:** success body keys are **exactly** the eleven keys listed under [Debug API (normative success shapes)](#debug-api-normative-success-shapes) (**`runTrustPanelHtml`** included). **`error`:** **`error`**, **`pathsTried`**, optional **`rawPreview`** (first ≤ 8KiB UTF-8 of the failing file when readable), empty **`meta`** in JSON.
 
-**`GET /api/runs/:runId/focus`** — **`200`** with **`{ targets: [{ kind, value, rationale }] }`** from **`buildFocusTargets`** for ok runs; **`409`** **`FOCUS_NOT_AVAILABLE`** for error rows. The browser UI must not reimplement this mapping.
+**`GET /api/runs/:runId/focus`** — **`200`** with **`{ targets: [{ kind, value, rationale }] }`** from **`buildFocusTargets`** for ok runs; **`409`** **`FOCUS_NOT_AVAILABLE`** for error rows. The browser UI must not reimplement this mapping. The Debug Console renders those targets as **buttons** that scroll to the matching execution-trace step (see **Focus navigation** under the default example corpus below).
 
 **`POST /api/compare`** — body **`{ runIds: string[] }`** (length ≥ 2). **400** if any run is not loaded ok, or **`COMPARE_WORKFLOW_ID_MISMATCH`**. **`200`** success body keys are **exactly** **`comparePanelHtml`**, **`humanSummary`**, **`report`** (see [Debug API (normative success shapes)](#debug-api-normative-success-shapes)); compare tab uses **`comparePanelHtml`** only for markup.
 
 **`GET /api/corpus-patterns`** — same filter query subset as **`/api/runs`** (no pagination). If more than **10_000** load-ok rows match → **413** JSON **`code: CORPUS_TOO_LARGE`**. If **`workflowId`** is set and more than **50** ok runs match that id → **413** **`PATTERNS_COMPARE_TOO_MANY`**. Otherwise **`200`** body **`schemaVersion: 1`** with **`actionableCategoryHistogram`**, **`topRunLevelCodes`**, **`topStepReasonCodes`**, **`recurrenceCandidates`** (signature **`hitRuns`** across the filtered corpus), and optional **`pairwiseRecurrence`** when **`workflowId`** filter is set and count ≤ 50.
 
-### Example corpus
+### Default example corpus (normative)
 
-**`examples/debug-corpus/`** ships one sealed **`ok`** run (**`run_ok`**) for CI and manual smoke. **Negative corpus fixtures** (bad JSON, missing events, schema-invalid **`{}`**) live under **`test/fixtures/corpus-negative/`** and use the same loader; they are not bundled under **`examples/debug-corpus/`**.
+**`examples/debug-corpus/`** ships **five** sealed **`loadStatus: ok`** runs for CI, Playwright, and guided exploration:
+
+| **`runId`** | **Role** |
+|-------------|-----------|
+| **`run_ok`** | Clean **`wf_complete`** success (baseline). |
+| **`run_value_mismatch`** | **`wf_inconsistent`** with **`failureAnalysis.evidence`** (Focus targets exercise **`seq`**). |
+| **`run_row_absent`** | **`wf_missing`** / **`ROW_ABSENT`** with evidence-linked focus (second failure story). |
+| **`run_path_nonempty`** | **`wf_complete`** with non-empty **`workflowTruthReport.executionPathFindings`**. |
+| **`run_complete_b`** | Second **`wf_complete`** bundle to pair with **`run_ok`** on the **Compare** tab (same **`workflowId`**). |
+
+**Negative corpus fixtures** (bad JSON, missing events, schema-invalid **`{}`**) live under **`test/fixtures/corpus-negative/`** and use the same loader; they are **not** copied into **`examples/debug-corpus/`**.
+
+**Regeneration:** After changing source fixtures, run **`npm run build && node scripts/seed-debug-corpus.mjs`** to rewrite **`run_value_mismatch`**, **`run_row_absent`**, **`run_complete_b`**, and **`run_path_nonempty`** ( **`run_ok`** is hand-maintained — update **`agent-run.json`** digests if you edit its JSON by hand).
+
+### Debug Console URL state (normative)
+
+The static UI persists **`tab`** (**`runs`** \| **`patterns`** \| **`compare`**), optional **`run`** (**`runId`** for the open detail drawer), and the same **Runs** filter query keys as **`GET /api/runs`**. Encode/decode rules are SSOT **`debug-ui/urlState.js`** (Vitest imports the same module from **`src/debugUiUrlState.test.ts`**).
+
+### Focus navigation (normative)
+
+For ok runs with non-empty focus targets, the UI shows **clickable buttons** built only from **`GET /api/runs/:id/focus`**; each button scrolls the trace list to the matching step and applies a short **pulse** highlight. The browser does not duplicate **`buildFocusTargets`** logic.
 
 ## Cross-run comparison (normative)
 

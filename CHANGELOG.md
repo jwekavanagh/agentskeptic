@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.0
+
+### Changed
+
+- Bumped **agentskeptic** and **agentskeptic-web** to **1.2.0** for npm publish: root and workspace `package.json`, `package-lock.json`, `AGENTSKEPTIC_CLI_SEMVER` in `src/publicDistribution.generated.ts`, Python `pyproject.toml` / `PKG-INFO`, demo corpus `producer.version`, and embedded report lock `workflowVerifierVersion` fields.
+
 ## Unreleased
 
 ### Breaking

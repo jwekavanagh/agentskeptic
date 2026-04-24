@@ -1,6 +1,6 @@
 {
   "name": "agentskeptic",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Read-only verification: what agents claim versus what your databases, warehouses, and APIs show.",
   "license": "MIT",
   "type": "module",
