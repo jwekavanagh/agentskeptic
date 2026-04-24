@@ -17,7 +17,7 @@ Open **http://127.0.0.1:3000** (not only `localhost` if your env binds oddly).
 
 **Security, env, webhooks, CSP, and canonical origin contracts:** see **[`docs/website-security-and-operations.md`](../docs/website-security-and-operations.md)**.
 
-Use **`npm run dev`** for day-to-day work. It runs the **Turbopack** dev server (`next dev --turbopack`) for faster cold starts and HMR than the default dev bundler. Production builds use **Webpack** (`next build`, no `--webpack` flag) for stable, predictable serverless output on Vercel.
+Use **`npm run dev`** for day-to-day work. It runs the **Turbopack** dev server (`next dev --turbopack`) for faster cold starts and HMR than the default dev bundler. Production builds use **Webpack** explicitly: **`next build --webpack`**. (Next.js 16 defaults `next build` to **Turbopack**, which is not a good match for this app’s instrumentation and Node file APIs on Vercel; Webpack remains the supported production path.)
 
 Use **`npm run build` + `npm run start`** only when you need a production-like run.
 

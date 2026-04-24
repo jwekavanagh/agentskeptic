@@ -8,7 +8,7 @@
   "scripts": {
     "prebuild": "node ../scripts/sync-website-ssot.mjs",
     "dev": "next dev --turbopack",
-    "build": "next build",
+    "build": "next build --webpack",
     "start": "next start",
     "db:generate": "node ./scripts/drizzle-kit-guarded.mjs generate",
     "db:generate:telemetry": "node ./scripts/drizzle-kit-guarded.mjs generate --config drizzle.telemetry.config.ts",
