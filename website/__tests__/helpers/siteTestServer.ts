@@ -1,4 +1,4 @@
-import { execFileSync, execSync, spawn, type ChildProcess } from "node:child_process";
+import { execFileSync, execSync, spawn, spawnSync, type ChildProcess } from "node:child_process";
 import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { createRequire } from "node:module";
@@ -25,13 +25,41 @@ let lastStartStderr = "";
 let startPromise: Promise<void> | null = null;
 let teardownRegistered = false;
 
-/** `next build` is memory-heavy; bump heap on CI to avoid OOM (exit 1, no log in Vitest). */
+/**
+ * `next build` is memory-heavy; cap V8 heap so the process can grow without asking the OS for
+ * more RAM than typical GitHub-hosted runners have (~7GiB total). An 8192MiB cap can still
+ * fail there (OOM-kill → exit 1, empty Vitest `execSync` diagnostics with stdio:inherit).
+ * Override with `SITE_TEST_NODE_HEAP_MB` (digits only, mebibytes) if needed.
+ */
 function withNodeBuildHeap(e: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
   const o = { ...e };
   const cur = o.NODE_OPTIONS;
   if (cur != null && String(cur).includes("max-old-space-size")) return o;
-  o.NODE_OPTIONS = cur ? `${String(cur)} --max-old-space-size=8192` : "--max-old-space-size=8192";
+  const raw = o.SITE_TEST_NODE_HEAP_MB?.trim();
+  let mb = 8192;
+  if (raw && /^\d+$/.test(raw)) mb = Number(raw);
+  else if (o.CI === "true" || o.GITHUB_ACTIONS === "true") mb = 4096;
+  const flag = `--max-old-space-size=${String(mb)}`;
+  o.NODE_OPTIONS = cur ? `${String(cur)} ${flag}` : flag;
   return o;
+}
+
+/** Run `npm run build` with piped stdio so failures attach a stderr/stdout tail to the thrown error. */
+function execNpmRunBuild(cwd: string, env: NodeJS.ProcessEnv, label: string): void {
+  const r = spawnSync("npm run build", {
+    cwd,
+    env,
+    encoding: "utf8",
+    shell: true,
+    stdio: ["ignore", "pipe", "pipe"],
+    maxBuffer: 24 * 1024 * 1024,
+  });
+  if (r.status === 0) return;
+  const out = [r.stderr, r.stdout].filter(Boolean).join("\n---\n");
+  const tail = out.trim().slice(-16_000);
+  throw new Error(
+    `siteTestServer: ${label} failed (exit ${String(r.status)}${r.signal ? ` signal=${String(r.signal)}` : ""})\n${tail || "(no output captured)"}`,
+  );
 }
 
 /** CI runners often need well over 18s for `next start` to listen after a fresh `next build`. */
@@ -104,24 +132,18 @@ async function startInternal(): Promise<void> {
     // Use `npm run build` in `website/` (not `npm -w` from the root) so the layout matches
     // published lockfiles; add heap for `next build` on Linux CI.
     const buildPe = withNodeBuildHeap(process.env);
-    execSync("npm run build", {
-      cwd: repoRoot,
-      env: buildPe,
-      stdio: "inherit",
-      shell: true,
-    });
+    execNpmRunBuild(repoRoot, buildPe, "npm run build (repo root)");
     // `next build` sets NODE_ENV=production while loading `next.config.ts`, which calls
     // `assertNextPublicOriginParity()`. Any drift vs `config/marketing.json` (or Vitest env)
     // then fails the build with exit 1 and no useful Vitest capture under stdio:inherit.
     // Vercel preview skips that assert (see `public-origin-parity.test.ts`); use the same
     // for this subprocess only. `next start` below still uses `process.env` with VERCEL_ENV=production.
-    const buildPeWebsite = { ...buildPe, VERCEL_ENV: "preview" };
-    execSync("npm run build", {
-      cwd: websiteDir,
-      env: buildPeWebsite,
-      stdio: "inherit",
-      shell: true,
-    });
+    const buildPeWebsite = {
+      ...buildPe,
+      VERCEL_ENV: "preview",
+      NEXT_TELEMETRY_DISABLED: buildPe.NEXT_TELEMETRY_DISABLED ?? "1",
+    };
+    execNpmRunBuild(websiteDir, buildPeWebsite, "npm run build (website)");
   }
   const requireWebsite = createRequire(join(websiteDir, "package.json"));
   const nextBin = join(dirname(requireWebsite.resolve("next/package.json")), "dist", "bin", "next");
