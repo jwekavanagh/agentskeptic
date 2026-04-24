@@ -1,1 +1,2 @@
-npx --no -- commitlint --no-color --edit "$1"
+# Use the repo devDependency: bare `commitlint` resolves a different top-level package on the registry.
+npx --no -- @commitlint/cli --no-color --edit "$1"
