@@ -41,4 +41,14 @@ describe("GitHub Actions AGENTSKEPTIC_TELEMETRY env", () => {
     assert.equal(jobs["semantic-release"].env.AGENTSKEPTIC_TELEMETRY, "0");
     assert.equal(jobs["publish-pypi"].env.AGENTSKEPTIC_TELEMETRY, "0");
   });
+
+  it("website.yml jobs match inventory and telemetry env", () => {
+    const doc = loadWorkflow("website.yml");
+    const jobs = doc.jobs;
+    const ids = Object.keys(jobs).sort();
+    assert.deepEqual(ids, ["build", "should_publish_vercel", "vercel_production"]);
+    assert.equal(jobs.build.env.AGENTSKEPTIC_TELEMETRY, "0");
+    assert.equal("AGENTSKEPTIC_TELEMETRY" in (jobs.should_publish_vercel.env ?? {}), false);
+    assert.equal(jobs.vercel_production.env.AGENTSKEPTIC_TELEMETRY, "0");
+  });
 });

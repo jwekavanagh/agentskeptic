@@ -2,14 +2,36 @@ name: CI
 
 on:
   push:
+    paths-ignore:
+      - "website/**"
+      - "docs/**"
+      - "**/*.md"
+      - "*.md"
+      - "CHANGELOG.md"
+      - "README.md"
+      - "llms.txt"
+      - "AGENTS.md"
+      - "CONTRIBUTING.md"
+      - "SECURITY.md"
   pull_request:
+    paths-ignore:
+      - "website/**"
+      - "docs/**"
+      - "**/*.md"
+      - "*.md"
+      - "CHANGELOG.md"
+      - "README.md"
+      - "llms.txt"
+      - "AGENTS.md"
+      - "CONTRIBUTING.md"
+      - "SECURITY.md"
 
 permissions:
   contents: read
 
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   commitlint:

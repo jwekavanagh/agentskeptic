@@ -4,6 +4,7 @@
 name: Release
 
 on:
+  # Path filters on the CI workflow do not apply to tag pushes; v* tag CI always runs.
   workflow_run:
     workflows: [CI]
     types: [completed]

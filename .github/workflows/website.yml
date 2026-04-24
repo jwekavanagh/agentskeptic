@@ -1,0 +1,94 @@
+# When full CI is skipped (paths-ignore includes website/**), this workflow still
+# builds the Next.js app, checks doc claim URLs, and deploys production on main.
+name: Website
+
+on:
+  push:
+    paths:
+      - "website/**"
+  pull_request:
+    paths:
+      - "website/**"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build and check
+    runs-on: ubuntu-latest
+    env:
+      AGENTSKEPTIC_TELEMETRY: "0"
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/setup-node-npm
+      - name: Verify web docs claim URLs
+        run: npm run check:docs-claim-urls --prefix website
+      - name: Build website (workspace)
+        run: npm run build:website
+
+  # If this push also changes non-website paths, full CI runs and its vercel job deploys — skip here.
+  should_publish_vercel:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [build]
+    runs-on: ubuntu-latest
+    outputs:
+      only_website: ${{ steps.check.outputs.only_website }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - id: check
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event.before }}" = "0000000000000000000000000000000000000000" ]; then
+            echo "only_website=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          mapfile -t files < <(git diff --name-only "${{ github.event.before }}" "${{ github.event.after }}")
+          if [ "${#files[@]}" -eq 0 ]; then
+            echo "only_website=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          for f in "${files[@]}"; do
+            case "$f" in
+              website/*) ;;
+              *) echo "only_website=false" >> "$GITHUB_OUTPUT"
+                 exit 0
+                 ;;
+            esac
+          done
+          echo "only_website=true" >> "$GITHUB_OUTPUT"
+
+  # When main changes are website-only, full ci.yml (including Vercel) is skipped; deploy here.
+  # `website/vercel.json` disables auto-deploys for `main` so a push alone does not ship.
+  vercel_production:
+    name: Vercel production
+    if: |
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/main' &&
+      needs.should_publish_vercel.outputs.only_website == 'true'
+    needs: [build, should_publish_vercel]
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      AGENTSKEPTIC_TELEMETRY: "0"
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+      # Build runs on Vercel (not on this runner). `vercel build` in GHA can fail with
+      # `spawn sh ENOENT` when running the project Install Command (e.g. `npm install --prefix ..`) locally.
+      # Run from repo root without `--cwd website`: the linked Vercel project’s Root Directory is `website`
+      # in Project Settings; adding `--cwd website` would resolve to `website/website` and fail.
+      - name: Deploy to Vercel (production, remote build)
+        run: npx -y vercel@52 deploy --prod --yes --logs
