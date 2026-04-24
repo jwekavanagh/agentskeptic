@@ -21,10 +21,11 @@ describe("GitHub Actions AGENTSKEPTIC_TELEMETRY env", () => {
     const doc = loadWorkflow("ci.yml");
     const jobs = doc.jobs;
     const ids = Object.keys(jobs).sort();
-    assert.deepEqual(ids, ["codeql", "commercial", "test"]);
+    assert.deepEqual(ids, ["codeql", "commercial", "test", "vercel_production"]);
     assert.equal(jobs.test.env.AGENTSKEPTIC_TELEMETRY, "0");
     assert.equal(jobs.commercial.env.AGENTSKEPTIC_TELEMETRY, "0");
     assert.equal("AGENTSKEPTIC_TELEMETRY" in (jobs.codeql.env ?? {}), false);
+    assert.equal("AGENTSKEPTIC_TELEMETRY" in (jobs.vercel_production.env ?? {}), false);
   });
 
   it("commercial-publish.yml publish job has telemetry env", () => {
