@@ -57,7 +57,7 @@
     "validate:activation-spine": "node scripts/validate-activation-spine.mjs",
     "validate:integrator-onboarding-shape": "node scripts/validate-integrator-onboarding-shape.mjs",
     "test:commercial-layer": "node scripts/validate-commercial-funnel.mjs",
-    "build:website": "npm run build && npm run build -w agentskeptic-web",
+    "build:website": "npm run build && npm run build --prefix website",
     "check:web-demo-prereqs": "node scripts/check-web-demo-prereqs.mjs",
     "generate:partner-quickstart-commands": "node scripts/generate-partner-quickstart-commands.mjs",
     "sync-website-ssot": "node scripts/sync-website-ssot.mjs",

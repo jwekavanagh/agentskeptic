@@ -18,6 +18,12 @@ const anchors = JSON.parse(
 const canonical = new URL(String(anchors.productionCanonicalOrigin).trim()).origin;
 
 const env = { ...process.env, NEXT_PUBLIC_APP_URL: canonical };
+if (env.NODE_OPTIONS == null || !String(env.NODE_OPTIONS).includes("max-old-space-size")) {
+  env.NODE_OPTIONS =
+    env.NODE_OPTIONS != null
+      ? `${String(env.NODE_OPTIONS)} --max-old-space-size=8192`
+      : "--max-old-space-size=8192";
+}
 
 function run(cmd, args, cwd = root) {
   const r = spawnSync(cmd, args, { cwd, env, stdio: "inherit", shell: true });
@@ -31,6 +37,6 @@ function run(cmd, args, cwd = root) {
 
 run(process.execPath, [path.join(root, "scripts", "validate-discovery-acquisition.mjs")]);
 run(process.execPath, ["--test", path.join(root, "test", "visitor-problem-outcome.test.mjs")]);
-run("npm", ["run", "build", "-w", "agentskeptic-web"]);
+run("npm", ["run", "build:website"]);
 run(process.execPath, [path.join(root, "scripts", "run-website-vitest-with-reuse.mjs")]);
 run(process.execPath, [path.join(root, "scripts", "website-holistic-gate.mjs")]);

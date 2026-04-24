@@ -25,6 +25,15 @@ let lastStartStderr = "";
 let startPromise: Promise<void> | null = null;
 let teardownRegistered = false;
 
+/** `next build` is memory-heavy; bump heap on CI to avoid OOM (exit 1, no log in Vitest). */
+function withNodeBuildHeap(e: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
+  const o = { ...e };
+  const cur = o.NODE_OPTIONS;
+  if (cur != null && String(cur).includes("max-old-space-size")) return o;
+  o.NODE_OPTIONS = cur ? `${String(cur)} --max-old-space-size=8192` : "--max-old-space-size=8192";
+  return o;
+}
+
 /** CI runners often need well over 18s for `next start` to listen after a fresh `next build`. */
 const READY_POLL_MS = 500;
 const READY_ATTEMPTS = 150;
@@ -88,15 +97,18 @@ async function startInternal(): Promise<void> {
   if (!reuseDist) {
     // The workspace package `agentskeptic` exports from `../dist` (tsc out). A website-only
     // `next build` fails in CI (npm ci) when `dist/` is absent, so build the monorepo first.
+    // Use `npm run build` in `website/` (not `npm -w` from the root) so the layout matches
+    // published lockfiles; add heap for `next build` on Linux CI.
+    const buildPe = withNodeBuildHeap(process.env);
     execSync("npm run build", {
       cwd: repoRoot,
-      env: process.env,
+      env: buildPe,
       stdio: "inherit",
       shell: true,
     });
-    execSync("npm run build -w agentskeptic-web", {
-      cwd: repoRoot,
-      env: process.env,
+    execSync("npm run build", {
+      cwd: websiteDir,
+      env: buildPe,
       stdio: "inherit",
       shell: true,
     });

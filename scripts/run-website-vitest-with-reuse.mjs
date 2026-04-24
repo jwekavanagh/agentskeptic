@@ -1,6 +1,6 @@
 /**
  * Runs website Vitest with WEBSITE_TEST_REUSE_DIST=1 so marketing HTML tests reuse
- * the `.next` output from a preceding `npm run build -w agentskeptic-web` (CI memory / flake guard).
+ * the `.next` output from a preceding `npm run build:website` (CI memory / flake guard).
  */
 import { spawnSync } from "node:child_process";
 
