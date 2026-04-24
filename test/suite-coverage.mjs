@@ -1,6 +1,6 @@
 /**
  * Every top-level `test/*.mjs` (except `suites.mjs` and `*.lib.mjs`) is classified
- * in test/suites.mjs into sqlite, postgres, nodeTestScheduledByVerify, or mjsAtTestRootRunByVerifyOnly.
+ * in test/suites.mjs into sqlite, postgres, commercialHarness, nodeTestScheduledByVerify, or mjsAtTestRootRunByVerifyOnly.
  */
 import { readdir, stat } from "node:fs/promises";
 import { dirname, join } from "node:path";
@@ -10,6 +10,7 @@ import { describe, it } from "node:test";
 import {
   sqliteNodeTestFiles,
   postgresNodeTestFiles,
+  commercialHarnessNodeTestFiles,
   nodeTestScheduledByVerify,
   mjsAtTestRootRunByVerifyOnly,
 } from "./suites.mjs";
@@ -25,18 +26,24 @@ function basenamePath(rootRel) {
 }
 
 describe("test/suites.mjs coverage (exhaustive, disjoint)", () => {
-  it("sqlite and postgres are disjoint", () => {
+  it("sqlite, postgres, and commercialHarness are pairwise disjoint", () => {
     const a = new Set(sqliteNodeTestFiles);
     const b = new Set(postgresNodeTestFiles);
+    const c = new Set(commercialHarnessNodeTestFiles);
     for (const p of a) {
-      assert.equal(b.has(p), false, `in both: ${p}`);
+      assert.equal(b.has(p), false, `sqlite ∩ postgres: ${p}`);
+      assert.equal(c.has(p), false, `sqlite ∩ commercialHarness: ${p}`);
+    }
+    for (const p of b) {
+      assert.equal(c.has(p), false, `postgres ∩ commercialHarness: ${p}`);
     }
   });
 
-  it("no duplicate entries within sqlite or postgres", () => {
+  it("no duplicate entries within sqlite, postgres, or commercialHarness", () => {
     for (const [name, arr] of [
       ["sqlite", sqliteNodeTestFiles],
       ["postgres", postgresNodeTestFiles],
+      ["commercialHarness", commercialHarnessNodeTestFiles],
     ]) {
       const s = new Set();
       for (const p of arr) {
@@ -55,6 +62,7 @@ describe("test/suites.mjs coverage (exhaustive, disjoint)", () => {
     const reg = new Set([
       ...sqliteNodeTestFiles,
       ...postgresNodeTestFiles,
+      ...commercialHarnessNodeTestFiles,
       ...nodeTestScheduledByVerify,
       ...mjsAtTestRootRunByVerifyOnly,
     ]);

@@ -2,6 +2,7 @@
  * Single registry: every test/*.test.mjs is in exactly one of
  * - sqliteNodeTestFiles (default node:test batch, plus guards in verify)
  * - postgresNodeTestFiles (CI postgres batch)
+ * - commercialHarnessNodeTestFiles (commercial dist + license mock; scripts/commercial-enforce-test-harness.mjs only)
  * - nodeTestScheduledByVerify (run only in scripts/verify.mjs, not the sqlite batch; ordering contract)
  * @packageDocumentation
  */
@@ -70,12 +71,8 @@ export const sqliteNodeTestFiles = [
   // Previously unlisted: now classified so the registry is exhaustive
   "test/adoption-docs-boundary.test.mjs",
   "test/adoption-validation.test.mjs",
-  "test/assurance-cli-enforce.test.mjs",
   "test/assurance-cli.test.mjs",
-  "test/commercial-license-reserve-intent.test.mjs",
-  "test/crossing-commercial-smoke.test.mjs",
   "test/docs-golden-path-pointer-only.test.mjs",
-  "test/enforce-cli.test.mjs",
   "test/integrate-spine-step3-chain.happy.test.mjs",
   "test/integrate-spine-step3-chain.negative.test.mjs",
   "test/no-handrolled-node-test-lists.mjs",
@@ -97,6 +94,13 @@ export const postgresNodeTestFiles = [
   "test/ci-workflow-truth-postgres-contract.test.mjs",
   "test/quick-verify.postgres.test.mjs",
   "test/ci-workflow-truth-postgres-enforce.test.mjs",
+];
+
+export const commercialHarnessNodeTestFiles = [
+  "test/assurance-cli-enforce.test.mjs",
+  "test/commercial-license-reserve-intent.test.mjs",
+  "test/crossing-commercial-smoke.test.mjs",
+  "test/enforce-cli.test.mjs",
 ];
 
 /** Not run in the sqlite node --test batch: ordering with validate-adoption stages in verify.mjs. */

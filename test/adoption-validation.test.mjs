@@ -59,8 +59,9 @@ describe("adoption-validation", () => {
     assert.equal(r.status, 0, r.stderr);
     const line = r.stdout.trim().split(/\r?\n/).filter(Boolean).pop();
     const o = JSON.parse(line);
-    assert.equal(o.status, "complete");
-    assert.equal(o.steps[0]?.status, "verified");
+    assert.equal(o.runKind, "contract_sql");
+    assert.equal(o.stateRelation, "matches_expectations");
+    assert.ok(o.steps?.length >= 1, "outcome certificate includes at least one step");
   });
 
   it("cli_wf_missing_batch_contract", () => {
@@ -72,9 +73,9 @@ describe("adoption-validation", () => {
     assert.equal(r.status, 1, r.stderr);
     const line = r.stdout.trim().split(/\r?\n/).filter(Boolean).pop();
     const o = JSON.parse(line);
-    assert.equal(o.status, "inconsistent");
-    assert.equal(o.steps[0]?.status, "missing");
-    assert.equal(o.steps[0]?.reasons[0]?.code, "ROW_ABSENT");
+    assert.equal(o.stateRelation, "does_not_match");
+    const rowAbsent = o.explanation.details.find((d) => d.code === "ROW_ABSENT");
+    assert.ok(rowAbsent, "ROW_ABSENT in certificate explanation details");
   });
 
   it("no_steps_message_matches_template_for_wrong_workflow_id_fixture", () => {
@@ -99,7 +100,7 @@ describe("adoption-validation", () => {
     assert.equal(r.status, 2, r.stderr);
     const line = r.stdout.trim().split(/\r?\n/).filter(Boolean).pop();
     const o = JSON.parse(line);
-    const rl = o.runLevelReasons.find((x) => x.code === "NO_STEPS_FOR_WORKFLOW");
+    const rl = o.explanation.details.find((x) => x.code === "NO_STEPS_FOR_WORKFLOW");
     assert(rl, "NO_STEPS_FOR_WORKFLOW present");
     assert.equal(rl.message, expectedMsg);
   });
