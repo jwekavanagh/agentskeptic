@@ -77,16 +77,18 @@ async function startInternal(): Promise<void> {
     env: process.env,
     stdio: "inherit",
   });
-  const anchors0 = loadAnchors();
-  process.env.NEXT_PUBLIC_APP_URL = normalize(anchors0.productionCanonicalOrigin);
-  process.env.VERCEL_ENV = "production";
-
+  // `sync:public-product-anchors` may rewrite `config/marketing.json`. `next.config` calls
+  // `assertNextPublicOriginParity()` (production) — NEXT_PUBLIC must match the file *after* sync
+  // or `next build` exits 1 (seen on CI when NODE_ENV=production and Vitest reuses a stale origin).
   execSync("npm run sync:public-product-anchors", {
     cwd: repoRoot,
     env: process.env,
     stdio: "inherit",
     shell: true,
   });
+  const anchors = loadAnchors();
+  process.env.NEXT_PUBLIC_APP_URL = normalize(anchors.productionCanonicalOrigin);
+  process.env.VERCEL_ENV = "production";
 
   const websiteDir = join(repoRoot, "website");
   const buildIdPath = join(websiteDir, ".next", "BUILD_ID");
