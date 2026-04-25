@@ -116,10 +116,12 @@ function statusLabelFromRow(row: { terminalStatus: string }): string {
 
 export function AccountClient({
   initialKeys,
+  hasKey,
   initialCommercial,
   activity,
 }: {
-  initialKeys: AccountApiKeyRow[];
+  initialKeys?: AccountApiKeyRow[];
+  hasKey?: boolean;
   initialCommercial: CommercialAccountStatePayload;
   activity: AccountPageVerificationActivity;
 }) {
@@ -131,7 +133,18 @@ export function AccountClient({
   const ossClaimRunId = searchParams.get("run_id")?.trim() ?? "";
 
   const [newlyIssuedKey, setNewlyIssuedKey] = useState<string | null>(null);
-  const [keyRows, setKeyRows] = useState<AccountApiKeyRow[]>(initialKeys);
+  const seedKeys = initialKeys ?? (hasKey ? [{
+    id: "legacy-single-key",
+    label: "API key",
+    scopes: ["read", "meter", "report", "admin"],
+    status: "active",
+    createdAt: new Date(0).toISOString(),
+    expiresAt: null,
+    revokedAt: null,
+    disabledAt: null,
+    lastUsedAt: null,
+  }] : []);
+  const [keyRows, setKeyRows] = useState<AccountApiKeyRow[]>(seedKeys);
   const [err, setErr] = useState<string | null>(null);
   const [commercial, setCommercial] = useState<CommercialAccountStatePayload>(initialCommercial);
   const [activationUi, setActivationUi] = useState<"idle" | "pending" | "ready" | "timeout">("idle");
@@ -150,8 +163,19 @@ export function AccountClient({
   }, [initialCommercial]);
 
   useEffect(() => {
-    setKeyRows(initialKeys);
-  }, [initialKeys]);
+    const nextKeys = initialKeys ?? (hasKey ? [{
+      id: "legacy-single-key",
+      label: "API key",
+      scopes: ["read", "meter", "report", "admin"],
+      status: "active",
+      createdAt: new Date(0).toISOString(),
+      expiresAt: null,
+      revokedAt: null,
+      disabledAt: null,
+      lastUsedAt: null,
+    }] : []);
+    setKeyRows(nextKeys);
+  }, [initialKeys, hasKey]);
 
   useEffect(() => {
     if (checkout !== "success" || !expectedPlanRaw) {

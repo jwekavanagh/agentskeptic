@@ -1,6 +1,6 @@
 import { and, eq } from "drizzle-orm";
 import { db } from "@/db/client";
-import { apiKeysV2 } from "@/db/schema";
+import { apiKeys, apiKeysV2 } from "@/db/schema";
 import {
   hashApiKey,
   randomHexWithWfSkLivePrefix,
@@ -126,18 +126,29 @@ export async function createApiKeyForUser(
   const keyHash = hashApiKey(issuedBearer);
   const keyLookupSha256 = sha256HexApiKeyLookupFingerprint(issuedBearer);
 
-  const [created] = await db
-    .insert(apiKeysV2)
-    .values({
+  const created = await db.transaction(async (tx) => {
+    const [v2] = await tx
+      .insert(apiKeysV2)
+      .values({
+        userId,
+        label: input.label,
+        scopes: input.scopes,
+        keyHash,
+        keyLookupSha256,
+        expiresAt: input.expiresAt,
+        status: "active",
+      })
+      .returning({ id: apiKeysV2.id });
+    if (!v2) return null;
+    // Transitional dual-write while usage tables still reference legacy `api_key`.
+    await tx.insert(apiKeys).values({
+      id: v2.id,
       userId,
-      label: input.label,
-      scopes: input.scopes,
       keyHash,
       keyLookupSha256,
-      expiresAt: input.expiresAt,
-      status: "active",
-    })
-    .returning({ id: apiKeysV2.id });
+    });
+    return v2;
+  });
   if (!created) {
     throw new Error("failed to create api_key_v2 row");
   }
@@ -148,17 +159,26 @@ export async function revokeApiKeyForUser(
   userId: string,
   keyId: string,
 ): Promise<{ revoked: boolean }> {
-  const updated = await db
-    .update(apiKeysV2)
-    .set({ status: "revoked", revokedAt: new Date() })
-    .where(
-      and(
-        eq(apiKeysV2.userId, userId),
-        eq(apiKeysV2.id, keyId),
-        eq(apiKeysV2.status, "active"),
-      ),
-    )
-    .returning({ id: apiKeysV2.id });
+  const updated = await db.transaction(async (tx) => {
+    const rows = await tx
+      .update(apiKeysV2)
+      .set({ status: "revoked", revokedAt: new Date() })
+      .where(
+        and(
+          eq(apiKeysV2.userId, userId),
+          eq(apiKeysV2.id, keyId),
+          eq(apiKeysV2.status, "active"),
+        ),
+      )
+      .returning({ id: apiKeysV2.id });
+    if (rows.length > 0) {
+      await tx
+        .update(apiKeys)
+        .set({ revokedAt: new Date() })
+        .where(and(eq(apiKeys.userId, userId), eq(apiKeys.id, keyId)));
+    }
+    return rows;
+  });
   return { revoked: updated.length > 0 };
 }
 
@@ -199,6 +219,13 @@ export async function rotateApiKeyForUser(
       throw new Error("failed to create rotated successor key");
     }
 
+    await tx.insert(apiKeys).values({
+      id: successor.id,
+      userId,
+      keyHash,
+      keyLookupSha256,
+    });
+
     await tx
       .update(apiKeysV2)
       .set({
@@ -207,6 +234,13 @@ export async function rotateApiKeyForUser(
         rotatedToKeyId: successor.id,
       })
       .where(and(eq(apiKeysV2.id, existing.id), eq(apiKeysV2.userId, userId)));
+
+    await tx
+      .update(apiKeys)
+      .set({
+        revokedAt: new Date(),
+      })
+      .where(and(eq(apiKeys.userId, userId), eq(apiKeys.id, existing.id)));
 
     return successor;
   });

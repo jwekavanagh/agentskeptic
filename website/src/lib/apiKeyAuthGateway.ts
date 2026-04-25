@@ -116,15 +116,30 @@ export async function authenticateApiKey(
   }
 
   const lookup = sha256HexApiKeyLookupFingerprint(parsed.rawKey);
-  const keyRowsV2 = await db
-    .select({
-      key: apiKeysV2,
-      user: users,
-    })
-    .from(apiKeysV2)
-    .innerJoin(users, eq(apiKeysV2.userId, users.id))
-    .where(eq(apiKeysV2.keyLookupSha256, lookup))
-    .limit(1);
+  let keyRowsV2: Array<{ key: typeof apiKeysV2.$inferSelect; user: typeof users.$inferSelect }> = [];
+  try {
+    keyRowsV2 = await db
+      .select({
+        key: apiKeysV2,
+        user: users,
+      })
+      .from(apiKeysV2)
+      .innerJoin(users, eq(apiKeysV2.userId, users.id))
+      .where(eq(apiKeysV2.keyLookupSha256, lookup))
+      .limit(1);
+  } catch (error) {
+    const maybeCode =
+      typeof error === "object" && error !== null
+        ? (error as { code?: string; cause?: { code?: string } }).code ??
+          (error as { cause?: { code?: string } }).cause?.code
+        : undefined;
+    const message = error instanceof Error ? error.message : String(error);
+    const isMissingV2Relation =
+      maybeCode === "42P01" || /relation "api_key_v2" does not exist/i.test(message);
+    if (!isMissingV2Relation) {
+      throw error;
+    }
+  }
 
   const v2 = keyRowsV2[0];
   if (v2) {

@@ -18,17 +18,6 @@ export const runtime = "nodejs";
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   const rid = resolveActivationRequestId(req);
-  const authn = await authenticateApiKey(req);
-  if (!authn.ok) {
-    return authn.response;
-  }
-  const scopeCheck = requireScopes(req, authn.principal, ["report"]);
-  if (!scopeCheck.ok) {
-    return scopeCheck.response;
-  }
-  const apiKeyId = authn.principal.keyId;
-  const userId = authn.principal.userId;
-
   let jsonBody: unknown;
   try {
     jsonBody = await req.json();
@@ -52,6 +41,17 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       code: "VALIDATION_FAILED",
     });
   }
+
+  const authn = await authenticateApiKey(req);
+  if (!authn.ok) {
+    return authn.response;
+  }
+  const scopeCheck = requireScopes(req, authn.principal, ["report"]);
+  if (!scopeCheck.ok) {
+    return scopeCheck.response;
+  }
+  const apiKeyId = authn.principal.keyId;
+  const userId = authn.principal.userId;
 
   const {
     run_id: runId,
