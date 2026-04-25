@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 /**
- * One-shot: emit golden Outcome Certificate JSON for python/tests/parity_vectors/.
- * Run from repo root after `npm run build`. Uses node:sqlite + dist/cli.js spawn.
+ * Emit golden Outcome Certificate JSON for python/tests/parity_vectors/partner_contract_sql.
+ * LangGraph LCT rows (A2, B, C, D): use `npm run regen:langgraph-embeds` (single SSOT with website).
+ * Run from repo root after `npm run build`.
  */
 import { spawnSync } from "node:child_process";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { randomUUID } from "node:crypto";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { DatabaseSync } from "node:sqlite";
@@ -31,7 +31,7 @@ function seedDb() {
   } finally {
     db.close();
   }
-  return { dir, dbPath, cleanup: () => rmSync(dir, { recursive: true, force: true }) };
+  return { dbPath, cleanup: () => rmSync(dir, { recursive: true, force: true }) };
 }
 
 function runCli(args) {
@@ -41,32 +41,11 @@ function runCli(args) {
   });
 }
 
-function toolLineV3() {
-  const line = {
-    schemaVersion: 3,
-    workflowId: "wf_partner",
-    runEventId: randomUUID(),
-    type: "tool_observed",
-    seq: 0,
-    toolId: "crm.upsert_contact",
-    params: { recordId: "partner_1", fields: { name: "You", status: "active" } },
-    langgraphCheckpoint: {
-      threadId: "t-contract",
-      checkpointNs: "",
-      checkpointId: "cp-contract",
-    },
-  };
-  return `${JSON.stringify(line)}\n`;
-}
-
 function main() {
   mkdirSync(join(outRoot, "partner_contract_sql"), { recursive: true });
-  mkdirSync(join(outRoot, "partner_langgraph_row_b"), { recursive: true });
-  mkdirSync(join(outRoot, "langgraph_a2_malformed"), { recursive: true });
 
   const { dbPath, cleanup } = seedDb();
   try {
-    // contract_sql (v1 events)
     const r1 = runCli([
       "--workflow-id",
       "wf_partner",
@@ -87,85 +66,11 @@ function main() {
       `${JSON.stringify(cert1, null, 2)}\n`,
       "utf8",
     );
-
-    // LangGraph row B
-    const evPath = join(tmpdir(), `lg-b-${randomUUID()}.ndjson`);
-    writeFileSync(evPath, toolLineV3(), "utf8");
-    const r2 = runCli([
-      "--workflow-id",
-      "wf_partner",
-      "--events",
-      evPath,
-      "--registry",
-      partnerRegistry,
-      "--db",
-      dbPath,
-      "--langgraph-checkpoint-trust",
-    ]);
-    if (r2.status !== 0) {
-      console.error(r2.stderr);
-      throw new Error(`langgraph verify failed: ${r2.status}`);
-    }
-    const cert2 = JSON.parse(r2.stdout.trim());
-    writeFileSync(
-      join(outRoot, "partner_langgraph_row_b", "golden_certificate.json"),
-      `${JSON.stringify(cert2, null, 2)}\n`,
-      "utf8",
-    );
-
-    // A2 malformed
-    const badPath = join(tmpdir(), `lg-a2-${randomUUID()}.ndjson`);
-    writeFileSync(badPath, "{not-json\n", "utf8");
-    const r3 = runCli([
-      "--workflow-id",
-      "wf_partner",
-      "--events",
-      badPath,
-      "--registry",
-      partnerRegistry,
-      "--db",
-      dbPath,
-      "--langgraph-checkpoint-trust",
-    ]);
-    if (r3.status !== 2) throw new Error(`expected exit 2, got ${r3.status}`);
-    const cert3 = JSON.parse(r3.stdout.trim());
-    writeFileSync(
-      join(outRoot, "langgraph_a2_malformed", "golden_certificate.json"),
-      `${JSON.stringify(cert3, null, 2)}\n`,
-      "utf8",
-    );
-    writeFileSync(join(outRoot, "langgraph_a2_malformed", "golden_exit_code.txt"), "2\n", "utf8");
   } finally {
     cleanup();
   }
 
-  const manifest = {
-    cases: [
-      {
-        id: "partner_contract_sql",
-        mode: "contract_sql",
-        events: "examples/partner-quickstart/partner.events.ndjson",
-        registry: "examples/partner-quickstart/partner.tools.json",
-        workflowId: "wf_partner",
-      },
-      {
-        id: "partner_langgraph_row_b",
-        mode: "langgraph_checkpoint_trust",
-        events_inline: "v3_single_line",
-        registry: "examples/partner-quickstart/partner.tools.json",
-        workflowId: "wf_partner",
-      },
-      {
-        id: "langgraph_a2_malformed",
-        mode: "langgraph_checkpoint_trust",
-        events_inline: "malformed_ndjson",
-        registry: "examples/partner-quickstart/partner.tools.json",
-        workflowId: "wf_partner",
-      },
-    ],
-  };
-  writeFileSync(join(outRoot, "manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
-  console.log("Wrote goldens to", outRoot);
+  console.log("Wrote partner_contract_sql golden. For LangGraph LCT rows, run: npm run regen:langgraph-embeds");
 }
 
 main();

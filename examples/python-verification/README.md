@@ -10,3 +10,5 @@ Run the kernel demo (requires repo root `examples/partner-quickstart` fixtures):
 pip install -e "python/[dev]"
 python examples/python-verification/run_partner_kernel_demo.py
 ```
+
+**Postgres (same certificates as the Node CLI):** install **`pip install -e "python/[dev,postgres]"`** and set **`database_url` to a connection string** (e.g. `postgresql://user:pass@localhost:5432/mydb`) on **`VerificationSession`**. For direct kernel use, import **`verify_langgraph_checkpoint_trust`** from **`agentskeptic.kernel`** and pass that URL. Apply the same `partner.seed.sql` (or your schema) to the target database for parity with the partner quickstart.

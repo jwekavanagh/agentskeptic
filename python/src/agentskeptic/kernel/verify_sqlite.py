@@ -302,6 +302,38 @@ def verify_langgraph_checkpoint_trust_sqlite(
     return build_outcome_certificate_langgraph_checkpoint_trust_from_workflow_result(wf)
 
 
+def verify_langgraph_checkpoint_trust(
+    *,
+    workflow_id: str,
+    registry_path: str | Path,
+    database_url: str,
+    buffered_run_events: list[dict[str, Any]],
+    run_level_reasons: list[dict[str, Any]],
+) -> dict[str, Any]:
+    """
+    Entry point for LangGraph checkpoint trust: SQLite file path or postgresql:// URL.
+    Ineligible (A2) paths never open a database connection, matching the TS/CLI short-circuit.
+    """
+    u = str(database_url).strip()
+    if u.startswith("postgres://") or u.startswith("postgresql://"):
+        from agentskeptic.kernel.verify_postgres import verify_langgraph_checkpoint_trust_postgres
+
+        return verify_langgraph_checkpoint_trust_postgres(
+            workflow_id=workflow_id,
+            registry_path=registry_path,
+            database_url=u,
+            buffered_run_events=buffered_run_events,
+            run_level_reasons=run_level_reasons,
+        )
+    return verify_langgraph_checkpoint_trust_sqlite(
+        workflow_id=workflow_id,
+        registry_path=registry_path,
+        database_path=Path(u),
+        buffered_run_events=buffered_run_events,
+        run_level_reasons=run_level_reasons,
+    )
+
+
 def verify_contract_sql_certificate_sqlite(
     *,
     workflow_id: str,

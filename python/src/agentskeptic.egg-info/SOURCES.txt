@@ -19,6 +19,7 @@ src/agentskeptic/kernel/execution_path_findings.py
 src/agentskeptic/kernel/no_steps.py
 src/agentskeptic/kernel/outcome_certificate.py
 src/agentskeptic/kernel/plan_logical.py
+src/agentskeptic/kernel/reconciler_postgres.py
 src/agentskeptic/kernel/reconciler_sqlite.py
 src/agentskeptic/kernel/reconciliation_presentation.py
 src/agentskeptic/kernel/resolve_expectation.py
@@ -27,6 +28,7 @@ src/agentskeptic/kernel/user_phrases.py
 src/agentskeptic/kernel/value_verification.py
 src/agentskeptic/kernel/verification_diagnostics.py
 src/agentskeptic/kernel/verification_run_context.py
+src/agentskeptic/kernel/verify_postgres.py
 src/agentskeptic/kernel/verify_sqlite.py
 src/agentskeptic/kernel/workflow_truth_report.py
 src/agentskeptic/tools/__init__.py

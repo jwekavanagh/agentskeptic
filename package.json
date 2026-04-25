@@ -68,6 +68,8 @@
     "partner-quickstart": "node scripts/partner-quickstart-verify.mjs",
     "first-run-verify": "node scripts/partner-quickstart-verify.mjs",
     "generate:langgraph-guide-embed": "node scripts/embed/generate-langgraph-guide-embed.mjs",
+    "regen:langgraph-embeds": "node scripts/regen-langgraph-embeds.mjs",
+    "check:langgraph-embeds": "node scripts/regen-langgraph-embeds.mjs --check",
     "release:dry": "semantic-release --dry-run",
     "lock:align-esbuild-nested": "node scripts/align-esbuild-kit-lock-nested.mjs",
     "prepare": "npx --yes patch-package@8.0.1 && husky"

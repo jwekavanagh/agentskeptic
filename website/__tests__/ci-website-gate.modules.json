@@ -1,5 +1,8 @@
 [
   "./langgraph-reference-primacy.dom.test.tsx",
+  "./langgraph-lct-stories.contract.test.tsx",
+  "./langgraph-certificate-panel.contract.test.tsx",
+  "./langgraph-lct-embeds.contract.test.ts",
   "./oss-claim-client-flow.dom.test.tsx",
   "./integrate-page-completion-semantics.contract.test.tsx",
   "./funnel-surface-beacon-keepalive.contract.test.tsx"

@@ -31,6 +31,7 @@ function run(cmd) {
 
 const stages = {
   build: () => run("npm run build"),
+  checkLanggraphEmbeds: () => run("npm run check:langgraph-embeds"),
   epistemic: () => run("npm run check:epistemic-contract-structure"),
   vitestRoot: () => run("npm run test:vitest"),
   vitestWebsiteCiGate: () => {
@@ -85,6 +86,7 @@ const stages = {
 
 const profileDefault = [
   "build",
+  "checkLanggraphEmbeds",
   "epistemic",
   "vitestRoot",
   "vitestWebsiteCiGate",
@@ -111,6 +113,7 @@ const profileDefault = [
 
 const profileCi = [
   "build",
+  "checkLanggraphEmbeds",
   "epistemic",
   "vitestRoot",
   "vitestWebsiteCiGate",

@@ -1,3 +1,4 @@
+import { LangGraphCheckpointTrustStories } from "@/components/examples/LangGraphCheckpointTrustStories";
 import { VerificationReportView } from "@/components/VerificationReportView";
 import { getExampleEmbed } from "@/lib/exampleEmbeds";
 import { derivedFieldsFromEnvelope } from "@/lib/publicVerificationReportService";
@@ -7,7 +8,7 @@ type Variant = "wf_complete" | "wf_missing" | "langgraph_checkpoint_trust";
 const titles: Record<Variant, string> = {
   wf_complete: "Bundled demo: wf_complete (verified)",
   wf_missing: "Bundled demo: wf_missing (ROW_ABSENT)",
-  langgraph_checkpoint_trust: "LangGraph checkpoint trust: verified (B-row certificate)",
+  langgraph_checkpoint_trust: "LangGraph checkpoint trust: terminal rows (A2, B, C, D)",
 };
 
 const blurbs: Record<Variant, string> = {
@@ -16,7 +17,7 @@ const blurbs: Record<Variant, string> = {
   wf_missing:
     "The block below reuses the same bundled wf_missing envelope used on indexable guides so ROW_ABSENT stays consistent.",
   langgraph_checkpoint_trust:
-    "The block below is a captured Outcome Certificate v1 from `contract_sql_langgraph_checkpoint_trust` verify (partner quickstart contract) so you can see checkpoint verdicts without running the CLI.",
+    "Certificates are regenerated from the CLI with `npm run regen:langgraph-embeds` (same contract as `npm run check:langgraph-embeds` in CI).",
 };
 
 type Props = {
@@ -24,6 +25,15 @@ type Props = {
 };
 
 export function ExampleVerificationEmbed({ variant }: Props) {
+  if (variant === "langgraph_checkpoint_trust") {
+    return (
+      <section className="home-section" aria-labelledby={`example-embed-${variant}`}>
+        <h2 id={`example-embed-${variant}`}>{titles[variant]}</h2>
+        <p className="muted">{blurbs[variant]}</p>
+        <LangGraphCheckpointTrustStories />
+      </section>
+    );
+  }
   const embed = getExampleEmbed(variant);
   const { humanText } = derivedFieldsFromEnvelope(embed);
   return (

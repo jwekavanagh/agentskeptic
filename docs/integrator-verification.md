@@ -20,6 +20,10 @@ Public surface is intentionally tiny: import **`verify`**, **`emit_tools_json`**
 
 Use **`framework="langgraph"`** inside **`with agentskeptic.verify(...):`**. That sets LangGraph certificate mode internally (so **A1** mis-invocation against a v3-only buffer cannot happen through the generic batch flag). The kernel matches the TS **`verifyRunStateFromBufferedRunEvents`** semantics for eligibility (**A2** ineligible → certificate only, no DB), terminal exit codes, and **`runKind: contract_sql_langgraph_checkpoint_trust`**.
 
+**Postgres (production):** `pip install -e "python/[dev,postgres]"` and pass **`database_url` as `postgresql://` or `postgres://`**. The session routes to the same read-only SQL verification as the TypeScript CLI. **SQLite (file path)** remains supported for the same API when **`database_url`** is a local path. For **A2 ineligible** runs, the kernel does not open a database, matching the CLI.
+
+See **all four** terminal story certificates (A2, B, C, D) on the static example **[`/examples/langgraph-checkpoint-trust`](/examples/langgraph-checkpoint-trust)** (source: `npm run regen:langgraph-embeds` in the repo; CI runs `npm run check:langgraph-embeds` after build).
+
 Minimal **kernel-level** demo (no hand-written NDJSON files; events built in Python): **`examples/python-verification/run_partner_kernel_demo.py`** with fixtures under **`examples/partner-quickstart/`**.
 
 ### CrewAI and AutoGen

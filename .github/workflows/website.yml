@@ -103,6 +103,8 @@ jobs:
       - name: Assert job env Postgres URLs are localhost (runtime; requires core + telemetry)
         run: node scripts/assert-ci-postgres-env-safety.mjs --require-core-and-telemetry
       - uses: ./.github/actions/setup-node-npm
+      - name: LangGraph LCT embeds match CLI (SSOT)
+        run: npm run build && npm run check:langgraph-embeds
       - name: Create website and telemetry databases
         run: node scripts/ci-create-website-telemetry-dbs.mjs
       - name: Verify web docs claim URLs

@@ -1,5 +1,5 @@
 /**
- * Node-side contract: website gate JSON lists exist and have four resolvable __tests__ paths.
+ * Node-side contract: website gate JSON lists exist and every entry is a resolvable __tests__ path.
  */
 import { readFileSync, existsSync } from "node:fs";
 import { join, dirname } from "node:path";
@@ -16,7 +16,7 @@ function readGate(name) {
 
 function assertGateJson(jsonName) {
   const list = readGate(jsonName);
-  assert.equal(list.length, 4, jsonName);
+  assert.ok(list.length >= 1, `${jsonName}: expected at least one module`);
   for (const rel of list) {
     assert.equal(typeof rel, "string");
     const p = join(webTests, rel.replace(/^\.\//, ""));

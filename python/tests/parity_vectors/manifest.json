@@ -8,18 +8,24 @@
       "workflowId": "wf_partner"
     },
     {
-      "id": "partner_langgraph_row_b",
+      "id": "langgraph_lct_a2",
       "mode": "langgraph_checkpoint_trust",
-      "events_inline": "v3_single_line",
-      "registry": "examples/partner-quickstart/partner.tools.json",
-      "workflowId": "wf_partner"
+      "note": "Golden from scripts/regen-langgraph-embeds.mjs (also website embeddedReports)"
     },
     {
-      "id": "langgraph_a2_malformed",
+      "id": "langgraph_lct_b",
       "mode": "langgraph_checkpoint_trust",
-      "events_inline": "malformed_ndjson",
-      "registry": "examples/partner-quickstart/partner.tools.json",
-      "workflowId": "wf_partner"
+      "note": "Golden from scripts/regen-langgraph-embeds.mjs (also website embeddedReports)"
+    },
+    {
+      "id": "langgraph_lct_c",
+      "mode": "langgraph_checkpoint_trust",
+      "note": "Golden from scripts/regen-langgraph-embeds.mjs (also website embeddedReports)"
+    },
+    {
+      "id": "langgraph_lct_d",
+      "mode": "langgraph_checkpoint_trust",
+      "note": "Golden from scripts/regen-langgraph-embeds.mjs (also website embeddedReports)"
     }
   ]
 }

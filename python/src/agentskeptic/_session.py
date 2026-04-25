@@ -6,7 +6,7 @@ from typing import Any
 
 from agentskeptic.kernel.verify_sqlite import (
     verify_contract_sql_certificate_sqlite,
-    verify_langgraph_checkpoint_trust_sqlite,
+    verify_langgraph_checkpoint_trust,
 )
 
 
@@ -75,10 +75,10 @@ class VerificationSession:
     def flush_certificate(self) -> dict[str, Any]:
         db = self.database_url
         if self.framework == "langgraph":
-            cert = verify_langgraph_checkpoint_trust_sqlite(
+            cert = verify_langgraph_checkpoint_trust(
                 workflow_id=self.workflow_id,
                 registry_path=self.registry,
-                database_path=db,
+                database_url=db,
                 buffered_run_events=self.buffered,
                 run_level_reasons=self.run_level_reasons,
             )

@@ -14,18 +14,29 @@ import { DatabaseSync } from "node:sqlite";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, "..");
+const embedDir = join(root, "website", "src", "content", "embeddedReports");
+const ssot = {
+  a2: join(embedDir, "langgraph-lct-a2-ineligible.v1.json"),
+  b: join(embedDir, "langgraph-lct-b-verified.v1.json"),
+  c: join(embedDir, "langgraph-lct-c-mismatch.v1.json"),
+  d: join(embedDir, "langgraph-lct-d-incomplete.v1.json"),
+};
 const cli = join(root, "dist", "cli.js");
 const partnerDir = join(root, "examples", "partner-quickstart");
 const partnerRegistry = join(partnerDir, "partner.tools.json");
 const partnerSeed = readFileSync(join(partnerDir, "partner.seed.sql"), "utf8");
 
-/** @param {{ toolId?: string; params?: Record<string, unknown>; langgraphCheckpoint?: Record<string, string> }} [opts] */
+const STABLE_RUN_B = "00000000-0000-4000-8000-00000000b0b0";
+const STABLE_RUN_C = "00000000-0000-4000-8000-00000000c0c0";
+const STABLE_RUN_D = "00000000-0000-4000-8000-00000000d0d0";
+
+/** @param {{ toolId?: string; runEventId?: string; params?: Record<string, unknown>; langgraphCheckpoint?: Record<string, string> }} [opts] */
 function toolLineV3(opts) {
   const o = opts ?? {};
   const line = {
     schemaVersion: 3,
     workflowId: "wf_partner",
-    runEventId: randomUUID(),
+    runEventId: o.runEventId ?? randomUUID(),
     type: "tool_observed",
     seq: 0,
     toolId: o.toolId ?? "crm.upsert_contact",
@@ -111,6 +122,8 @@ describe("langgraph checkpoint trust terminal contract", () => {
       assert.equal(obj.checkpointVerdicts, undefined);
       assert.equal(obj.stateRelation, "not_established");
       assert.ok((r.stderr ?? "").includes("LangGraph checkpoint trust: ineligible"), r.stderr);
+      const want = JSON.parse(readFileSync(ssot.a2, "utf8"));
+      assert.deepStrictEqual(obj, want);
     } finally {
       cleanup();
     }
@@ -173,7 +186,7 @@ describe("langgraph checkpoint trust terminal contract", () => {
     const { dir, dbPath, cleanup } = seedDb();
     try {
       const ev = join(dir, "ok.ndjson");
-      writeFileSync(ev, toolLineV3(), "utf8");
+      writeFileSync(ev, toolLineV3({ runEventId: STABLE_RUN_B }), "utf8");
       const r = run([
         "--workflow-id",
         "wf_partner",
@@ -190,6 +203,8 @@ describe("langgraph checkpoint trust terminal contract", () => {
       assert.equal(obj.runKind, "contract_sql_langgraph_checkpoint_trust");
       assert.ok(Array.isArray(obj.checkpointVerdicts) && obj.checkpointVerdicts.length >= 1);
       assert.ok(obj.checkpointVerdicts.every((x) => x.verdict === "verified"));
+      const want = JSON.parse(readFileSync(ssot.b, "utf8"));
+      assert.deepStrictEqual(obj, want);
     } finally {
       cleanup();
     }
@@ -202,6 +217,7 @@ describe("langgraph checkpoint trust terminal contract", () => {
       writeFileSync(
         ev,
         toolLineV3({
+          runEventId: STABLE_RUN_C,
           params: { recordId: "wrong_id", fields: { name: "You", status: "active" } },
         }),
         "utf8",
@@ -221,6 +237,8 @@ describe("langgraph checkpoint trust terminal contract", () => {
       const obj = JSON.parse((r.stdout ?? "").trim());
       assert.equal(obj.stateRelation, "does_not_match");
       assert.ok(Array.isArray(obj.checkpointVerdicts));
+      const want = JSON.parse(readFileSync(ssot.c, "utf8"));
+      assert.deepStrictEqual(obj, want);
     } finally {
       cleanup();
     }
@@ -230,7 +248,7 @@ describe("langgraph checkpoint trust terminal contract", () => {
     const { dir, dbPath, cleanup } = seedDb();
     try {
       const ev = join(dir, "unk.ndjson");
-      writeFileSync(ev, toolLineV3({ toolId: "no.such.tool" }), "utf8");
+      writeFileSync(ev, toolLineV3({ runEventId: STABLE_RUN_D, toolId: "no.such.tool" }), "utf8");
       const r = run([
         "--workflow-id",
         "wf_partner",
@@ -247,6 +265,8 @@ describe("langgraph checkpoint trust terminal contract", () => {
       const obj = JSON.parse((r.stdout ?? "").trim());
       assert.equal(obj.stateRelation, "not_established");
       assert.ok(Array.isArray(obj.checkpointVerdicts));
+      const want = JSON.parse(readFileSync(ssot.d, "utf8"));
+      assert.deepStrictEqual(obj, want);
     } finally {
       cleanup();
     }

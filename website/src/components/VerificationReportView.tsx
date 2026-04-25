@@ -1,4 +1,5 @@
 import { productCopy } from "@/content/productCopy";
+import { maybeLangGraphPanelFromCertificate } from "@/components/verification/LangGraphCertificatePanel";
 import type { PublicReportEnvelope } from "@/lib/publicVerificationReportService";
 
 type Props = {
@@ -29,6 +30,12 @@ function kindLabel(payload: PublicReportEnvelope): string {
 export function VerificationReportView({ humanText, payload, variant }: Props) {
   const machineJson = machineJsonFromPayload(payload);
   const kind = kindLabel(payload);
+  const langPanel =
+    "schemaVersion" in payload && payload.schemaVersion === 2
+      ? maybeLangGraphPanelFromCertificate(
+          (payload as { schemaVersion: 2; certificate: unknown }).certificate,
+        )
+      : null;
   if (variant === "embed") {
     return (
       <section className="verification-report-embed" data-testid="verification-report-embed">
@@ -37,6 +44,7 @@ export function VerificationReportView({ humanText, payload, variant }: Props) {
         <p className="muted">
           Kind: <strong>{kind}</strong>
         </p>
+        {langPanel}
         <section className="home-section" aria-labelledby="human-heading-embed">
           <h2 id="human-heading-embed">Human report</h2>
           <pre className="truth-report-pre" data-testid="verification-report-human">
@@ -59,6 +67,7 @@ export function VerificationReportView({ humanText, payload, variant }: Props) {
       <p className="muted">
         Kind: <strong>{kind}</strong>
       </p>
+      {langPanel}
       <section className="home-section" aria-labelledby="human-heading">
         <h2 id="human-heading">Human report</h2>
         <pre className="truth-report-pre" data-testid="verification-report-human">
