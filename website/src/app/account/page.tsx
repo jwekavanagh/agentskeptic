@@ -4,8 +4,8 @@ import { auth } from "@/auth";
 import { AccountClient } from "./AccountClient";
 import { AccountServerAboveFold } from "./AccountServerAboveFold";
 import { db } from "@/db/client";
-import { apiKeys } from "@/db/schema";
-import { and, eq, isNull } from "drizzle-orm";
+import { apiKeysV2 } from "@/db/schema";
+import { eq } from "drizzle-orm";
 import { assembleCommercialAccountState } from "@/lib/commercialAccountState";
 import { loadAccountPageVerificationActivity } from "@/lib/funnelObservabilityQueries";
 import { loadReliabilitySignalsForUser } from "@/lib/reliabilitySignals";
@@ -22,8 +22,8 @@ export default async function AccountPage() {
 
   const keys = await db
     .select()
-    .from(apiKeys)
-    .where(and(eq(apiKeys.userId, session.user.id), isNull(apiKeys.revokedAt)));
+    .from(apiKeysV2)
+    .where(eq(apiKeysV2.userId, session.user.id));
 
   const initialCommercial = await assembleCommercialAccountState({
     userId: session.user.id,
@@ -38,7 +38,7 @@ export default async function AccountPage() {
 
   const reliability = await loadReliabilitySignalsForUser(session.user.id);
 
-  const masked = keys[0] ? `wf_sk_live_****… (created)` : null;
+  const masked = keys[0] ? `${keys[0].label} · wf_sk_live_****…` : null;
 
   return (
     <main>
@@ -53,7 +53,17 @@ export default async function AccountPage() {
       </div>
       <Suspense fallback={<div className="card u-mt-1">Loading…</div>}>
         <AccountClient
-          hasKey={keys.length > 0}
+          initialKeys={keys.map((k) => ({
+            id: k.id,
+            label: k.label,
+            scopes: k.scopes ?? [],
+            status: k.status,
+            createdAt: k.createdAt.toISOString(),
+            expiresAt: k.expiresAt?.toISOString() ?? null,
+            revokedAt: k.revokedAt?.toISOString() ?? null,
+            disabledAt: k.disabledAt?.toISOString() ?? null,
+            lastUsedAt: k.lastUsedAt?.toISOString() ?? null,
+          }))}
           initialCommercial={initialCommercial}
           activity={activity}
         />

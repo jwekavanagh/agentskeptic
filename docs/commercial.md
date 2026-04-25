@@ -236,6 +236,45 @@ UPDATE "user" SET plan = 'enterprise', subscription_status = 'active' WHERE emai
 
 API keys are verified with **Node `crypto.scrypt`** (parameters fixed in website code and reviewed with security in mind). Store **salt + hash** only; show plaintext **once** at creation.
 
+### Scoped API keys (`api_key_v2`) — normative
+
+- Canonical table for active key management is **`api_key_v2`** (multi-key, scoped, labeled, rotatable).
+- Legacy **`api_key`** remains read-only during migration only.
+- Allowed scopes: **`read`**, **`meter`**, **`report`**, **`admin`**.
+- Validation rules:
+  - scopes must be non-empty and contain only allowed values,
+  - label must match `^[A-Za-z0-9 _./:-]+$` and length `1..64`,
+  - label uniqueness is enforced per user among active keys (case-insensitive),
+  - `expires_at` is optional; when set, must be at least 5 minutes in the future.
+- Lifecycle states:
+  - `active`, `revoked`, `disabled`; expiry is evaluated from `expires_at`.
+- Rotation contract:
+  - predecessor is row-locked,
+  - successor is inserted with copied label/scopes and new secret material,
+  - predecessor is revoked in the same transaction,
+  - rollback leaves predecessor active if successor insert fails.
+- Route auth scopes (bearer-key routes only):
+  - `POST /api/v1/usage/reserve` requires `meter`,
+  - `POST /api/v1/funnel/verify-outcome` requires `report`.
+- Account key-management routes are session-authenticated (owner-scoped), not bearer-key-scoped.
+- Legacy cutover policy:
+  - **T0** = first production deploy with v2 routes,
+  - legacy adapter is deleted at **T0 + 90 days** (hard removal).
+
+### Auth failure contract (normative)
+
+- `401 INVALID_KEY` (unknown key / hash mismatch)
+- `401 KEY_REVOKED`
+- `401 KEY_DISABLED`
+- `401 KEY_EXPIRED`
+- `403 INSUFFICIENT_SCOPE` (includes required scopes in response payload)
+
+### `last_used_at` reliability contract (normative)
+
+- `last_used_at` updates are non-blocking to avoid coupling authentication to observability writes.
+- On write failure, server emits `api_key_last_used_write_failed` telemetry.
+- Repair path retries failed updates asynchronously.
+
 ## Roadmap (v1.1+)
 
 - (Reserved for future product work.) Metered overage after included quota is **live** in [`config/commercial-plans.json`](../config/commercial-plans.json) and Stripe; buyer-visible rates are built from that file in [`website/src/lib/commercialNarrative.ts`](../website/src/lib/commercialNarrative.ts).

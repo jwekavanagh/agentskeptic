@@ -1,9 +1,9 @@
-import { and, eq, isNull } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 import { activationJson, activationReserveDeny } from "@/lib/activationHttp";
 import { db } from "@/db/client";
-import { apiKeys, usageCounters, usageReservations, users } from "@/db/schema";
-import { sha256HexApiKeyLookupFingerprint, verifyApiKey } from "@/lib/apiKeyCrypto";
+import { usageCounters, usageReservations } from "@/db/schema";
+import { authenticateApiKey, requireScopes } from "@/lib/apiKeyAuthGateway";
 import {
   resolveCommercialEntitlement,
   type ReserveIntent,
@@ -76,15 +76,16 @@ function normalizeSubscriptionStatus(
 }
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
-  const auth = req.headers.get("authorization");
-  if (!auth?.startsWith("Bearer ")) {
-    return activationReserveDeny(req, {
-      status: 400,
-      code: "BAD_REQUEST",
-      message: "Missing Authorization Bearer token.",
-    });
+  const authn = await authenticateApiKey(req);
+  if (!authn.ok) {
+    return authn.response;
   }
-  const rawKey = auth.slice(7).trim();
+  const scopeCheck = requireScopes(req, authn.principal, ["meter"]);
+  if (!scopeCheck.ok) {
+    return scopeCheck.response;
+  }
+  const apiKeyId = authn.principal.keyId;
+  const userRow = authn.principal.user;
   let body: { run_id?: string; issued_at?: string; intent?: unknown };
   try {
     body = (await req.json()) as { run_id?: string; issued_at?: string; intent?: unknown };
@@ -135,37 +136,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     });
   }
 
-  const lookup = sha256HexApiKeyLookupFingerprint(rawKey);
-  const keyRows = await db
-    .select({
-      key: apiKeys,
-      user: users,
-    })
-    .from(apiKeys)
-    .innerJoin(users, eq(apiKeys.userId, users.id))
-    .where(and(eq(apiKeys.keyLookupSha256, lookup), isNull(apiKeys.revokedAt)))
-    .limit(1);
-
-  const row = keyRows[0];
-  if (!row) {
-    return activationReserveDeny(req, {
-      status: 401,
-      code: "INVALID_KEY",
-      message: "Unknown or revoked API key.",
-    });
-  }
-
-  const ok = verifyApiKey(rawKey, row.key.keyHash);
-  if (!ok) {
-    return activationReserveDeny(req, {
-      status: 401,
-      code: "INVALID_KEY",
-      message: "Invalid API key.",
-    });
-  }
-
   const plans = loadCommercialPlans();
-  const planId = row.user.plan as PlanId;
+  const planId = userRow.plan as PlanId;
   const planDef = plans.plans[planId];
   if (!planDef) {
     return activationReserveDeny(req, {
@@ -175,7 +147,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     });
   }
 
-  const subNorm = normalizeSubscriptionStatus(row.user.subscriptionStatus);
+  const subNorm = normalizeSubscriptionStatus(userRow.subscriptionStatus);
   if (subNorm === null) {
     return activationReserveDeny(req, {
       status: 500,
@@ -184,7 +156,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     });
   }
 
-  const stripePriceIdRaw = row.user.stripePriceId?.trim();
+  const stripePriceIdRaw = userRow.stripePriceId?.trim();
   const needsMappedStripePrice = (paidEnforcementPlanIds as readonly string[]).includes(planId);
   if (needsMappedStripePrice && stripePriceIdRaw && priceIdToPlanId(stripePriceIdRaw) === null) {
     const upgrade_url = publicUpgradeUrl();
@@ -249,7 +221,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         .select()
         .from(usageReservations)
         .where(
-          and(eq(usageReservations.apiKeyId, row.key.id), eq(usageReservations.runId, runId)),
+          and(eq(usageReservations.apiKeyId, apiKeyId), eq(usageReservations.runId, runId)),
         )
         .limit(1);
       if (dup.length > 0) {
@@ -258,14 +230,14 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
           .from(usageCounters)
           .where(
             and(
-              eq(usageCounters.apiKeyId, row.key.id),
+              eq(usageCounters.apiKeyId, apiKeyId),
               eq(usageCounters.yearMonth, yearMonth),
             ),
           )
           .for("update");
         if (c.length === 0) {
           await tx.insert(usageCounters).values({
-            apiKeyId: row.key.id,
+            apiKeyId,
             yearMonth,
             count: 0,
           });
@@ -274,7 +246,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
             .from(usageCounters)
             .where(
               and(
-                eq(usageCounters.apiKeyId, row.key.id),
+                eq(usageCounters.apiKeyId, apiKeyId),
                 eq(usageCounters.yearMonth, yearMonth),
               ),
             )
@@ -289,7 +261,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         .from(usageCounters)
         .where(
           and(
-            eq(usageCounters.apiKeyId, row.key.id),
+            eq(usageCounters.apiKeyId, apiKeyId),
             eq(usageCounters.yearMonth, yearMonth),
           ),
         )
@@ -297,7 +269,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
       if (locked.length === 0) {
         await tx.insert(usageCounters).values({
-          apiKeyId: row.key.id,
+          apiKeyId,
           yearMonth,
           count: 0,
         });
@@ -306,7 +278,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
           .from(usageCounters)
           .where(
             and(
-              eq(usageCounters.apiKeyId, row.key.id),
+              eq(usageCounters.apiKeyId, apiKeyId),
               eq(usageCounters.yearMonth, yearMonth),
             ),
           )
@@ -325,7 +297,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       }
 
       await tx.insert(usageReservations).values({
-        apiKeyId: row.key.id,
+        apiKeyId,
         runId,
       });
 
@@ -335,7 +307,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         .set({ count: newCount })
         .where(
           and(
-            eq(usageCounters.apiKeyId, row.key.id),
+            eq(usageCounters.apiKeyId, apiKeyId),
             eq(usageCounters.yearMonth, yearMonth),
           ),
         );
@@ -363,7 +335,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
     await logFunnelEvent({
       event: "reserve_allowed",
-      userId: row.user.id,
+      userId: authn.principal.userId,
       metadata: buildReserveAllowedMetadata(intent),
     });
 

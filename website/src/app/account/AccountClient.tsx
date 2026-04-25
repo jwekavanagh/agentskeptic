@@ -20,6 +20,18 @@ import {
 import type { LicensedVerifyOutcomeMetadata } from "@/lib/funnelCommercialMetadata";
 import { SignOutButton } from "../SignOutButton";
 
+type AccountApiKeyRow = {
+  id: string;
+  label: string;
+  scopes: string[];
+  status: string;
+  createdAt: string;
+  expiresAt: string | null;
+  revokedAt: string | null;
+  disabledAt: string | null;
+  lastUsedAt: string | null;
+};
+
 function ApiKeyOneTimeReveal({ apiKey, onAcknowledge }: { apiKey: string; onAcknowledge: () => void }) {
   const [copied, setCopied] = useState(false);
   const [copyErr, setCopyErr] = useState(false);
@@ -103,11 +115,11 @@ function statusLabelFromRow(row: { terminalStatus: string }): string {
 }
 
 export function AccountClient({
-  hasKey,
+  initialKeys,
   initialCommercial,
   activity,
 }: {
-  hasKey: boolean;
+  initialKeys: AccountApiKeyRow[];
   initialCommercial: CommercialAccountStatePayload;
   activity: AccountPageVerificationActivity;
 }) {
@@ -118,8 +130,8 @@ export function AccountClient({
   const fromOssClaim = searchParams.get("fromOssClaim") === "1";
   const ossClaimRunId = searchParams.get("run_id")?.trim() ?? "";
 
-  const [key, setKey] = useState<string | null>(null);
-  const [hasActiveKey, setHasActiveKey] = useState(hasKey);
+  const [newlyIssuedKey, setNewlyIssuedKey] = useState<string | null>(null);
+  const [keyRows, setKeyRows] = useState<AccountApiKeyRow[]>(initialKeys);
   const [err, setErr] = useState<string | null>(null);
   const [commercial, setCommercial] = useState<CommercialAccountStatePayload>(initialCommercial);
   const [activationUi, setActivationUi] = useState<"idle" | "pending" | "ready" | "timeout">("idle");
@@ -138,8 +150,8 @@ export function AccountClient({
   }, [initialCommercial]);
 
   useEffect(() => {
-    setHasActiveKey(hasKey);
-  }, [hasKey]);
+    setKeyRows(initialKeys);
+  }, [initialKeys]);
 
   useEffect(() => {
     if (checkout !== "success" || !expectedPlanRaw) {
@@ -215,30 +227,49 @@ export function AccountClient({
     }
   }
 
+  const hasActiveKey = keyRows.some((k) => k.status === "active");
+
+  async function refreshKeys() {
+    const r = await fetch("/api/account/keys");
+    if (!r.ok) return;
+    const j = (await r.json()) as { keys?: AccountApiKeyRow[] };
+    setKeyRows(j.keys ?? []);
+  }
+
   async function createKey() {
     setErr(null);
-    const r = await fetch("/api/account/create-key", { method: "POST" });
-    const j = (await r.json()) as { apiKey?: string; error?: string };
+    const defaultLabel = `Key ${new Date().toISOString().slice(0, 16).replace("T", " ")}`;
+    const label = window.prompt("Label for this key", defaultLabel)?.trim();
+    if (!label) return;
+    const r = await fetch("/api/account/keys", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        label,
+        scopes: ["read", "meter", "report", "admin"],
+      }),
+    });
+    const j = (await r.json()) as { key?: { id: string; apiKey: string }; error?: string };
     if (!r.ok) {
       setErr(j.error ?? "Failed");
       return;
     }
-    if (j.apiKey) {
-      setKey(j.apiKey);
-      setHasActiveKey(true);
+    if (j.key?.apiKey) {
+      setNewlyIssuedKey(j.key.apiKey);
+      await refreshKeys();
     }
   }
 
-  async function revokeKey() {
+  async function revokeKey(keyId: string) {
     if (
       !window.confirm(
-        "Revoke your API key? Paid verification stops until you generate a new key.",
+        "Revoke this API key? Any integration using it will stop immediately.",
       )
     ) {
       return;
     }
     setErr(null);
-    const r = await fetch("/api/account/revoke-key", { method: "POST" });
+    const r = await fetch(`/api/account/keys/${encodeURIComponent(keyId)}/revoke`, { method: "POST" });
     const j = (await r.json()) as { ok?: boolean; revoked?: boolean; error?: string };
     if (r.status === 401) {
       setErr(j.error ?? "Unauthorized");
@@ -248,13 +279,31 @@ export function AccountClient({
       setErr("Revoke failed");
       return;
     }
-    setKey(null);
-    setHasActiveKey(false);
-    router.refresh();
+    setNewlyIssuedKey(null);
+    await refreshKeys();
+  }
+
+  async function rotateKey(keyId: string) {
+    if (!window.confirm("Rotate this key now? The current key will be revoked.")) {
+      return;
+    }
+    setErr(null);
+    const r = await fetch(`/api/account/keys/${encodeURIComponent(keyId)}/rotate`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({}),
+    });
+    const j = (await r.json()) as { key?: { id: string; apiKey: string }; error?: string };
+    if (!r.ok || !j.key?.apiKey) {
+      setErr(j.error ?? "Rotate failed");
+      return;
+    }
+    setNewlyIssuedKey(j.key.apiKey);
+    await refreshKeys();
   }
 
   function acknowledgeSavedKey() {
-    setKey(null);
+    setNewlyIssuedKey(null);
     router.refresh();
   }
 
@@ -388,7 +437,7 @@ export function AccountClient({
           <Link href="/integrate" className="btn" data-testid="account-primary-cta">
             {hasActivityRows || monthCount > 0
               ? productCopy.account.primaryVerificationCtaAgain
-              : !hasActiveKey && !key
+              : !hasActiveKey && !newlyIssuedKey
                 ? productCopy.account.primaryVerificationCtaFirstRunNeedsKey
                 : productCopy.account.primaryVerificationCtaFirstRun}
           </Link>
@@ -553,19 +602,33 @@ export function AccountClient({
             </li>
           ))}
         </ol>
-        {(hasActiveKey || key) && (
-          <p className="u-mt-05">
-            <button type="button" onClick={() => void revokeKey()}>
-              Revoke API key
-            </button>
-          </p>
-        )}
-        {!hasActiveKey && !key && (
+        <p className="u-mt-05">
           <button type="button" onClick={() => void createKey()}>
             Generate API key
           </button>
-        )}
-        {key ? <ApiKeyOneTimeReveal apiKey={key} onAcknowledge={acknowledgeSavedKey} /> : null}
+        </p>
+        {keyRows.length > 0 ? (
+          <ul className="u-mt-05">
+            {keyRows.map((k) => (
+              <li key={k.id} className="u-mb-05">
+                <strong>{k.label}</strong> — {k.status} — scopes: {k.scopes.join(", ")}
+                {k.lastUsedAt ? <span className="muted"> · last used {k.lastUsedAt}</span> : null}
+                {k.status === "active" ? (
+                  <>
+                    {" "}
+                    <button type="button" onClick={() => void revokeKey(k.id)}>
+                      Revoke
+                    </button>{" "}
+                    <button type="button" onClick={() => void rotateKey(k.id)}>
+                      Rotate
+                    </button>
+                  </>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        ) : null}
+        {newlyIssuedKey ? <ApiKeyOneTimeReveal apiKey={newlyIssuedKey} onAcknowledge={acknowledgeSavedKey} /> : null}
       </section>
 
       <section data-testid="account-trust-footnote" className="u-mt-125">

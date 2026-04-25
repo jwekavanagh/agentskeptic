@@ -1,34 +1,33 @@
 import { db } from "@/db/client";
-import { apiKeys, usageReservations, users, verifyOutcomeBeacons } from "@/db/schema";
-import { sha256HexApiKeyLookupFingerprint, verifyApiKey } from "@/lib/apiKeyCrypto";
+import { usageReservations, verifyOutcomeBeacons } from "@/db/schema";
 import {
   ACTIVATION_PROBLEM_BASE,
   activationNoContent,
   activationProblem,
   resolveActivationRequestId,
 } from "@/lib/activationHttp";
+import { authenticateApiKey, requireScopes } from "@/lib/apiKeyAuthGateway";
 import { buildLicensedVerifyOutcomeMetadata } from "@/lib/funnelCommercialMetadata";
 import { VERIFY_OUTCOME_BEACON_MAX_RESERVATION_AGE_MS } from "@/lib/funnelVerifyOutcomeConstants";
 import { verifyOutcomeRequestSchema } from "@/lib/funnelVerifyOutcome.contract";
 import { logFunnelEvent } from "@/lib/funnelEvent";
-import { and, eq, isNull } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   const rid = resolveActivationRequestId(req);
-  const auth = req.headers.get("authorization");
-  if (!auth?.startsWith("Bearer ")) {
-    return activationProblem(req, {
-      status: 401,
-      type: `${ACTIVATION_PROBLEM_BASE}/unauthorized`,
-      title: "Unauthorized",
-      detail: "Missing or invalid Authorization Bearer token.",
-      code: "UNAUTHORIZED",
-    });
+  const authn = await authenticateApiKey(req);
+  if (!authn.ok) {
+    return authn.response;
   }
-  const rawKey = auth.slice(7).trim();
+  const scopeCheck = requireScopes(req, authn.principal, ["report"]);
+  if (!scopeCheck.ok) {
+    return scopeCheck.response;
+  }
+  const apiKeyId = authn.principal.keyId;
+  const userId = authn.principal.userId;
 
   let jsonBody: unknown;
   try {
@@ -64,43 +63,11 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     subcommand,
   } = parsed.data;
 
-  const lookup = sha256HexApiKeyLookupFingerprint(rawKey);
-  const keyRows = await db
-    .select({
-      key: apiKeys,
-      user: users,
-    })
-    .from(apiKeys)
-    .innerJoin(users, eq(apiKeys.userId, users.id))
-    .where(and(eq(apiKeys.keyLookupSha256, lookup), isNull(apiKeys.revokedAt)))
-    .limit(1);
-
-  const row = keyRows[0];
-  if (!row) {
-    return activationProblem(req, {
-      status: 401,
-      type: `${ACTIVATION_PROBLEM_BASE}/unauthorized`,
-      title: "Unauthorized",
-      detail: "Unknown or revoked API key.",
-      code: "INVALID_KEY",
-    });
-  }
-
-  if (!verifyApiKey(rawKey, row.key.keyHash)) {
-    return activationProblem(req, {
-      status: 401,
-      type: `${ACTIVATION_PROBLEM_BASE}/unauthorized`,
-      title: "Unauthorized",
-      detail: "Invalid API key.",
-      code: "INVALID_KEY",
-    });
-  }
-
   const resvRows = await db
     .select()
     .from(usageReservations)
     .where(
-      and(eq(usageReservations.apiKeyId, row.key.id), eq(usageReservations.runId, runId)),
+      and(eq(usageReservations.apiKeyId, apiKeyId), eq(usageReservations.runId, runId)),
     )
     .limit(1);
 
@@ -131,7 +98,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       const inserted = await tx
         .insert(verifyOutcomeBeacons)
         .values({
-          apiKeyId: row.key.id,
+          apiKeyId,
           runId,
         })
         .onConflictDoNothing()
@@ -144,7 +111,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       await logFunnelEvent(
         {
           event: "licensed_verify_outcome",
-          userId: row.user.id,
+          userId,
           metadata: buildLicensedVerifyOutcomeMetadata({
             terminal_status,
             workload_class,

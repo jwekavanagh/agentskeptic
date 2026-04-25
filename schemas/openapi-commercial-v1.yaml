@@ -45,7 +45,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ReserveError"
         "401":
-          description: Invalid or revoked API key
+          description: Invalid API key or key lifecycle denial (revoked, disabled, expired)
           content:
             application/json:
               schema:
@@ -526,7 +526,8 @@ components:
               type: string
               description: >
                 Examples BAD_REQUEST, INVALID_KEY, QUOTA_EXCEEDED, ENFORCEMENT_REQUIRES_PAID_PLAN,
-                VERIFICATION_REQUIRES_SUBSCRIPTION, SUBSCRIPTION_INACTIVE, BILLING_PRICE_UNMAPPED, SERVER_ERROR
+                VERIFICATION_REQUIRES_SUBSCRIPTION, SUBSCRIPTION_INACTIVE, BILLING_PRICE_UNMAPPED,
+                INSUFFICIENT_SCOPE, KEY_EXPIRED, KEY_REVOKED, KEY_DISABLED, SERVER_ERROR
             message:
               type: string
             upgrade_url:

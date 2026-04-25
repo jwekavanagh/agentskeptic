@@ -135,6 +135,30 @@ export async function runLicensePreflightIfNeeded(
               `${body.message || "Stripe price is not mapped in this deployment."}${suffix}${rid}`,
             );
           }
+          if (body.code === "INSUFFICIENT_SCOPE") {
+            throw new TruthLayerError(
+              CLI_OPERATIONAL_CODES.LICENSE_DENIED,
+              `${body.message || "API key does not include required scope for this operation."}${rid}`,
+            );
+          }
+          if (body.code === "KEY_EXPIRED") {
+            throw new TruthLayerError(
+              CLI_OPERATIONAL_CODES.LICENSE_DENIED,
+              `${body.message || "API key is expired."}${rid}`,
+            );
+          }
+          if (body.code === "KEY_REVOKED") {
+            throw new TruthLayerError(
+              CLI_OPERATIONAL_CODES.LICENSE_DENIED,
+              `${body.message || "API key is revoked."}${rid}`,
+            );
+          }
+          if (body.code === "KEY_DISABLED") {
+            throw new TruthLayerError(
+              CLI_OPERATIONAL_CODES.LICENSE_DENIED,
+              `${body.message || "API key is disabled."}${rid}`,
+            );
+          }
           throw new TruthLayerError(
             CLI_OPERATIONAL_CODES.LICENSE_DENIED,
             `${body.message || `License check failed (${body.code}).`}${rid}`,

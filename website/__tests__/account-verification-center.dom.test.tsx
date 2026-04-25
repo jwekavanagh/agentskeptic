@@ -68,10 +68,36 @@ const idleActivity: AccountPageVerificationActivity = {
   licensedOutcomesThisUtcMonth: 0,
 };
 
+const noKeys: Array<{
+  id: string;
+  label: string;
+  scopes: string[];
+  status: string;
+  createdAt: string;
+  expiresAt: string | null;
+  revokedAt: string | null;
+  disabledAt: string | null;
+  lastUsedAt: string | null;
+}> = [];
+
+const activeKey = [
+  {
+    id: "k1",
+    label: "Team CI",
+    scopes: ["read", "meter", "report", "admin"],
+    status: "active",
+    createdAt: "2026-04-01T00:00:00.000Z",
+    expiresAt: null,
+    revokedAt: null,
+    disabledAt: null,
+    lastUsedAt: null,
+  },
+];
+
 describe("Account verification center (DOM)", () => {
   it("orders verification region and primary CTA before subscription", () => {
     render(
-      <AccountClient hasKey={false} initialCommercial={baseCommercial()} activity={idleActivity} />,
+      <AccountClient initialKeys={noKeys} initialCommercial={baseCommercial()} activity={idleActivity} />,
     );
     const V = screen.getByTestId("account-verification-region");
     const S = screen.getByTestId("account-subscription-region");
@@ -83,13 +109,13 @@ describe("Account verification center (DOM)", () => {
 
   it("shows Starter upgrade strip only when plan is starter", () => {
     const { rerender } = render(
-      <AccountClient hasKey={false} initialCommercial={baseCommercial({ plan: "starter" })} activity={idleActivity} />,
+      <AccountClient initialKeys={noKeys} initialCommercial={baseCommercial({ plan: "starter" })} activity={idleActivity} />,
     );
     const strip = screen.getByTestId("account-starter-upgrade");
     expect(strip.hidden).toBe(false);
 
     rerender(
-      <AccountClient hasKey={false} initialCommercial={baseCommercial({ plan: "individual" })} activity={idleActivity} />,
+      <AccountClient initialKeys={noKeys} initialCommercial={baseCommercial({ plan: "individual" })} activity={idleActivity} />,
     );
     expect(strip.hidden).toBe(true);
   });
@@ -107,7 +133,7 @@ describe("Account verification center (DOM)", () => {
         },
       ],
     };
-    render(<AccountClient hasKey={false} initialCommercial={baseCommercial()} activity={activity} />);
+    render(<AccountClient initialKeys={noKeys} initialCommercial={baseCommercial()} activity={activity} />);
     expect(
       screen.getByText(accountActivityStatusLabel("inconsistent"), { exact: true }),
     ).toBeInTheDocument();
@@ -117,7 +143,7 @@ describe("Account verification center (DOM)", () => {
   });
 
   it("shows exact activityEmpty when ok, zero rows, zero month count", () => {
-    render(<AccountClient hasKey={false} initialCommercial={baseCommercial()} activity={idleActivity} />);
+    render(<AccountClient initialKeys={noKeys} initialCommercial={baseCommercial()} activity={idleActivity} />);
     expect(
       screen.getByText(productCopy.account.verificationHeadlineEmpty, { exact: true }),
     ).toBeInTheDocument();
@@ -125,28 +151,28 @@ describe("Account verification center (DOM)", () => {
   });
 
   it("styles primary verification CTA as a button", () => {
-    render(<AccountClient hasKey={false} initialCommercial={baseCommercial()} activity={idleActivity} />);
+    render(<AccountClient initialKeys={noKeys} initialCommercial={baseCommercial()} activity={idleActivity} />);
     const cta = screen.getByTestId("account-primary-cta");
     expect(cta.tagName).toBe("A");
     expect(cta).toHaveClass("btn");
   });
 
   it("nudges verification CTA when no API key exists yet", () => {
-    render(<AccountClient hasKey={false} initialCommercial={baseCommercial()} activity={idleActivity} />);
+    render(<AccountClient initialKeys={noKeys} initialCommercial={baseCommercial()} activity={idleActivity} />);
     expect(screen.getByTestId("account-primary-cta")).toHaveTextContent(
       productCopy.account.primaryVerificationCtaFirstRunNeedsKey,
     );
   });
 
   it("uses short first-run CTA when a key already exists", () => {
-    render(<AccountClient hasKey initialCommercial={baseCommercial()} activity={idleActivity} />);
+    render(<AccountClient initialKeys={activeKey} initialCommercial={baseCommercial()} activity={idleActivity} />);
     expect(screen.getByTestId("account-primary-cta")).toHaveTextContent(
       productCopy.account.primaryVerificationCtaFirstRun,
     );
   });
 
   it("shows activityLoadError for ok false without LiveStatus wrapper", () => {
-    render(<AccountClient hasKey={false} initialCommercial={baseCommercial()} activity={{ ok: false }} />);
+    render(<AccountClient initialKeys={noKeys} initialCommercial={baseCommercial()} activity={{ ok: false }} />);
     const err = screen.getByTestId("account-activity-error");
     expect(err.tagName).toBe("P");
     expect(err).toHaveClass("muted");
@@ -171,17 +197,24 @@ describe("Account verification center (DOM)", () => {
     });
     vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
       const url = typeof input === "string" ? input : input.toString();
-      if (url.includes("/api/account/create-key") && init?.method === "POST") {
+      if (url.includes("/api/account/keys") && init?.method === "POST") {
         return {
           ok: true,
-          json: async () => ({ apiKey: issued }),
+          json: async () => ({ key: { id: "k-new", apiKey: issued } }),
+        } as Response;
+      }
+      if (url.includes("/api/account/keys") && (!init?.method || init?.method === "GET")) {
+        return {
+          ok: true,
+          json: async () => ({ keys: activeKey }),
         } as Response;
       }
       return { ok: false, json: async () => ({}) } as Response;
     });
+    vi.spyOn(window, "prompt").mockReturnValue("My Key");
 
     const { rerender, container } = render(
-      <AccountClient hasKey={false} initialCommercial={baseCommercial()} activity={idleActivity} />,
+      <AccountClient initialKeys={noKeys} initialCommercial={baseCommercial()} activity={idleActivity} />,
     );
     expect(API_KEY_ISSUED_PATTERN.test(container.textContent ?? "")).toBe(false);
 
@@ -198,14 +231,14 @@ describe("Account verification center (DOM)", () => {
     expect(screen.queryByTestId("api-key-plaintext")).toBeNull();
     expect(refresh).toHaveBeenCalled();
 
-    rerender(<AccountClient hasKey initialCommercial={baseCommercial()} activity={idleActivity} />);
+    rerender(<AccountClient initialKeys={activeKey} initialCommercial={baseCommercial()} activity={idleActivity} />);
     expect(API_KEY_ISSUED_PATTERN.test(container.textContent ?? "")).toBe(false);
 
     cleanup();
     vi.restoreAllMocks();
 
     const { container: c2 } = render(
-      <AccountClient hasKey={false} initialCommercial={baseCommercial()} activity={idleActivity} />,
+      <AccountClient initialKeys={noKeys} initialCommercial={baseCommercial()} activity={idleActivity} />,
     );
     expect(API_KEY_ISSUED_PATTERN.test(c2.textContent ?? "")).toBe(false);
   });

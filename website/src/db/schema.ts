@@ -1,7 +1,9 @@
 import {
+  check,
   boolean,
   integer,
   jsonb,
+  pgEnum,
   pgTable,
   primaryKey,
   text,
@@ -10,6 +12,7 @@ import {
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 
 /** Auth.js default table name `user`. */
 export const users = pgTable("user", {
@@ -100,6 +103,62 @@ export const apiKeys = pgTable("api_key", {
   createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
   revokedAt: timestamp("revoked_at", { mode: "date" }),
 });
+
+export const apiKeyStatusEnum = pgEnum("api_key_v2_status", [
+  "active",
+  "revoked",
+  "disabled",
+]);
+
+export const apiKeyScopeEnum = pgEnum("api_key_v2_scope", [
+  "read",
+  "meter",
+  "report",
+  "admin",
+]);
+
+/**
+ * Production key model (v2): multiple concurrent keys, explicit scopes, and lifecycle metadata.
+ * Legacy `api_key` stays readable during migration and is removed after hard sunset.
+ */
+export const apiKeysV2 = pgTable(
+  "api_key_v2",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    label: varchar("label", { length: 64 }).notNull(),
+    scopes: apiKeyScopeEnum("scopes").array().notNull(),
+    keyLookupSha256: text("key_lookup_sha256").notNull().unique(),
+    keyHash: text("key_hash").notNull(),
+    status: apiKeyStatusEnum("status").notNull().default("active"),
+    createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+    expiresAt: timestamp("expires_at", { mode: "date" }),
+    revokedAt: timestamp("revoked_at", { mode: "date" }),
+    disabledAt: timestamp("disabled_at", { mode: "date" }),
+    lastUsedAt: timestamp("last_used_at", { mode: "date" }),
+    rotatedFromKeyId: text("rotated_from_key_id"),
+    rotatedToKeyId: text("rotated_to_key_id"),
+    migratedFromLegacyId: text("migrated_from_legacy_id").unique(),
+  },
+  (t) => ({
+    labelTrimmedNonEmpty: check(
+      "api_key_v2_label_trimmed_nonempty",
+      sql`char_length(btrim(${t.label})) between 1 and 64`,
+    ),
+    scopesNonEmpty: check(
+      "api_key_v2_scopes_nonempty",
+      sql`coalesce(array_length(${t.scopes}, 1), 0) >= 1`,
+    ),
+    scopesLenMax4: check(
+      "api_key_v2_scopes_len_max4",
+      sql`coalesce(array_length(${t.scopes}, 1), 0) <= 4`,
+    ),
+  }),
+);
 
 export const usageCounters = pgTable(
   "usage_counter",
