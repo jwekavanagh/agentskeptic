@@ -3,7 +3,7 @@
  * RR-F / SP operator SQL gates for eval-to-account (D_ihm mint cohort).
  * Usage: node scripts/sql-eval-to-account-staging-gates.mjs -- --gate-set=rr|sp
  */
-import { createHash, randomBytes } from "node:crypto";
+import { createHash, randomBytes, randomUUID } from "node:crypto";
 import postgres from "postgres";
 
 const gateSet =
@@ -101,11 +101,11 @@ async function main() {
             `INSERT INTO oss_claim_ticket (
             secret_hash, run_id, terminal_status, workload_class, subcommand, build_profile, issued_at,
             telemetry_source, created_at, expires_at, claimed_at, user_id, handoff_token, handoff_consumed_at,
-            interactive_human_claim, browser_open_invoked_at
+            interactive_human_claim, browser_open_invoked_at, activation_request_id
           ) VALUES (
             $1, $2, 'complete', 'non_bundled', 'batch_verify', 'oss', $3,
             'unknown', $4::timestamptz, $5::timestamptz, $6, $7, $8, $9::timestamptz,
-            true, $10::timestamptz
+            true, $10::timestamptz, $11
           )`,
             [
               secretHashes[i],
@@ -118,6 +118,7 @@ async function main() {
               `tok_${tag}_${i}`,
               handoff,
               ack,
+              randomUUID(),
             ],
           );
         }
