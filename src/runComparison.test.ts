@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { copyFileSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -7,12 +7,8 @@ import { describe, expect, it } from "vitest";
 import { CLI_OPERATIONAL_CODES } from "./failureCatalog.js";
 import { COMPARE_INPUT_RUN_LEVEL_INCONSISTENT_MESSAGE } from "./runLevelDriftMessages.js";
 import { loadSchemaValidator } from "./schemaLoad.js";
-import {
-  buildRunComparisonReport,
-  formatRunComparisonReport,
-  logicalStepKeyFromStep,
-  recurrenceSignature,
-} from "./runComparison.js";
+import { buildRunComparisonReport, logicalStepKeyFromStep, recurrenceSignature } from "./runComparison.js";
+import { buildRegressionArtifactFromDebugCorpus } from "./regressionArtifact.js";
 import type { StepOutcome, WorkflowEngineResult, WorkflowResult } from "./types.js";
 import {
   createEmptyVerificationRunContext,
@@ -338,19 +334,24 @@ describe("runComparison", () => {
     expect(recurrenceSignature(a)).toBe(recurrenceSignature(b));
   });
 
-  it("formatRunComparisonReport includes cross_run_comparison header", () => {
-    const r = buildRunComparisonReport(
-      [wf([sqlRowStep(0, "t", "a", true)]), wf([sqlRowStep(0, "t", "a", true)])],
-      ["a", "b"],
-    );
-    const text = formatRunComparisonReport(r);
-    expect(text).toContain("cross_run_comparison:");
-    expect(text).toContain("per_run_actionable:");
-    expect(text).toContain("actionable_category_recurrence:");
-    expect(text).toContain("recurrence_patterns:");
-    expect(text).toContain("reliability_assessment:");
-    expect(text).toContain("headline_verdict:");
-    expect(text).toContain("compare_highlights:");
+  it("regressionArtifact humanText covers verification summary and certificates", () => {
+    const base = join(root, "test", "fixtures", "debug-ui-compare");
+    const wrA = JSON.parse(
+      readFileSync(join(base, "run_a", "workflow-result.json"), "utf8"),
+    ) as WorkflowResult;
+    const wrB = JSON.parse(
+      readFileSync(join(base, "run_b", "workflow-result.json"), "utf8"),
+    ) as WorkflowResult;
+    const art = buildRegressionArtifactFromDebugCorpus({
+      results: [wrA, wrB],
+      runIds: ["run_a", "run_b"],
+      eventPaths: [join(base, "run_a", "events.ndjson"), join(base, "run_b", "events.ndjson")],
+    });
+    expect(art.humanText).toContain("regression_artifact:");
+    expect(art.humanText).toContain("outcome_certificates:");
+    expect(art.humanText).toContain("trace_pairwise:");
+    const v = loadSchemaValidator("regression-artifact-v1");
+    expect(v(art as unknown as object)).toBe(true);
   });
 
   it("actionableCategoryRecurrence: streaks and indices along compare order", () => {
@@ -421,36 +422,29 @@ describe("runComparison", () => {
     expect(report.perRunActionableFailures).toHaveLength(4);
   });
 
-  it("CLI compare succeeds and stderr precedes valid stdout JSON", () => {
-    const golden = join(root, "test", "golden", "wf_multi_ok.stdout.json");
-    const raw = readFileSync(golden, "utf8");
-    const dir = mkdtempSync(join(tmpdir(), "etl-cmp-"));
-    try {
-      const p1 = join(dir, "a.json");
-      const p2 = join(dir, "b.json");
-      writeFileSync(p1, raw);
-      writeFileSync(p2, raw);
-      const proc = spawnSync(process.execPath, ["--no-warnings", cliJs, "compare", "--prior", p1, "--current", p2], {
-        encoding: "utf8",
-        cwd: root,
-      });
-      expect(proc.status, proc.stderr).toBe(0);
-      const out = proc.stdout.trim();
-      expect(out.length).toBeGreaterThan(0);
-      const parsed = JSON.parse(out) as { schemaVersion: number };
-      expect(parsed.schemaVersion).toBe(4);
-      const v = loadSchemaValidator("run-comparison-report");
-      expect(v(JSON.parse(out))).toBe(true);
-      expect(proc.stderr).toContain("cross_run_comparison:");
-    } finally {
-      rmSync(dir, { recursive: true, force: true });
-    }
+  it("CLI compare --manifest succeeds: stderr humanText, stdout RegressionArtifactV1", () => {
+    const manifest = join(root, "test", "fixtures", "debug-ui-compare", "compare-manifest.json");
+    const proc = spawnSync(
+      process.execPath,
+      ["--no-warnings", cliJs, "compare", "--manifest", manifest],
+      { encoding: "utf8", cwd: root },
+    );
+    expect(proc.status, proc.stderr).toBe(0);
+    const out = proc.stdout.trim();
+    expect(out.length).toBeGreaterThan(0);
+    const parsed = JSON.parse(out) as { schemaVersion: number; verification: { schemaVersion: number } };
+    expect(parsed.schemaVersion).toBe(1);
+    expect(parsed.verification.schemaVersion).toBe(4);
+    const v = loadSchemaValidator("regression-artifact-v1");
+    expect(v(JSON.parse(out))).toBe(true);
+    expect(proc.stderr).toContain("regression_artifact:");
   });
 
   it("CLI compare v9 runLevel drift: exit 3 COMPARE_INPUT_RUN_LEVEL_INCONSISTENT", () => {
     const golden = JSON.parse(
       readFileSync(join(root, "test", "golden", "wf_multi_ok.stdout.json"), "utf8"),
     ) as WorkflowResult;
+    const evSrc = join(root, "test/fixtures/debug-ui-compare/run_a/events.ndjson");
     const dir = mkdtempSync(join(tmpdir(), "etl-cmp-rl-"));
     try {
       const drifting = {
@@ -459,13 +453,28 @@ describe("runComparison", () => {
         runLevelCodes: ["A"],
         runLevelReasons: [{ code: "B", message: "mismatch" }],
       };
-      const p1 = join(dir, "bad.json");
-      const p2 = join(dir, "ok.json");
-      writeFileSync(p1, JSON.stringify(drifting));
-      writeFileSync(p2, JSON.stringify(golden));
+      mkdirSync(join(dir, "a"), { recursive: true });
+      mkdirSync(join(dir, "b"), { recursive: true });
+      writeFileSync(join(dir, "a", "wf.json"), JSON.stringify(drifting));
+      writeFileSync(join(dir, "b", "wf.json"), JSON.stringify(golden));
+      copyFileSync(evSrc, join(dir, "a", "e.ndjson"));
+      copyFileSync(evSrc, join(dir, "b", "e.ndjson"));
+      const mpath = join(dir, "cmp.json");
+      writeFileSync(
+        mpath,
+        JSON.stringify({
+          schemaVersion: 1,
+          baseDirectory: ".",
+          certificateProfile: { mode: "uniform", outcomeCertificateRunKind: "contract_sql" },
+          runs: [
+            { displayLabel: "a", workflowResult: "a/wf.json", events: "a/e.ndjson" },
+            { displayLabel: "b", workflowResult: "b/wf.json", events: "b/e.ndjson" },
+          ],
+        }),
+      );
       const proc = spawnSync(
         process.execPath,
-        ["--no-warnings", cliJs, "compare", "--prior", p1, "--current", p2],
+        ["--no-warnings", cliJs, "compare", "--manifest", mpath],
         { encoding: "utf8", cwd: root },
       );
       expect(proc.status).toBe(3);
@@ -479,13 +488,32 @@ describe("runComparison", () => {
   });
 
   it("CLI compare invalid JSON: exit 3, empty stdout, envelope on stderr", () => {
+    const evSrc = join(root, "test/fixtures/debug-ui-compare/run_a/events.ndjson");
     const dir = mkdtempSync(join(tmpdir(), "etl-cmp-bad-"));
     try {
-      const p1 = join(dir, "a.json");
-      const p2 = join(dir, "b.json");
-      writeFileSync(p1, "{");
-      writeFileSync(p2, readFileSync(join(root, "test", "golden", "wf_multi_ok.stdout.json"), "utf8"));
-      const proc = spawnSync(process.execPath, ["--no-warnings", cliJs, "compare", "--prior", p1, "--current", p2], {
+      mkdirSync(join(dir, "a"), { recursive: true });
+      mkdirSync(join(dir, "b"), { recursive: true });
+      writeFileSync(join(dir, "a", "wf.json"), "{");
+      writeFileSync(
+        join(dir, "b", "wf.json"),
+        readFileSync(join(root, "test", "golden", "wf_multi_ok.stdout.json"), "utf8"),
+      );
+      copyFileSync(evSrc, join(dir, "a", "e.ndjson"));
+      copyFileSync(evSrc, join(dir, "b", "e.ndjson"));
+      const mpath = join(dir, "cmp.json");
+      writeFileSync(
+        mpath,
+        JSON.stringify({
+          schemaVersion: 1,
+          baseDirectory: ".",
+          certificateProfile: { mode: "uniform", outcomeCertificateRunKind: "contract_sql" },
+          runs: [
+            { displayLabel: "a", workflowResult: "a/wf.json", events: "a/e.ndjson" },
+            { displayLabel: "b", workflowResult: "b/wf.json", events: "b/e.ndjson" },
+          ],
+        }),
+      );
+      const proc = spawnSync(process.execPath, ["--no-warnings", cliJs, "compare", "--manifest", mpath], {
         encoding: "utf8",
         cwd: root,
       });
@@ -499,6 +527,7 @@ describe("runComparison", () => {
   });
 
   it("CLI compare workflowId mismatch: exit 3, empty stdout", () => {
+    const evSrc = join(root, "test/fixtures/debug-ui-compare/run_a/events.ndjson");
     const dir = mkdtempSync(join(tmpdir(), "etl-cmp-mis-"));
     try {
       const a = JSON.parse(readFileSync(join(root, "test", "golden", "wf_multi_ok.stdout.json"), "utf8")) as WorkflowResult;
@@ -506,11 +535,26 @@ describe("runComparison", () => {
         ...workflowEngineResultFromEmitted(a),
         workflowId: "other",
       });
-      const p1 = join(dir, "a.json");
-      const p2 = join(dir, "b.json");
-      writeFileSync(p1, JSON.stringify(a));
-      writeFileSync(p2, JSON.stringify(b));
-      const proc = spawnSync(process.execPath, ["--no-warnings", cliJs, "compare", "--prior", p1, "--current", p2], {
+      mkdirSync(join(dir, "a"), { recursive: true });
+      mkdirSync(join(dir, "b"), { recursive: true });
+      writeFileSync(join(dir, "a", "wf.json"), JSON.stringify(a));
+      writeFileSync(join(dir, "b", "wf.json"), JSON.stringify(b));
+      copyFileSync(evSrc, join(dir, "a", "e.ndjson"));
+      copyFileSync(evSrc, join(dir, "b", "e.ndjson"));
+      const mpath = join(dir, "cmp.json");
+      writeFileSync(
+        mpath,
+        JSON.stringify({
+          schemaVersion: 1,
+          baseDirectory: ".",
+          certificateProfile: { mode: "uniform", outcomeCertificateRunKind: "contract_sql" },
+          runs: [
+            { displayLabel: "a", workflowResult: "a/wf.json", events: "a/e.ndjson" },
+            { displayLabel: "b", workflowResult: "b/wf.json", events: "b/e.ndjson" },
+          ],
+        }),
+      );
+      const proc = spawnSync(process.execPath, ["--no-warnings", cliJs, "compare", "--manifest", mpath], {
         encoding: "utf8",
         cwd: root,
       });
@@ -524,16 +568,32 @@ describe("runComparison", () => {
   });
 
   it("CLI compare v6 tampered workflowTruthReport: exit 3 COMPARE_WORKFLOW_TRUTH_MISMATCH", () => {
+    const evSrc = join(root, "test/fixtures/debug-ui-compare/run_a/events.ndjson");
     const dir = mkdtempSync(join(tmpdir(), "etl-cmp-tam-"));
     try {
       const a = JSON.parse(readFileSync(join(root, "test", "golden", "wf_multi_ok.stdout.json"), "utf8")) as WorkflowResult;
       const b = structuredClone(a);
       b.workflowTruthReport = { ...b.workflowTruthReport, trustSummary: "tampered" };
-      const p1 = join(dir, "a.json");
-      const p2 = join(dir, "b.json");
-      writeFileSync(p1, JSON.stringify(a));
-      writeFileSync(p2, JSON.stringify(b));
-      const proc = spawnSync(process.execPath, ["--no-warnings", cliJs, "compare", "--prior", p1, "--current", p2], {
+      mkdirSync(join(dir, "a"), { recursive: true });
+      mkdirSync(join(dir, "b"), { recursive: true });
+      writeFileSync(join(dir, "a", "wf.json"), JSON.stringify(a));
+      writeFileSync(join(dir, "b", "wf.json"), JSON.stringify(b));
+      copyFileSync(evSrc, join(dir, "a", "e.ndjson"));
+      copyFileSync(evSrc, join(dir, "b", "e.ndjson"));
+      const mpath = join(dir, "cmp.json");
+      writeFileSync(
+        mpath,
+        JSON.stringify({
+          schemaVersion: 1,
+          baseDirectory: ".",
+          certificateProfile: { mode: "uniform", outcomeCertificateRunKind: "contract_sql" },
+          runs: [
+            { displayLabel: "a", workflowResult: "a/wf.json", events: "a/e.ndjson" },
+            { displayLabel: "b", workflowResult: "b/wf.json", events: "b/e.ndjson" },
+          ],
+        }),
+      );
+      const proc = spawnSync(process.execPath, ["--no-warnings", cliJs, "compare", "--manifest", mpath], {
         encoding: "utf8",
         cwd: root,
       });

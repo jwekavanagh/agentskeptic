@@ -85,14 +85,14 @@ This subsection maps **workflow-level verdict** and **auditable run records** ac
 
 ## Compare runs and independent verification
 
-This subsection maps **multi-run compare**, **reliability/read highlights**, and **independent SQL trust** acceptance criteria to emitted artifacts and the Debug Console. **Structural SSOT** for compare stdout is [`schemas/run-comparison-report.schema.json`](../schemas/run-comparison-report.schema.json) (**`schemaVersion` `4`**). **No** second compare JSON view-model is defined for Debug UI: compare and trust panels are **HTML strings** only on HTTP success paths.
+**Regression artifact and compare I/O (normative, single source):** [`docs/regression-artifact-normative.md`](regression-artifact-normative.md) — **`RegressionArtifactV1`** on CLI stdout / Debug **`POST /api/compare`**, manifest shape, certificate digest, **`narrativeHtml`**, and error codes. The artifact embeds a full **`RunComparisonReport`** as **`verification`**; pairwise verification math and **`run-comparison-report`** v4 **remain** the structural SSOT for that embedded object.
 
 | Acceptance theme | Where it appears in the product |
 |------------------|----------------------------------|
-| **9.1** Multiple workflow results in one compare | `buildRunComparisonReport` over ordered normalized **`WorkflowResult[]`** (length ≥ 2); CLI **`compare`**; **`POST /api/compare`**. Proof: `src/compare.acceptance.test.ts` **`AC_9_1_multi_run_compare_emits_schema_v4`**. |
-| **9.2** Introduced / resolved / recurring highlights | Required **`compareHighlights`** on **`RunComparisonReport` v4**; HTML lists derived only in **`renderComparePanelHtml`**. Proof: **`AC_9_2_compareHighlights_match_fixture`**. |
-| **9.3** Review differences in UI | Compare tab assigns **`comparePanelHtml`** to **`innerHTML`** (no browser-side recompute). Proof: `test/debug-ui/ac-9-3.spec.ts` **`AC_9_3_compare_panel_markup`**. |
-| **9.4** Reliability headline when window vs pairwise diverge | Required **`reliabilityAssessment`** ( **`headlineVerdict`**, **`headlineRationale`** ); pinned golden `test/fixtures/debug-ui-compare/headline-ac-9-4.json`. Proof: **`AC_9_4_headlineVerdict_window_pairwise_divergence`**. |
+| **9.1** Multiple workflow results in one compare | `buildRunComparisonReport` over ordered normalized **`WorkflowResult[]`** (length ≥ 2); CLI **`compare --manifest`**, HTTP **`POST /api/compare`**, artifact wraps report. Proof: `src/compare.acceptance.test.ts` **`AC_9_1_multi_run_compare_emits_schema_v4`**. |
+| **9.2** Introduced / resolved / recurring highlights | Required **`compareHighlights`** on **`RunComparisonReport` v4** (embedded in **`regression.verification`**). Proof: **`AC_9_2_compareHighlights_match_fixture`**. |
+| **9.3** Review differences in UI | Compare tab assigns **`regression.narrativeHtml`** to **`innerHTML`**. Proof: `test/debug-ui/ac-9-3.spec.ts` **`AC_9_3_compare_panel_markup`**. |
+| **9.4** Reliability headline when window vs pairwise diverge | Required **`reliabilityAssessment`** on the embedded report; pinned golden `test/fixtures/debug-ui-compare/headline-ac-9-4.json`. Proof: **`AC_9_4_headlineVerdict_window_pairwise_divergence`**. |
 | **10.1–10.2** Trust from read-only SQL, not model narrative | `verifyWorkflow` + registry + DB for **`wf_missing`**: **`ROW_ABSENT`**, **`FAILED_ROW_MISSING`**, zero rows. Proof: `src/verificationAgainstSystemState.requirements.test.ts` **`AC_10_1_AC_10_2_independent_sql_evidence_not_execution_narrative`**. |
 | **10.3** Reconciliation columns in trust table | **`formatBatchObservedStateSummary`** (**`reconciliationPresentation.ts`**) + **`renderRunTrustPanelHtml`**: body cells use **`td[data-etl-dimension="<id>"]`** for **`declared`**, **`expected`**, **`observed_database`**, **`verification_verdict`** (titles from the same module); substring drift guard `test/fixtures/debug-ui-compare/expected-strings.json`. Proof: `test/debug-ui/ac-10-3.spec.ts`. |
 | **10.4** Execution-path findings vs empty | **`renderRunTrustPanelHtml`**: **`li[data-etl-finding-code]`** vs **`p[data-etl-execution-path-empty]`** (exact copy in **`expected-strings.json`**). Proof: `test/debug-ui/ac-10-4.spec.ts` **`AC_10_4_execution_path`**. |
@@ -101,11 +101,11 @@ This subsection maps **multi-run compare**, **reliability/read highlights**, and
 
 On **`200`** success, JSON bodies **must not** include keys outside the sets below (enforced by `src/debugServer.test.ts`: **`debug_api_POST_compare_200_json_has_exact_keys`**, **`debug_api_GET_run_detail_ok_json_has_exact_keys`**; key order in tests uses `localeCompare` UTF-16 sort).
 
-**`POST /api/compare`** — keys **exactly** (UTF-16 sort order):
+**`POST /api/compare`** — key **exactly** (only key):
 
-`comparePanelHtml`, `humanSummary`, `report`
+`regression`
 
-Types: **`comparePanelHtml`** non-empty string (server HTML from **`renderComparePanelHtml`**), **`humanSummary`** string (**`formatRunComparisonReport`**), **`report`** object (**`RunComparisonReport` v4**, AJV **`run-comparison-report`**).
+The value is **`RegressionArtifactV1`** (AJV **`regression-artifact-v1`**; includes embedded **`verification`**: **`RunComparisonReport` v4**). The compare tab uses **`regression.narrativeHtml`** for HTML. **Normative surface:** [`docs/regression-artifact-normative.md`](regression-artifact-normative.md).
 
 **`GET /api/runs/:runId`** when **`loadStatus === "ok"`** — keys **exactly** (UTF-16 sort order):
 
@@ -117,10 +117,8 @@ Types: **`runTrustPanelHtml`** non-empty string (from **`renderRunTrustPanelHtml
 
 | Hook | Meaning |
 |------|---------|
-| **`section[data-etl-section="compare-result"]`** | Compare panel root |
-| **`p[data-etl-headline]`** | One line: **`headlineVerdict`** then **`headlineRationale`** (see renderer) |
-| **`p[data-etl-window-trend]`**, **`p[data-etl-pairwise-trend]`**, **`p[data-etl-recurrence]`** | Reliability lines |
-| **`ul[data-etl-list="introduced\|resolved\|recurring"]`** | Compare highlight lists (may be empty; no placeholder **`li`**) |
+| **`section[data-etl-section="regression-artifact"]`** | Compare panel root (from **`regression.narrativeHtml`**) |
+| **`h2[data-etl-regression-classification]`**, **`p[data-etl-regression-headline]`**, **`p[data-etl-why-matters]`** | Narrative (classification, headline, why-it-matters) — see **Regression artifact (normative)** |
 | **`section[data-etl-section="run-trust"]`** | Trust panel root |
 | **`p[data-etl-verification-basis]`** | Fixed operator line: independent SQL basis (plan-transition runs: git + machine plan rules basis — see [Plan transition validation](#plan-transition-validation-normative)) |
 | **`table[data-etl-table="verify-evidence"]`**, **`tr[data-etl-seq]`**, **`td[data-etl-dimension="declared|expected|observed_database|verification_verdict"]`** | Step alignment + four reconciliation columns (see [reconciliation-vocabulary.md](reconciliation-vocabulary.md#reconciliation-vocabulary-canonical)) |
@@ -129,9 +127,10 @@ Types: **`runTrustPanelHtml`** non-empty string (from **`renderRunTrustPanelHtml
 
 ### Compare and trust panels — Engineer
 
-- **`debugPanels.ts`**: **`renderComparePanelHtml`**, **`renderRunTrustPanelHtml`** — sole producers of compare/trust HTML for Debug UI (trust panel observed text from **`formatBatchObservedStateSummary`** in **`reconciliationPresentation.ts`**).
-- **`runComparison.ts`**: **`buildRunComparisonReport`**, **`formatRunComparisonReport`** (v4 **`reliabilityAssessment`**, **`compareHighlights`**, per-run **`recommendedAction`** / **`automationSafe`**).
-- **`debug-ui/app.js`**: assigns **`comparePanelHtml`** / **`runTrustPanelHtml`** to **`innerHTML`** only.
+- **`regressionArtifact.ts`**: builds **`RegressionArtifactV1`** (including **`narrativeHtml`**) for CLI (manifest) and Debug corpus; **compare** human text is **`humanText`** only.
+- **`debugPanels.ts`**: **`renderRunTrustPanelHtml`** (trust only); compare panel HTML is **`regression.narrativeHtml`**, not a second renderer in **`debugPanels.ts`**.
+- **`runComparison.ts`**: **`buildRunComparisonReport`** (v4 **`reliabilityAssessment`**, **`compareHighlights`**, per-run **`recommendedAction`** / **`automationSafe`**) — embedded as **`regression.verification`**.
+- **`debug-ui/app.js`**: assigns **`regression.narrativeHtml`** / **`runTrustPanelHtml`** to **`innerHTML`** only.
 
 **Drift guard:** `test/fixtures/debug-ui-compare/expected-strings.json` is the only source for Playwright substring assertions (and matching Vitest checks).
 
@@ -289,7 +288,7 @@ Exit codes match batch verify (**0** / **1** / **2** / **3**). Operational codes
 
 | Module | Role |
 |--------|------|
-| `schemaLoad.ts` | AJV 2020-12 validators for event line, execution trace view, registry, workflow engine/result, **stdout v15** + **frozen v9** workflow result, truth report, compare-input (engine v8 / v9 / stdout v15 **`oneOf`**), **`cli-error-envelope`**, **`run-comparison-report`**, **`agent-run-record-v1`**, **`agent-run-record-v2`**, **`workflow-result-signature`**, **`plan-validation-core`** |
+| `schemaLoad.ts` | AJV 2020-12 validators for event line, execution trace view, registry, workflow engine/result, **stdout v15** + **frozen v9** workflow result, truth report, compare-input (engine v8 / v9 / stdout v15 **`oneOf`**), **`cli-error-envelope`**, **`run-comparison-report`**, **`regression-artifact-v1`**, **`compare-run-manifest-v1`**, **`agent-run-record-v1`**, **`agent-run-record-v2`**, **`workflow-result-signature`**, **`plan-validation-core`** |
 | `failureCatalog.ts` | Stable run-level literals, `formatOperationalMessage`, CLI error envelope helpers |
 | `cliOperationalCodes.ts` | Compare/corpus operational codes such as `COMPARE_INPUT_RUN_LEVEL_INCONSISTENT`, `WORKFLOW_RESULT_RUN_LEVEL_CODES_MISMATCH` |
 | `runLevelDriftMessages.ts` | Fixed `message` strings for v9 `runLevelCodes` / `runLevelReasons` drift (SSOT for CLI stderr and corpus errors) |
@@ -318,7 +317,9 @@ Exit codes match batch verify (**0** / **1** / **2** / **3**). Operational codes
 | `workflowTruthReport.ts` | `buildWorkflowTruthReport`, `buildWorkflowVerdictSurface`, `finalizeEmittedWorkflowResult`, `formatWorkflowTruthReportStruct`, `formatWorkflowTruthReport`, `HUMAN_REPORT_RESULT_PHRASE`, `HUMAN_REPORT_PLAN_TRANSITION_PHRASE`, `STEP_STATUS_TRUTH_LABELS`, `TRUST_LINE_EVENT_SEQUENCE_IRREGULAR_SUFFIX`; human report text is rendering of structured truth with per-step **`declared:`** / **`expected:`** / **`observed_database:`** / **`verification_verdict:`** (prefixes from **`reconciliationPresentation.ts`**) plus **`detail:`** lines; plan-transition phrasing when **`workflowId === wf_plan_transition`** |
 | `executionPathFindings.ts` | `buildExecutionPathFindings`, `buildExecutionPathSummary`, `ACTION_INPUT_REASON_CODES`, `RECONCILER_STEP_REASON_CODES` — execution-path layer orthogonal to SQL reconciliation (internal; not re-exported from package entry) |
 | `workflowResultNormalize.ts` | `normalizeToEmittedWorkflowResult`, `workflowEngineResultFromEmitted` (compare ingress: engine **v8** / frozen **v9** / stdout **v15**; strip legacy **`runLevelCodes`**; inject empty **`verificationRunContext`** where needed) |
-| `runComparison.ts` | `buildRunComparisonReport`, `formatRunComparisonReport`, `logicalStepKeyFromStep`, `recurrenceSignature`; cross-run comparison |
+| `runComparison.ts` | `buildRunComparisonReport`, `logicalStepKeyFromStep`, `recurrenceSignature`; cross-run comparison (embedded under **`RegressionArtifactV1.verification`**) |
+| `regressionArtifact.ts` | `buildRegressionArtifactFromCompareManifest`, `buildRegressionArtifactFromDebugCorpus`, `stringifyRegressionArtifact` — **RegressionArtifactV1** for CLI and Debug; **`humanText`** / **`narrativeHtml`** |
+| `compareRunManifest.ts` | `loadCompareRunManifest` — compare-run manifest v1 + **`certificateProfile`** invariants |
 | `verificationPolicy.ts` | `VerificationPolicy` normalization/validation; `executeVerificationWithPolicySync` / `executeVerificationWithPolicyAsync` (strong vs eventual polling; `sql_row` / `sql_effects` / `sql_row_absent` / `sql_relational`); `PolicyReconcileContext.reconcileRowAbsent`; `createSqlitePolicyContext` |
 | `executionTrace.ts` | `assertValidRunEventParentGraph`, `buildExecutionTraceView`, `formatExecutionTraceText`; `traceStepKind` derivation and `backwardPaths` |
 | `pipeline.ts` | Orchestration: `runLogicalStepsVerification` (internal), **`verifyRunStateFromEvents`**, async `verifyWorkflow`, sync `verifyToolObservedStep`; default `truthReport` / `logStep` |
@@ -329,7 +330,7 @@ Exit codes match batch verify (**0** / **1** / **2** / **3**). Operational codes
 | `debugRunFilters.ts` | Server-side **`GET /api/runs`** query parsing, pagination cursor, **`includeLoadErrors`** default **true**, **`hasPathFindings`** filter |
 | `debugRunIndex.ts` | **`RunListItem`** facets for filters (**`pathFindingCodes`** from truth report); customer sentinel **`__unspecified__`** when **`agent-run.json`** omits **`customerId`** (ok rows) or on load errors |
 | `debugServer.ts` | Local HTTP on **127.0.0.1** only: JSON APIs + static **`debug-ui/`** (copied to **`dist/debug-ui/`** on build) |
-| `debugPanels.ts` | **`renderComparePanelHtml`**, **`renderRunTrustPanelHtml`**, **`formatSqlEvidenceDetailForTrustPanel`** — server-only HTML for compare/trust Debug panels; plan-transition basis line + evidence serialization when **`workflowId === wf_plan_transition`** |
+| `debugPanels.ts` | **`renderRunTrustPanelHtml`**, **`formatSqlEvidenceDetailForTrustPanel`** — server-only HTML for **trust** Debug panel; compare HTML is **`regression.narrativeHtml`** from **`regressionArtifact.ts`**; plan-transition basis line + evidence serialization when **`workflowId === wf_plan_transition`** |
 | `agentRunRecord.ts` | **`buildAgentRunRecordForBundle`**, **`sha256Hex`**; types aligned with [`schemas/agent-run-record-v1.schema.json`](../schemas/agent-run-record-v1.schema.json) / [`schemas/agent-run-record-v2.schema.json`](../schemas/agent-run-record-v2.schema.json) |
 
 ### Integrator (stdout JSON)
@@ -1370,7 +1371,7 @@ If **`agentRunRecord.capturedAt`** parses as a valid date, use that instant. **E
 
 **`GET /api/runs/:runId/focus`** — **`200`** with **`{ targets: [{ kind, value, rationale }] }`** from **`buildFocusTargets`** for ok runs; **`409`** **`FOCUS_NOT_AVAILABLE`** for error rows. The browser UI must not reimplement this mapping. The Debug Console renders those targets as **buttons** that scroll to the matching execution-trace step (see **Focus navigation** under the default example corpus below).
 
-**`POST /api/compare`** — body **`{ runIds: string[] }`** (length ≥ 2). **400** if any run is not loaded ok, or **`COMPARE_WORKFLOW_ID_MISMATCH`**. **`200`** success body keys are **exactly** **`comparePanelHtml`**, **`humanSummary`**, **`report`** (see [Debug API (normative success shapes)](#debug-api-normative-success-shapes)); compare tab uses **`comparePanelHtml`** only for markup.
+**`POST /api/compare`** — body **`{ runIds: string[] }`** (length ≥ 2). **400** if any run is not loaded ok, or **`COMPARE_WORKFLOW_ID_MISMATCH`**. **`200`** success body key is **only** **`regression`** (full **`RegressionArtifactV1`**; compare tab uses **`regression.narrativeHtml`**) — see [Debug API (normative success shapes)](#debug-api-normative-success-shapes) and [`regression-artifact-normative.md`](regression-artifact-normative.md).
 
 **`GET /api/corpus-patterns`** — same filter query subset as **`/api/runs`** (no pagination). If more than **10_000** load-ok rows match → **413** JSON **`code: CORPUS_TOO_LARGE`**. If **`workflowId`** is set and more than **50** ok runs match that id → **413** **`PATTERNS_COMPARE_TOO_MANY`**. Otherwise **`200`** body **`schemaVersion: 1`** with **`actionableCategoryHistogram`**, **`topRunLevelCodes`**, **`topStepReasonCodes`**, **`recurrenceCandidates`** (signature **`hitRuns`** across the filtered corpus), and optional **`pairwiseRecurrence`** when **`workflowId`** filter is set and count ≤ 50.
 
@@ -1400,7 +1401,9 @@ For ok runs with non-empty focus targets, the UI shows **clickable buttons** bui
 
 ## Cross-run comparison (normative)
 
-This section defines **cross-run comparison**: comparing saved workflow artifacts locally (no hosted backend). **Inputs** are validated with **`schemas/workflow-result-compare-input.schema.json`**: each file is exactly one of **`WorkflowEngineResult`** (**`schemaVersion` 8**, or legacy **5–7** upgraded with empty **`verificationRunContext`** where needed), **frozen v9** **`WorkflowResult`** ([`schemas/workflow-result-v9.schema.json`](../schemas/workflow-result-v9.schema.json); requires **`runLevelCodes`** + **`runLevelReasons`** with per-index alignment), or emitted stdout **`WorkflowResult`** (**`schemaVersion` 15**, or legacy **6–8** / **12–14** upgraded). The **`oneOf`** order in the schema follows engine → frozen v9 → stdout (see schema **`$comment`**). Before AJV, v9-shaped inputs must pass the same **`runLevelCodes` / `runLevelReasons`** index rule; failure → exit **3**, **`COMPARE_INPUT_RUN_LEVEL_INCONSISTENT`**, **`message`** **`Compare input workflow result: runLevelCodes and runLevelReasons are inconsistent.`** The CLI normalizes each input to the current emitted shape (`finalizeEmittedWorkflowResult`; legacy inputs upgraded as in [Failure analysis](#failure-analysis-normative) and [Actionable failure classification](#actionable-failure-classification-normative)). For **`workflowTruthReport.schemaVersion` ≥ **3**, recomputed truth must match the file (**`util.isDeepStrictEqual`**) — mismatch → exit **3**, **`COMPARE_WORKFLOW_TRUTH_MISMATCH`**). The machine output is **`RunComparisonReport`** (`schemas/run-comparison-report.schema.json`, **`schemaVersion` `3`**), including prior aggregates (**`perRunActionableFailures`**, **`categoryHistogram`**, **`actionableCategoryRecurrence`**) plus required **`reliabilityAssessment`** and **`compareHighlights`**. **Breaking:** saved compare **stdout** files with **`schemaVersion` `2`** are not valid v3 output; re-run compare or upgrade tooling. Behavioral semantics below are authoritative—the schema is structural only (see [`$comment`](../schemas/run-comparison-report.schema.json)).
+This section defines **pairwise and window verification math** for embedded **`RunComparisonReport`** and related algorithms. **Product I/O (CLI stdout, Debug HTTP) is a `RegressionArtifactV1`**; see [`regression-artifact-normative.md`](regression-artifact-normative.md). The report below is the **`verification`** sub-object inside that artifact.
+
+**Inputs to compare** (after manifest path resolution) are validated with **`schemas/workflow-result-compare-input.schema.json`**: each workflow-result file is exactly one of **`WorkflowEngineResult`** (**`schemaVersion` 8**, or legacy **5–7** upgraded with empty **`verificationRunContext`** where needed), **frozen v9** **`WorkflowResult`** ([`schemas/workflow-result-v9.schema.json`](../schemas/workflow-result-v9.schema.json); requires **`runLevelCodes`** + **`runLevelReasons`** with per-index alignment), or emitted stdout **`WorkflowResult`** (**`schemaVersion` 15**, or legacy **6–8** / **12–14** upgraded). The **`oneOf`** order in the schema follows engine → frozen v9 → stdout (see schema **`$comment`**). Before AJV, v9-shaped inputs must pass the same **`runLevelCodes` / `runLevelReasons`** index rule; failure → exit **3**, **`COMPARE_INPUT_RUN_LEVEL_INCONSISTENT`**, **`message`** **`Compare input workflow result: runLevelCodes and runLevelReasons are inconsistent.`** The engine normalizes each input to the current emitted shape (`finalizeEmittedWorkflowResult`; legacy inputs upgraded as in [Failure analysis](#failure-analysis-normative) and [Actionable failure classification](#actionable-failure-classification-normative)). For **`workflowTruthReport.schemaVersion` ≥ **3**, recomputed truth must match the file (**`util.isDeepStrictEqual`**) — mismatch → exit **3**, **`COMPARE_WORKFLOW_TRUTH_MISMATCH`**. The embedded machine comparison object is **`RunComparisonReport`** (`schemas/run-comparison-report.schema.json`, **`schemaVersion` `4`**), including **prior aggregates**, **`reliabilityAssessment`**, and **`compareHighlights`**. Behavioral semantics below are authoritative for that embedded report—the schema is structural only (see [`$comment`](../schemas/run-comparison-report.schema.json)).
 
 ### `logicalStepKey`
 
@@ -1444,16 +1447,16 @@ For each run index `i`, build the **set** of `recurrenceSignature` values from *
 
 ### Success and failure I/O (compare subcommand)
 
-**Success:** Write **one** human summary line block to **stderr** (`formatRunComparisonReport`), then **one** JSON object to **stdout** (`RunComparisonReport`). Exit **0**.
+**Success:** Write **`humanText`** to **stderr** (one block; trailing newline normalized by the implementation), then **one** JSON object to **stdout** (**`RegressionArtifactV1`**, schema **`regression-artifact-v1`**). The embedded report **`verification`** is the **`RunComparisonReport`**. Exit **0**.
 
-**Operational failure:** **No** comparison JSON on **stdout** (stdout empty). **Stderr** is **exactly one** JSON line: the same **`execution_truth_layer_error`** envelope as [CLI operational errors](#cli-operational-errors), with a **`COMPARE_*`** code. Exit **3**.
+**Operational failure:** **No** JSON on **stdout** (stdout empty). **Stderr** is **exactly one** JSON line: the same **`execution_truth_layer_error`** envelope as [CLI operational errors](#cli-operational-errors), with a **`COMPARE_*`** code. Exit **3**.
 
 ### Cross-run comparison: implementation bindings (normative)
 
-- **CLI:** `agentskeptic compare --prior <path> [--prior <path> …] --current <path>`. Each `--prior` is a saved **`WorkflowResult`** JSON file; order is oldest → newest; **`--current`** is the last run. At least one `--prior` is required.
-- **`displayLabel`:** Integrator-supplied opaque string per run. The **reference CLI** sets **`displayLabel`** to the **basename** of each file path (never a full path in the report).
-- **Failure envelope:** Same shape and rules as § CLI operational errors; compare-specific codes live in `failureCatalog.ts` (e.g. `COMPARE_USAGE`, `COMPARE_WORKFLOW_ID_MISMATCH`, `COMPARE_WORKFLOW_TRUTH_MISMATCH`, `COMPARE_INPUT_READ_FAILED`, `COMPARE_INPUT_JSON_SYNTAX`, `COMPARE_INPUT_SCHEMA_INVALID`, `COMPARE_RUN_COMPARISON_REPORT_INVALID`).
-- **Schema:** `schemas/run-comparison-report.schema.json` validates stdout on success; root **`$comment`** points to this document’s **Cross-run comparison (normative)** anchor.
+- **CLI:** `agentskeptic compare --manifest <compare-run-manifest.json>`. The manifest lists ordered runs, **`baseDirectory`**, and **`certificateProfile`**; each run has **`workflowResult`** and **`events`** paths. **Normative I/O and manifest semantics:** [`regression-artifact-normative.md`](regression-artifact-normative.md).
+- **`displayLabel`:** Opaque per-run label from the manifest.
+- **Failure envelope:** Same shape and rules as § CLI operational errors; compare-specific codes include manifest/events/regression build failures (see `cliOperationalCodes` / `failureCatalog`).
+- **Schema:** `schemas/regression-artifact-v1.schema.json` validates stdout on success; the embedded `verification` object validates as **`run-comparison-report`**.
 
 ## Validation matrix (what CI proves vs operations)
 
@@ -1503,7 +1506,7 @@ Substrings for contract tests: **compare-only**, **batch verify**, **enforce bat
 
 **Purpose:** Run a **versioned multi-scenario sweep** over time (scheduled CI and/or PR gates) and optionally **fail closed** when a saved **`AssuranceRunReport`** is **missing**, **invalid**, or **stale** relative to wall clock.
 
-**Manifest:** `schemas/assurance-manifest-v1.schema.json`. Each scenario has **`kind` `spawn_argv`**: **`argv`** is appended after `node dist/cli.js` when the tool spawns itself (same integration surface as external CI). **Path arguments** immediately following these flags are resolved **relative to the manifest file’s directory** unless already absolute: **`--events`**, **`--registry`**, **`--db`**, **`--expect-lock`**, **`--prior`**, **`--current`**, **`--input`**, **`--export-registry`**, **`--emit-events`**, **`--output-lock`**.
+**Manifest:** `schemas/assurance-manifest-v1.schema.json`. Each scenario has **`kind` `spawn_argv`**: **`argv`** is appended after `node dist/cli.js` when the tool spawns itself (same integration surface as external CI). **Path arguments** immediately following these flags are resolved **relative to the manifest file’s directory** unless already absolute: **`--events`**, **`--registry`**, **`--db`**, **`--expect-lock`**, **`--manifest`**, **`--prior`**, **`--current`**, **`--input`**, **`--export-registry`**, **`--emit-events`**, **`--output-lock`**.
 
 **Repository root:** The runner locates the package root containing **`package.json`** with **`name`**: **`agentskeptic`** by walking parents from the manifest directory, then (if needed) from the **current working directory**. **`dist/cli.js`** must exist (run **`npm run build`** first).
 

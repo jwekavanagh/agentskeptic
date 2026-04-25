@@ -8,6 +8,7 @@ export const ASSURANCE_PATH_FLAGS = new Set([
   "--expect-lock",
   "--prior",
   "--current",
+  "--manifest",
   "--input",
   "--export-registry",
   "--emit-events",

@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "baseDirectory": ".",
+  "certificateProfile": {
+    "mode": "uniform",
+    "outcomeCertificateRunKind": "contract_sql"
+  },
+  "runs": [
+    {
+      "displayLabel": "run_a",
+      "workflowResult": "run_a/workflow-result.json",
+      "events": "run_a/events.ndjson"
+    },
+    {
+      "displayLabel": "run_b",
+      "workflowResult": "run_b/workflow-result.json",
+      "events": "run_b/events.ndjson"
+    }
+  ]
+}

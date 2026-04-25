@@ -46,7 +46,7 @@
       "properties": {
         "ingestIndex": { "type": "integer", "minimum": 0 },
         "runEventId": { "type": "string", "minLength": 1 },
-        "wireSchemaVersion": { "type": "integer", "enum": [1, 2] },
+        "wireSchemaVersion": { "type": "integer", "enum": [1, 2, 3] },
         "wireType": { "type": "string", "minLength": 1 },
         "parentRunEventId": { "type": ["string", "null"] },
         "traceStepKind": {

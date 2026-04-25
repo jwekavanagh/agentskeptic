@@ -3,7 +3,7 @@
  */
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { readFileSync, copyFileSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { join, dirname } from "path";
 import { tmpdir } from "os";
 import { fileURLToPath } from "node:url";
@@ -181,6 +181,27 @@ describe("assurance CLI", () => {
   it("assurance run exits 1 when compare workflowId mismatch", () => {
     const dir = mkdtempSync(join(tmpdir(), "etl-as-cmp-"));
     try {
+      const ev = join(root, "test", "fixtures", "debug-ui-compare", "run_a", "events.ndjson");
+      mkdirSync(join(dir, "p"), { recursive: true });
+      mkdirSync(join(dir, "c"), { recursive: true });
+      copyFileSync(mismatchPrior, join(dir, "p", "wf.json"));
+      copyFileSync(mismatchCurrent, join(dir, "c", "wf.json"));
+      copyFileSync(ev, join(dir, "p", "e.ndjson"));
+      copyFileSync(ev, join(dir, "c", "e.ndjson"));
+      const comparePath = join(dir, "compare.json");
+      writeFileSync(
+        comparePath,
+        JSON.stringify({
+          schemaVersion: 1,
+          baseDirectory: ".",
+          certificateProfile: { mode: "uniform", outcomeCertificateRunKind: "contract_sql" },
+          runs: [
+            { displayLabel: "p", workflowResult: "p/wf.json", events: "p/e.ndjson" },
+            { displayLabel: "c", workflowResult: "c/wf.json", events: "c/e.ndjson" },
+          ],
+        }),
+        "utf8",
+      );
       const mpath = join(dir, "manifest.json");
       writeFileSync(
         mpath,
@@ -190,7 +211,7 @@ describe("assurance CLI", () => {
             {
               id: "mismatch_compare",
               kind: "spawn_argv",
-              argv: ["compare", "--prior", mismatchPrior, "--current", mismatchCurrent],
+              argv: ["compare", "--manifest", comparePath],
             },
           ],
         }),

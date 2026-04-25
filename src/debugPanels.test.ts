@@ -7,11 +7,10 @@ import {
   PLAN_TRANSITION_VERIFICATION_BASIS_LINE,
   VERIFICATION_BASIS_LINE,
   formatSqlEvidenceDetailForTrustPanel,
-  renderComparePanelHtml,
   renderRunTrustPanelHtml,
 } from "./debugPanels.js";
+import { buildRegressionArtifactFromDebugCorpus } from "./regressionArtifact.js";
 import { PLAN_TRANSITION_WORKFLOW_ID } from "./planTransitionConstants.js";
-import { buildRunComparisonReport } from "./runComparison.js";
 import type { StepOutcome, WorkflowEngineResult, WorkflowResult } from "./types.js";
 import { createEmptyVerificationRunContext } from "./verificationRunContext.js";
 import { finalizeEmittedWorkflowResult } from "./workflowTruthReport.js";
@@ -151,19 +150,20 @@ describe("debugPanels", () => {
     expect(formatSqlEvidenceDetailForTrustPanel(step)).toBe("sql_relational check=x kind=related_exists");
   });
 
-  it("renderComparePanelHtml includes required data-etl hooks", () => {
-    const r0 = wf([sqlRowStep(0, "a", true)]);
-    const r1 = wf([sqlRowStep(0, "a", true)]);
-    const report = buildRunComparisonReport([r0, r1], ["a", "b"]);
-    const html = renderComparePanelHtml(report);
-    expect(html).toContain('data-etl-section="compare-result"');
-    expect(html).toContain("data-etl-headline");
-    expect(html).toContain("data-etl-window-trend");
-    expect(html).toContain("data-etl-pairwise-trend");
-    expect(html).toContain("data-etl-recurrence");
-    expect(html).toContain('data-etl-list="introduced"');
-    expect(html).toContain('data-etl-list="resolved"');
-    expect(html).toContain('data-etl-list="recurring"');
+  it("regression narrativeHtml includes regression-artifact data-etl hooks", () => {
+    const base = join(root, "test", "fixtures", "debug-ui-compare");
+    const r0 = JSON.parse(readFileSync(join(base, "run_a", "workflow-result.json"), "utf8")) as WorkflowResult;
+    const r1 = JSON.parse(readFileSync(join(base, "run_b", "workflow-result.json"), "utf8")) as WorkflowResult;
+    const art = buildRegressionArtifactFromDebugCorpus({
+      results: [r0, r1],
+      runIds: ["run_a", "run_b"],
+      eventPaths: [join(base, "run_a", "events.ndjson"), join(base, "run_b", "events.ndjson")],
+    });
+    const html = art.narrativeHtml;
+    expect(html).toContain('data-etl-section="regression-artifact"');
+    expect(html).toContain("data-etl-regression-classification");
+    expect(html).toContain("data-etl-regression-headline");
+    expect(html).toContain("data-etl-why-matters");
   });
 
   it("renderRunTrustPanelHtml includes verification basis and table", () => {

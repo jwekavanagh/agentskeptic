@@ -11,6 +11,7 @@ import {
 import { buildAgentRunRecordForBundle } from "./agentRunRecord.js";
 import { resetLoadEventsTestThrowInvocationCounter } from "./loadEvents.js";
 import { buildWorkflowVerdictSurface } from "./workflowTruthReport.js";
+import { loadSchemaValidator } from "./schemaLoad.js";
 import type { WorkflowResult } from "./types.js";
 import { monorepoRootForVitest } from "./vitestMonorepoRoot.js";
 
@@ -23,7 +24,7 @@ function sortedKeys(obj: object): string[] {
   return Object.keys(obj).sort((a, b) => a.localeCompare(b));
 }
 
-const DEBUG_API_COMPARE_200_KEYS = ["comparePanelHtml", "humanSummary", "report"];
+const DEBUG_API_COMPARE_200_KEYS = ["regression"];
 const DEBUG_API_RUN_DETAIL_OK_KEYS = [
   "agentRunRecord",
   "capturedAtEffectiveMs",
@@ -236,14 +237,12 @@ describe("debugServer HTTP", () => {
         body: JSON.stringify({ runIds: ["run_a", "run_b"] }),
       });
       expect(res.ok).toBe(true);
-      const data = (await res.json()) as {
-        comparePanelHtml: string;
-        humanSummary: string;
-        report: { schemaVersion: number };
-      };
+      const data = (await res.json()) as { regression: { schemaVersion: number; narrativeHtml: string } };
       expect(sortedKeys(data)).toEqual(DEBUG_API_COMPARE_200_KEYS);
-      expect(data.comparePanelHtml.length).toBeGreaterThan(0);
-      expect(data.report.schemaVersion).toBe(4);
+      const v = loadSchemaValidator("regression-artifact-v1");
+      expect(v(data.regression as object)).toBe(true);
+      expect(data.regression.schemaVersion).toBe(1);
+      expect(data.regression.narrativeHtml.length).toBeGreaterThan(0);
     } finally {
       await srv.close();
     }

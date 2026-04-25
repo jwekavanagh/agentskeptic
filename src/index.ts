@@ -129,7 +129,6 @@ export {
   buildRunComparisonReport,
   COMPARE_HIGHLIGHTS_MAX,
   actionableTrend,
-  formatRunComparisonReport,
   logicalStepKeyFromStep,
   perRunActionableFromWorkflowResult,
   recurrenceSignature,
@@ -139,9 +138,16 @@ export {
   PLAN_TRANSITION_VERIFICATION_BASIS_LINE,
   VERIFICATION_BASIS_LINE,
   formatSqlEvidenceDetailForTrustPanel,
-  renderComparePanelHtml,
   renderRunTrustPanelHtml,
 } from "./debugPanels.js";
+export type { RegressionArtifactV1 } from "./regressionArtifact.js";
+export {
+  buildRegressionArtifactFromCompareManifest,
+  buildRegressionArtifactFromDebugCorpus,
+  DEBUG_MANIFEST_SHA256_PLACEHOLDER,
+  stringifyRegressionArtifact,
+} from "./regressionArtifact.js";
+export { certificateCanonicalDigestHex } from "./certificateDigest.js";
 export {
   buildWorkflowTruthReport,
   buildWorkflowVerdictSurface,

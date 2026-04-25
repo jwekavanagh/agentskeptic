@@ -1,0 +1,212 @@
+{
+  "$id": "https://agentskeptic.com/schemas/regression-artifact-v1.schema.json",
+  "title": "RegressionArtifactV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "artifactSource",
+    "manifestSha256",
+    "workflowId",
+    "certificateProfile",
+    "verification",
+    "outcomeCertificates",
+    "tracePairwise",
+    "narrative",
+    "humanText",
+    "narrativeHtml"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "artifactSource": { "type": "string", "enum": ["cli_manifest", "debug_corpus"] },
+    "manifestSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "workflowId": { "type": "string", "minLength": 1 },
+    "certificateProfile": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode", "outcomeCertificateRunKind"],
+          "properties": {
+            "mode": { "const": "uniform" },
+            "outcomeCertificateRunKind": {
+              "type": "string",
+              "enum": ["contract_sql", "contract_sql_langgraph_checkpoint_trust"]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode", "entries"],
+          "properties": {
+            "mode": { "const": "perRun" },
+            "entries": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["runIndex", "outcomeCertificateRunKind"],
+                "properties": {
+                  "runIndex": { "type": "integer", "minimum": 0 },
+                  "outcomeCertificateRunKind": {
+                    "type": "string",
+                    "enum": ["contract_sql", "contract_sql_langgraph_checkpoint_trust"]
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "verification": { "$ref": "https://agentskeptic.com/schemas/run-comparison-report.schema.json" },
+    "outcomeCertificates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "runIndex",
+          "displayLabel",
+          "outcomeCertificateRunKind",
+          "certificateCanonicalDigest",
+          "certificate"
+        ],
+        "properties": {
+          "runIndex": { "type": "integer", "minimum": 0 },
+          "displayLabel": { "type": "string", "minLength": 1 },
+          "outcomeCertificateRunKind": {
+            "type": "string",
+            "enum": ["contract_sql", "contract_sql_langgraph_checkpoint_trust"]
+          },
+          "certificateCanonicalDigest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+          "certificate": { "$ref": "https://agentskeptic.com/schemas/outcome-certificate-v1.schema.json" }
+        }
+      }
+    },
+    "tracePairwise": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "priorRunIndex",
+        "currentRunIndex",
+        "viewBuild",
+        "bySeq",
+        "seqTimelineOrderDiverged",
+        "nonToolEventCounts"
+      ],
+      "properties": {
+        "priorRunIndex": { "type": "integer", "minimum": 0 },
+        "currentRunIndex": { "type": "integer", "minimum": 0 },
+        "viewBuild": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["prior", "current"],
+          "properties": {
+            "prior": { "$ref": "https://agentskeptic.com/schemas/execution-trace-view.schema.json" },
+            "current": { "$ref": "https://agentskeptic.com/schemas/execution-trace-view.schema.json" }
+          }
+        },
+        "bySeq": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["seq", "class", "prior", "current"],
+            "properties": {
+              "seq": { "type": "integer", "minimum": 0 },
+              "class": { "type": "string", "enum": ["only_in_prior", "only_in_current", "in_both"] },
+              "prior": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/evaluatedNodeSummary" }] },
+              "current": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/evaluatedNodeSummary" }] }
+            }
+          }
+        },
+        "seqTimelineOrderDiverged": { "type": "boolean" },
+        "nonToolEventCounts": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["prior", "current"],
+          "properties": {
+            "prior": { "type": "object", "additionalProperties": { "type": "integer", "minimum": 0 } },
+            "current": { "type": "object", "additionalProperties": { "type": "integer", "minimum": 0 } }
+          }
+        }
+      }
+    },
+    "narrative": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "classification",
+        "whyItMatters",
+        "headline",
+        "structural",
+        "traceSummary"
+      ],
+      "properties": {
+        "classification": {
+          "type": "string",
+          "enum": ["improving", "worsening", "unchanged", "mixed"]
+        },
+        "whyItMatters": { "type": "string" },
+        "headline": { "type": "string" },
+        "structural": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "introducedLogicalStepKeysCount",
+            "resolvedLogicalStepKeysCount",
+            "recurringSignatureCount"
+          ],
+          "properties": {
+            "introducedLogicalStepKeysCount": { "type": "integer", "minimum": 0 },
+            "resolvedLogicalStepKeysCount": { "type": "integer", "minimum": 0 },
+            "recurringSignatureCount": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "traceSummary": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "seqTimelineOrderDiverged",
+            "onlyInPriorSeqCount",
+            "onlyInCurrentSeqCount",
+            "inBothCount",
+            "nonToolCountsDiverged"
+          ],
+          "properties": {
+            "seqTimelineOrderDiverged": { "type": "boolean" },
+            "onlyInPriorSeqCount": { "type": "integer", "minimum": 0 },
+            "onlyInCurrentSeqCount": { "type": "integer", "minimum": 0 },
+            "inBothCount": { "type": "integer", "minimum": 0 },
+            "nonToolCountsDiverged": { "type": "boolean" }
+          }
+        }
+      }
+    },
+    "humanText": { "type": "string" },
+    "narrativeHtml": { "type": "string", "minLength": 1 }
+  },
+  "$defs": {
+    "evaluatedNodeSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ingestIndex",
+        "traceStepKind",
+        "engineStepStatus",
+        "truthOutcomeLabel",
+        "toolId"
+      ],
+      "properties": {
+        "ingestIndex": { "type": "integer", "minimum": 0 },
+        "traceStepKind": { "type": "string" },
+        "engineStepStatus": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+        "truthOutcomeLabel": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+        "toolId": { "oneOf": [{ "type": "string" }, { "type": "null" }] }
+      }
+    }
+  }
+}

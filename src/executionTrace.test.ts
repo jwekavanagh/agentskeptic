@@ -135,6 +135,42 @@ describe("buildExecutionTraceView", () => {
     expect(view.backwardPaths[0]!.ancestorRunEventIds).toEqual(["m1"]);
   });
 
+  it("v3 tool_observed trace passes execution-trace-view JSON Schema", () => {
+    const runEvents: RunEvent[] = [
+      {
+        schemaVersion: 3,
+        workflowId: "w",
+        runEventId: "t1",
+        type: "tool_observed",
+        seq: 0,
+        toolId: "t",
+        params: {},
+        langgraphCheckpoint: {
+          threadId: "th1",
+          checkpointNs: "ns",
+          checkpointId: "ck1",
+        },
+      },
+      {
+        schemaVersion: 2,
+        workflowId: "w",
+        runEventId: "c1",
+        type: "control",
+        controlKind: "run_completed",
+      },
+    ];
+    const view = buildExecutionTraceView({
+      workflowId: "w",
+      runEvents,
+      malformedEventLineCount: 0,
+    });
+    const v = loadSchemaValidator("execution-trace-view");
+    expect(v(view)).toBe(true);
+    const toolNode = view.nodes.find((n) => n.wireType === "tool_observed");
+    expect(toolNode).toBeDefined();
+    expect(toolNode!.wireSchemaVersion).toBe(3);
+  });
+
   it("adds verification_step paths when WorkflowResult provided", () => {
     const runEvents: RunEvent[] = [
       {

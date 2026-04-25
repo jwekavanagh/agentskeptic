@@ -1,9 +1,12 @@
+import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { buildRunComparisonReport } from "./runComparison.js";
+import { buildRegressionArtifactFromDebugCorpus } from "./regressionArtifact.js";
 import { loadSchemaValidator } from "./schemaLoad.js";
+import { stringifyWithSortedKeys } from "./sortedJsonStringify.js";
 import type { StepOutcome, WorkflowEngineResult, WorkflowResult } from "./types.js";
 import { createEmptyVerificationRunContext } from "./verificationRunContext.js";
 import { finalizeEmittedWorkflowResult } from "./workflowTruthReport.js";
@@ -58,6 +61,8 @@ function wf(steps: StepOutcome[], id = "wf_compare_ac"): WorkflowResult {
 
 describe("Run comparison acceptance tests", () => {
   const v = loadSchemaValidator("run-comparison-report");
+  const vArtifact = loadSchemaValidator("regression-artifact-v1");
+  const vCert = loadSchemaValidator("outcome-certificate-v1");
 
   it("AC_9_1_multi_run_compare_emits_schema_v4", () => {
     const r0 = wf([sqlRowStep(0, "t", "a", true)]);
@@ -76,6 +81,27 @@ describe("Run comparison acceptance tests", () => {
     expect(v(report)).toBe(true);
     expect(report.compareHighlights.introducedLogicalStepKeys).toContain("sql_row|contacts|id=a");
     expect(report.compareHighlights.resolvedLogicalStepKeys.length).toBeGreaterThanOrEqual(0);
+  });
+
+  it("AC_regression_artifact_narrative_matches_reliability_and_digest_recomputes", () => {
+    const base = join(root, "test", "fixtures", "debug-ui-compare");
+    const r0 = JSON.parse(readFileSync(join(base, "run_a", "workflow-result.json"), "utf8")) as WorkflowResult;
+    const r1 = JSON.parse(readFileSync(join(base, "run_b", "workflow-result.json"), "utf8")) as WorkflowResult;
+    const art = buildRegressionArtifactFromDebugCorpus({
+      results: [r0, r1],
+      runIds: ["run_a", "run_b"],
+      eventPaths: [join(base, "run_a", "events.ndjson"), join(base, "run_b", "events.ndjson")],
+    });
+    expect(vArtifact(art as unknown as object)).toBe(true);
+    expect(art.narrative.classification).toBe(art.verification.reliabilityAssessment.headlineVerdict);
+    expect(art.narrative.headline).toBe(art.verification.reliabilityAssessment.headlineRationale);
+    for (const row of art.outcomeCertificates) {
+      expect(vCert(row.certificate as object)).toBe(true);
+      const fromCert = createHash("sha256")
+        .update(stringifyWithSortedKeys(row.certificate), "utf8")
+        .digest("hex");
+      expect(fromCert).toBe(row.certificateCanonicalDigest);
+    }
   });
 
   it("AC_9_4_headlineVerdict_window_pairwise_divergence", () => {

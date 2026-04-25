@@ -8,10 +8,7 @@ import {
   cliErrorEnvelope,
   formatOperationalMessage,
 } from "./failureCatalog.js";
-import {
-  buildRunComparisonReport,
-  formatRunComparisonReport,
-} from "./runComparison.js";
+import { buildRegressionArtifactFromCompareManifest, stringifyRegressionArtifact } from "./regressionArtifact.js";
 import { buildExecutionTraceView, formatExecutionTraceText } from "./executionTrace.js";
 import { loadEventsForWorkflow } from "./loadEvents.js";
 import { verifyWorkflow } from "./pipeline.js";
@@ -144,8 +141,8 @@ Exit codes:
   3  operational failure (see stderr JSON)
   4  CI lock mismatch with --expect-lock (stdout: WorkflowResult line; stderr: envelope after human report if any)
 
-  agentskeptic compare --prior <path> [--prior <path> ...] --current <path>
-  Compare saved WorkflowResult JSON files (local only; see docs).
+  agentskeptic compare --manifest <compare-run-manifest.json>
+  Compare runs from a manifest (workflow results + events paths; see docs/regression-artifact-normative.md).
 
   agentskeptic validate-registry --registry <path>
   agentskeptic validate-registry --registry <path> --events <path> --workflow-id <id>
@@ -358,13 +355,13 @@ function runExecutionTraceSubcommand(args: string[]): void {
 
 function usageCompare(): string {
   return `Usage:
-  agentskeptic compare --prior <workflowResult.json> [--prior <path> ...] --current <workflowResult.json>
+  agentskeptic compare --manifest <compare-run-manifest.json>
 
-Compares the current run (last file) against the immediate prior run (last --prior).
-Recurrence uses all runs in order: each --prior in order, then --current.
+  Manifest schema: schemas/compare-run-manifest-v1.schema.json.
+  Success: stdout is UTF-8 RegressionArtifactV1 JSON (sorted keys); stderr is artifact.humanText only.
 
 Exit codes:
-  0  comparison succeeded (stdout: RunComparisonReport JSON; stderr: human summary)
+  0  comparison succeeded
   3  operational failure (stderr: JSON envelope only; stdout empty)
 
   --help, -h  print this message and exit 0`;
@@ -848,98 +845,28 @@ function runCompareSubcommand(args: string[]): void {
     process.exit(0);
   }
 
-  const priors = argValues(args, "--prior");
-  const currentPath = argValue(args, "--current");
-
-  if (priors.length < 1 || !currentPath) {
-    writeCliError(
-      CLI_OPERATIONAL_CODES.COMPARE_USAGE,
-      "compare requires at least one --prior and --current.",
-    );
+  const manifestPath = argValue(args, "--manifest");
+  if (!manifestPath) {
+    writeCliError(CLI_OPERATIONAL_CODES.COMPARE_USAGE, "compare requires --manifest <path>.");
     process.exit(3);
   }
 
-  const paths = [...priors, currentPath];
-  const validateCompareInput = loadSchemaValidator("workflow-result-compare-input");
-  const results: WorkflowResult[] = [];
-  const displayLabels: string[] = [];
-
-  for (const filePath of paths) {
-    displayLabels.push(path.basename(filePath));
-    let raw: string;
-    try {
-      raw = readFileSync(filePath, "utf8");
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      writeCliError(CLI_OPERATIONAL_CODES.COMPARE_INPUT_READ_FAILED, formatOperationalMessage(msg));
-      process.exit(3);
-    }
-    let parsed: unknown;
-    try {
-      parsed = JSON.parse(raw) as unknown;
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      writeCliError(CLI_OPERATIONAL_CODES.COMPARE_INPUT_JSON_SYNTAX, formatOperationalMessage(msg));
-      process.exit(3);
-    }
-    if (isV9RunLevelCodesInconsistent(parsed)) {
-      writeCliError(
-        CLI_OPERATIONAL_CODES.COMPARE_INPUT_RUN_LEVEL_INCONSISTENT,
-        COMPARE_INPUT_RUN_LEVEL_INCONSISTENT_MESSAGE,
-      );
-      process.exit(3);
-    }
-    if (!validateCompareInput(parsed)) {
-      writeCliError(
-        CLI_OPERATIONAL_CODES.COMPARE_INPUT_SCHEMA_INVALID,
-        JSON.stringify(validateCompareInput.errors ?? []),
-      );
-      process.exit(3);
-    }
-    try {
-      results.push(
-        normalizeToEmittedWorkflowResult(parsed as WorkflowEngineResult | WorkflowResult),
-      );
-    } catch (e) {
-      if (e instanceof TruthLayerError) {
-        writeCliError(e.code, e.message);
-        process.exit(3);
-      }
-      throw e;
-    }
-  }
-
-  const wf0 = results[0]!.workflowId;
-  for (const r of results) {
-    if (r.workflowId !== wf0) {
-      writeCliError(
-        CLI_OPERATIONAL_CODES.COMPARE_WORKFLOW_ID_MISMATCH,
-        "All WorkflowResult inputs must share the same workflowId.",
-      );
-      process.exit(3);
-    }
-  }
-
-  let report;
+  let artifact;
   try {
-    report = buildRunComparisonReport(results, displayLabels);
+    const built = buildRegressionArtifactFromCompareManifest(manifestPath);
+    artifact = built.artifact;
   } catch (e) {
+    if (e instanceof TruthLayerError) {
+      writeCliError(e.code, e.message);
+      process.exit(3);
+    }
     const msg = e instanceof Error ? e.message : String(e);
     writeCliError(CLI_OPERATIONAL_CODES.INTERNAL_ERROR, formatOperationalMessage(msg));
     process.exit(3);
   }
 
-  const validateReport = loadSchemaValidator("run-comparison-report");
-  if (!validateReport(report)) {
-    writeCliError(
-      CLI_OPERATIONAL_CODES.COMPARE_RUN_COMPARISON_REPORT_INVALID,
-      JSON.stringify(validateReport.errors ?? []),
-    );
-    process.exit(3);
-  }
-
-  process.stderr.write(`${formatRunComparisonReport(report)}\n`);
-  console.log(JSON.stringify(report));
+  process.stderr.write(artifact.humanText.endsWith("\n") ? artifact.humanText : `${artifact.humanText}\n`);
+  process.stdout.write(`${stringifyRegressionArtifact(artifact)}\n`);
   process.exit(0);
 }
 

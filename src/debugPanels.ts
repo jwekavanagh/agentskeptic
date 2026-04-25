@@ -1,4 +1,3 @@
-import type { RunComparisonReport } from "./runComparison.js";
 import { PLAN_TRANSITION_WORKFLOW_ID } from "./planTransitionConstants.js";
 import {
   formatBatchDeclaredStderrValue,
@@ -46,32 +45,6 @@ const PLAN_TRANSITION_VERIFICATION_BASIS_LINE =
   "Verification outcomes below are from git diff (name-status) and machine-declared plan rules (YAML front matter planValidation, body section Repository transition validation, or derived path citations as required diff surfaces)—not from model-reported success.";
 
 const EXECUTION_PATH_EMPTY = "No execution-path concerns recorded for this run.";
-
-/** HTML fragment for Compare tab (server-side only). */
-export function renderComparePanelHtml(report: RunComparisonReport): string {
-  const ra = report.reliabilityAssessment;
-  const ch = report.compareHighlights;
-  const headline = `${ra.headlineVerdict}: ${ra.headlineRationale}`;
-  const windowLine = `Window trend: ${ra.windowTrend} (run index 0 vs run index ${report.runs.length - 1}).`;
-  const pairwiseLine = `Pairwise trend: ${ra.pairwiseTrend} (run index ${report.pairwise.priorRunIndex} vs ${report.pairwise.currentRunIndex}).`;
-  const recurrenceLine = ra.recurrenceBurden.rationale;
-
-  const liIntro = ch.introducedLogicalStepKeys.map((k) => `<li>${escapeHtml(k)}</li>`).join("");
-  const liRes = ch.resolvedLogicalStepKeys.map((k) => `<li>${escapeHtml(k)}</li>`).join("");
-  const liRec = ch.recurringSignatures.map((k) => `<li>${escapeHtml(k)}</li>`).join("");
-
-  return [
-    `<section data-etl-section="compare-result">`,
-    `<p data-etl-headline>${escapeHtml(headline)}</p>`,
-    `<p data-etl-window-trend>${escapeHtml(windowLine)}</p>`,
-    `<p data-etl-pairwise-trend>${escapeHtml(pairwiseLine)}</p>`,
-    `<p data-etl-recurrence>${escapeHtml(recurrenceLine)}</p>`,
-    `<ul data-etl-list="introduced">${liIntro}</ul>`,
-    `<ul data-etl-list="resolved">${liRes}</ul>`,
-    `<ul data-etl-list="recurring">${liRec}</ul>`,
-    `</section>`,
-  ].join("");
-}
 
 /** HTML fragment for run-detail trust + execution path (server-side only). */
 export function renderRunTrustPanelHtml(wf: WorkflowResult): string {

@@ -1,0 +1,65 @@
+{
+  "$id": "https://agentskeptic.com/schemas/compare-run-manifest-v1.schema.json",
+  "title": "CompareRunManifestV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "baseDirectory", "certificateProfile", "runs"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "baseDirectory": { "type": "string" },
+    "certificateProfile": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode", "outcomeCertificateRunKind"],
+          "properties": {
+            "mode": { "const": "uniform" },
+            "outcomeCertificateRunKind": {
+              "type": "string",
+              "enum": ["contract_sql", "contract_sql_langgraph_checkpoint_trust"]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode", "entries"],
+          "properties": {
+            "mode": { "const": "perRun" },
+            "entries": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["runIndex", "outcomeCertificateRunKind"],
+                "properties": {
+                  "runIndex": { "type": "integer", "minimum": 0 },
+                  "outcomeCertificateRunKind": {
+                    "type": "string",
+                    "enum": ["contract_sql", "contract_sql_langgraph_checkpoint_trust"]
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "runs": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["displayLabel", "workflowResult", "events"],
+        "properties": {
+          "displayLabel": { "type": "string", "minLength": 1 },
+          "workflowResult": { "type": "string", "minLength": 1 },
+          "events": { "type": "string", "minLength": 1 }
+        }
+      }
+    }
+  }
+}

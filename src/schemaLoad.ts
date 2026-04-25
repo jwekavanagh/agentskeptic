@@ -86,6 +86,8 @@ export type SchemaValidatorName =
   | "public-verification-report-v1"
   | "public-verification-report-v2"
   | "outcome-certificate-v1"
+  | "compare-run-manifest-v1"
+  | "regression-artifact-v1"
   | "bootstrap-pack-input-v1"
   | "openai-function-tool-call-item-v1";
 
@@ -188,6 +190,14 @@ export function loadSchemaValidator(name: SchemaValidatorName): ValidateFunction
       return compileSchemaFile(name, "public-verification-report-v1.schema.json");
     case "outcome-certificate-v1":
       return compileSchemaFile(name, "outcome-certificate-v1.schema.json");
+    case "compare-run-manifest-v1":
+      return compileSchemaFile(name, "compare-run-manifest-v1.schema.json");
+    case "regression-artifact-v1":
+      compileSchemaFile("outcome-certificate-v1", "outcome-certificate-v1.schema.json");
+      ensureWorkflowTruthForWireRefs();
+      compileSchemaFile("run-comparison-report", "run-comparison-report.schema.json");
+      compileSchemaFile("execution-trace-view", "execution-trace-view.schema.json");
+      return compileSchemaFile(name, "regression-artifact-v1.schema.json");
     case "public-verification-report-v2":
       compileSchemaFile("outcome-certificate-v1", "outcome-certificate-v1.schema.json");
       return compileSchemaFile(name, "public-verification-report-v2.schema.json");

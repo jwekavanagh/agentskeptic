@@ -393,10 +393,11 @@ document.getElementById("run-compare").addEventListener("click", async () => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ runIds: ids }),
     });
-    if (typeof data.comparePanelHtml === "string") {
-      out.innerHTML = data.comparePanelHtml;
+    const html = data?.regression?.narrativeHtml;
+    if (typeof html === "string" && html.length > 0) {
+      out.innerHTML = html;
     } else {
-      out.textContent = "comparePanelHtml missing in response.";
+      out.textContent = "regression.narrativeHtml missing in response.";
     }
   } catch (e) {
     out.textContent = "";

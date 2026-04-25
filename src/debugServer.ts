@@ -18,16 +18,13 @@ import {
   parseLimitCursor,
   parseRunListQuery,
 } from "./debugRunFilters.js";
-import { renderComparePanelHtml, renderRunTrustPanelHtml } from "./debugPanels.js";
-import {
-  buildRunComparisonReport,
-  formatRunComparisonReport,
-} from "./runComparison.js";
+import { renderRunTrustPanelHtml } from "./debugPanels.js";
+import { buildRegressionArtifactFromDebugCorpus } from "./regressionArtifact.js";
 import type { WorkflowResult } from "./types.js";
 import { buildWorkflowVerdictSurface } from "./workflowTruthReport.js";
 
 const validateTrace = loadSchemaValidator("execution-trace-view");
-const validateCompareReport = loadSchemaValidator("run-comparison-report");
+const validateRegressionArtifact = loadSchemaValidator("regression-artifact-v1");
 
 export const DEBUG_SERVER_OPAQUE_500_MESSAGE = "Internal server error.";
 export const DEBUG_SERVER_INTERNAL_STDERR_PREFIX = "[debug-internal]";
@@ -290,7 +287,6 @@ async function handleRequest(
       }
       const { outcomes } = loadCorpusBundle(corpusRoot);
       const results: WorkflowResult[] = [];
-      const labels: string[] = [];
       for (const id of runIds) {
         const o = outcomes.find((x) => x.runId === id);
         if (!o) {
@@ -305,7 +301,6 @@ async function handleRequest(
           return;
         }
         results.push(o.workflowResult);
-        labels.push(id);
       }
       const wf0 = results[0]!.workflowId;
       for (const r of results) {
@@ -317,22 +312,26 @@ async function handleRequest(
           return;
         }
       }
-      const report = buildRunComparisonReport(results, labels);
-      if (!validateCompareReport(report)) {
+      const eventPaths = runIds.map((id) => {
+        const o = outcomes.find((x) => x.runId === id) as CorpusRunLoadedOk;
+        return o.paths.events;
+      });
+      let regression;
+      try {
+        regression = buildRegressionArtifactFromDebugCorpus({ results, runIds, eventPaths });
+      } catch (e) {
+        jsonDebugServer500(res, "REGRESSION_ARTIFACT_BUILD", e);
+        return;
+      }
+      if (!validateRegressionArtifact(regression)) {
         jsonDebugServer500(
           res,
-          "COMPARE_REPORT_INVALID",
-          validateCompareReport.errors ?? validateCompareReport,
+          "REGRESSION_ARTIFACT_INVALID",
+          validateRegressionArtifact.errors ?? validateRegressionArtifact,
         );
         return;
       }
-      const humanSummary = formatRunComparisonReport(report);
-      const comparePanelHtml = renderComparePanelHtml(report);
-      json(res, 200, {
-        comparePanelHtml,
-        humanSummary,
-        report,
-      });
+      json(res, 200, { regression });
       return;
     }
 

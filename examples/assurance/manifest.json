@@ -4,13 +4,7 @@
     {
       "id": "compare_debug_ui_fixtures",
       "kind": "spawn_argv",
-      "argv": [
-        "compare",
-        "--prior",
-        "../../test/fixtures/debug-ui-compare/run_path_empty/workflow-result.json",
-        "--current",
-        "../../test/fixtures/debug-ui-compare/run_path_nonempty/workflow-result.json"
-      ]
+      "argv": ["compare", "--manifest", "compare-run-manifest.json"]
     }
   ]
 }

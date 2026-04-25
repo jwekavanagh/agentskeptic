@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "baseDirectory": "../../test/fixtures/debug-ui-compare",
+  "certificateProfile": {
+    "mode": "uniform",
+    "outcomeCertificateRunKind": "contract_sql"
+  },
+  "runs": [
+    {
+      "displayLabel": "run_path_empty",
+      "workflowResult": "run_path_empty/workflow-result.json",
+      "events": "run_path_empty/events.ndjson"
+    },
+    {
+      "displayLabel": "run_path_nonempty",
+      "workflowResult": "run_path_nonempty/workflow-result.json",
+      "events": "run_path_nonempty/events.ndjson"
+    }
+  ]
+}
