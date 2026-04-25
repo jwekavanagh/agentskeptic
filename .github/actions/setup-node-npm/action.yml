@@ -1,6 +1,6 @@
 # Setup Node 22, npm cache, and npm ci at the repository root. Does not run checkout
 # (keeps CodeQL and other jobs free to run grep/validation before or after install).
-# package.json `engines` allows >=22 <26; CI stays pinned to 22 for reproducibility.
+# package.json `engines.node` is `22.x || 24.x`; CI pins Node 22 for reproducibility.
 name: "Setup Node + npm ci"
 description: "Node 22 (LTS), npm cache, and npm ci (no checkout; compose after actions/checkout in workflows)"
 runs:

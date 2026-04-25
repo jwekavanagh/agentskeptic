@@ -21,7 +21,7 @@ function runNode(scriptRel) {
 }
 
 function runNpmScript(name) {
-  const r = spawnSync("npm", ["run", name], {
+  const r = spawnSync(`npm run ${name}`, {
     cwd: root,
     stdio: "inherit",
     shell: true,

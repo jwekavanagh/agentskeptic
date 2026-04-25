@@ -25,8 +25,8 @@ if (env.NODE_OPTIONS == null || !String(env.NODE_OPTIONS).includes("max-old-spac
       : "--max-old-space-size=8192";
 }
 
-function run(cmd, args, cwd = root) {
-  const r = spawnSync(cmd, args, { cwd, env, stdio: "inherit", shell: true });
+function runNode(args, cwd = root) {
+  const r = spawnSync(process.execPath, args, { cwd, env, stdio: "inherit", shell: false });
   if (r.error) {
     console.error(r.error);
     process.exit(1);
@@ -35,8 +35,18 @@ function run(cmd, args, cwd = root) {
   if (code !== 0) process.exit(code);
 }
 
-run(process.execPath, [path.join(root, "scripts", "validate-discovery-acquisition.mjs")]);
-run(process.execPath, ["--test", path.join(root, "test", "visitor-problem-outcome.test.mjs")]);
-run("npm", ["run", "build:website"]);
-run(process.execPath, [path.join(root, "scripts", "run-website-vitest-with-reuse.mjs")]);
-run(process.execPath, [path.join(root, "scripts", "website-holistic-gate.mjs")]);
+function runShell(line, cwd = root) {
+  const r = spawnSync(line, { cwd, env, stdio: "inherit", shell: true });
+  if (r.error) {
+    console.error(r.error);
+    process.exit(1);
+  }
+  const code = r.status === null ? 1 : r.status;
+  if (code !== 0) process.exit(code);
+}
+
+runNode([path.join(root, "scripts", "validate-discovery-acquisition.mjs")]);
+runNode(["--test", path.join(root, "test", "visitor-problem-outcome.test.mjs")]);
+runShell("npm run build:website");
+runNode([path.join(root, "scripts", "run-website-vitest-with-reuse.mjs")]);
+runNode([path.join(root, "scripts", "website-holistic-gate.mjs")]);

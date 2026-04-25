@@ -24,7 +24,7 @@ function runNode(args, env = process.env) {
 }
 
 function runNpm(args, env = process.env) {
-  return spawnSync("npm", args, {
+  return spawnSync(["npm", ...args].join(" "), {
     cwd: root,
     encoding: "utf8",
     env,

@@ -5,7 +5,7 @@
 import { spawnSync } from "node:child_process";
 
 process.env.WEBSITE_TEST_REUSE_DIST = "1";
-const r = spawnSync("npm", ["run", "test:vitest", "-w", "agentskeptic-web"], {
+const r = spawnSync("npm run test:vitest -w agentskeptic-web", {
   stdio: "inherit",
   shell: true,
 });

@@ -96,7 +96,7 @@ async function httpOk(url) {
   }
 }
 
-const child = spawn("npx", ["next", "start", "-p", String(port)], {
+const child = spawn(`npx next start -p ${String(port)}`, {
   cwd: websiteDir,
   env: serverEnv,
   stdio: "ignore",
@@ -142,7 +142,7 @@ for (const p of ["/", "/pricing", "/security"]) {
   }
 }
 
-const pw = spawnSync("npx", ["playwright", "test", "-c", "playwright.website-holistic.config.ts"], {
+const pw = spawnSync("npx playwright test -c playwright.website-holistic.config.ts", {
   cwd: root,
   env: { ...process.env },
   stdio: "inherit",
@@ -153,7 +153,7 @@ if (pw.error || pw.status !== 0) {
   process.exit(1);
 }
 
-const lhci = spawnSync("npx", ["lhci", "autorun", "--config=./website/lighthouserc.cjs"], {
+const lhci = spawnSync("npx lhci autorun --config=./website/lighthouserc.cjs", {
   cwd: root,
   env: serverEnv,
   stdio: "inherit",

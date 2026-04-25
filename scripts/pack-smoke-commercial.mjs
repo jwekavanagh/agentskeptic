@@ -33,7 +33,10 @@ if (!src.includes(needle)) {
 }
 
 const dir = mkdtempSync(path.join(tmpdir(), "wfv-pack-"));
-const p = spawnSync("npm", ["pack", "--pack-destination", dir], { cwd: root, shell: true });
+const p = spawnSync(`npm pack --pack-destination "${dir.replace(/"/g, "")}"`, {
+  cwd: root,
+  shell: true,
+});
 if (p.status !== 0) {
   console.error("npm pack failed", p.stderr?.toString() || p.stdout?.toString() || "");
   process.exit(1);

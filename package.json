@@ -73,7 +73,7 @@
     "prepare": "npx --yes patch-package@8.0.1 && husky"
   },
   "engines": {
-    "node": ">=22.0.0 <26"
+    "node": "22.x || 24.x"
   },
   "devDependencies": {
     "@commitlint/cli": "^20.3.0",

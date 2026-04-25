@@ -1,10 +1,9 @@
 #!/usr/bin/env node
 /**
- * @esbuild-kit/core-utils declares esbuild ~0.18.20 (affected by GHSA-67mh-4wv8-2f99). We pin 0.25.12+ via
- * patch-package, but the lockfile can still list 0.18.20, which re-triggers Dependabot. This script copies
- * the hoisted 0.25.12 package entries in package-lock v3 from `node_modules/@esbuild/...` and
- * `node_modules/esbuild` into `node_modules/@esbuild-kit/core-utils/node_modules/...` so the lock matches
- * the resolved tree. Run after `npx patch-package` + `npm install` when the patch changes.
+ * Legacy: @esbuild-kit/core-utils (pulled by older drizzle-kit) nested a vulnerable esbuild.
+ * drizzle-kit 1.x no longer depends on @esbuild-kit; this script is a no-op when absent.
+ * When the lockfile still contains `node_modules/@esbuild-kit/core-utils`, copies hoisted
+ * `esbuild` / `@esbuild/*` entries into that nested tree so the lock matches patched installs.
  */
 import { readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
@@ -17,6 +16,12 @@ const { packages: pk } = lock;
 if (!pk || typeof pk !== "object") {
   process.stderr.write("align-esbuild-kit-lock-nested: invalid package-lock (no packages)\n");
   process.exit(1);
+}
+
+const utilKey = "node_modules/@esbuild-kit/core-utils";
+if (!pk[utilKey]) {
+  process.stdout.write("align-esbuild-kit-lock-nested: no @esbuild-kit/core-utils in lockfile; skipping\n");
+  process.exit(0);
 }
 
 const NESTED = "node_modules/@esbuild-kit/core-utils/node_modules";
@@ -51,7 +56,6 @@ for (const toKey of Object.keys(pk)) {
   }
   updated++;
 }
-const utilKey = "node_modules/@esbuild-kit/core-utils";
 if (pk[utilKey]?.dependencies) {
   pk[utilKey].dependencies.esbuild = "0.25.12";
 }

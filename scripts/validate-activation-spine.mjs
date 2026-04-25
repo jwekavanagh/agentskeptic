@@ -32,8 +32,20 @@ for (const rel of ["dist/cli.js", "dist/telemetry/postProductActivationEvent.js"
 
 const childEnv = { ...process.env, ACTIVATION_SPINE_VALIDATOR: "1" };
 
-function run(cmd, args) {
-  const r = spawnSync(cmd, args, {
+function runNode(argv) {
+  const r = spawnSync(process.execPath, argv, {
+    cwd: root,
+    env: childEnv,
+    stdio: "inherit",
+    shell: false,
+  });
+  if (r.status !== 0) {
+    process.exit(r.status ?? 1);
+  }
+}
+
+function runShell(line) {
+  const r = spawnSync(line, {
     cwd: root,
     env: childEnv,
     stdio: "inherit",
@@ -44,74 +56,34 @@ function run(cmd, args) {
   }
 }
 
-run("npm", ["run", "check:integrate-activation-shell"]);
-run("npm", [
-  "run",
-  "test:vitest",
-  "-w",
-  "agentskeptic-web",
-  "--",
-  "__tests__/activation-spine-narrative-alignment.source.test.ts",
-]);
-run("npx", ["vitest", "run", "src/commercial/verifyWorkloadClassify.test.ts"]);
-run("npm", [
-  "run",
-  "test:vitest",
-  "-w",
-  "agentskeptic-web",
-  "--",
-  "__tests__/integrate-activation-guided-spine.integration.test.tsx",
-]);
-run("npm", [
-  "run",
-  "test:vitest",
-  "-w",
-  "agentskeptic-web",
-  "--",
-  "__tests__/integrate-activation-telemetry-off.integration.test.ts",
-]);
-run(process.execPath, ["--test", "test/integrate-spine-step3-chain.happy.test.mjs"]);
-run(process.execPath, ["--test", "test/integrate-spine-step3-chain.negative.test.mjs"]);
-run("npm", [
-  "run",
-  "test:vitest",
-  "-w",
-  "agentskeptic-web",
-  "--",
-  "__tests__/product-activation-reachability.integration.test.ts",
-]);
-run("npm", [
-  "run",
-  "test:vitest",
-  "-w",
-  "agentskeptic-web",
-  "--",
-  "__tests__/integrate-next-steps-surface.source.test.ts",
-]);
-run("npm", [
-  "run",
-  "test:vitest",
-  "-w",
-  "agentskeptic-web",
-  "--",
-  "__tests__/funnel-observability-epistemics.source.test.ts",
-]);
-run("npm", [
-  "run",
-  "test:vitest",
-  "-w",
-  "agentskeptic-web",
-  "--",
-  "__tests__/growth-metrics-qualified-kpi-epistemics.source.test.ts",
-]);
+runShell("npm run check:integrate-activation-shell");
+runShell(
+  "npm run test:vitest -w agentskeptic-web -- __tests__/activation-spine-narrative-alignment.source.test.ts",
+);
+runShell("npx vitest run src/commercial/verifyWorkloadClassify.test.ts");
+runShell(
+  "npm run test:vitest -w agentskeptic-web -- __tests__/integrate-activation-guided-spine.integration.test.tsx",
+);
+runShell(
+  "npm run test:vitest -w agentskeptic-web -- __tests__/integrate-activation-telemetry-off.integration.test.ts",
+);
+runNode(["--test", "test/integrate-spine-step3-chain.happy.test.mjs"]);
+runNode(["--test", "test/integrate-spine-step3-chain.negative.test.mjs"]);
+runShell(
+  "npm run test:vitest -w agentskeptic-web -- __tests__/product-activation-reachability.integration.test.ts",
+);
+runShell(
+  "npm run test:vitest -w agentskeptic-web -- __tests__/integrate-next-steps-surface.source.test.ts",
+);
+runShell(
+  "npm run test:vitest -w agentskeptic-web -- __tests__/funnel-observability-epistemics.source.test.ts",
+);
+runShell(
+  "npm run test:vitest -w agentskeptic-web -- __tests__/growth-metrics-qualified-kpi-epistemics.source.test.ts",
+);
 // Prewarm website .next; markup test + siteTestServer reuse the build (faster, avoids hook timeout)
-run("npm", ["run", "build", "-w", "agentskeptic-web"]);
+runShell("npm run build -w agentskeptic-web");
 childEnv.WEBSITE_TEST_REUSE_DIST = "1";
-run("npm", [
-  "run",
-  "test:vitest",
-  "-w",
-  "agentskeptic-web",
-  "--",
-  "__tests__/integrate-page-prerequisites.markup.test.ts",
-]);
+runShell(
+  "npm run test:vitest -w agentskeptic-web -- __tests__/integrate-page-prerequisites.markup.test.ts",
+);

@@ -52,7 +52,7 @@ function assertLockRule(rule, lockfileObj, lockLabel) {
   const packages = lockfileObj.packages;
 
   // Pin only the primary (hoisted) lock paths. npm v3 lockfiles can still list nested esbuild
-  // copies (e.g. drizzle-kit -> @esbuild-kit) that the root "overrides" does not always collapse.
+  // copies (e.g. legacy transitive esbuild) that the root "overrides" does not always collapse.
   if (match === "lockKeysExact") {
     const lockKeys = rule.lockKeys;
     if (!Array.isArray(lockKeys) || lockKeys.length === 0) {

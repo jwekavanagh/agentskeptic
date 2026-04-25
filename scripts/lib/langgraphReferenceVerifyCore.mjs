@@ -249,7 +249,8 @@ export function executeLanggraphReferencePipeline(options = {}) {
   const seedSql = readFileSync(seedPath, "utf8");
 
   const examplePrefix = path.join(pipelineRoot, "test", "fixtures", "langgraph-node-oracle");
-  const npmR = spawnSyncImpl("npm", ["ci", "--prefix", examplePrefix], {
+  const quotedPrefix = JSON.stringify(examplePrefix);
+  const npmR = spawnSyncImpl(`npm ci --prefix ${quotedPrefix}`, {
     cwd: pipelineRoot,
     encoding: "utf8",
     shell: true,

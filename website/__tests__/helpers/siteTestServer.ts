@@ -1,4 +1,4 @@
-import { execFileSync, execSync, spawn, spawnSync, type ChildProcess } from "node:child_process";
+import { execFileSync, spawn, spawnSync, type ChildProcess } from "node:child_process";
 import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { createRequire } from "node:module";
@@ -28,7 +28,7 @@ let teardownRegistered = false;
 /**
  * `next build` is memory-heavy; cap V8 heap so the process can grow without asking the OS for
  * more RAM than typical GitHub-hosted runners have (~7GiB total). An 8192MiB cap can still
- * fail there (OOM-kill → exit 1, empty Vitest `execSync` diagnostics with stdio:inherit).
+ * fail there (OOM-kill → exit 1, empty Vitest `spawnSync` diagnostics with stdio:inherit).
  * Override with `SITE_TEST_NODE_HEAP_MB` (digits only, mebibytes) if needed.
  */
 function withNodeBuildHeap(e: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
@@ -110,12 +110,15 @@ async function startInternal(): Promise<void> {
   // `next.config` calls `assertNextPublicOriginParity()` during `next build` — the env
   // we pass must match the on-disk `productionCanonicalOrigin` *after* that same SSOT
   // materialization, or `next build` exits 1 in CI.
-  execSync("npm run sync-website-ssot", {
+  const ssot = spawnSync("npm run sync-website-ssot", {
     cwd: repoRoot,
     env: process.env,
     stdio: "inherit",
     shell: true,
   });
+  if (ssot.status !== 0) {
+    throw new Error(`siteTestServer: sync-website-ssot failed (exit ${String(ssot.status)})`);
+  }
   const anchors = loadAnchors();
   process.env.NEXT_PUBLIC_APP_URL = normalize(anchors.productionCanonicalOrigin);
   process.env.VERCEL_ENV = "production";

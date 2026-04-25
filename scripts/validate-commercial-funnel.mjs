@@ -99,11 +99,23 @@ function mergeWebsiteDotenv() {
   }
 }
 
-function run(cmd, args, opts = {}) {
-  const r = spawnSync(cmd, args, {
+/** `node …` without shell (argv are not concatenated). */
+function runNode(argv, opts = {}) {
+  const r = spawnSync(process.execPath, argv, {
     cwd: opts.cwd ?? root,
     stdio: "inherit",
-    shell: opts.shell ?? false,
+    shell: false,
+    env: { ...process.env, ...opts.env },
+  });
+  return r.status === 0;
+}
+
+/** One shell command line (Windows `npm`/`npx` shims; avoids DEP0190 `argv` + `shell: true`). */
+function runShell(line, opts = {}) {
+  const r = spawnSync(line, {
+    cwd: opts.cwd ?? root,
+    stdio: "inherit",
+    shell: true,
     env: { ...process.env, ...opts.env },
   });
   return r.status === 0;
@@ -119,17 +131,17 @@ function gitHead() {
 
 const layers = { regression: false, playwrightCommercialE2e: false };
 
-if (!run(process.execPath, ["scripts/check-commercial-plans.mjs"])) {
+if (!runNode(["scripts/check-commercial-plans.mjs"])) {
   writeVerdict("not_solved", layers);
   process.exit(1);
 }
 
-if (!run("npm", ["run", "build"], { shell: true })) {
+if (!runShell("npm run build")) {
   writeVerdict("not_solved", layers);
   process.exit(1);
 }
 
-if (!run("npx", ["vitest", "run", "src/commercial/licensePreflight.test.ts"], { shell: true })) {
+if (!runShell("npx vitest run src/commercial/licensePreflight.test.ts")) {
   writeVerdict("not_solved", layers);
   process.exit(1);
 }
@@ -167,9 +179,7 @@ if (destructiveUrlViolations.length > 0) {
   process.exit(1);
 }
 
-if (
-  !run(process.execPath, [path.join(root, "scripts", "core-database-boundary-preflight.mjs")])
-) {
+if (!runNode([path.join(root, "scripts", "core-database-boundary-preflight.mjs")])) {
   writeVerdict("not_solved", layers);
   process.exit(1);
 }
@@ -207,42 +217,42 @@ websiteTestEnv.VERCEL_ENV = "production";
 websiteTestEnv.TELEMETRY_DATABASE_URL = process.env.TELEMETRY_DATABASE_URL;
 websiteTestEnv.AGENTSKEPTIC_TELEMETRY_WRITES_TELEMETRY_DB = "1";
 
-if (!run(process.execPath, ["scripts/db-migrate.mjs"], { cwd: websiteDir, env: websiteTestEnv })) {
+if (!runNode(["scripts/db-migrate.mjs"], { cwd: websiteDir, env: websiteTestEnv })) {
   writeVerdict("not_solved", layers);
   process.exit(1);
 }
 
-if (!run(process.execPath, ["scripts/db-migrate-telemetry.mjs"], { cwd: websiteDir, env: websiteTestEnv })) {
+if (!runNode(["scripts/db-migrate-telemetry.mjs"], { cwd: websiteDir, env: websiteTestEnv })) {
   writeVerdict("not_solved", layers);
   process.exit(1);
 }
 
-if (!run(process.execPath, ["--test", path.join(root, "test", "post-product-activation-install-id.test.mjs")])) {
+if (!runNode(["--test", path.join(root, "test", "post-product-activation-install-id.test.mjs")])) {
   writeVerdict("not_solved", layers);
   process.exit(1);
 }
 
-if (!run(process.execPath, ["--test", path.join(root, "test", "visitor-problem-outcome.test.mjs")])) {
+if (!runNode(["--test", path.join(root, "test", "visitor-problem-outcome.test.mjs")])) {
   writeVerdict("not_solved", layers);
   process.exit(1);
 }
 
-if (!run(process.execPath, ["--test", path.join(root, "test", "registry-metadata-parity.test.mjs")])) {
+if (!runNode(["--test", path.join(root, "test", "registry-metadata-parity.test.mjs")])) {
   writeVerdict("not_solved", layers);
   process.exit(1);
 }
 
-if (!run("npx", ["vitest", "run"], { cwd: websiteDir, shell: true, env: websiteTestEnv })) {
+if (!runShell("npx vitest run", { cwd: websiteDir, env: websiteTestEnv })) {
   writeVerdict("not_solved", layers);
   process.exit(1);
 }
 
-if (!run("npm", ["run", "verify:eval-to-account-gate:mechanical"], { cwd: websiteDir, shell: true, env: websiteTestEnv })) {
+if (!runShell("npm run verify:eval-to-account-gate:mechanical", { cwd: websiteDir, env: websiteTestEnv })) {
   writeVerdict("not_solved", layers);
   process.exit(1);
 }
 
-if (!run(process.execPath, ["scripts/check-web-demo-prereqs.mjs"])) {
+if (!runNode(["scripts/check-web-demo-prereqs.mjs"])) {
   writeVerdict("not_solved", layers);
   process.exit(1);
 }
@@ -250,7 +260,7 @@ if (!run(process.execPath, ["scripts/check-web-demo-prereqs.mjs"])) {
 const packSmokeUrl =
   process.env.COMMERCIAL_LICENSE_API_BASE_URL?.trim() || "https://pack-smoke.example.com";
 if (
-  !run(process.execPath, ["scripts/pack-smoke-commercial.mjs"], {
+  !runNode(["scripts/pack-smoke-commercial.mjs"], {
     env: {
       ...process.env,
       COMMERCIAL_LICENSE_API_BASE_URL: packSmokeUrl,
@@ -263,7 +273,7 @@ if (
 
 // BUILD:postPackSmokeOssRestore
 // PHASE:postPackSmokeOssRestoreBuild
-if (!run("npm", ["run", "build"], { shell: true })) {
+if (!runShell("npm run build")) {
   writeVerdict("not_solved", layers);
   process.exit(1);
 }
@@ -274,8 +284,7 @@ if (!runRegistryDraftOutcomeHarness(root)) {
 }
 
 if (process.env.COMMERCIAL_VALIDATE_PLAYWRIGHT === "1") {
-  const pw = run("npx", ["playwright", "test", "-c", "playwright.commercial.config.ts"], {
-    shell: true,
+  const pw = runShell("npx playwright test -c playwright.commercial.config.ts", {
     env: process.env,
   });
   if (!pw) {
@@ -309,7 +318,7 @@ function runRegistryDraftOutcomeHarness(r) {
     "test/registry-draft-outcome-chain.test.mjs",
   ];
   for (const rel of tests) {
-    if (!run(process.execPath, ["--test", path.join(r, rel)])) {
+    if (!runNode(["--test", path.join(r, rel)])) {
       return false;
     }
   }
