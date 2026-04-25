@@ -9,6 +9,7 @@ COPY python/tests ./tests
 COPY python/scripts ./scripts
 COPY examples/partner-quickstart ./examples/partner-quickstart
 COPY schemas ./schemas
+COPY conformance ./conformance
 
 ENV AGENTSKEPTIC_REPO_ROOT=/app
 

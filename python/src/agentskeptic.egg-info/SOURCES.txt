@@ -33,7 +33,8 @@ src/agentskeptic/kernel/verify_sqlite.py
 src/agentskeptic/kernel/workflow_truth_report.py
 src/agentskeptic/tools/__init__.py
 src/agentskeptic/tools/emit_registry.py
+src/agentskeptic_conformance/__init__.py
+src/agentskeptic_conformance/run.py
 tests/test_emit_registry.py
 tests/test_framework_lock_imports.py
-tests/test_parity_goldens.py
 tests/test_public_api.py

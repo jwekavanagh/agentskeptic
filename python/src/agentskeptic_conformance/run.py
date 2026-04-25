@@ -2,13 +2,21 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 from pathlib import Path
 from typing import Any
 
 
 def _root() -> Path:
+    configured = os.environ.get("AGENTSKEPTIC_REPO_ROOT")
+    if configured:
+        return Path(configured).resolve()
     here = Path(__file__).resolve()
-    return here.parents[3]
+    marker = Path("conformance/scenarios/expected-outcomes.json")
+    for candidate in here.parents:
+        if (candidate / marker).exists():
+            return candidate
+    raise FileNotFoundError("could not locate repository root containing conformance/scenarios/expected-outcomes.json")
 
 
 def _read_expected(root: Path) -> list[dict[str, Any]]:

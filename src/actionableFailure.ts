@@ -119,6 +119,9 @@ const STEP_CODE_TO_CATEGORY: Record<string, ActionableFailureCategory> = {
   [SQL_VERIFICATION_OUTCOME_CODE.HTTP_WITNESS_NETWORK_ERROR]: "downstream_execution_failure",
   [SQL_VERIFICATION_OUTCOME_CODE.MONGO_DOCUMENT_MISSING]: "state_inconsistency",
   [SQL_VERIFICATION_OUTCOME_CODE.MONGO_VALUE_MISMATCH]: "state_inconsistency",
+  [SQL_VERIFICATION_OUTCOME_CODE.BOUNDED_WINDOW_EXPIRED_WITHOUT_OBSERVATION]: "downstream_execution_failure",
+  [SQL_VERIFICATION_OUTCOME_CODE.BOUNDED_MODE_UNSUPPORTED_FOR_CONNECTOR]: "bad_input",
+  [SQL_VERIFICATION_OUTCOME_CODE.CONNECTOR_UNSUPPORTED_IN_SCOPE]: "control_flow_problem",
 
   [STEP_NO_REASON_CODE]: "control_flow_problem",
   [TEST_BLOCKING_CODE]: "control_flow_problem",
@@ -267,6 +270,18 @@ const STEP_CODE_TO_REMEDIATION: Record<string, RemediationRow> = {
   },
   [SQL_VERIFICATION_OUTCOME_CODE.MONGO_VALUE_MISMATCH]: {
     recommendedAction: "reconcile_downstream_state",
+    automationSafe: false,
+  },
+  [SQL_VERIFICATION_OUTCOME_CODE.BOUNDED_WINDOW_EXPIRED_WITHOUT_OBSERVATION]: {
+    recommendedAction: "improve_read_connectivity",
+    automationSafe: false,
+  },
+  [SQL_VERIFICATION_OUTCOME_CODE.BOUNDED_MODE_UNSUPPORTED_FOR_CONNECTOR]: {
+    recommendedAction: "correct_verification_inputs",
+    automationSafe: false,
+  },
+  [SQL_VERIFICATION_OUTCOME_CODE.CONNECTOR_UNSUPPORTED_IN_SCOPE]: {
+    recommendedAction: "manual_review",
     automationSafe: false,
   },
 
