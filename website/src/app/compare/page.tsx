@@ -1,4 +1,4 @@
-import { productCopy } from "@/content/productCopy";
+import { conversionSpine, productCopy } from "@/content/productCopy";
 import { indexableGuideCanonical } from "@/lib/indexableGuides";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -60,13 +60,21 @@ export default function CompareHubPage() {
 
       <section className="home-section" aria-labelledby="compare-hub-cta-heading">
         <h2 id="compare-hub-cta-heading">Ready to see it in action?</h2>
-        <div className="home-cta-row" role="group" aria-label="Try the demo or get started">
-          <a className="btn secondary" href="/?demo=wf_missing#try-it">
-            {productCopy.homeHeroCtaLabels.demo}
-          </a>
-          <Link className="btn" href={productCopy.homeHeroSecondaryCta.href}>
+        <div className="home-cta-row" role="group" aria-label="Get started or try the demo">
+          <Link
+            className="btn"
+            href={productCopy.homeHeroSecondaryCta.href}
+            data-cta-priority={conversionSpine.ctaPriorityPrimaryValue}
+          >
             {productCopy.homeHeroSecondaryCta.label}
           </Link>
+          <a
+            className="btn secondary"
+            href="/?demo=wf_missing#try-it"
+            data-cta-priority={conversionSpine.ctaPrioritySecondaryValue}
+          >
+            {productCopy.homeHeroCtaLabels.demo}
+          </a>
         </div>
       </section>
     </main>

@@ -76,23 +76,28 @@ export default async function HomePage({
         <div className="home-hero-grid">
           <div className="home-hero-copy">
             <h1 id="hero-heading">{productCopy.hero.title}</h1>
-            <p className="home-hero-positioning lede">{productCopy.heroPositioning}</p>
             <p className="lede">{productCopy.heroOutcome}</p>
             <p className="lede">{productCopy.heroMechanism}</p>
-            <p className="lede">{productCopy.homeValueProposition}</p>
             <p className="home-cta-row" data-testid="home-hero-cta-row">
-              <a className="btn" href="/?demo=wf_missing#try-it" data-testid="home-hero-demo-cta">
+              <a
+                className="btn"
+                href="/?demo=wf_missing#try-it"
+                data-testid="home-hero-demo-cta"
+                data-cta-priority="primary"
+              >
                 {productCopy.homeHeroCtaLabels.demo}
               </a>
+            </p>
+            <p className="muted home-hero-tertiary">
               <Link
-                className="btn secondary"
+                className="link-tertiary"
                 href={productCopy.homePageHeroSecondaryCta.href}
                 data-testid={productCopy.homePageHeroSecondaryCta.testId}
+                data-cta-priority="secondary"
               >
                 {productCopy.homePageHeroSecondaryCta.label}
               </Link>
-            </p>
-            <p className="muted home-hero-tertiary" data-testid="home-hero-install-cta">
+              <span> · </span>
               <Link className="link-tertiary" href={productCopy.homeHeroSecondaryCta.href}>
                 {productCopy.homeHeroSecondaryCta.label}
               </Link>

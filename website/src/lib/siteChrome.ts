@@ -32,14 +32,6 @@ export function openapiHrefFromProcessEnv(): string {
   return `${anchorBase}/openapi-commercial-v1.yaml`;
 }
 
-/**
- * Shown in the header on hover (Problems and Compare; the Learn label links to /guides, not in this list).
- */
-export const SITE_HEADER_LEARN_FLYOUT_LINKS = [
-  { key: "problems", href: "/problems", label: "Problems" },
-  { key: "compare", href: "/compare", label: "Compare" },
-] as const;
-
 export function buildSiteHeaderPrimaryLinks(args: {
   anchors: SiteChromeAnchors;
   acquisitionHref: string;

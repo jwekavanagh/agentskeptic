@@ -6,17 +6,14 @@ describe("SiteHeader funnel links", () => {
   const src = readFileSync(path.join(__dirname, "..", "src", "app", "SiteHeader.tsx"), "utf8");
   const siteChromeSrc = readFileSync(path.join(__dirname, "..", "src", "lib", "siteChrome.ts"), "utf8");
 
-  it("exposes Learn to /guides, flyout, acquisition, Get started, pricing, sign-in callback, account, sign-out, and CLI", () => {
+  it("exposes Learn, Problems, Compare as direct links plus acquisition, Get started, pricing, sign-in callback, account, sign-out, and CLI", () => {
     expect(src).toContain("buildSiteHeaderPrimaryLinks");
-    expect(src).toContain("SITE_HEADER_LEARN_FLYOUT_LINKS");
     expect(src).toContain('href="/guides"');
-    expect(src).toContain("site-nav-learn-flyout");
-    expect(src).toContain("site-nav-learn-primary");
-    expect(siteChromeSrc).toContain('href: "/problems"');
-    expect(siteChromeSrc).toContain('label: "Problems"');
-    expect(siteChromeSrc).toContain('href: "/compare"');
-    expect(siteChromeSrc).toContain('label: "Compare"');
-    expect(siteChromeSrc).not.toContain('label: "Guides"');
+    expect(src).toContain('href="/problems"');
+    expect(src).toContain('href="/compare"');
+    expect(src).not.toContain("site-nav-learn-flyout");
+    expect(src).not.toContain("site-nav-learn-primary");
+    expect(siteChromeSrc).not.toContain("SITE_HEADER_LEARN_FLYOUT_LINKS");
     expect(siteChromeSrc).toContain('label: "Get started"');
     expect(src).toContain("href={productCopy.homepageAcquisitionCta.href}");
     expect(src).toContain("{marketing.homepageAcquisitionCtaLabel}");

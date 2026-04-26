@@ -58,6 +58,32 @@ export type SupportPageMetadata = { title: string; description: string };
 export type LearnBundledProofLedes = { primary: string; secondaryMuted: string };
 
 export type HomeHeroCtaLabels = { demo: string };
+export type ConversionSpineCtaLabel =
+  | "Try the demo"
+  | "Get started"
+  | "Continue to checkout"
+  | "Sign in to continue"
+  | "Continue with email"
+  | "Run your first verification"
+  | "View pricing";
+
+export type ConversionSpineRoute =
+  | "/"
+  | "/database-truth-vs-traces"
+  | "/integrate"
+  | "/pricing"
+  | "/guides"
+  | "/guides/[slug]"
+  | "/examples/[slug]"
+  | "/problems"
+  | "/compare"
+  | "/compare/[slug]"
+  | "/security"
+  | "/support"
+  | "/contact"
+  | "/claim"
+  | "/privacy"
+  | "/terms";
 
 /** Hero primary CTA — scrolls to bundled Try it. */
 export const HOME_HERO_DEMO_CTA_LABEL = "Try the demo" as const;
@@ -88,7 +114,7 @@ export const supportPage = {
       h2: "Buying and Enterprise",
       paragraph:
         "Self-serve plans and Stripe checkout are on Pricing. Enterprise procurement uses Contact sales on the Enterprise pricing card—this page does not publish a sales email address.",
-      cta: { label: "Go to Pricing", href: "/pricing" as const },
+      cta: { label: "View pricing", href: "/pricing" as const },
     },
     {
       kind: "legal" as const,
@@ -174,28 +200,34 @@ export const learnHub = {
     {
       href: "/guides/debug-postgres-after-langgraph",
       title: "Debug after LangGraph or agent runs (Postgres, SQLite, and other stores)",
+      caption: "A practical checklist to reconcile traces with persisted rows and state.",
     },
     {
       href: "/guides/first-run-verification",
       title: "First-run verification on your own data",
+      caption: "Run the first deterministic check on your own stores with minimal setup.",
     },
     {
       href: "/guides/pre-production-read-only-sql-gate",
       title: "Add a pre-production read-only gate (instead of more log volume)",
+      caption: "Add a stop-ship gate that verifies state before release.",
     },
   ],
   buyers: [
     {
       href: "/guides/buyer-ci-enforcement-metering",
       title: "CI enforcement and metering",
+      caption: "Understand enforcement controls, reserve behavior, and quota planning.",
     },
     {
       href: "/guides/buyer-commercial-boundary",
       title: "Commercial vs open-source boundaries and evaluation path",
+      caption: "See exactly what is paid vs OSS and how to evaluate without ambiguity.",
     },
     {
       href: "/guides/buyer-trust-production-implications",
       title: "What a green verdict really means in production",
+      caption: "Interpret trust outcomes correctly and avoid over-claiming guarantees.",
     },
   ],
 } as const;
@@ -242,15 +274,48 @@ export const pricingTeamFootnote = "";
 /** Primary CTA labels on `/pricing` cards (sign-in still required before checkout). */
 export const pricingPlanCtas = {
   starter: { href: "/integrate" as const, label: "Start free" },
-  individual: { signInLabel: "Get API key", checkoutLabel: "Continue to checkout" },
-  team: { signInLabel: "Start using CI enforcement", checkoutLabel: "Continue to checkout" },
-  business: { signInLabel: "Scale across services", checkoutLabel: "Continue to checkout" },
+  individual: { signInLabel: "Sign in to continue", checkoutLabel: "Continue to checkout" },
+  team: { signInLabel: "Sign in to continue", checkoutLabel: "Continue to checkout" },
+  business: { signInLabel: "Sign in to continue", checkoutLabel: "Continue to checkout" },
   enterprise: { label: "Contact sales" },
 } as const;
 
 export const homeHeroCtaLabels = {
   demo: HOME_HERO_DEMO_CTA_LABEL,
 } as const satisfies HomeHeroCtaLabels;
+
+export const conversionSpine = {
+  ctaPriorityAttr: "data-cta-priority",
+  ctaPriorityPrimaryValue: "primary",
+  ctaPrioritySecondaryValue: "secondary",
+  allowedLabels: [
+    "Try the demo",
+    "Get started",
+    "Continue to checkout",
+    "Sign in to continue",
+    "Continue with email",
+    "Run your first verification",
+    "View pricing",
+  ] as const,
+  dominantByRoute: {
+    "/": "Try the demo",
+    "/database-truth-vs-traces": "Try the demo",
+    "/integrate": "Run your first verification",
+    "/pricing": "Continue to checkout",
+    "/guides": "Get started",
+    "/guides/[slug]": "Get started",
+    "/examples/[slug]": "Get started",
+    "/problems": "Get started",
+    "/compare": "Get started",
+    "/compare/[slug]": "Get started",
+    "/security": "Get started",
+    "/support": "View pricing",
+    "/contact": "View pricing",
+    "/claim": "Continue with email",
+    "/privacy": "Get started",
+    "/terms": "Get started",
+  } as const satisfies Readonly<Record<ConversionSpineRoute, ConversionSpineCtaLabel>>,
+} as const;
 
 /** Hero secondary CTA — “Get started” (Install) on most surfaces; see `homePageHeroSecondaryCta` for `/` only. */
 export const homeHeroSecondaryCta = {
