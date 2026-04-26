@@ -164,7 +164,7 @@ export const adoptionCompleteChecklistTokenRefs = {
 
 /** Curated Learn hub (`/guides`): benefit-led links; routes must match markdown `route` frontmatter. */
 export const learnHub = {
-  popularHeading: "Popular guides",
+  popularHeading: "Guides",
   debugHeading: "Debug & troubleshooting",
   buyersHeading: "For buyers and teams",
   bundledProofHeading: "Bundled proof examples",

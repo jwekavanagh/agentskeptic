@@ -51,9 +51,9 @@ export default function PricingPage() {
         outcome={productCopy.coreValuePropTriptych.outcome}
       />
 
-      <section className="pricing-example" aria-labelledby="why-teams-pay">
-        <h2 id="why-teams-pay" className="pricing-example-heading">
-          Why teams pay
+      <section className="pricing-example" aria-labelledby="what-paid-plans-enable">
+        <h2 id="what-paid-plans-enable" className="pricing-example-heading">
+          What paid plans enable
         </h2>
         <ul>
           <li>Prevent false-green releases before they reach customers or compliance workflows.</li>
