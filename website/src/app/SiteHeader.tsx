@@ -46,7 +46,7 @@ export async function SiteHeader() {
     acquisitionHref: productCopy.homepageAcquisitionCta.href,
     acquisitionLabel: marketing.homepageAcquisitionCtaLabel,
   });
-  const [acq, started, price] = primaryLinks;
+  const [acq, started, price, cli] = primaryLinks;
 
   return (
     <header className="site-header">
@@ -55,8 +55,11 @@ export async function SiteHeader() {
         <nav className="site-nav" aria-label="Primary">
           {renderTopLevelLink(acq)}
           {renderTopLevelLink(started)}
+          <Link href="/guides">Learn</Link>
+          <Link href="/problems">Problems</Link>
+          <Link href="/compare">{productCopy.homeCommercialCompareApproachesLabel}</Link>
           {renderTopLevelLink(price)}
-          <Link href="/guides">Docs</Link>
+          {renderTopLevelLink(cli)}
           {signedIn ? (
             <>
               <Link href="/account">Account</Link>

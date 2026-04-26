@@ -94,14 +94,21 @@ export default async function HomePage({
               >
                 {productCopy.ctaTaxonomy.topOfFunnel}
               </a>
+            </p>
+            <p className="muted home-hero-tertiary">
               <Link
-                className="btn secondary"
-                href={productCopy.homeHeroSecondaryCta.href}
-                data-testid={productCopy.homeHeroSecondaryCta.testId}
+                className="link-tertiary"
+                href={productCopy.homePageHeroSecondaryCta.href}
+                data-testid={productCopy.homePageHeroSecondaryCta.testId}
                 data-cta-priority="secondary"
               >
-                {productCopy.ctaTaxonomy.decision}
+                {productCopy.homePageHeroSecondaryCta.label}
               </Link>
+              <span> · </span>
+              <Link className="link-tertiary" href={productCopy.homeHeroSecondaryCta.href}>
+                {productCopy.homeHeroSecondaryCta.label}
+              </Link>
+              <span> — npm, CI, and your own data.</span>
             </p>
             <TrustPills items={productCopy.trustStripPills} />
             <p className="muted" data-testid="home-guarantee-footnote">

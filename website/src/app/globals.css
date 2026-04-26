@@ -504,17 +504,6 @@ button.secondary, .btn.secondary {
   margin: 0 auto;
   padding: 1rem 1rem 2rem;
 }
-.site-footer-resources {
-  margin: 0.35rem 0 0.45rem;
-}
-.site-footer-resources summary {
-  cursor: pointer;
-  color: var(--muted);
-  font-size: 0.9rem;
-}
-.site-footer-resources nav {
-  margin-top: 0.35rem;
-}
 .site-footer-sep {
   color: var(--muted);
 }
