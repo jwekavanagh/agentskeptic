@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /**
- * Ensure website test databases are migrated before Vitest integration suites run.
- * Runs core migrations always; telemetry migrations only when TELEMETRY_DATABASE_URL is present.
+ * Ensure website test databases are migrated before DB-backed Vitest suites run.
+ * Runs core migrations only when DATABASE_URL is present and telemetry migrations
+ * only when TELEMETRY_DATABASE_URL is present.
  */
 import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
@@ -41,7 +42,9 @@ function run(scriptName) {
   }
 }
 
-run("db:migrate");
+if (env.DATABASE_URL?.trim()) {
+  run("db:migrate");
+}
 if (env.TELEMETRY_DATABASE_URL?.trim()) {
   run("db:migrate:telemetry");
 }
