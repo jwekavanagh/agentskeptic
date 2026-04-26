@@ -60,7 +60,7 @@ textarea:focus-visible,
   --surface: #eef2f7;
   --surface-2: #e2e8f0;
   --fg: #0b1220;
-  --muted: #3f4f61;
+  --muted: #5c6b7a;
   --brand-navy-ink: #0b1f33;
   --link: #1a4a6e;
   --link-hover: #0b1f33;
@@ -470,6 +470,10 @@ button.secondary, .btn.secondary {
 }
 .site-nav button.site-nav-signout:hover {
   text-decoration: underline;
+}
+.site-nav-learn {
+  display: inline-flex;
+  align-items: center;
 }
 .site-footer nav a {
   color: var(--muted);
