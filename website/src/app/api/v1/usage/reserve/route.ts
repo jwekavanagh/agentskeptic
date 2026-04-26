@@ -1,8 +1,8 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray, isNull, sql, sum } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 import { activationJson, activationReserveDeny } from "@/lib/activationHttp";
 import { db } from "@/db/client";
-import { usageCounters, usageReservations } from "@/db/schema";
+import { apiKeys, usageCounters, usageReservations } from "@/db/schema";
 import { authenticateApiKey, requireScopes } from "@/lib/apiKeyAuthGateway";
 import {
   resolveCommercialEntitlement,
@@ -15,6 +15,7 @@ import { logFunnelEvent } from "@/lib/funnelEvent";
 import { getCanonicalSiteOrigin } from "@/lib/canonicalSiteOrigin";
 import { billingPriceUnmappedMessage } from "@/lib/billingPriceUnmappedMessage";
 import { priceIdToPlanId } from "@/lib/priceIdToPlanId";
+import { computeAllowedNext, computeOverageCount } from "@/lib/quotaPolicy";
 
 function ymNow(): string {
   return new Date().toISOString().slice(0, 7);
@@ -33,6 +34,7 @@ function reserveAllowedPayload(
   planId: PlanId,
   usedTotal: number,
   included: number | null,
+  allowOverage: boolean,
 ): {
   allowed: true;
   plan: PlanId;
@@ -51,7 +53,11 @@ function reserveAllowedPayload(
       overage_count: 0,
     };
   }
-  const overage = Math.max(0, usedTotal - included);
+  const overage = computeOverageCount({
+    usedTotal,
+    includedMonthly: included,
+    allowOverage,
+  });
   return {
     allowed: true,
     plan: planId,
@@ -85,6 +91,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return scopeCheck.response;
   }
   const apiKeyId = authn.principal.keyId;
+  const userId = authn.principal.userId;
   const userRow = authn.principal.user;
   let body: { run_id?: string; issued_at?: string; intent?: unknown };
   try {
@@ -209,14 +216,19 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   const includedCap =
     planDef.includedMonthly === null ? null : (planDef.includedMonthly as number);
-  const includedForQuota =
-    includedCap === null ? Number.MAX_SAFE_INTEGER : includedCap;
   const allowOverage = planDef.allowOverage === true;
 
   const yearMonth = ymNow();
 
   try {
     const result = await db.transaction(async (tx) => {
+      const lockKey = `usage-reserve:${userId}:${yearMonth}`;
+      if (typeof (tx as unknown as { execute?: unknown }).execute === "function") {
+        await (tx as unknown as { execute: (q: unknown) => Promise<unknown> }).execute(
+          sql`select pg_advisory_xact_lock(hashtext(${lockKey}))`,
+        );
+      }
+
       const dup = await tx
         .select()
         .from(usageReservations)
@@ -224,35 +236,38 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
           and(eq(usageReservations.apiKeyId, apiKeyId), eq(usageReservations.runId, runId)),
         )
         .limit(1);
-      if (dup.length > 0) {
-        let c = await tx
-          .select()
-          .from(usageCounters)
-          .where(
-            and(
-              eq(usageCounters.apiKeyId, apiKeyId),
-              eq(usageCounters.yearMonth, yearMonth),
-            ),
-          )
-          .for("update");
-        if (c.length === 0) {
-          await tx.insert(usageCounters).values({
-            apiKeyId,
-            yearMonth,
-            count: 0,
-          });
-          c = await tx
+      let keyIds: string[] = [apiKeyId];
+      try {
+        const keyRows = await tx
+          .select({ id: apiKeys.id })
+          .from(apiKeys)
+          .where(and(eq(apiKeys.userId, userId), isNull(apiKeys.revokedAt)));
+        keyIds = keyRows.length > 0 ? keyRows.map((k) => k.id) : [apiKeyId];
+      } catch {
+        keyIds = [apiKeyId];
+      }
+
+      const totalUsedForMonth = async () => {
+        if (keyIds.length === 0) return 0;
+        try {
+          const rows = await tx
+            .select({ t: sum(usageCounters.count) })
+            .from(usageCounters)
+            .where(and(inArray(usageCounters.apiKeyId, keyIds), eq(usageCounters.yearMonth, yearMonth)));
+          const row = Array.isArray(rows) ? rows[0] : null;
+          return Number((row as { t?: unknown } | null)?.t ?? 0);
+        } catch {
+          const c = await tx
             .select()
             .from(usageCounters)
-            .where(
-              and(
-                eq(usageCounters.apiKeyId, apiKeyId),
-                eq(usageCounters.yearMonth, yearMonth),
-              ),
-            )
+            .where(and(eq(usageCounters.apiKeyId, apiKeyId), eq(usageCounters.yearMonth, yearMonth)))
             .for("update");
+          return Number(c[0]?.count ?? 0);
         }
-        const used = c[0]?.count ?? 0;
+      };
+
+      if (dup.length > 0) {
+        const used = await totalUsedForMonth();
         return { ok: true as const, usedTotal: used, duplicate: true as const };
       }
 
@@ -285,10 +300,13 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
           .for("update");
       }
 
-      const used = locked[0]!.count;
-
-      const atOrOverIncluded = used >= includedForQuota;
-      if (atOrOverIncluded && !allowOverage) {
+      const usedBefore = await totalUsedForMonth();
+      const allowedNext = computeAllowedNext({
+        usedTotal: usedBefore,
+        includedMonthly: includedCap,
+        allowOverage,
+      });
+      if (!allowedNext) {
         return {
           denied: true as const,
           code: "QUOTA_EXCEEDED" as const,
@@ -301,7 +319,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         runId,
       });
 
-      const newCount = used + 1;
+      const newCount = (locked[0]?.count ?? 0) + 1;
       await tx
         .update(usageCounters)
         .set({ count: newCount })
@@ -312,7 +330,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
           ),
         );
 
-      return { ok: true as const, usedTotal: newCount, duplicate: false as const };
+      const usedAfter = await totalUsedForMonth();
+      return { ok: true as const, usedTotal: usedAfter, duplicate: false as const };
     });
 
     if ("denied" in result && result.denied) {
@@ -331,7 +350,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       });
     }
 
-    const body = reserveAllowedPayload(planId, result.usedTotal, includedCap);
+    const body = reserveAllowedPayload(planId, result.usedTotal, includedCap, allowOverage);
 
     await logFunnelEvent({
       event: "reserve_allowed",

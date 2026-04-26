@@ -1,5 +1,7 @@
 # Commercial HTTP activation (correlation, errors, OpenAPI)
 
+> Non-normative companion. Normative commercial semantics live only in `docs/commercial.md`. Normative API contract lives only in `schemas/openapi-commercial-v1.yaml`.
+
 Normative contract for **traceable, machine-readable** HTTP on the OSS → paid activation surface: license reserve, plans catalog, verify-outcome beacon, public verification report ingestion, and OSS claim (ticket, redeem, continuation, legacy handoff redirect).
 
 **OpenAPI:** [`schemas/openapi-commercial-v1.yaml`](../schemas/openapi-commercial-v1.yaml) (served at `/openapi-commercial-v1.yaml` on the canonical site). **Drift gate:** [`scripts/assert-openapi-covers-activation-routes.mjs`](../scripts/assert-openapi-covers-activation-routes.mjs) — every `website/src/app/api/v1/**/route.ts`, `website/src/app/api/oss/**/route.ts`, and `api/public/verification-reports/route.ts` must appear in that spec (and vice versa).

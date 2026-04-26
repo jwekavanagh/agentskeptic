@@ -1,5 +1,7 @@
 # AgentSkeptic — website
 
+> Non-normative implementation guide. For normative commercial semantics, see `docs/commercial.md`. For normative API contract, see `schemas/openapi-commercial-v1.yaml`.
+
 ## Run locally (recommended)
 
 ```bash

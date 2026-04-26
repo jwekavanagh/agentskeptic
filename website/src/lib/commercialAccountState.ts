@@ -1,7 +1,4 @@
-import {
-  loadMonthlyQuotaForUser,
-  type MonthlyQuotaKeyRow,
-} from "@/lib/accountMonthlyQuota";
+import type { MonthlyQuotaKeyRow } from "@/lib/accountMonthlyQuota";
 import {
   getAccountEntitlementSummary,
   type PriceMapping,
@@ -15,6 +12,7 @@ import { users } from "@/db/schema";
 import { loadCommercialPlans, type PlanId } from "@/lib/plans";
 import { priceIdToPlanId } from "@/lib/priceIdToPlanId";
 import { eq } from "drizzle-orm";
+import { loadUsageSnapshotForUser } from "@/lib/usageSnapshot";
 
 function bareSupportEmail(raw: string | null | undefined): string | null {
   const trimmed = raw?.trim();
@@ -77,9 +75,13 @@ export type QuotaUrgency = "ok" | "notice" | "warning" | "in_overage" | "at_cap"
 
 export type MonthlyQuotaPayload = {
   yearMonth: string;
+  periodStartUtc: string;
+  periodEndUtc: string;
   keys: MonthlyQuotaKeyRow[];
   distinctReserveUtcDaysThisMonth: number;
   worstUrgency: QuotaUrgency;
+  allowedNext: boolean;
+  estimatedOverageUsd: string;
   totalOverageVerifications: number;
   overageProjectedLine: string | null;
   overageUpgradeNudge: string | null;
@@ -103,9 +105,13 @@ export function emptyMonthlyQuotaForTests(): MonthlyQuotaPayload {
   const yearMonth = new Date().toISOString().slice(0, 7);
   return {
     yearMonth,
+    periodStartUtc: new Date(`${yearMonth}-01T00:00:00.000Z`).toISOString(),
+    periodEndUtc: new Date(`${yearMonth}-28T00:00:00.000Z`).toISOString(),
     keys: [],
     distinctReserveUtcDaysThisMonth: 0,
     worstUrgency: "ok",
+    allowedNext: true,
+    estimatedOverageUsd: "0.00",
     totalOverageVerifications: 0,
     overageProjectedLine: null,
     overageUpgradeNudge: null,
@@ -223,10 +229,22 @@ export async function assembleCommercialAccountState(
   }
   const plan = row.plan as PlanId;
   const subscriptionStatus = normalizeSubscriptionStatusForAccount(row.subscriptionStatus);
-  const quotaBlock = await loadMonthlyQuotaForUser(input.userId, plan);
+  const usage = await loadUsageSnapshotForUser({
+    userId: input.userId,
+    planId: plan,
+  });
   const planDef = loadCommercialPlans().plans[plan];
   const allowOverage = planDef?.allowOverage === true;
-  const worstUrgency = computeWorstUrgency(quotaBlock.keys, allowOverage);
+  const quotaKeyRows: MonthlyQuotaKeyRow[] = [
+    {
+      apiKeyId: "account-pooled",
+      label: "Account usage",
+      used: usage.used_total,
+      limit: usage.included_monthly,
+      overageOnKey: usage.overage_count,
+    },
+  ];
+  const worstUrgency = usage.quota_state as QuotaUrgency;
   return buildCommercialAccountStatePayload({
     plan,
     subscriptionStatus,
@@ -235,13 +253,20 @@ export async function assembleCommercialAccountState(
     expectedPlan: input.expectedPlan,
     operatorContactEmail: input.operatorContactEmail,
     monthlyQuota: {
-      yearMonth: quotaBlock.yearMonth,
-      keys: quotaBlock.keys,
-      distinctReserveUtcDaysThisMonth: quotaBlock.distinctReserveUtcDaysThisMonth,
+      yearMonth: usage.year_month,
+      periodStartUtc: usage.period_start_utc,
+      periodEndUtc: usage.period_end_utc,
+      keys: quotaKeyRows,
+      distinctReserveUtcDaysThisMonth: 0,
       worstUrgency,
-      totalOverageVerifications: quotaBlock.totalOverageVerifications,
-      overageProjectedLine: quotaBlock.overageProjectedLine,
-      overageUpgradeNudge: quotaBlock.overageUpgradeNudge,
+      allowedNext: usage.allowed_next,
+      estimatedOverageUsd: usage.estimated_overage_usd,
+      totalOverageVerifications: usage.overage_count,
+      overageProjectedLine:
+        usage.overage_count > 0
+          ? `Overage this month: ${usage.overage_count.toLocaleString()} verifications past included; estimated add-on (before tax) ~$${usage.estimated_overage_usd}. Final amount appears on your Stripe invoice.`
+          : null,
+      overageUpgradeNudge: allowOverage ? null : null,
     },
   });
 }

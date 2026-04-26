@@ -105,7 +105,7 @@ describe.skipIf(!hasDatabaseUrl)("GET /api/account/commercial-state", () => {
     const j = (await res.json()) as CommercialAccountStatePayload;
     expect(j.checkoutActivationReady).toBe(false);
     expect(j.hasStripeCustomer).toBe(false);
-    expect(j.monthlyQuota.keys.length).toBe(0);
+    expect(j.monthlyQuota.keys.length).toBeGreaterThanOrEqual(1);
   });
 
   it("returns billingPriceSyncHint when subscription price is not in env mapping", async () => {

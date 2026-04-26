@@ -79,6 +79,37 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProblemDetails"
+  /api/v1/usage/current:
+    get:
+      operationId: getCurrentUsage
+      summary: Current usage and quota status for authenticated API key principal
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Current month usage and quota status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UsageCurrentV1"
+        "401":
+          description: Invalid API key or key lifecycle denial
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+        "403":
+          description: Missing required scope
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+        "503":
+          description: Plans configuration unavailable or server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
   /api/public/verification-reports:
     post:
       operationId: createPublicVerificationReport
@@ -534,6 +565,57 @@ components:
               type: string
               format: uri
               description: Present for some 403 entitlement responses
+    UsageCurrentV1:
+      type: object
+      required:
+        - schema_version
+        - plan
+        - year_month
+        - period_start_utc
+        - period_end_utc
+        - used_total
+        - included_monthly
+        - allow_overage
+        - overage_count
+        - quota_state
+        - allowed_next
+        - estimated_overage_usd
+      properties:
+        schema_version:
+          type: integer
+          const: 1
+        plan:
+          type: string
+          enum: [starter, individual, team, business, enterprise]
+        year_month:
+          type: string
+          pattern: "^[0-9]{4}-[0-9]{2}$"
+        period_start_utc:
+          type: string
+          format: date-time
+        period_end_utc:
+          type: string
+          format: date-time
+        used_total:
+          type: integer
+          minimum: 0
+        included_monthly:
+          oneOf:
+            - type: integer
+            - type: "null"
+        allow_overage:
+          type: boolean
+        overage_count:
+          type: integer
+          minimum: 0
+        quota_state:
+          type: string
+          enum: [ok, notice, warning, in_overage, at_cap]
+        allowed_next:
+          type: boolean
+        estimated_overage_usd:
+          type: string
+          example: "24.00"
     CommercialPlansResponse:
       type: object
       required:

@@ -64,6 +64,7 @@ describe("openapi-commercial contract", () => {
   it("lists activation paths matching implemented routes (see assert-openapi-covers-activation-routes.mjs)", () => {
     const t = readFileSync(derivedPath, "utf8");
     expect(t).toContain("/api/v1/usage/reserve");
+    expect(t).toContain("/api/v1/usage/current");
     expect(t).toContain("/api/v1/commercial/plans");
     expect(t).toContain("/api/v1/funnel/verify-outcome");
     expect(t).toContain("/api/public/verification-reports");
@@ -73,6 +74,7 @@ describe("openapi-commercial contract", () => {
     expect(t).toContain("/api/oss/claim-handoff");
     expect(t).toContain("createPublicVerificationReport");
     expect(t).toContain("reserveUsage");
+    expect(t).toContain("getCurrentUsage");
     expect(t).toContain("getCommercialPlans");
     expect(t).toContain("postVerifyOutcomeBeacon");
     expect(t).toContain("included_monthly");

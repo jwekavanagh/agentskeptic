@@ -77,6 +77,7 @@ import { maybeEmitOssClaimTicketUrlToStderr } from "./telemetry/maybeEmitOssClai
 import { classifyWorkflowLineage } from "./funnel/workflowLineageClassify.js";
 import { postProductActivationEvent } from "./telemetry/postProductActivationEvent.js";
 import { runFunnelAnonCliAndExit } from "./cli/runFunnelAnonSet.js";
+import { fetchCurrentUsage } from "./commercial/getCurrentUsage.js";
 
 function usageQuick(): string {
   return `Usage:
@@ -172,6 +173,19 @@ Advanced / optional (persisted runs, signing, local UI, plan/git checks):
 
   agentskeptic plan-transition --repo <dir> --before <ref> --after <ref> --plan <path>
   Validate git Before..After against machine plan rules (planValidation, body YAML section, or derived path citations as required diff surfaces; Git >= 2.30.0; see docs).
+
+  --help, -h  print this message and exit 0`;
+}
+
+function usageCurrentCommand(): string {
+  return `Usage:
+  agentskeptic usage [--json]
+
+Shows current commercial quota usage from GET /api/v1/usage/current.
+
+Exit codes:
+  0  success
+  3  operational failure (stderr: JSON envelope)
 
   --help, -h  print this message and exit 0`;
 }
@@ -1051,6 +1065,34 @@ function runPlanTransitionSubcommand(args: string[]): void {
 
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
+  if (args[0] === "usage") {
+    const rest = args.slice(1);
+    if (rest.includes("--help") || rest.includes("-h")) {
+      console.log(usageCurrentCommand());
+      process.exit(0);
+    }
+    const asJson = rest.includes("--json");
+    try {
+      const payload = await fetchCurrentUsage();
+      if (asJson) {
+        console.log(JSON.stringify(payload));
+      } else {
+        const included = payload.included_monthly === null ? "unlimited" : String(payload.included_monthly);
+        process.stdout.write(
+          `Plan: ${payload.plan}\nMonth: ${payload.year_month}\nUsed: ${payload.used_total}\nIncluded: ${included}\nOverage: ${payload.overage_count}\nState: ${payload.quota_state}\nAllowed next: ${payload.allowed_next}\nEstimated overage USD: ${payload.estimated_overage_usd}\n`,
+        );
+      }
+      process.exit(0);
+    } catch (e) {
+      if (e instanceof TruthLayerError) {
+        writeCliError(e.code, e.message);
+        process.exit(3);
+      }
+      const msg = e instanceof Error ? e.message : String(e);
+      writeCliError(CLI_OPERATIONAL_CODES.INTERNAL_ERROR, formatOperationalMessage(msg));
+      process.exit(3);
+    }
+  }
   if (args[0] === "funnel-anon") {
     await runFunnelAnonCliAndExit(args.slice(1));
     return;

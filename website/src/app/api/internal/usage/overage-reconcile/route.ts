@@ -1,10 +1,11 @@
 import { db } from "@/db/client";
-import { apiKeys, usageCounters, users } from "@/db/schema";
+import { users } from "@/db/schema";
 import { loadCommercialPlans, type PlanId } from "@/lib/plans";
 import { overagePriceIdToPlanId } from "@/lib/priceIdToPlanId";
 import { getStripe } from "@/lib/stripeServer";
-import { and, eq, inArray, isNotNull, sum } from "drizzle-orm";
+import { and, eq, inArray, isNotNull } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
+import { loadUsageSnapshotForUser } from "@/lib/usageSnapshot";
 
 /** Cron-invoked; must not be statically prerendered. */
 export const dynamic = "force-dynamic";
@@ -55,28 +56,12 @@ async function runReconcile(): Promise<NextResponse> {
     if (!def?.allowOverage || def.includedMonthly === null) {
       continue;
     }
-    const included = def.includedMonthly;
-
-    const krows = await db
-      .select({ id: apiKeys.id })
-      .from(apiKeys)
-      .where(eq(apiKeys.userId, u.id));
-    const keyIds = krows.map((k) => k.id);
-    let total = 0;
-    if (keyIds.length > 0) {
-      const [row] = await db
-        .select({ t: sum(usageCounters.count) })
-        .from(usageCounters)
-        .where(
-          and(
-            inArray(usageCounters.apiKeyId, keyIds),
-            eq(usageCounters.yearMonth, yearMonth),
-          ),
-        );
-      total = Number(row?.t ?? 0);
-    }
-
-    const overage = Math.max(0, total - included);
+    const usage = await loadUsageSnapshotForUser({
+      userId: u.id,
+      planId,
+      yearMonth,
+    });
+    const overage = usage.overage_count;
 
     try {
       if (!u.subId) {

@@ -578,6 +578,9 @@ export function AccountClient({
         <div data-testid="account-monthly-quota">
           <h2 className="u-mt-0">{productCopy.account.monthlyQuotaHeading}</h2>
           <p className="muted">{productCopy.account.monthlyQuotaYearMonth(commercial.monthlyQuota.yearMonth)}</p>
+          <p className="muted" data-testid="quota-reset-date">
+            Resets at {commercial.monthlyQuota.periodEndUtc}
+          </p>
           {commercial.monthlyQuota.keys.length === 0 ? (
             <p className="muted">{productCopy.account.monthlyQuotaNoKeyLine}</p>
           ) : (
@@ -611,6 +614,14 @@ export function AccountClient({
             {productCopy.account.monthlyQuotaDistinctDays(commercial.monthlyQuota.distinctReserveUtcDaysThisMonth)}
           </p>
           <p data-testid="quota-urgency-line">{quotaUrgencyLine}</p>
+          <p data-testid="quota-allowed-next">
+            {commercial.monthlyQuota.allowedNext
+              ? "Next licensed run is allowed."
+              : "Next licensed run will be denied at current usage."}
+          </p>
+          <p className="muted" data-testid="quota-estimated-overage-usd">
+            Estimated overage USD: {commercial.monthlyQuota.estimatedOverageUsd}
+          </p>
         </div>
       </section>
 

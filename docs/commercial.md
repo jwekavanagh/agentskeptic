@@ -95,6 +95,24 @@ Forks: build with `oss` to omit the gate.
 - **Auth:** none
 - **200:** `{"schemaVersion", "plans"}` with public fields only (no Stripe price env key names). Same shapes as the OpenAPI `CommercialPlansResponse` component.
 
+## HTTP — `GET /api/v1/usage/current`
+
+- **Auth:** `Authorization: Bearer <api_key>`
+- **Scope:** requires `meter`
+- **200:** `UsageCurrentV1` payload (`schema_version=1`) with month bounds, pooled usage, included quota, overage count, `quota_state`, `allowed_next`, and `estimated_overage_usd`
+- **403:** insufficient scope
+- **503:** plans unavailable or server error
+
+### Quota semantics (normative)
+
+- Quota policy is **account-pooled per month** (not per-key caps).
+- Reserve decisions are computed from transaction-locked state + pure quota policy rules.
+- `GET /api/v1/usage/current`, account usage UI, CLI `agentskeptic usage`, and overage reconcile all derive from the same pooled semantics.
+- If a user plan is missing in plans config:
+  - reserve returns `403 SUBSCRIPTION_INACTIVE` (`Invalid plan configuration.`)
+  - usage/current returns `503 PLANS_UNAVAILABLE`
+  - overage reconcile skips row and logs `overage_reconcile_invalid_plan`
+
 ## Subscription state, Stripe webhooks, and account API
 
 **Normative detail for billing sync, post-checkout UX, and deletion semantics lives here** (do not duplicate in other docs—link to this section).
