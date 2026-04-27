@@ -17,6 +17,14 @@ If your team needs baseline management, drift detection, and explicit change acc
 - Successful reserve preflight (`POST /api/v1/usage/reserve` with `intent=enforce`).
 - Active paid entitlement.
 
+<!-- buyer-surface-ci-enforcement-metering:begin -->
+
+## CI enforcement and metering
+
+`agentskeptic enforce` governs correctness over time using product-managed baseline, drift detection, and acceptance state. It requires the commercial npm build, a valid `AGENTSKEPTIC_API_KEY`, and a successful `POST /api/v1/usage/reserve` with `intent=enforce` under an active paid plan. OSS/local `verify` remains available for single-run checks, but does not provide authoritative cross-run enforcement state for CI teams.
+
+<!-- buyer-surface-ci-enforcement-metering:end -->
+
 ## Stateful workflow
 
 1. **Create baseline**

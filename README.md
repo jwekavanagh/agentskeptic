@@ -305,7 +305,7 @@ Run **after** a workflow (or CI replay of its log), **before** you treat the out
 
 **Typical uses:** block a release, trigger human review, open an incident, or attach a verification artifact to an audit trail.
 
-**CI with pinned outcomes:** **`agentskeptic enforce`** and committed **`ci-lock-v1`** fixtures—[`docs/ci-enforcement.md`](docs/ci-enforcement.md).
+**CI with over-time guarantees:** use stateful **`agentskeptic enforce`** baseline/check/accept lifecycle—[`docs/ci-enforcement.md`](docs/ci-enforcement.md).
 
 ## Further capabilities (reference)
 
@@ -338,7 +338,7 @@ Everything beyond core contract verification lives in **[`docs/agentskeptic.md`]
 
 ## Commercial CLI (npm) vs OSS (this repo)
 
-Canonical write-up: **[`docs/commercial.md`](docs/commercial.md)** (npm package, Stripe, keys, telemetry, validation, entitlements; operator metrics in **[`docs/funnel-observability.md`](docs/funnel-observability.md)**—disable with **`AGENTSKEPTIC_TELEMETRY=0`**). OSS builds in this repo run contract **`verify`** / **`quick`** without a license server and may emit **`--output-lock`** fixtures; **`--expect-lock`**, **`agentskeptic enforce`**, and paid compare require a commercial build per **[`docs/commercial-enforce-gate-normative.md`](docs/commercial-enforce-gate-normative.md)**. Example workflow: **[`examples/github-actions/agentskeptic-commercial.yml`](examples/github-actions/agentskeptic-commercial.yml)**.
+Canonical write-up: **[`docs/commercial.md`](docs/commercial.md)** (npm package, Stripe, keys, telemetry, validation, entitlements; operator metrics in **[`docs/funnel-observability.md`](docs/funnel-observability.md)**—disable with **`AGENTSKEPTIC_TELEMETRY=0`**). OSS builds in this repo run contract **`verify`** / **`quick`** without a license server for stateless runs. Stateful `agentskeptic enforce` and over-time guarantees require a commercial build per **[`docs/commercial-enforce-gate-normative.md`](docs/commercial-enforce-gate-normative.md)**. Example workflow: **[`examples/github-actions/agentskeptic-commercial.yml`](examples/github-actions/agentskeptic-commercial.yml)**.
 
 ## Status, contributing, security
 
