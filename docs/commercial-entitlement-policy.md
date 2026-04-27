@@ -14,9 +14,9 @@ The **published npm** path is gated in **`POST /api/v1/usage/reserve`**. **Start
 
 **OSS builds** from source (`WF_BUILD_PROFILE=oss`) do not call the license server and are not subscription-gated—see README and [`commercial-enforce-gate-normative.md`](commercial-enforce-gate-normative.md).
 
-## Why `enforce` and CI locks share the same paid gate
+## Why stateful `enforce` uses the paid gate
 
-**Licensed `verify` / `quick` with `--output-lock`** uses **`intent=verify`** on reserve. **`--expect-lock`**, **`agentskeptic enforce`**, and other enforcement-shaped paths use **`intent=enforce`**, which requires a **paid** plan (not Starter) and an active subscription (SSOT; see [`commercial-enforce-gate-normative.md`](commercial-enforce-gate-normative.md)).
+`agentskeptic verify` / `quick` use **`intent=verify`** on reserve for licensed stateless runs. Stateful `agentskeptic enforce` uses **`intent=enforce`**, which requires a **paid** plan (not Starter) and an active subscription (SSOT; see [`commercial-enforce-gate-normative.md`](commercial-enforce-gate-normative.md)).
 
 ## Why `starter` can `verify` but not `enforce` on commercial npm
 

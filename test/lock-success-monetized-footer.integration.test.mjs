@@ -1,5 +1,5 @@
 /**
- * Batch verify + --output-lock success emits monetized-boundary stderr literals (machine-checked).
+ * Batch verify with removed lock flags exits ENFORCE_USAGE.
  */
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
@@ -9,17 +9,13 @@ import { tmpdir } from "os";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "child_process";
 import { DatabaseSync } from "node:sqlite";
-import {
-  LOCK_SUCCESS_MONETIZED_BOUNDARY_LINE_A,
-  LOCK_SUCCESS_MONETIZED_BOUNDARY_LINE_B,
-} from "../dist/cli/lockOrchestration.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, "..");
 const cliJs = join(root, "dist", "cli.js");
 
-describe("lock success monetized boundary footers", () => {
-  it("stderr includes exported literals after exit 0", () => {
+describe("removed lock flag enforcement", () => {
+  it("batch verify with --output-lock exits 3 ENFORCE_USAGE", () => {
     const dir = mkdtempSync(join(tmpdir(), "lock-footer-"));
     try {
       const dbPath = join(dir, "demo.db");
@@ -47,9 +43,9 @@ describe("lock success monetized boundary footers", () => {
         ],
         { encoding: "utf8", cwd: root },
       );
-      assert.equal(r.status, 0, r.stderr);
-      assert.ok(r.stderr.includes(LOCK_SUCCESS_MONETIZED_BOUNDARY_LINE_A), r.stderr);
-      assert.ok(r.stderr.includes(LOCK_SUCCESS_MONETIZED_BOUNDARY_LINE_B), r.stderr);
+      assert.equal(r.status, 3, r.stderr);
+      const envelope = JSON.parse(r.stderr.trim());
+      assert.equal(envelope.code, "ENFORCE_USAGE");
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

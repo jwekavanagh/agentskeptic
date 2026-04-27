@@ -1,5 +1,5 @@
 /**
- * OSS batch verify: --output-lock only under mkdtemp (no expect-lock).
+ * OSS batch verify: removed --output-lock flag must fail with ENFORCE_USAGE.
  */
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
@@ -16,8 +16,8 @@ const cliJs = join(root, "dist", "cli.js");
 const eventsPath = join(root, "examples", "events.ndjson");
 const registryPath = join(root, "examples", "tools.json");
 
-describe("OSS batch --output-lock", () => {
-  it("writes ci-lock under mkdtemp and exits 0", () => {
+describe("OSS batch removed --output-lock", () => {
+  it("rejects removed flag and exits 3", () => {
     const dir = mkdtempSync(join(tmpdir(), "oss-out-lock-"));
     try {
       const dbPath = join(dir, "demo.db");
@@ -45,10 +45,9 @@ describe("OSS batch --output-lock", () => {
         ],
         { encoding: "utf8", cwd: root },
       );
-      assert.equal(r.status, 0, r.stderr);
-      const raw = readFileSync(lockPath, "utf8");
-      assert.ok(raw.includes('"kind"'));
-      assert.ok(raw.includes("batch"));
+      assert.equal(r.status, 3, r.stderr);
+      const envelope = JSON.parse(r.stderr.trim());
+      assert.equal(envelope.code, "ENFORCE_USAGE");
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

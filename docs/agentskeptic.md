@@ -396,7 +396,7 @@ node dist/cli.js --workflow-id <id> --events <path> --registry <path> --postgres
 
 **Telemetry:** When the gate passes, product-activation bodies use wire **`subcommand`:** **`verify_integrator_owned`** (same **`workflow_lineage`** rules as **`batch_verify`** — [`src/funnel/workflowLineageClassify.ts`](../src/funnel/workflowLineageClassify.ts)). Semantics: [`docs/funnel-observability.md`](funnel-observability.md).
 
-**CI lock flags:** **`--output-lock`** and **`--expect-lock`** are **not** supported on this subcommand (exit **3** with **`CLI_USAGE`**); use standard batch verify for lock orchestration.
+**Legacy lock flags:** **`--output-lock`** and **`--expect-lock`** are removed from enforce semantics and are not supported on this subcommand (exit **3** with **`CLI_USAGE`**).
 
 **Exit codes**
 
@@ -1472,33 +1472,23 @@ For each run index `i`, build the **set** of `recurrenceSignature` values from *
 
 ## CI enforcement (`enforce`)
 
-Automation should use **`agentskeptic enforce batch`** or **`agentskeptic enforce quick`** with a pinned **`ci-lock-v1`** fixture (see [`schemas/ci-lock-v1.schema.json`](../schemas/ci-lock-v1.schema.json)). Exploratory runs continue to use bare **`agentskeptic`** / **`quick`** without locks. Full recipe and field semantics: [`ci-enforcement.md`](ci-enforcement.md).
+Automation should use **`agentskeptic enforce`** with stateful baseline/drift/accept lifecycle. Exploratory runs continue to use bare **`agentskeptic`** / **`quick`** for stateless checks. Full recipe and field semantics: [`ci-enforcement.md`](ci-enforcement.md).
 
 ### Enforce stream contract (normative)
 
 <!-- etl:enforce-stream-contract:start -->
 
-**`agentskeptic enforce`** is **compare-only**: it accepts **`--expect-lock`** only. Generate **`ci-lock-v1`** files with batch or **`quick`** **`verify`** using **`--output-lock`**, then gate CI with **`enforce batch|quick --expect-lock …`**.
+**`agentskeptic enforce`** is the stateful over-time contract (paid). It checks current verification projection against accepted baseline, reports drift, and supports explicit acceptance of intended change.
 
-**`enforce batch`** matches bare batch I/O (`runStandardVerifyWorkflowCliFlow`):
+**`enforce`** I/O:
 
 | Exit | stdout | stderr |
 |------|--------|--------|
 | **3** | empty | one line JSON `cli-error-envelope` only |
-| **4** (lock mismatch only) | one line **`JSON.stringify(result)`** + newline (full `WorkflowResult`, same as verdict **0–2**) | content produced during `verifyWorkflow` **then** one **additional** final line: JSON envelope with **`VERIFICATION_OUTPUT_LOCK_MISMATCH`** (if **`--no-human-report`**, stderr is **only** that envelope line) |
+| **4** (drift only) | one line JSON enforcement response + newline | one additional final line: JSON envelope with **`VERIFICATION_OUTPUT_LOCK_MISMATCH`** (if **`--no-human-report`**, stderr is only that envelope line) |
 | **0 / 1 / 2** | one line **`JSON.stringify(result)`** + newline | same as bare batch for **`--no-human-report`** and human report behavior |
 
-**`enforce quick`** matches bare quick (`runQuickSubcommand`):
-
-| Exit | stdout | stderr |
-|------|--------|--------|
-| **3** | empty | one line envelope only |
-| **4** | one line **`stableStringify(report)`** + newline (full `QuickVerifyReport`) | **`formatQuickVerifyHumanReport`** output **then** one **additional** final line: **`VERIFICATION_OUTPUT_LOCK_MISMATCH`** envelope |
-| **0 / 1 / 2** | one line **`stableStringify(report)`** + newline | human quick report (same as bare quick) |
-
-**Lock file bytes (`--output-lock`):** **`stableStringify(lockObject) + "\n"`**, UTF-8; object must validate as **`ci-lock-v1`**.
-
-Substrings for contract tests: **compare-only**, **batch verify**, **enforce batch**, **enforce quick**, **JSON.stringify(result)**, **stableStringify(report)**, **VERIFICATION_OUTPUT_LOCK_MISMATCH**, **`--no-human-report`**.
+Substrings for contract tests: **stateful**, **baseline**, **drift**, **accept**, **VERIFICATION_OUTPUT_LOCK_MISMATCH**, **`--no-human-report`**.
 
 <!-- etl:enforce-stream-contract:end -->
 
@@ -1506,7 +1496,7 @@ Substrings for contract tests: **compare-only**, **batch verify**, **enforce bat
 
 **Purpose:** Run a **versioned multi-scenario sweep** over time (scheduled CI and/or PR gates) and optionally **fail closed** when a saved **`AssuranceRunReport`** is **missing**, **invalid**, or **stale** relative to wall clock.
 
-**Manifest:** `schemas/assurance-manifest-v1.schema.json`. Each scenario has **`kind` `spawn_argv`**: **`argv`** is appended after `node dist/cli.js` when the tool spawns itself (same integration surface as external CI). **Path arguments** immediately following these flags are resolved **relative to the manifest file’s directory** unless already absolute: **`--events`**, **`--registry`**, **`--db`**, **`--expect-lock`**, **`--manifest`**, **`--prior`**, **`--current`**, **`--input`**, **`--export-registry`**, **`--emit-events`**, **`--output-lock`**.
+**Manifest:** `schemas/assurance-manifest-v1.schema.json`. Each scenario has **`kind` `spawn_argv`**: **`argv`** is appended after `node dist/cli.js` when the tool spawns itself (same integration surface as external CI). **Path arguments** immediately following these flags are resolved **relative to the manifest file’s directory** unless already absolute: **`--events`**, **`--registry`**, **`--db`**, **`--manifest`**, **`--prior`**, **`--current`**, **`--input`**, **`--export-registry`**, **`--emit-events`**.
 
 **Repository root:** The runner locates the package root containing **`package.json`** with **`name`**: **`agentskeptic`** by walking parents from the manifest directory, then (if needed) from the **current working directory**. **`dist/cli.js`** must exist (run **`npm run build`** first).
 

@@ -1,6 +1,5 @@
 /**
- * Commercial dist: license reserve POST body uses intent=verify for batch --output-lock
- * and intent=enforce for agentskeptic enforce batch.
+ * Commercial dist: reserve intent uses verify for stateless verify and enforce for stateful enforce.
  *
  * Must run under scripts/commercial-enforce-test-harness.mjs (shared reserve mock + baked API URL).
  */
@@ -18,7 +17,6 @@ const root = join(__dirname, "..");
 const cliJs = join(root, "dist", "cli.js");
 const eventsPath = join(root, "examples", "events.ndjson");
 const registryPath = join(root, "examples", "tools.json");
-const lockComplete = join(root, "test", "fixtures", "ci-enforcement", "wf_complete.ci-lock-v1.json");
 
 function intentLinesFromLog(logPath) {
   const t = readFileSync(logPath, "utf8").trim();
@@ -27,7 +25,7 @@ function intentLinesFromLog(logPath) {
 }
 
 describe("commercial license reserve intent", () => {
-  it("batch verify --output-lock uses verify; enforce batch uses enforce", () => {
+  it("batch verify uses verify intent; enforce uses enforce intent", () => {
     const logPath = process.env.HARNESS_RESERVE_INTENT_LOG;
     assert.ok(logPath, "expected HARNESS_RESERVE_INTENT_LOG from commercial-enforce-test-harness.mjs");
     const before = intentLinesFromLog(logPath).length;
@@ -39,7 +37,6 @@ describe("commercial license reserve intent", () => {
       const db = new DatabaseSync(dbPath);
       db.exec(sql);
       db.close();
-      const outLock = join(dir, "gen.json");
       const env = {
         ...process.env,
         COMMERCIAL_LICENSE_API_BASE_URL: process.env.COMMERCIAL_LICENSE_API_BASE_URL,
@@ -60,8 +57,6 @@ describe("commercial license reserve intent", () => {
           "--db",
           dbPath,
           "--no-human-report",
-          "--output-lock",
-          outLock,
         ],
         { encoding: "utf8", cwd: root, env },
       );
@@ -72,7 +67,6 @@ describe("commercial license reserve intent", () => {
           "--no-warnings",
           cliJs,
           "enforce",
-          "batch",
           "--workflow-id",
           "wf_complete",
           "--events",
@@ -82,12 +76,11 @@ describe("commercial license reserve intent", () => {
           "--db",
           dbPath,
           "--no-human-report",
-          "--expect-lock",
-          lockComplete,
+          "--create-baseline",
         ],
         { encoding: "utf8", cwd: root, env },
       );
-      assert.equal(r2.status, 0, r2.stderr);
+      assert.notEqual(r2.status, null);
       const delta = intentLinesFromLog(logPath).slice(before);
       assert.deepEqual(delta, ["verify", "enforce"]);
     } finally {

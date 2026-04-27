@@ -14,7 +14,7 @@ This document is the **narrative SSOT** for the thin commercial layer (website, 
 
 ## Commercial boundary
 
-The **published npm CLI** path for licensed contract **`verify`** and **`quick`** with lock flags uses a valid API key and a successful **`POST /api/v1/usage/reserve`**. **Starter** includes a **finite free** monthly allowance for licensed **`verify`** (see [`config/commercial-plans.json`](../config/commercial-plans.json)); **`enforce`** and **`--expect-lock`** require a **paid** plan with an **active** Individual, Team, Business, or Enterprise subscription (Stripe **trialing** counts). The default **OSS** build runs contract **`verify`** / **`quick`** without a license server and can emit **`--output-lock`** fixtures. **Paid** plans add **metered overage** after the included amount (Stripe subscription has a **base** Price + **metered** overage Price; see `scripts/stripe-bootstrap.mjs`). Full matrix: *Free vs paid boundary* below.
+The **published npm CLI** path for licensed contract **`verify`** and **`quick`** uses a valid API key and a successful **`POST /api/v1/usage/reserve`**. **Starter** includes a **finite free** monthly allowance for licensed **`verify`** (see [`config/commercial-plans.json`](../config/commercial-plans.json)). Stateful **`enforce`** (baseline, drift check, acceptance over time) requires a **paid** plan with an **active** Individual, Team, Business, or Enterprise subscription (Stripe **trialing** counts). The default **OSS** build runs contract **`verify`** / **`quick`** without a license server for single-run outcomes only. **Paid** plans add metered overage after the included amount (Stripe subscription has a base Price + metered overage Price; see `scripts/stripe-bootstrap.mjs`). Full matrix: *Free vs paid boundary* below.
 
 In-process **`createDecisionGate`** in your application evaluates read-only SQL and **does not** call the reserve API; metering applies to the **CLI entry points** that perform license preflight.
 
@@ -50,9 +50,7 @@ Single matrix for what the **default OSS artifact** vs **published commercial np
 | Capability | OSS build (`WF_BUILD_PROFILE=oss`) | Commercial npm + subscription + reserve | Starter account (no paid subscription) |
 |------------|--------------------------------------|------------------------------------------|----------------------------------------|
 | Contract **`verify`** / **`quick`** without API key | Yes | No (requires key + reserve + entitlement) | N/A (use OSS or subscribe) |
-| **`--output-lock`** on batch / quick | Yes (generates lock fixture; no reserve) | Yes (reserve `intent=verify`) | N/A |
-| **`--expect-lock`** on batch / quick | No (exit `ENFORCE_REQUIRES_COMMERCIAL_BUILD`) | Yes (reserve `intent=enforce` per lock orchestration) | N/A |
-| **`agentskeptic enforce`** | No | Yes (reserve `intent=enforce`) | N/A |
+| Stateful `enforce` baseline/drift/accept | No | Yes (reserve `intent=enforce`) | N/A |
 | Licensed monthly quota consumption | No | Yes, per API key; included then overage on paid | Yes, up to Starter **included** cap per key (`includedMonthly` in JSON; no overage) |
 
 **Why this shape:** OSS stays useful for adoption and local experimentation (including generating lock artifacts). **Subscription-backed reliance** for the published npm path—licensed verify, compare against an existing lock in CI, and **`enforce`**—is gated by the license server and Stripe-backed entitlement. Normative CLI split: **[`docs/commercial-enforce-gate-normative.md`](commercial-enforce-gate-normative.md)**; CI recipes: **[`docs/ci-enforcement.md`](ci-enforcement.md)**.

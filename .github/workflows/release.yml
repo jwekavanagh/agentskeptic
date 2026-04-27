@@ -42,15 +42,21 @@ jobs:
       issues: write
       pull-requests: write
     env:
-      GITHUB_TOKEN: ${{ secrets.SEMANTIC_RELEASE_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
       AGENTSKEPTIC_TELEMETRY: "0"
     steps:
-      - uses: actions/checkout@v5
+      - name: Create GitHub App token
+        uses: actions/create-github-app-token@v1
+        id: app-token
+        with:
+          app-id: ${{ vars.RELEASE_APP_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+
+      - uses: actions/checkout@v4
         with:
           ref: "${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.ref }}"
           fetch-depth: 0
           persist-credentials: true
-          token: ${{ secrets.SEMANTIC_RELEASE_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
+          token: ${{ steps.app-token.outputs.token }}
 
       - uses: actions/setup-node@v5
         env:
@@ -99,6 +105,8 @@ jobs:
         env:
           WF_BUILD_PROFILE: commercial
           COMMERCIAL_LICENSE_API_BASE_URL: ${{ vars.COMMERCIAL_LICENSE_API_BASE_URL }}
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
         shell: bash
         run: |
           set +e

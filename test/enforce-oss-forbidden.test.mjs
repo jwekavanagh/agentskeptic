@@ -8,7 +8,6 @@ import { fileURLToPath } from "node:url";
 import { spawnSync } from "child_process";
 import { cliErrorEnvelope, CLI_OPERATIONAL_CODES } from "../dist/failureCatalog.js";
 import { ENFORCE_OSS_GATE_MESSAGE } from "../dist/enforceCli.js";
-import { EXPECT_LOCK_REQUIRES_COMMERCIAL_BUILD_MESSAGE } from "../dist/cli/lockOrchestration.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, "..");
@@ -17,11 +16,6 @@ const cliJs = join(root, "dist", "cli.js");
 const expectedStderr = cliErrorEnvelope(
   CLI_OPERATIONAL_CODES.ENFORCE_REQUIRES_COMMERCIAL_BUILD,
   ENFORCE_OSS_GATE_MESSAGE,
-);
-
-const expectedExpectLockOssStderr = cliErrorEnvelope(
-  CLI_OPERATIONAL_CODES.ENFORCE_REQUIRES_COMMERCIAL_BUILD,
-  EXPECT_LOCK_REQUIRES_COMMERCIAL_BUILD_MESSAGE,
 );
 
 function runCli(args) {
@@ -39,10 +33,9 @@ describe("enforce OSS forbidden", () => {
     assert.equal(r.stderr.trim(), expectedStderr);
   });
 
-  it("enforce batch without lock flags exits 3 with commercial-build envelope", () => {
+  it("enforce with batch-shaped args exits 3 with commercial-build envelope", () => {
     const r = runCli([
       "enforce",
-      "batch",
       "--workflow-id",
       "wf_complete",
       "--events",
@@ -58,8 +51,8 @@ describe("enforce OSS forbidden", () => {
     assert.equal(r.stderr.trim(), expectedStderr);
   });
 
-  it("enforce quick exits 3 with commercial-build envelope before quick parse", () => {
-    const r = runCli(["enforce", "quick"]);
+  it("enforce with malformed args exits 3 with commercial-build envelope", () => {
+    const r = runCli(["enforce", "--unexpected"]);
     assert.equal(r.status, 3);
     assert.equal(r.stdout, "");
     assert.equal(r.stderr.trim(), expectedStderr);
@@ -78,7 +71,7 @@ describe("enforce OSS forbidden", () => {
     assert.ok(r.stdout.includes("Usage:"));
   });
 
-  it("batch verify with --expect-lock exits 3 with commercial-build envelope (OSS)", () => {
+  it("batch verify with --expect-lock exits ENFORCE_USAGE (lock flags removed)", () => {
     const r = runCli([
       "--workflow-id",
       "wf_complete",
@@ -94,6 +87,7 @@ describe("enforce OSS forbidden", () => {
     ]);
     assert.equal(r.status, 3);
     assert.equal(r.stdout, "");
-    assert.equal(r.stderr.trim(), expectedExpectLockOssStderr);
+    const env = JSON.parse(r.stderr.trim());
+    assert.equal(env.code, "ENFORCE_USAGE");
   });
 });

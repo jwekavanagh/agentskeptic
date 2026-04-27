@@ -13,7 +13,7 @@
       "overageDisplayLabel": null,
       "marketingHeadline": "Starter",
       "audience": "Local/OSS and small CI validation",
-      "valueUnlock": "1,000 licensed CI verifications per month. Open-source and in-process use stays free. Upgrade for enforcement and higher volume.",
+      "valueUnlock": "1,000 licensed CI checks per month. Local single-run verify stays free; over-time enforcement state (baseline, drift, acceptance) requires paid plans.",
       "stripePriceEnvKeyMonthly": null,
       "stripePriceEnvKeyYearly": null,
       "stripeOveragePriceEnvKey": null
@@ -29,7 +29,7 @@
       "overageDisplayLabel": "$0.015 / verification (overage, after included)",
       "marketingHeadline": "Individual",
       "audience": "Solo engineers running verification in CI",
-      "valueUnlock": "Enforce in CI, licensed npm CLI, API keys, and usage-based overage when you exceed included quota.",
+      "valueUnlock": "Stateful CI enforcement: baseline management, drift detection, and change acceptance over time, plus licensed npm CLI and overage after included quota.",
       "stripePriceEnvKeyMonthly": "STRIPE_PRICE_INDIVIDUAL",
       "stripePriceEnvKeyYearly": "STRIPE_PRICE_INDIVIDUAL_YEARLY",
       "stripeOveragePriceEnvKey": "STRIPE_OVERAGE_INDIVIDUAL"
@@ -45,7 +45,7 @@
       "overageDisplayLabel": "$0.012 / verification (overage, after included)",
       "marketingHeadline": "Team",
       "audience": "Teams sharing CI pipelines",
-      "valueUnlock": "More included runs for shared pipelines, same overage model when you grow past quota.",
+      "valueUnlock": "Shared team enforcement state across pipelines with higher included volume and overage when you grow past quota.",
       "stripePriceEnvKeyMonthly": "STRIPE_PRICE_TEAM",
       "stripePriceEnvKeyYearly": "STRIPE_PRICE_TEAM_YEARLY",
       "stripeOveragePriceEnvKey": "STRIPE_OVERAGE_TEAM"
@@ -61,7 +61,7 @@
       "overageDisplayLabel": "$0.009 / verification (overage, after included)",
       "marketingHeadline": "Business",
       "audience": "Multi-service and high-volume workflows",
-      "valueUnlock": "Large included quota for many pipelines; overage for bursts beyond it.",
+      "valueUnlock": "Organization-wide enforcement governance over time with large included volume and overage for bursts.",
       "stripePriceEnvKeyMonthly": "STRIPE_PRICE_BUSINESS",
       "stripePriceEnvKeyYearly": "STRIPE_PRICE_BUSINESS_YEARLY",
       "stripeOveragePriceEnvKey": "STRIPE_OVERAGE_BUSINESS"

@@ -1,5 +1,5 @@
-import { conversionSpine, productCopy } from "@/content/productCopy";
 import { ValuePropTriptych } from "@/components/marketing/ValuePropTriptych";
+import { conversionSpine, productCopy } from "@/content/productCopy";
 import { indexableGuideCanonical } from "@/lib/indexableGuides";
 import type { Metadata } from "next";
 import Link from "next/link";

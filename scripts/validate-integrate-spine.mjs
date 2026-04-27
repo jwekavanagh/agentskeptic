@@ -67,6 +67,9 @@ if [ ! -f examples/integrate-your-db/bootstrap-input.json ] && [ -n "\${INTEGRAT
   cp "\$INTEGRATE_SPINE_HOST_ROOT/examples/integrate-your-db/bootstrap-input.json" examples/integrate-your-db/
   cp "\$INTEGRATE_SPINE_HOST_ROOT/examples/integrate-your-db/required-sqlite-state.sql" examples/integrate-your-db/
 fi
+if [ -n "\${INTEGRATE_SPINE_HOST_ROOT:-}" ]; then
+  cp "\$INTEGRATE_SPINE_HOST_ROOT/scripts/partner-quickstart-verify.mjs" scripts/partner-quickstart-verify.mjs
+fi
 `;
   if (!templateUtf8.includes("cd agentskeptic\n")) {
     throw new Error("integrate template must contain cd agentskeptic newline");
