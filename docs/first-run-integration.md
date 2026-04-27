@@ -32,6 +32,8 @@ npm start
 npm run first-run-verify
 ```
 
+**Partner quickstart (copy-paste commands SSOT):** [partner-quickstart-commands.md](partner-quickstart-commands.md) — `npm run partner-quickstart`, Postgres, LangGraph oracle, and integrator-owned gate examples. LangGraph-shaped emitters vs repo truth: [`langgraph-reference-boundaries.md`](langgraph-reference-boundaries.md#langgraph-reference-documentation-boundaries).
+
 ## Step 3: Bootstrap fixture and `wf_bootstrap_fixture`
 
 The activation shell uses a temp `--out` and a copied DB (`$ADOPT_DB`); the bootstrap input path is exactly:
