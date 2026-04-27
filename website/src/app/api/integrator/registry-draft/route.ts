@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { parseBootstrapPackInputJson, synthesizeQuickInputUtf8FromOpenAiV1 } from "agentskeptic/bootstrapPackSynthesis";
 import {
   buildRegistryDraftPrompt,
   getBootstrapPackInputValidator,
@@ -84,20 +85,48 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ code: "OPENAI_ERROR", message: ai.message }, { status: ai.status });
   }
 
-  let responseJson: unknown;
+  let llmPartial: unknown;
   try {
-    responseJson = JSON.parse(ai.contentText) as unknown;
+    llmPartial = JSON.parse(ai.contentText) as unknown;
   } catch {
     return NextResponse.json({ code: "MODEL_OUTPUT_INVALID", message: "model returned non-JSON" }, { status: 502 });
   }
 
+  if (llmPartial === null || typeof llmPartial !== "object" || Array.isArray(llmPartial)) {
+    return NextResponse.json(
+      { code: "MODEL_OUTPUT_INVALID", message: "model output must be a JSON object" },
+      { status: 502 },
+    );
+  }
+  const lp = llmPartial as Record<string, unknown>;
+
+  let bodyUtf8: string;
+  try {
+    const rawBootstrap = JSON.stringify(parsed.normalizedBootstrapPackInput);
+    const pbi = parseBootstrapPackInputJson(rawBootstrap);
+    bodyUtf8 = synthesizeQuickInputUtf8FromOpenAiV1(pbi);
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    return NextResponse.json({ code: "QUICK_INGEST_SYNTHESIS_FAILED", message: msg }, { status: 500 });
+  }
+
+  const merged = {
+    schemaVersion: 2,
+    draft: lp["draft"],
+    assumptions: lp["assumptions"],
+    warnings: lp["warnings"],
+    disclaimer: lp["disclaimer"],
+    model: lp["model"],
+    quickIngestInput: { encoding: "utf8" as const, body: bodyUtf8 },
+  };
+
   const validateResponse = getRegistryDraftResponseEnvelopeValidator();
-  if (!validateResponse(responseJson)) {
+  if (!validateResponse(merged)) {
     return NextResponse.json(
       { code: "MODEL_OUTPUT_INVALID", errors: validateResponse.errors ?? [] },
       { status: 502 },
     );
   }
 
-  return NextResponse.json(responseJson, { status: 200 });
+  return NextResponse.json(merged, { status: 200 });
 }

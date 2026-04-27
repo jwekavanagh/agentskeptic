@@ -1,5 +1,7 @@
 # AgentSkeptic integrator guide (v2 SSOT)
 
+**Fastest first path to a real verify:** [guided-first-verification.md](guided-first-verification.md) (browser flow: draft + quick ingest + one `agentskeptic quick` copy-paste).
+
 This document is the **single supported starting point** for shipping AgentSkeptic in application code. Older split guides are stubs that redirect here.
 
 ## Product shape

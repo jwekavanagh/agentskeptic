@@ -43,5 +43,8 @@ describe("/integrate completion semantics (RTL)", () => {
       expect(aggregate.includes(bad)).toBe(false);
     }
     expect(container.querySelector('[data-testid="integrate-crossing-commands"]')).toBeTruthy();
+    const guided = container.querySelector('[data-testid="integrate-guided-link"]');
+    expect(guided).toBeTruthy();
+    expect((guided as HTMLAnchorElement).getAttribute("href")).toBe("/integrate/guided");
   });
 });

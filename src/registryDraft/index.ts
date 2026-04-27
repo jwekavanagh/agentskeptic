@@ -9,3 +9,4 @@ export { normalizeOpenAiToolCallsToBootstrapPackInput } from "./normalizeOpenAiT
 export { parseAndNormalizeRegistryDraftRequest } from "./parseAndNormalizeRegistryDraftRequest.js";
 export type { RegistryDraftParseResult } from "./parseAndNormalizeRegistryDraftRequest.js";
 export { buildRegistryDraftPrompt } from "./buildRegistryDraftPrompt.js";
+export { getOpenAiRegistryDraftLlmResponseJsonSchemaRoot } from "./openAiLlmResponseSchema.js";
