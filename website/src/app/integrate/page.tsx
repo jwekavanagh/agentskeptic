@@ -104,7 +104,11 @@ export default function IntegratePage() {
         silent green traces hiding bad data.
       </p>
 
-      <section className="integrate-framework-picker" aria-label="Framework starter commands" id="agentskeptic-init">
+      <section
+        className="integrate-optional-spine integrate-framework-picker"
+        aria-label="Framework starter commands"
+        id="agentskeptic-init"
+      >
         <h3>Framework starter (`init`)</h3>
         <p className="muted">
           AgentSkeptic v2 ships a small, tested matrix. SQLite only on day one. Full integrator SSOT:{" "}
