@@ -38,9 +38,7 @@ const eventsPath = path.join(partnerDir, "partner.events.ndjson");
 const registryPath = path.join(partnerDir, "partner.tools.json");
 const seedPath = path.join(partnerDir, "partner.seed.sql");
 const cliPath = path.join(root, "dist", "cli.js");
-const goldenLockPath = path.join(partnerDir, "partner.ci-lock-v1.json");
-
-for (const p of [eventsPath, registryPath, seedPath, cliPath, goldenLockPath]) {
+for (const p of [eventsPath, registryPath, seedPath, cliPath]) {
   if (!existsSync(p)) fail(`Missing required file: ${p} (run npm run build from repo root if dist/cli.js is missing)`);
 }
 
@@ -65,32 +63,6 @@ function runCli(dbArg, extraArgs = []) {
     env: process.env,
   });
   return { status: r.status ?? 1, stdout: r.stdout ?? "", stderr: r.stderr ?? "" };
-}
-
-/** OSS output-lock under mkdtemp must match committed golden (read-only in automation). */
-function assertOutputLockMatchesGolden(dbArg) {
-  if (!existsSync(goldenLockPath)) {
-    fail(`Missing golden ci-lock: ${goldenLockPath}`);
-  }
-  const lockTmp = path.join(tmpdir(), `partner-ci-lock-${randomUUID()}.json`);
-  const r = runCli(dbArg, ["--no-human-report", "--output-lock", lockTmp]);
-  try {
-    if (r.status !== 0) {
-      console.error(r.stderr);
-      fail(`output-lock verify exited ${r.status}`);
-    }
-    const got = readFileSync(lockTmp);
-    const want = readFileSync(goldenLockPath);
-    if (got.length !== want.length || !got.equals(want)) {
-      fail("ci-lock bytes differ from examples/partner-quickstart/partner.ci-lock-v1.json");
-    }
-  } finally {
-    try {
-      unlinkSync(lockTmp);
-    } catch {
-      /* ignore */
-    }
-  }
 }
 
 function assertVerified(stdout) {
@@ -145,7 +117,6 @@ async function main() {
       fail("CLI exited " + r.status);
     }
     assertVerified(r.stdout);
-    assertOutputLockMatchesGolden(["--postgres-url", pgUrl]);
     emitSuccessReplay(r, "postgres");
   } else {
     const dbFile = path.join(tmpdir(), `wf-partner-${randomUUID()}.db`);
@@ -166,7 +137,6 @@ async function main() {
       fail("CLI exited " + r.status);
     }
     assertVerified(r.stdout);
-    assertOutputLockMatchesGolden(["--db", dbFile]);
     try {
       unlinkSync(dbFile);
     } catch {

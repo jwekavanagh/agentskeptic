@@ -25,6 +25,12 @@ if (requirePostgres && !process.env.POSTGRES_VERIFICATION_URL?.trim()) {
 
 const reserveIntentLogPath = path.join(tmpdir(), `agentskeptic-harness-reserve-intents-${randomUUID()}.log`);
 writeFileSync(reserveIntentLogPath, "", "utf8");
+const baselineByWorkflow = new Map();
+
+function json(res, status, body) {
+  res.writeHead(status, { "Content-Type": "application/json", "x-request-id": randomUUID() });
+  res.end(JSON.stringify(body));
+}
 
 const server = createServer((req, res) => {
   if (req.method === "POST" && req.url === "/api/v1/usage/reserve") {
@@ -41,8 +47,61 @@ const server = createServer((req, res) => {
       } catch {
         /* ignore */
       }
-      res.writeHead(200, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ allowed: true, plan: "business", limit: 50000, used: 0 }));
+      json(res, 200, { allowed: true, plan: "business", limit: 50000, used: 0 });
+    });
+    return;
+  }
+  if (
+    req.method === "POST" &&
+    (req.url === "/api/v1/enforcement/baselines" ||
+      req.url === "/api/v1/enforcement/check" ||
+      req.url === "/api/v1/enforcement/accept")
+  ) {
+    let raw = "";
+    req.on("data", (c) => {
+      raw += c;
+    });
+    req.on("end", () => {
+      let body = {};
+      try {
+        body = JSON.parse(raw || "{}");
+      } catch {
+        json(res, 400, { detail: "invalid json" });
+        return;
+      }
+      const workflowId = typeof body.workflow_id === "string" ? body.workflow_id : "";
+      const projectionHash = typeof body.projection_hash === "string" ? body.projection_hash : "";
+      if (!workflowId || !projectionHash) {
+        json(res, 400, { detail: "workflow_id and projection_hash are required" });
+        return;
+      }
+      if (req.url === "/api/v1/enforcement/baselines" || req.url === "/api/v1/enforcement/accept") {
+        baselineByWorkflow.set(workflowId, projectionHash);
+        json(res, 200, { schema_version: 1, status: "ok", workflow_id: workflowId });
+        return;
+      }
+      const expected = baselineByWorkflow.get(workflowId);
+      if (!expected) {
+        json(res, 409, { detail: "baseline not initialized" });
+        return;
+      }
+      if (expected === projectionHash) {
+        json(res, 200, {
+          schema_version: 1,
+          status: "ok",
+          workflow_id: workflowId,
+          expected_projection_hash: expected,
+          actual_projection_hash: projectionHash,
+        });
+        return;
+      }
+      json(res, 200, {
+        schema_version: 1,
+        status: "drift",
+        workflow_id: workflowId,
+        expected_projection_hash: expected,
+        actual_projection_hash: projectionHash,
+      });
     });
     return;
   }

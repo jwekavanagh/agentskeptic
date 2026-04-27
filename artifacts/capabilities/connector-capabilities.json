@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-25T05:06:12.323Z",
+  "generatedAt": "2026-04-27T03:21:07.135Z",
   "behaviors": [
     {
       "supportedBehaviorId": "bigquery.sql_row.strong",
