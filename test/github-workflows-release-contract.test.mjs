@@ -6,10 +6,28 @@ import { readFileSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, it } from "node:test";
+import { parse } from "yaml";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
+function loadWorkflowYaml(name) {
+  const text = readFileSync(join(root, ".github", "workflows", name), "utf8");
+  return parse(text);
+}
+
 describe("release workflow contract", () => {
+  it("ci.yml top-level name is CI (required for release.yml workflow_run trigger)", () => {
+    const doc = loadWorkflowYaml("ci.yml");
+    assert.equal(doc.name, "CI");
+  });
+
+  it("release.yml workflow_run lists exactly CI (must match ci.yml name: field)", () => {
+    const doc = loadWorkflowYaml("release.yml");
+    const workflows = doc.on.workflow_run.workflows;
+    assert.ok(Array.isArray(workflows), "on.workflow_run.workflows must be an array");
+    assert.deepEqual(workflows, ["CI"]);
+  });
+
   it("uses .releaserc.cjs and not .releaserc.json", () => {
     assert.equal(existsSync(join(root, ".releaserc.cjs")), true);
     assert.equal(existsSync(join(root, ".releaserc.json")), false);

@@ -1,4 +1,6 @@
 # See CONTRIBUTING.md → GitHub Actions (operator) → Releases (canonical).
+# Concurrency: one at a time (queue) so rapid main merges and tag-CI back-to-back runs cannot
+# interleave git pushes, tags, or PyPI with parallel semantic-release jobs.
 name: Release
 
 on:
@@ -21,7 +23,7 @@ on:
 permissions: {}
 
 concurrency:
-  group: "rel-${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.run_id }}"
+  group: release-mutations
   cancel-in-progress: false
 
 jobs:
@@ -51,7 +53,7 @@ jobs:
           app-id: ${{ vars.RELEASE_APP_ID }}
           private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           ref: "${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.ref }}"
           fetch-depth: 0
@@ -134,6 +136,26 @@ jobs:
       id-token: write
       contents: read
     steps:
+      - name: PyPI path diagnostics (tag workflow_run)
+        shell: bash
+        run: |
+          set -euo pipefail
+          b="${{ github.event.workflow_run.head_branch }}"
+          sha="${{ github.event.workflow_run.head_sha }}"
+          {
+            echo '### publish-pypi: workflow_run (tag path)'
+            echo 'This job only runs when the tag-shaped head_branch filters in publish-pypi matched.'
+            echo "- **head_branch** (expected short SemVer tag, e.g. v1.0.0): ${b}"
+            echo "- **head_sha**: ${sha}"
+            echo "- **triggering event**: ${{ github.event.workflow_run.event }}"
+            echo "- **upstream workflow name**: ${{ github.event.workflow_run.name }}"
+            echo "- **upstream run id**: ${{ github.event.workflow_run.id }}"
+            echo "- **conclusion**: ${{ github.event.workflow_run.conclusion }}"
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [[ -z "$b" ]]; then
+            echo "::error::workflow_run.head_branch is empty; PyPI job condition should not have matched"
+            exit 1
+          fi
       - name: Assert SemVer 2.0.0 v-tag (head_branch is short tag name for tag push)
         env:
           TAG: ${{ github.event.workflow_run.head_branch }}
