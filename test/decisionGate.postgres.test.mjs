@@ -7,7 +7,7 @@ import { readFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { verifyWorkflow } from "../dist/pipeline.js";
-import { createDecisionGate } from "../dist/decisionGate.js";
+import { createDecisionGate } from "../dist/index.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, "..");

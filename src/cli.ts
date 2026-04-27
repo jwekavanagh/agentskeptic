@@ -1057,6 +1057,16 @@ function runPlanTransitionSubcommand(args: string[]): void {
 
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
+  if (args[0] === "init") {
+    const { runInitCommand } = await import("./cli/initCommand.js");
+    runInitCommand(args.slice(1));
+    return;
+  }
+  if (args[0] === "migrate") {
+    const { runMigrateCommand } = await import("./cli/migrateCommand.js");
+    runMigrateCommand(args.slice(1));
+    return;
+  }
   if (args[0] === "usage") {
     const rest = args.slice(1);
     if (rest.includes("--help") || rest.includes("-h")) {

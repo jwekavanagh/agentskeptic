@@ -7,7 +7,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { DatabaseSync } from "node:sqlite";
-import { createDecisionGate } from "../dist/decisionGate.js";
+import { createDecisionGate } from "../dist/index.js";
 
 const runRoot = join(fileURLToPath(new URL(".", import.meta.url)), ".canonical-verify-run");
 mkdirSync(runRoot, { recursive: true });

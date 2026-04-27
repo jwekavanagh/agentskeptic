@@ -1,42 +1,11 @@
 import { CLI_OPERATIONAL_CODES } from "../cliOperationalCodes.js";
 import { TruthLayerError } from "../truthLayerError.js";
-import {
-  LICENSE_API_BASE_URL,
-  LICENSE_PREFLIGHT_ENABLED,
-} from "../generated/commercialBuildFlags.js";
-
-const RETRY_MS = [250, 750, 2250] as const;
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((r) => setTimeout(r, ms));
-}
+import { LICENSE_PREFLIGHT_ENABLED } from "../generated/commercialBuildFlags.js";
+import { postUsageReserve, resolveApiKey } from "../sdk/transport.js";
 
 export type LicensePreflightIntent = "verify" | "enforce";
 
-type ReserveOk = {
-  allowed: true;
-  plan: string;
-  limit: number;
-  used: number;
-  /** Omitted in legacy deployments. */
-  included_monthly?: number | null;
-  overage_count?: number;
-};
-type ReserveDeny = {
-  allowed: false;
-  code: string;
-  message: string;
-  upgrade_url?: string;
-};
-
-type ReserveBody = ReserveOk | ReserveDeny;
-
 export type LicensePreflightResult = { runId: string | null };
-
-function requestIdSuffix(res: Response): string {
-  const rid = res.headers.get("x-request-id")?.trim();
-  return rid ? ` [x-request-id=${rid}]` : "";
-}
 
 /**
  * Before contract-mode verification (commercial npm build), contact license API.
@@ -48,9 +17,7 @@ export async function runLicensePreflightIfNeeded(
 ): Promise<LicensePreflightResult> {
   if (!LICENSE_PREFLIGHT_ENABLED) return { runId: null };
 
-  const apiKey =
-    process.env.AGENTSKEPTIC_API_KEY?.trim() ||
-    process.env.WORKFLOW_VERIFIER_API_KEY?.trim();
+  const apiKey = resolveApiKey();
   if (!apiKey) {
     throw new TruthLayerError(
       CLI_OPERATIONAL_CODES.LICENSE_KEY_MISSING,
@@ -65,129 +32,13 @@ export async function runLicensePreflightIfNeeded(
     crypto.randomUUID();
   const xRequestId = opts?.xRequestId?.trim() || crypto.randomUUID();
   const issuedAt = new Date().toISOString();
-  const url = `${LICENSE_API_BASE_URL.replace(/\/$/, "")}/api/v1/usage/reserve`;
 
-  let lastErr: unknown;
-  for (let attempt = 0; attempt <= RETRY_MS.length; attempt++) {
-    try {
-      const res = await fetch(url, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-          "x-request-id": xRequestId,
-        },
-        body: JSON.stringify({ run_id: runId, issued_at: issuedAt, intent }),
-      });
-
-      const text = await res.text();
-      let body: ReserveBody | null = null;
-      try {
-        body = JSON.parse(text) as ReserveBody;
-      } catch {
-        body = null;
-      }
-
-      const rid = requestIdSuffix(res);
-
-      if (
-        res.status === 429 ||
-        res.status === 502 ||
-        res.status === 503 ||
-        res.status === 504
-      ) {
-        lastErr = new Error(`HTTP ${res.status}${rid}`);
-        if (attempt < RETRY_MS.length) await sleep(RETRY_MS[attempt]!);
-        continue;
-      }
-
-      if (!res.ok) {
-        if (body && body.allowed === false) {
-          if (body.code === "ENFORCEMENT_REQUIRES_PAID_PLAN") {
-            const suffix = body.upgrade_url
-              ? ` ${body.upgrade_url}`
-              : "";
-            throw new TruthLayerError(
-              CLI_OPERATIONAL_CODES.ENFORCEMENT_REQUIRES_PAID_PLAN,
-              `${body.message || "Enforcement requires a paid plan."}${suffix}${rid}`,
-            );
-          }
-          if (body.code === "VERIFICATION_REQUIRES_SUBSCRIPTION") {
-            const suffix = body.upgrade_url
-              ? ` ${body.upgrade_url}`
-              : "";
-            throw new TruthLayerError(
-              CLI_OPERATIONAL_CODES.VERIFICATION_REQUIRES_SUBSCRIPTION,
-              `${body.message || "Licensed verification requires an active subscription."}${suffix}${rid}`,
-            );
-          }
-          if (body.code === "SUBSCRIPTION_INACTIVE") {
-            const suffix = body.upgrade_url ? ` ${body.upgrade_url}` : "";
-            throw new TruthLayerError(
-              CLI_OPERATIONAL_CODES.LICENSE_DENIED,
-              `${body.message || "Subscription is not active for licensed verification or CI enforcement."}${suffix}${rid}`,
-            );
-          }
-          if (body.code === "BILLING_PRICE_UNMAPPED") {
-            const suffix = body.upgrade_url ? ` ${body.upgrade_url}` : "";
-            throw new TruthLayerError(
-              CLI_OPERATIONAL_CODES.LICENSE_DENIED,
-              `${body.message || "Stripe price is not mapped in this deployment."}${suffix}${rid}`,
-            );
-          }
-          if (body.code === "INSUFFICIENT_SCOPE") {
-            throw new TruthLayerError(
-              CLI_OPERATIONAL_CODES.LICENSE_DENIED,
-              `${body.message || "API key does not include required scope for this operation."}${rid}`,
-            );
-          }
-          if (body.code === "KEY_EXPIRED") {
-            throw new TruthLayerError(
-              CLI_OPERATIONAL_CODES.LICENSE_DENIED,
-              `${body.message || "API key is expired."}${rid}`,
-            );
-          }
-          if (body.code === "KEY_REVOKED") {
-            throw new TruthLayerError(
-              CLI_OPERATIONAL_CODES.LICENSE_DENIED,
-              `${body.message || "API key is revoked."}${rid}`,
-            );
-          }
-          if (body.code === "KEY_DISABLED") {
-            throw new TruthLayerError(
-              CLI_OPERATIONAL_CODES.LICENSE_DENIED,
-              `${body.message || "API key is disabled."}${rid}`,
-            );
-          }
-          throw new TruthLayerError(
-            CLI_OPERATIONAL_CODES.LICENSE_DENIED,
-            `${body.message || `License check failed (${body.code}).`}${rid}`,
-          );
-        }
-        throw new TruthLayerError(
-          CLI_OPERATIONAL_CODES.LICENSE_DENIED,
-          `License check failed with HTTP ${res.status}.${rid}`,
-        );
-      }
-
-      if (!body || body.allowed !== true) {
-        throw new TruthLayerError(
-          CLI_OPERATIONAL_CODES.LICENSE_DENIED,
-          `License server returned an unexpected response.${rid}`,
-        );
-      }
-      return { runId };
-    } catch (e) {
-      if (e instanceof TruthLayerError) throw e;
-      lastErr = e;
-      if (attempt < RETRY_MS.length) await sleep(RETRY_MS[attempt]!);
-    }
-  }
-
-  const msg =
-    lastErr instanceof Error ? lastErr.message : String(lastErr ?? "unknown");
-  throw new TruthLayerError(
-    CLI_OPERATIONAL_CODES.LICENSE_USAGE_UNAVAILABLE,
-    `Could not reach license service after retries: ${msg}`,
-  );
+  await postUsageReserve({
+    intent,
+    runId,
+    issuedAtIso: issuedAt,
+    xRequestId,
+    apiKey,
+  });
+  return { runId };
 }

@@ -9,13 +9,6 @@ Pinned third-party versions are enforced in CI via optional dependency installs.
 - **Trust boundary**: `before_tool_call` (parameters visible before tool side effects).
 - **Rejected alternatives**: crew-scoped decorators only (we use global registration scoped by context manager lifetime).
 
-## AutoGen (AgentChat)
-
-- **Packages**: `autogen-agentchat` (optional extra `autogen`).
-- **Hook surface**: `autogen_agentchat.base._chat_agent` / team stream APIs vary by minor version — **integration tests** pin the import used in `agentskeptic/_integrations/autogen.py`.
-- **Trust boundary**: end of each `Team.run` / streamed task completion (flush verify on context exit).
-- **Rejected alternatives**: per-message monkeypatch of internal `_sleep` helpers.
-
 ## LangGraph (Python)
 
 - **Packages**: `langgraph`, `langchain-core` (optional extra `langgraph`).
@@ -28,6 +21,7 @@ Pinned third-party versions are enforced in CI via optional dependency installs.
 | Package | Minimum |
 |---------|---------|
 | `crewai` | 0.80.0 |
-| `autogen-agentchat` | 0.4.0 |
 | `langgraph` | 0.2.0 |
 | `langchain-core` | 0.3.0 |
+
+AutoGen integration was removed in AgentSkeptic Python 2.0; a future release may reintroduce it with pinned upstream versions and tests.

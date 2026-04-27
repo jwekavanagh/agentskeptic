@@ -4,10 +4,10 @@ import { parseBatchVerifyCliArgs } from "./cliArgv.js";
 import { verifyWorkflow } from "./pipeline.js";
 import { runBatchVerifyToValidatedResult } from "./standardVerifyWorkflowCli.js";
 import { TruthLayerError } from "./truthLayerError.js";
-import { LICENSE_API_BASE_URL } from "./generated/commercialBuildFlags.js";
 import { workflowResultToEnforcementProjectionV1, stableStringify } from "./enforcementProjection.js";
 import { runLicensePreflightIfNeeded } from "./commercial/licensePreflight.js";
 import { cliErrorEnvelope } from "./failureCatalog.js";
+import { postEnforcementJson } from "./sdk/transport.js";
 
 type EnforceMode = "check" | "create-baseline" | "accept-drift";
 
@@ -43,28 +43,11 @@ function apiKeyOrThrow(): string {
 }
 
 async function postEnforcementState(
-  path: string,
+  path: "/api/v1/enforcement/baselines" | "/api/v1/enforcement/check" | "/api/v1/enforcement/accept",
   payload: Record<string, unknown>,
 ): Promise<{ ok: boolean; status: number; body: unknown; requestId: string | null }> {
   const apiKey = apiKeyOrThrow();
-  const xRequestId = randomUUID();
-  const res = await fetch(`${LICENSE_API_BASE_URL.replace(/\/$/, "")}${path}`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-      "x-request-id": xRequestId,
-    },
-    body: JSON.stringify(payload),
-  });
-  const text = await res.text();
-  let body: unknown = null;
-  try {
-    body = JSON.parse(text) as unknown;
-  } catch {
-    body = { raw: text };
-  }
-  return { ok: res.ok, status: res.status, body, requestId: res.headers.get("x-request-id") };
+  return postEnforcementJson({ path, payload, apiKey });
 }
 
 function projectionHash(projectionUtf8: string): string {

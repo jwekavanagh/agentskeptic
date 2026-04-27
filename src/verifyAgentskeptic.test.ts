@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import { DatabaseSync } from "node:sqlite";
 import { describe, expect, it } from "vitest";
 import { TruthLayerError } from "./truthLayerError.js";
-import { verifyAgentskeptic } from "./verifyAgentskeptic.js";
+import { verifyAgentskepticImpl } from "./verifyAgentskeptic.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = join(__dirname, "..");
@@ -29,7 +29,7 @@ describe("verifyAgentskeptic", () => {
     const projectRoot = seedTempProject();
     try {
       const dbPath = join(projectRoot, "demo.db");
-      const certificate = await verifyAgentskeptic({
+      const certificate = await verifyAgentskepticImpl({
         workflowId: "wf_complete",
         databaseUrl: dbPath,
         projectRoot,
@@ -46,7 +46,7 @@ describe("verifyAgentskeptic", () => {
     const projectRoot = seedTempProject();
     try {
       const dbPath = join(projectRoot, "demo.db");
-      const certificate = await verifyAgentskeptic({
+      const certificate = await verifyAgentskepticImpl({
         workflowId: "wf_missing",
         databaseUrl: dbPath,
         projectRoot,
@@ -64,7 +64,7 @@ describe("verifyAgentskeptic", () => {
     try {
       unlinkSync(join(projectRoot, "agentskeptic", "tools.json"));
       await expect(
-        verifyAgentskeptic({
+        verifyAgentskepticImpl({
           workflowId: "wf_complete",
           databaseUrl: join(projectRoot, "demo.db"),
           projectRoot,
@@ -72,7 +72,7 @@ describe("verifyAgentskeptic", () => {
       ).rejects.toThrow(TruthLayerError);
 
       try {
-        await verifyAgentskeptic({
+        await verifyAgentskepticImpl({
           workflowId: "wf_complete",
           databaseUrl: join(projectRoot, "demo.db"),
           projectRoot,

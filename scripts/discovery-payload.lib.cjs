@@ -143,7 +143,7 @@ function buildDiscoveryPayload(root) {
   const { owner, repo } = parseGithubRepoFromUrl(anchors.gitRepositoryUrl);
   const llmsRaw = `https://raw.githubusercontent.com/${owner}/${repo}/refs/heads/${DISCOVERY_LLM_BRANCH}/llms.txt`;
   const llmsBlob = `https://github.com/${owner}/${repo}/blob/${DISCOVERY_LLM_BRANCH}/llms.txt`;
-  const integratorVerificationSsotRaw = `https://raw.githubusercontent.com/${owner}/${repo}/refs/heads/${DISCOVERY_LLM_BRANCH}/docs/integrator-verification.md`;
+  const integratorGuideSsotRaw = `https://raw.githubusercontent.com/${owner}/${repo}/refs/heads/${DISCOVERY_LLM_BRANCH}/docs/integrate.md`;
   const openapiRaw = `https://raw.githubusercontent.com/${owner}/${repo}/refs/heads/${DISCOVERY_LLM_BRANCH}/schemas/openapi-commercial-v1.yaml`;
   const llms = /** @type {{ intentPhrases: string[]; notFor: string[]; relatedQueries: string[] }} */ (
     discovery.llms
@@ -163,7 +163,7 @@ function buildDiscoveryPayload(root) {
       npm: String(anchors.npmPackageUrl),
       llmsRaw,
       llmsBlob,
-      integratorVerificationSsotRaw,
+      integratorGuideSsotRaw,
     },
     appendix: {
       slug: String(discovery.slug),
@@ -247,7 +247,7 @@ function renderLlmsTextFromPayload(payload) {
     "",
     "## Primary links",
     `- Canonical site: ${links.site}`,
-    `- Integrator verification SSOT (Python + LangGraph tables): ${links.integratorVerificationSsotRaw}`,
+    `- Integrator guide (v2 SSOT): ${links.integratorGuideSsotRaw}`,
     `- First-run integration: ${integrateUrl}`,
     `- Learn: ${learnHubUrl}`,
     `- OpenAPI (canonical): ${openapiSelfCanonical}`,

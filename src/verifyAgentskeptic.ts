@@ -1,6 +1,6 @@
 import { existsSync } from "node:fs";
 import path from "node:path";
-import { createDecisionGate } from "./decisionGate.js";
+import { createDecisionGateImpl } from "./decisionGate.js";
 import { loadEventsForWorkflow } from "./loadEvents.js";
 import { TruthLayerError } from "./truthLayerError.js";
 import type { OutcomeCertificateV1 } from "./outcomeCertificate.js";
@@ -11,7 +11,7 @@ const PROJECT_LAYOUT_MISSING = "PROJECT_VERIFICATION_LAYOUT_MISSING" as const;
  * Thin file-replay alias: reads `agentskeptic/events.ndjson` into a DecisionGate buffer and returns the same Outcome Certificate as batch verify.
  * Prefer `createDecisionGate` for runtime integration.
  */
-export async function verifyAgentskeptic(options: {
+export async function verifyAgentskepticImpl(options: {
   workflowId: string;
   databaseUrl: string;
   projectRoot?: string;
@@ -30,7 +30,7 @@ export async function verifyAgentskeptic(options: {
   }
 
   const load = loadEventsForWorkflow(eventsPath, options.workflowId);
-  const gate = createDecisionGate({
+  const gate = createDecisionGateImpl({
     workflowId: options.workflowId,
     registryPath: registryPathRel,
     databaseUrl: options.databaseUrl,

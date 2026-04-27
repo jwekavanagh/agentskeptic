@@ -4,7 +4,9 @@ def test_only_documented_public_exports() -> None:
     assert set(agentskeptic.__all__) == {
         "verify",
         "emit_tools_json",
+        "AgentSkeptic",
         "AgentSkepticError",
+        "AGENT_SKEPTIC_ERROR_CODES",
         "DecisionUnsafeError",
         "LangGraphCheckpointTrustUnsafeError",
     }

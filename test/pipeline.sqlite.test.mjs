@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 import { dirname } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { verifyWorkflow } from "../dist/pipeline.js";
-import { createDecisionGate } from "../dist/decisionGate.js";
+import { createDecisionGate } from "../dist/index.js";
 import { formatWorkflowTruthReport } from "../dist/workflowTruthReport.js";
 import { loadSchemaValidator } from "../dist/schemaLoad.js";
 import { loadEventsForWorkflow } from "../dist/loadEvents.js";

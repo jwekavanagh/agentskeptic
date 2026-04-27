@@ -4,10 +4,9 @@ import IntegratePage from "@/app/integrate/page";
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-/** Expected accessible names — literals live only here (independent of productCopy exports). */
-const EXPECT_CROSSING_H2 = "Cross the boundary (canonical path)";
-const EXPECT_SPINE_CHECKPOINT_H3 = "Mechanical spine checkpoint (not product completion)";
-const EXPECT_PRODUCT_COMPLETION_H2 = "Product completion: Step 4 on your emitters";
+/** Expected accessible names — literals live only here (v2 /integrate layout). */
+const EXPECT_SCAFFOLD_H2 = "Scaffold then verify (canonical v2 path)";
+const EXPECT_PRODUCT_WIRE_H2 = "Product completion: wire your emitters";
 
 const FORBIDDEN_IN_MAIN = [
   "What success looks like",
@@ -25,14 +24,13 @@ describe("/integrate completion semantics (RTL)", () => {
     vi.clearAllMocks();
   });
 
-  it("crossing is primary h2; spine checkpoint is h3 inside optional spine section; activation commands nest there; main omits forbidden phrases", () => {
+  it("scaffold+verify is primary h2; wire emitters h2; framework spine section contains activation; main omits forbidden phrases", () => {
     const { container } = render(<IntegratePage />);
     const main = screen.getByRole("main");
-    const headings = within(main).getAllByRole("heading", { level: 2 });
-    expect(headings[0]?.textContent).toBe(EXPECT_CROSSING_H2);
-    expect(within(main).getByRole("heading", { level: 2, name: EXPECT_PRODUCT_COMPLETION_H2 })).toBeTruthy();
-    expect(within(main).queryByRole("heading", { level: 2, name: EXPECT_SPINE_CHECKPOINT_H3 })).toBeNull();
-    expect(within(main).getByRole("heading", { level: 3, name: EXPECT_SPINE_CHECKPOINT_H3 })).toBeTruthy();
+    const h2s = within(main).getAllByRole("heading", { level: 2 });
+    expect(h2s[0]?.textContent).toBe(EXPECT_SCAFFOLD_H2);
+    expect(within(main).getByRole("heading", { level: 2, name: EXPECT_PRODUCT_WIRE_H2 })).toBeTruthy();
+    expect(within(main).queryByRole("heading", { level: 2, name: "Mechanical spine checkpoint (not product completion)" })).toBeNull();
 
     const spine = container.querySelector("section.integrate-optional-spine");
     expect(spine).toBeTruthy();
