@@ -67,7 +67,6 @@ import { postVerifyOutcomeBeacon } from "./commercial/postVerifyOutcomeBeacon.js
 import { quickVerifyVerdictToTerminalStatus } from "./commercial/quickVerifyFunnelTerminalStatus.js";
 import { classifyQuickVerifyWorkload } from "./commercial/verifyWorkloadClassify.js";
 import { LICENSE_PREFLIGHT_ENABLED } from "./generated/commercialBuildFlags.js";
-import { orchestrateVerifyBatchLockRun, orchestrateVerifyQuickLockRun } from "./cli/lockOrchestration.js";
 import { formatDistributionFooter } from "./distributionFooter.js";
 import { postPublicVerificationReport } from "./shareReport/postPublicVerificationReport.js";
 import { runBootstrapSubcommand } from "./bootstrap/runBootstrapSubcommand.js";
@@ -89,7 +88,7 @@ function usageQuick(): string {
   Use - for stdin. Writes registry JSON array atomically, then optional events file, then stdout (see docs/quick-verify-normative.md).
   With --share-report-origin, human stderr is deferred until after a successful POST (same contract as batch verify; see docs/shareable-verification-reports.md).
 
-  Optional CI lock: exactly one of --output-lock <path> or --expect-lock <path> (same OSS/commercial split as batch; see docs/ci-enforcement.md).
+  CI enforcement over time is provided by "agentskeptic enforce" (stateful, paid). Lock flags are no longer supported on quick.
 
 Exit codes:
   0  verdict pass
@@ -118,8 +117,9 @@ function usageVerify(): string {
   agentskeptic --workflow-id <id> --events <path> --registry <path> --db <sqlitePath>
   agentskeptic --workflow-id <id> --events <path> --registry <path> --postgres-url <url>
 
-  Optional CI lock: append exactly one of --output-lock <path> or --expect-lock <path>
-  (OSS: --output-lock only; commercial: both; see docs/ci-enforcement.md and docs/commercial-enforce-gate-normative.md).
+  Stateful CI enforcement uses:
+  agentskeptic enforce --workflow-id <id> --events <path> --registry <path> (--db <sqlitePath> | --postgres-url <url>)
+  with optional --create-baseline or --accept-drift.
 
 Optional consistency (default strong):
   --consistency strong|eventual
@@ -140,7 +140,7 @@ Exit codes:
   1  workflow status inconsistent
   2  workflow status incomplete
   3  operational failure (see stderr JSON)
-  4  CI lock mismatch with --expect-lock (stdout: WorkflowResult line; stderr: envelope after human report if any)
+  4  reserved for stateful enforce drift mismatch
 
   agentskeptic compare --manifest <compare-run-manifest.json>
   Compare runs from a manifest (workflow results + events paths; see docs/regression-artifact-normative.md).
@@ -153,9 +153,9 @@ Exit codes:
   agentskeptic execution-trace --workflow-id <id> --events <path> [--workflow-result <path>] [--format json|text]
   Emit ExecutionTraceView JSON or text (see docs/agentskeptic.md).
 
-  agentskeptic enforce batch (--expect-lock <path> | --output-lock <path>) <same flags as batch verify>
-  agentskeptic enforce quick (--expect-lock <path> | --output-lock <path>) <same flags as quick>
-  CI enforcement with pinned ci-lock-v1 (see docs/ci-enforcement.md).
+  agentskeptic enforce --workflow-id <id> --events <path> --registry <path> (--db <sqlitePath> | --postgres-url <url>)
+    [--create-baseline | --accept-drift]
+  CI enforcement over time (stateful baseline/drift workflow).
 
   agentskeptic assurance run --manifest <path> [--write-report <path>]
   agentskeptic assurance stale --report <path> --max-age-hours <n>
@@ -195,7 +195,7 @@ function usageVerifyIntegratorOwned(): string {
   agentskeptic verify-integrator-owned --workflow-id <id> --events <path> --registry <path> --db <sqlitePath>
   agentskeptic verify-integrator-owned --workflow-id <id> --events <path> --registry <path> --postgres-url <url>
 
-  Same flags and verification semantics as contract batch verify, except paths classified as bundled_examples are rejected (exit 2; stderr: INTEGRATOR_OWNED_GATE). CI lock flags (--output-lock / --expect-lock) are not supported here—use standard batch verify for lock flows.
+  Same flags and verification semantics as contract batch verify, except paths classified as bundled_examples are rejected (exit 2; stderr: INTEGRATOR_OWNED_GATE).
 
   See docs/agentskeptic.md (Integrator-owned gate).
 
@@ -523,20 +523,12 @@ async function runQuickSubcommand(args: string[]): Promise<void> {
     console.log(usageQuick());
     process.exit(0);
   }
-  const expectLockQ = argValue(args, "--expect-lock");
-  const outputLockQ = argValue(args, "--output-lock");
-  const hasExpectQ = expectLockQ !== undefined;
-  const hasOutputQ = outputLockQ !== undefined;
-  if (hasExpectQ && hasOutputQ) {
+  if (argValue(args, "--expect-lock") !== undefined || argValue(args, "--output-lock") !== undefined) {
     writeCliError(
       CLI_OPERATIONAL_CODES.ENFORCE_USAGE,
-      "quick requires exactly one of --expect-lock <path> or --output-lock <path>.",
+      "Lock flags are removed. Use `agentskeptic verify` for stateless checks or `agentskeptic enforce` for stateful CI enforcement.",
     );
     process.exit(3);
-  }
-  if (hasExpectQ !== hasOutputQ) {
-    await orchestrateVerifyQuickLockRun(args);
-    return;
   }
   let pq;
   try {
@@ -1158,27 +1150,12 @@ async function main(): Promise<void> {
     process.exit(0);
   }
 
-  const expectLockB = argValue(verifyCliArgs, "--expect-lock");
-  const outputLockB = argValue(verifyCliArgs, "--output-lock");
-  const hasExpectB = expectLockB !== undefined;
-  const hasOutputB = outputLockB !== undefined;
-  if (hasExpectB && hasOutputB) {
+  if (argValue(verifyCliArgs, "--expect-lock") !== undefined || argValue(verifyCliArgs, "--output-lock") !== undefined) {
     writeCliError(
       CLI_OPERATIONAL_CODES.ENFORCE_USAGE,
-      "batch verify requires exactly one of --expect-lock <path> or --output-lock <path>.",
+      "Lock flags are removed. Use `agentskeptic enforce` for over-time CI enforcement.",
     );
     process.exit(3);
-  }
-  if (hasExpectB !== hasOutputB) {
-    if (leadIsIntegratorOwned) {
-      writeCliError(
-        CLI_OPERATIONAL_CODES.CLI_USAGE,
-        "verify-integrator-owned does not support --output-lock or --expect-lock; use standard contract verify for CI lock flows.",
-      );
-      process.exit(3);
-    }
-    await orchestrateVerifyBatchLockRun(verifyCliArgs);
-    return;
   }
 
   await runBatchVerifyWithTelemetrySubcommand(verifyCliArgs, {

@@ -12,7 +12,7 @@ evaluatorLens: false
 
 ## CI enforcement and metering
 
-**`agentskeptic enforce`** and **`--expect-lock`** on batch or quick verification require the **commercial** npm build, a valid **`AGENTSKEPTIC_API_KEY`**, and a successful **`POST /api/v1/usage/reserve`** with an active paid plan (Individual, Team, Business, or Enterprise—including **trialing**). Generate lock fixtures with **`--output-lock`** on **`verify`** or **`quick`** (OSS or commercial), then pin CI by re-running with **`--expect-lock`** or by invoking **`enforce`** against the committed **`ci-lock-v1`** file. Each allowed run consumes (or idempotently reuses) quota per **`run_id`** on the license API. OSS builds **cannot** enforce or expect-lock on the published npm path—see **`docs/commercial-enforce-gate-normative.md`**.
+`agentskeptic enforce` now governs correctness over time using product-managed baseline, drift detection, and acceptance state. It requires the commercial npm build, a valid `AGENTSKEPTIC_API_KEY`, and a successful `POST /api/v1/usage/reserve` with `intent=enforce` under an active paid plan. OSS/local `verify` remains available for single-run checks, but does not provide authoritative cross-run enforcement state for CI teams.
 
 ## What to do next
 

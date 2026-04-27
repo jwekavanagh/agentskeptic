@@ -188,6 +188,41 @@ export const usageReservations = pgTable(
   }),
 );
 
+/** Stateful CI enforcement baseline per (user, workflow). */
+export const enforcementBaselines = pgTable(
+  "enforcement_baseline",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    workflowId: text("workflow_id").notNull(),
+    projectionHash: text("projection_hash").notNull(),
+    projection: jsonb("projection").notNull(),
+    acceptedByKeyId: text("accepted_by_key_id"),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
+  },
+  (t) => ({
+    userWorkflowUnique: unique().on(t.userId, t.workflowId),
+  }),
+);
+
+/** Immutable event log for stateful enforcement transitions. */
+export const enforcementEvents = pgTable("enforcement_event", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  workflowId: text("workflow_id").notNull(),
+  runId: text("run_id").notNull(),
+  event: text("event").notNull(),
+  expectedProjectionHash: text("expected_projection_hash"),
+  actualProjectionHash: text("actual_projection_hash").notNull(),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
+});
+
 export const stripeEvents = pgTable("stripe_event", {
   id: text("id").primaryKey(),
   receivedAt: timestamp("received_at", { mode: "date" }).notNull().defaultNow(),

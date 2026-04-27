@@ -3,7 +3,7 @@
 #
 # Prerequisites:
 # - GitHub secret AGENTSKEPTIC_API_KEY from your product account (legacy WORKFLOW_VERIFIER_API_KEY is still accepted by the CLI)
-# - License server must accept POST /api/v1/usage/reserve for intent=verify
+# - License server must accept POST /api/v1/usage/reserve for intent=enforce
 #
 # Copy to .github/workflows/ in a repo that vendors the same examples/ layout, or run from this monorepo.
 #
@@ -48,16 +48,17 @@ jobs:
       - name: Install published agentskeptic (commercial)
         run: npm install agentskeptic@latest
 
-      - name: Run contract verification
+      - name: Run stateful CI enforcement
         id: wfv_verify
         continue-on-error: true
         env:
           AGENTSKEPTIC_API_KEY: ${{ secrets.AGENTSKEPTIC_API_KEY }}
         run: |
-          npx agentskeptic --workflow-id wf_complete \
+          npx agentskeptic enforce --workflow-id wf_complete \
             --events examples/events.ndjson \
             --registry examples/tools.json \
             --db examples/demo.db \
+            --create-baseline \
             > verify.stdout 2> verify.stderr
 
       - name: Append AgentSkeptic discovery summary

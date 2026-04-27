@@ -5,7 +5,7 @@ import {
 } from "./failureCatalog.js";
 import { TruthLayerError } from "./truthLayerError.js";
 import { LICENSE_PREFLIGHT_ENABLED } from "./generated/commercialBuildFlags.js";
-import { orchestrateEnforceBatchLockRun, orchestrateEnforceQuickLockRun } from "./cli/lockOrchestration.js";
+import { runStatefulEnforce } from "./enforceStateful.js";
 
 /** User-facing message for OSS builds when `enforce` is invoked; exported for tests. */
 export const ENFORCE_OSS_GATE_MESSAGE =
@@ -17,45 +17,19 @@ function writeCliError(code: string, message: string): void {
 
 function usageEnforce(): string {
   return `Usage:
-  agentskeptic enforce batch --expect-lock <path> <same flags as batch verify>
-  agentskeptic enforce quick --expect-lock <path> <same flags as quick>
+  agentskeptic enforce --workflow-id <id> --events <path> --registry <path> (--db <sqlitePath> | --postgres-url <url>)
+    [--create-baseline | --accept-drift] [other batch verify flags]
 
-Compare-only: --expect-lock is required. Generate locks with batch or quick verify using --output-lock.
+Stateful model:
+  default: compare current run to accepted baseline (paid, over-time).
+  --create-baseline: initialize or replace accepted baseline.
+  --accept-drift: accept current drift as new baseline.
 
-Exit codes (batch): same as batch verify for 0–2; 3 operational; 4 lock mismatch.
-Exit codes (quick): same as quick for 0–2; 3 operational; 4 lock mismatch.
+Exit codes: same as batch verify for 0–2; 3 operational; 4 drift.
 
 See docs/ci-enforcement.md and docs/agentskeptic.md.
 
   --help, -h  print this message and exit 0`;
-}
-
-async function runEnforceBatch(restArgs: string[]): Promise<void> {
-  try {
-    await orchestrateEnforceBatchLockRun(restArgs);
-  } catch (e) {
-    if (e instanceof TruthLayerError) {
-      writeCliError(e.code, e.message);
-      process.exit(3);
-    }
-    const msg = e instanceof Error ? e.message : String(e);
-    writeCliError(CLI_OPERATIONAL_CODES.INTERNAL_ERROR, formatOperationalMessage(msg));
-    process.exit(3);
-  }
-}
-
-async function runEnforceQuick(restArgs: string[]): Promise<void> {
-  try {
-    await orchestrateEnforceQuickLockRun(restArgs);
-  } catch (e) {
-    if (e instanceof TruthLayerError) {
-      writeCliError(e.code, e.message);
-      process.exit(3);
-    }
-    const msg = e instanceof Error ? e.message : String(e);
-    writeCliError(CLI_OPERATIONAL_CODES.INTERNAL_ERROR, formatOperationalMessage(msg));
-    process.exit(3);
-  }
 }
 
 export async function runEnforce(args: string[]): Promise<void> {
@@ -67,18 +41,15 @@ export async function runEnforce(args: string[]): Promise<void> {
     writeCliError(CLI_OPERATIONAL_CODES.ENFORCE_REQUIRES_COMMERCIAL_BUILD, ENFORCE_OSS_GATE_MESSAGE);
     process.exit(3);
   }
-  const mode = args[0];
-  if (mode === "batch") {
-    await runEnforceBatch(args.slice(1));
-    return;
+  try {
+    await runStatefulEnforce(args);
+  } catch (e) {
+    if (e instanceof TruthLayerError) {
+      writeCliError(e.code, e.message);
+      process.exit(3);
+    }
+    const msg = e instanceof Error ? e.message : String(e);
+    writeCliError(CLI_OPERATIONAL_CODES.INTERNAL_ERROR, formatOperationalMessage(msg));
+    process.exit(3);
   }
-  if (mode === "quick") {
-    await runEnforceQuick(args.slice(1));
-    return;
-  }
-  writeCliError(
-    CLI_OPERATIONAL_CODES.ENFORCE_USAGE,
-    'enforce requires "batch" or "quick" immediately after enforce.',
-  );
-  process.exit(3);
 }
