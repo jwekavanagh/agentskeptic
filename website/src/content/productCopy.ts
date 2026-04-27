@@ -59,12 +59,14 @@ export type LearnBundledProofLedes = { primary: string; secondaryMuted: string }
 
 export type HomeHeroCtaLabels = { demo: string };
 export type ConversionSpineCtaLabel =
-  | "Try the demo"
-  | "Get started"
+  | "Try interactive demo"
+  | "See a failed vs passed run"
+  | "Run on sample data in 5 minutes"
+  | "Run first verification"
+  | "Start free"
   | "Continue to checkout"
   | "Sign in to continue"
   | "Continue with email"
-  | "Run your first verification"
   | "View pricing";
 
 export type ConversionSpineRoute =
@@ -86,7 +88,7 @@ export type ConversionSpineRoute =
   | "/terms";
 
 /** Hero primary CTA — scrolls to bundled Try it. */
-export const HOME_HERO_DEMO_CTA_LABEL = "Try the demo" as const;
+export const HOME_HERO_DEMO_CTA_LABEL = "Try interactive demo" as const;
 
 /** Try-it control — performs POST /api/demo/verify (distinct from scroll CTAs). */
 export const HOME_TRY_IT_RUN_BUTTON_LABEL = "Run sample verification" as const;
@@ -162,7 +164,7 @@ export const adoptionCompleteChecklistTokenRefs = {
 
 /** Curated Learn hub (`/guides`): benefit-led links; routes must match markdown `route` frontmatter. */
 export const learnHub = {
-  popularHeading: "Popular guides",
+  popularHeading: "Guides",
   debugHeading: "Debug & troubleshooting",
   buyersHeading: "For buyers and teams",
   bundledProofHeading: "Bundled proof examples",
@@ -289,38 +291,40 @@ export const conversionSpine = {
   ctaPriorityPrimaryValue: "primary",
   ctaPrioritySecondaryValue: "secondary",
   allowedLabels: [
-    "Try the demo",
-    "Get started",
+    "Try interactive demo",
+    "See a failed vs passed run",
+    "Run on sample data in 5 minutes",
+    "Run first verification",
+    "Start free",
     "Continue to checkout",
     "Sign in to continue",
     "Continue with email",
-    "Run your first verification",
     "View pricing",
   ] as const,
   dominantByRoute: {
-    "/": "Try the demo",
-    "/database-truth-vs-traces": "Try the demo",
-    "/integrate": "Run your first verification",
-    "/pricing": "Continue to checkout",
-    "/guides": "Get started",
-    "/guides/[slug]": "Get started",
-    "/examples/[slug]": "Get started",
-    "/problems": "Get started",
-    "/compare": "Get started",
-    "/compare/[slug]": "Get started",
-    "/security": "Get started",
+    "/": "Try interactive demo",
+    "/database-truth-vs-traces": "See a failed vs passed run",
+    "/integrate": "Run first verification",
+    "/pricing": "Start free",
+    "/guides": "Run first verification",
+    "/guides/[slug]": "Run first verification",
+    "/examples/[slug]": "Run on sample data in 5 minutes",
+    "/problems": "Run first verification",
+    "/compare": "Run on sample data in 5 minutes",
+    "/compare/[slug]": "Run on sample data in 5 minutes",
+    "/security": "Run first verification",
     "/support": "View pricing",
     "/contact": "View pricing",
     "/claim": "Continue with email",
-    "/privacy": "Get started",
-    "/terms": "Get started",
+    "/privacy": "Run first verification",
+    "/terms": "Run first verification",
   } as const satisfies Readonly<Record<ConversionSpineRoute, ConversionSpineCtaLabel>>,
 } as const;
 
 /** Hero secondary CTA — “Get started” (Install) on most surfaces; see `homePageHeroSecondaryCta` for `/` only. */
 export const homeHeroSecondaryCta = {
   href: "/integrate" as const,
-  label: "Get started",
+  label: "Run first verification",
   testId: "home-hero-get-started" as const,
 } as const;
 
@@ -330,6 +334,44 @@ export const homePageHeroSecondaryCta = {
   label: "Read the docs",
   testId: "home-hero-read-docs" as const,
 } as const;
+
+export const ctaTaxonomy = {
+  awareness: "See a failed vs passed run",
+  topOfFunnel: "Try interactive demo",
+  consideration: "Run on sample data in 5 minutes",
+  decision: "Run first verification",
+  decisionAlternative: "Start free",
+} as const;
+
+export const coreValuePropTriptych = {
+  problem: "Agents can report success while data is wrong.",
+  solution: "Read-only verification against your actual stores.",
+  outcome: "Prevent false-green releases.",
+} as const;
+
+export const whenToUseDecisionBox = {
+  title: "When to use AgentSkeptic",
+  strongFitHeading: "Strong fit",
+  notDesignedHeading: "Not designed for",
+  strongFitBullets: [
+    "You need a release gate that verifies stored state, not just logs.",
+    "You already have queryable stores (SQL, APIs, vectors, object storage).",
+    "You have seen green traces that still shipped missing or wrong data.",
+    "You need CI-friendly, deterministic verification artifacts for handoffs.",
+  ],
+  notDesignedBullets: [
+    "Unstructured logs with no queryable source of truth.",
+    "A full APM or observability replacement.",
+    "Causal attribution to one exact call without state verification needs.",
+    "Teams that cannot emit any structured tool activity.",
+  ],
+} as const;
+
+export const trustStripPills = [
+  "Read-only by default",
+  "No production writes",
+  "Audit-friendly outputs",
+] as const;
 
 /**
  * Primary homepage copy (canonical for `/`). Stubs for the same topics remain in
@@ -730,10 +772,10 @@ export const productCopy = {
       "Set AGENTSKEPTIC_API_KEY in your environment (WORKFLOW_VERIFIER_API_KEY still works).",
       "Open Integrate and run npx agentskeptic verify … from your repo (full commands are on that page).",
     ] as const,
-    primaryVerificationCtaFirstRun: "Run your first verification",
+    primaryVerificationCtaFirstRun: "Run first verification",
     /** When the user has no key yet; verification CTA stays visible but sets expectations. */
-    primaryVerificationCtaFirstRunNeedsKey: "Run your first verification (create a key below first)",
-    primaryVerificationCtaAgain: "Run another verification",
+    primaryVerificationCtaFirstRunNeedsKey: "Run first verification (create a key below first)",
+    primaryVerificationCtaAgain: "Run first verification again",
     ossClaimChecklistTitle: "After linking a CLI verification",
     ossClaimChecklistItems: [
       "Your run id and outcome are attached to this account for verification history.",
@@ -795,7 +837,7 @@ export const productCopy = {
   signInPurpose: {
     title: "Sign in",
     intro:
-      "Use your email for a magic link. Signing in lets you subscribe to paid plans, manage your account, and generate API keys—not required for the homepage demo.",
+      "Use your email for a magic link to manage plans, account settings, and API keys.",
     benefits: [
       "Subscribe to Individual, Team, or Business (Stripe Checkout; trial available on eligible plans)—required before licensed npm verify.",
       "Create and view API keys on the account page after sign-in.",
@@ -805,6 +847,10 @@ export const productCopy = {
   homeHeroCtaLabels,
   homeHeroSecondaryCta,
   homePageHeroSecondaryCta,
+  ctaTaxonomy,
+  coreValuePropTriptych,
+  whenToUseDecisionBox,
+  trustStripPills,
   pricingBillingAndQuestionsBand,
   learnBundledProofLedes,
   learnBundledProofIntegrateLede,

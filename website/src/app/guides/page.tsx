@@ -122,14 +122,14 @@ export default function GuidesHubPage() {
             className="btn"
             data-cta-priority={conversionSpine.ctaPriorityPrimaryValue}
           >
-            {learnHub.getStartedCtaLabel}
+            {productCopy.ctaTaxonomy.decision}
           </Link>
           <Link
             href="/?demo=wf_missing#try-it"
             className="btn secondary"
             data-cta-priority={conversionSpine.ctaPrioritySecondaryValue}
           >
-            {learnHub.tryDemoCtaLabel}
+            {productCopy.ctaTaxonomy.topOfFunnel}
           </Link>
         </p>
       </section>
