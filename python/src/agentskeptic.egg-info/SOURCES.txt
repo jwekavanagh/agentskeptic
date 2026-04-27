@@ -1,8 +1,14 @@
 README.md
 pyproject.toml
 src/agentskeptic/__init__.py
+src/agentskeptic/__main__.py
+src/agentskeptic/_http.py
+src/agentskeptic/_init_cli.py
+src/agentskeptic/_models.py
 src/agentskeptic/_session.py
+src/agentskeptic/errors.py
 src/agentskeptic/exceptions.py
+src/agentskeptic/sdk.py
 src/agentskeptic/verify.py
 src/agentskeptic.egg-info/PKG-INFO
 src/agentskeptic.egg-info/SOURCES.txt
@@ -10,7 +16,6 @@ src/agentskeptic.egg-info/dependency_links.txt
 src/agentskeptic.egg-info/requires.txt
 src/agentskeptic.egg-info/top_level.txt
 src/agentskeptic/_integrations/__init__.py
-src/agentskeptic/_integrations/autogen.py
 src/agentskeptic/_integrations/crewai.py
 src/agentskeptic/kernel/__init__.py
 src/agentskeptic/kernel/aggregate.py

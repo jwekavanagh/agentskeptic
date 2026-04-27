@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
 import { DatabaseSync } from "node:sqlite";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { createDecisionGate } from "./decisionGate.js";
+import { createDecisionGateImpl } from "./decisionGate.js";
 import { DecisionUnsafeError } from "./decisionUnsafeError.js";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -31,7 +31,7 @@ describe("DecisionGate.assertSafeForIrreversibleAction", () => {
     const eventsPath = join(root, "examples", "events.ndjson");
     const registryPath = join(root, "examples", "tools.json");
     const lines = readFileSync(eventsPath, "utf8").split(/\r?\n/).filter((l) => l.trim().length > 0);
-    const gate = createDecisionGate({
+    const gate = createDecisionGateImpl({
       workflowId: "wf_missing",
       registryPath,
       databaseUrl: dbPath,

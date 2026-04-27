@@ -33,15 +33,19 @@ export type {
   OutcomeCertificateCheckpointVerdict,
   BuildQuickOutcomeCertificateOptions,
 } from "./outcomeCertificate.js";
-export { verifyWorkflow, loadToolsRegistry, verifyRunStateFromEvents } from "./pipeline.js";
+export { loadToolsRegistry, verifyRunStateFromEvents } from "./pipeline.js";
 export type { VerifyRunStateFromEventsInput } from "./pipeline.js";
-export { createDecisionGate } from "./decisionGate.js";
-export type { CreateDecisionGateOptions, DecisionGate } from "./decisionGate.js";
 export {
+  verifyWorkflow,
+  createDecisionGate,
+  verifyAgentskeptic,
+  runQuickVerify,
+  runQuickVerifyToValidatedReport,
   assertLangGraphCheckpointProductionGate,
-  classifyLangGraphCheckpointTrustEligibility,
   createLangGraphCheckpointTrustGate,
-} from "./langGraphCheckpointTrustGate.js";
+} from "./sdk/deprecatedPublicApi.js";
+export type { CreateDecisionGateOptions, DecisionGate } from "./decisionGate.js";
+export { classifyLangGraphCheckpointTrustEligibility } from "./langGraphCheckpointTrustGate.js";
 export type {
   CreateLangGraphCheckpointTrustGateOptions,
   LangGraphCheckpointTrustEligibility,
@@ -52,14 +56,9 @@ export { trustDecisionFromCertificate } from "./trustDecision.js";
 export type { TrustDecision } from "./trustDecision.js";
 export { formatDecisionBlockerForHumans } from "./decisionBlocker.js";
 export { DecisionUnsafeError } from "./decisionUnsafeError.js";
-export { verifyAgentskeptic } from "./verifyAgentskeptic.js";
 export { loadSchemaValidator } from "./schemaLoad.js";
 export type { SchemaValidatorName } from "./schemaLoad.js";
-export {
-  runQuickVerify,
-  quickReportToStdoutLine,
-  runQuickVerifyToValidatedReport,
-} from "./quickVerify/runQuickVerify.js";
+export { quickReportToStdoutLine } from "./quickVerify/runQuickVerify.js";
 export type {
   QuickVerifyReport,
   RunQuickVerifyOptions,
@@ -93,6 +92,10 @@ export type { BuildExecutionTraceViewInput } from "./executionTrace.js";
 export { loadEventsForWorkflow, eventsFileHasSchemaV3ToolObservedForWorkflow } from "./loadEvents.js";
 export { formatNoStepsForWorkflowMessage, enrichNoStepsRunLevelReasons } from "./noStepsMessage.js";
 export { TruthLayerError } from "./truthLayerError.js";
+export { AgentSkepticError, agentSkepticErrorEntries, lookupErrorCodeMeta } from "./sdk/errors.js";
+export type { ErrorCodeEntry, AgentSkepticErrorCode } from "./sdk/errors.js";
+export { AgentSkeptic } from "./sdk/AgentSkeptic.js";
+export type { AgentSkepticOptions } from "./sdk/AgentSkeptic.js";
 export {
   CLI_OPERATIONAL_CODES,
   OPERATIONAL_MESSAGE_MAX_CHARS,

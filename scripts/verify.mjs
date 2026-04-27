@@ -49,7 +49,13 @@ const stages = {
         "node scripts/assert-no-legacy-verify-surface.mjs && " +
         "node scripts/assert-no-withWorkflowVerification-surface.mjs && " +
         "node scripts/assert-openapi-covers-activation-routes.mjs && " +
-        "node scripts/check-agentskeptic-compare-delegation.mjs",
+        "node scripts/check-agentskeptic-compare-delegation.mjs && " +
+        "node scripts/assert-no-adhoc-fetch-for-activation.mjs && " +
+        "node scripts/assert-error-code-parity.mjs && " +
+        "node scripts/assert-pydantic-matches-openapi.mjs && " +
+        "node scripts/assert-deprecations-still-export.mjs && " +
+        "node scripts/assert-openapi-types-fresh.mjs && " +
+        "node scripts/assert-python-httpx-scope.mjs",
     ),
   nodeTestSqlite: () => {
     const files = sqliteNodeTestFiles.map((f) => f.replace(/\\/g, "/")).join(" ");

@@ -11,7 +11,7 @@ import { dirname } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import * as api from "../dist/index.js";
 import { verifyWorkflow } from "../dist/pipeline.js";
-import { createDecisionGate } from "../dist/decisionGate.js";
+import { createDecisionGate } from "../dist/index.js";
 import { loadSchemaValidator } from "../dist/schemaLoad.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));

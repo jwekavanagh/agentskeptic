@@ -1,12 +1,16 @@
 from __future__ import annotations
 
+import os
+import warnings
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Callable, Iterator, Literal
 
 from agentskeptic._session import VerificationSession
 
-FrameworkName = Literal["crewai", "autogen", "langgraph"]
+FrameworkName = Literal["crewai", "langgraph"]
+
+_WARN_VERIFY = False
 
 
 @contextmanager
@@ -18,7 +22,6 @@ def verify(
     registry: str | Path,
     crew: Any | None = None,
     compiled: Any | None = None,
-    team: Any | None = None,
     tool_id_resolver: Callable[[Any], str] | None = None,
     langgraph_tool_id: str = "crm.upsert_contact",
     langgraph_tool_params: dict[str, Any] | None = None,
@@ -29,6 +32,14 @@ def verify(
 
     ``database_url`` must be a filesystem path to a SQLite database (``file:`` URI or plain path).
     """
+    global _WARN_VERIFY
+    if not _WARN_VERIFY and os.environ.get("AGENTSKEPTIC_SUPPRESS_DEPRECATION", "") != "1":
+        _WARN_VERIFY = True
+        warnings.warn(
+            "agentskeptic.verify() is deprecated in favor of `AgentSkeptic` (v2). See docs/migrate-2.md.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
     session = VerificationSession(
         framework=framework,
         workflow_id=workflow_id,
@@ -43,12 +54,6 @@ def verify(
             from agentskeptic._integrations.crewai import attach_crewai
 
             attach_crewai(session, tool_id_resolver)
-        elif framework == "autogen":
-            if team is None:
-                raise TypeError("verify(...): team= is required when framework='autogen'")
-            from agentskeptic._integrations.autogen import attach_autogen
-
-            attach_autogen(session, team)
         elif framework == "langgraph":
             if compiled is None:
                 raise TypeError("verify(...): compiled= is required when framework='langgraph'")

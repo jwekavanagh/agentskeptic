@@ -2,7 +2,7 @@ import {
   LICENSE_API_BASE_URL,
   LICENSE_PREFLIGHT_ENABLED,
 } from "../generated/commercialBuildFlags.js";
-import { fetchWithTimeout } from "../telemetry/fetchWithTimeout.js";
+import { postVerifyOutcomeBestEffort } from "../sdk/transport.js";
 import type { OutcomeCertificateV1 } from "../outcomeCertificate.js";
 import {
   buildVerifyOutcomeBeaconBodyV2,
@@ -45,17 +45,5 @@ export async function postVerifyOutcomeBeacon(input: {
   if (input.xRequestId?.trim()) {
     headers["x-request-id"] = input.xRequestId.trim();
   }
-  try {
-    await fetchWithTimeout(
-      url,
-      {
-        method: "POST",
-        headers,
-        body: JSON.stringify(body),
-      },
-      400,
-    );
-  } catch {
-    /* ignore */
-  }
+  await postVerifyOutcomeBestEffort({ url, body, headers, timeoutMs: 400 });
 }

@@ -1,6 +1,6 @@
 {
   "name": "agentskeptic",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "AgentSkeptic compares agent claims with real downstream state — databases, APIs, object stores, and vector stores — and returns a clear verdict.",
   "license": "MIT",
   "type": "module",
@@ -14,6 +14,10 @@
   },
   "exports": {
     ".": "./dist/index.js",
+    "./next": {
+      "import": "./dist/sdk/frameworks/next.js",
+      "types": "./dist/sdk/frameworks/next.d.ts"
+    },
     "./schemaLoad": "./dist/schemaLoad.js",
     "./registryDraft": "./dist/registryDraft/index.js",
     "./bootstrapPackSynthesis": "./dist/bootstrap/bootstrapPackSynthesis.js",
@@ -22,7 +26,9 @@
   },
   "scripts": {
     "prepublishOnly": "node scripts/build-commercial.mjs",
-    "build": "node scripts/write-commercial-build-flags.mjs --oss && node scripts/sync-failure-origin-from-schema.mjs && tsc && node scripts/copy-debug-ui.mjs && node scripts/write-discovery-payload.mjs",
+    "codegen:types": "openapi-typescript schemas/openapi-commercial-v1.yaml -o src/sdk/_generated/openapi-types.ts",
+    "codegen:error-codes": "node scripts/generate-agentskeptic-error-codes.mjs",
+    "build": "node scripts/write-commercial-build-flags.mjs --oss && node scripts/sync-failure-origin-from-schema.mjs && tsc && node scripts/copy-cli-init-assets.mjs && node scripts/copy-debug-ui.mjs && node scripts/write-discovery-payload.mjs",
     "build:commercial": "node scripts/build-commercial.mjs",
     "start": "npm run build && node scripts/demo.mjs",
     "dev": "npm run dev -w agentskeptic-web",
@@ -90,19 +96,20 @@
     "@commitlint/config-conventional": "^20.3.0",
     "@lhci/cli": "0.15.1",
     "@playwright/test": "^1.51.0",
-    "@types/node": "^22.10.2",
-    "@types/pg": "^8.20.0",
-    "@types/picomatch": "^4.0.3",
-    "stripe": "^17.5.0",
-    "typescript": "^5.7.2",
-    "vitest": "^4.1.4",
-    "husky": "^9.1.7",
-    "semantic-release": "^25.0.0",
     "@semantic-release/changelog": "^6.0.0",
+    "@semantic-release/exec": "^6.0.0",
     "@semantic-release/git": "^10.0.0",
     "@semantic-release/github": "^12.0.0",
     "@semantic-release/npm": "^13.0.0",
-    "@semantic-release/exec": "^6.0.0"
+    "@types/node": "^22.10.2",
+    "@types/pg": "^8.20.0",
+    "@types/picomatch": "^4.0.3",
+    "husky": "^9.1.7",
+    "openapi-typescript": "^7.10.1",
+    "semantic-release": "^25.0.0",
+    "stripe": "^17.5.0",
+    "typescript": "^5.7.2",
+    "vitest": "^4.1.4"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1034.0",
@@ -114,6 +121,7 @@
     "mysql2": "^3.14.0",
     "pg": "^8.20.0",
     "picomatch": "^4.0.4",
+    "ts-morph": "^25.0.1",
     "yaml": "^2.8.3"
   },
   "overrides": {

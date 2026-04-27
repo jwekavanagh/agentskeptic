@@ -40,8 +40,9 @@ export type DecisionGate = {
 
 /**
  * Runtime integration: buffer structured run events, evaluate against the registry + DB, assert before irreversible work.
+ * Prefer the public `createDecisionGate` export from the package root (deprecated wrapper) or `AgentSkeptic` in v2+.
  */
-export function createDecisionGate(options: CreateDecisionGateOptions): DecisionGate {
+export function createDecisionGateImpl(options: CreateDecisionGateOptions): DecisionGate {
   const projectRoot = path.resolve(options.projectRoot ?? process.cwd());
   const registryPath = path.resolve(projectRoot, options.registryPath);
   const verificationPolicy = resolveVerificationPolicyInput(options.verificationPolicy);

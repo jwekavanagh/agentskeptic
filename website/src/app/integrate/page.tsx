@@ -1,4 +1,3 @@
-import { INTEGRATE_ACTIVATION_SHELL_BODY } from "@/generated/integrateActivationShellStatic";
 import marketing from "@/lib/marketing";
 import { conversionSpine } from "@/content/productCopy";
 import { siteMetadata } from "@/content/siteMetadata";
@@ -46,10 +45,15 @@ export default function IntegratePage() {
         optional telemetry (same checklist appears at the top of beacon-eligible pages).
       </p>
 
-      <h2>Cross the boundary (canonical path)</h2>
+      <h2>Scaffold then verify (canonical v2 path)</h2>
       <p>
-        <code>agentskeptic crossing</code> is the one-shot pack-led entry: NDJSON tool lines, a registry, and
-        read-only state in one pass. Normative behavior is documented in the crossing contract below.
+        Run <code>agentskeptic init</code> to emit <code>agentskeptic/tools.json</code>, <code>agentskeptic/events.ndjson</code>,
+        and a seeded <code>demo.db</code>, then add the documented <code>verify</code> script. For pack-led NDJSON replay
+        without scaffolding, see <code>agentskeptic crossing</code> in{" "}
+        <a href="https://github.com/jwekavanagh/agentskeptic/blob/main/docs/crossing-normative.md" rel="noopener noreferrer" target="_blank">
+          crossing-normative.md
+        </a>
+        .
       </p>
       <pre id="integrate-crossing-commands" className="integrate-pack-command" data-testid="integrate-crossing-commands">
         {p.packLedCommand}
@@ -81,11 +85,10 @@ export default function IntegratePage() {
         ))}
       </ul>
 
-      <h2>Product completion: Step 4 on your emitters</h2>
+      <h2>Product completion: wire your emitters</h2>
       <p>
-        Wire your tool and workflow code so it emits the NDJSON and registry this command consumes. The mechanical
-        spine (clone, build, first-run) is an optional on-ramp in the section below—product completion is your
-        emitters and stores matching the expected shape.
+        Wire tool and workflow code so it emits the NDJSON and registry verification consumes. Product completion is your
+        emitters and stores matching the expected shape — not a long shell template.
       </p>
 
       <h2>What a green run shows</h2>
@@ -101,21 +104,30 @@ export default function IntegratePage() {
         silent green traces hiding bad data.
       </p>
 
-      <section
-        className="integrate-optional-spine"
-        aria-label="Mechanical spine (optional, for full end-to-end validation)"
-      >
-        <p className="integrate-optional-spine-label muted">
-          Mechanical spine (optional, for full end-to-end validation)
+      <section className="integrate-framework-picker" aria-label="Framework starter commands" id="agentskeptic-init">
+        <h3>Framework starter (`init`)</h3>
+        <p className="muted">
+          AgentSkeptic v2 ships a small, tested matrix. SQLite only on day one. Full integrator SSOT:{" "}
+          <a href={p.githubDeepLink} rel="noopener noreferrer" target="_blank">
+            docs/integrate.md
+          </a>
+          .
         </p>
-        <h3>Mechanical spine checkpoint (not product completion)</h3>
         <p>
-          Long-form bash template for local machines and CI. This is not a substitute for wiring your own emitters—the
-          crossing command above is the product-shaped gate.
+          <strong>TypeScript · Next.js (App Router)</strong>
         </p>
-        <pre className="integrate-activation-commands" data-testid="integrator-activation-commands">
-          {INTEGRATE_ACTIVATION_SHELL_BODY}
-        </pre>
+        <pre
+          className="integrate-pack-command"
+          data-testid="integrator-activation-commands"
+        >{`npx agentskeptic init --framework next --database sqlite --yes`}</pre>
+        <p>
+          <strong>TypeScript · bare</strong>
+        </p>
+        <pre className="integrate-pack-command">{`npx agentskeptic init --framework none --database sqlite --yes`}</pre>
+        <p>
+          <strong>Python</strong>
+        </p>
+        <pre className="integrate-pack-command">{`python -m agentskeptic init --framework none --database sqlite --yes`}</pre>
       </section>
 
       <h2>Next steps</h2>

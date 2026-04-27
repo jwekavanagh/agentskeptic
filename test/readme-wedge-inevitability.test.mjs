@@ -47,13 +47,13 @@ describe("readme adoption + wedge", () => {
     }
   });
 
-  it("O3 README: adoption region contains createDecisionGate import", () => {
+  it("O3 README: adoption region contains AgentSkeptic import (v2)", () => {
     const readme = readFileSync(join(root, "README.md"), "utf8");
     const a0 = readme.indexOf("<!-- adoption-canonical:start -->");
     const a1 = readme.indexOf("<!-- adoption-canonical:end -->");
     assert.ok(a0 >= 0 && a1 > a0, "adoption markers missing");
     const region = readme.slice(a0, a1);
-    assert.match(region, /import \{ createDecisionGate \} from "agentskeptic"/);
+    assert.match(region, /import \{ AgentSkeptic \} from "agentskeptic"/);
   });
 
   it("O4 README: no npm start above ## Advanced", () => {

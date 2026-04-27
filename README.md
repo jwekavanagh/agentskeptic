@@ -70,48 +70,34 @@ npm install agentskeptic
 
 ### Code
 
-```ts
-import { appendFileSync, writeFileSync, mkdirSync } from "node:fs";
-import { join } from "node:path";
-import { createDecisionGate } from "agentskeptic";
+```bash
+npx agentskeptic init --framework none --database sqlite --yes
+```
 
-const projectRoot = process.cwd();
-const d = join(projectRoot, "agentskeptic");
-mkdirSync(d, { recursive: true });
-writeFileSync(
-  join(d, "tools.json"),
-  JSON.stringify([
-    {
-      toolId: "crm.upsert_contact",
-      effectDescriptionTemplate: "Upsert contact {/recordId} with fields {/fields}",
-      verification: {
-        kind: "sql_row",
-        table: { const: "contacts" },
-        identityEq: [{ column: { const: "id" }, value: { pointer: "/recordId" } }],
-        requiredFields: { pointer: "/fields" },
-      },
-    },
-  ]) + "\n",
-);
-const ev = {
+```ts
+import { join } from "node:path";
+import { AgentSkeptic } from "agentskeptic";
+
+const skeptic = new AgentSkeptic({
+  registryPath: join("agentskeptic", "tools.json"),
+  databaseUrl: join(process.cwd(), "demo.db"),
+});
+
+const gate = skeptic.gate({ workflowId: "wf_complete" });
+// After each tool observation, buffer the event:
+gate.appendRunEvent({
   schemaVersion: 1,
-  workflowId: "wf_demo",
+  workflowId: "wf_complete",
   seq: 0,
   type: "tool_observed",
   toolId: "crm.upsert_contact",
   params: { recordId: "c_ok", fields: { name: "Alice", status: "active" } },
-};
-appendFileSync(join(d, "events.ndjson"), JSON.stringify(ev) + "\n");
-
-const gate = createDecisionGate({
-  workflowId: "wf_demo",
-  registryPath: join("agentskeptic", "tools.json"),
-  databaseUrl: join(projectRoot, "app.db"),
-  projectRoot,
 });
-gate.appendRunEvent(ev);
+// Before an irreversible action:
 await gate.assertSafeForIrreversibleAction();
 ```
+
+See **[`docs/integrate.md`](docs/integrate.md)** (v2 integrator SSOT) and [`docs/migrate-2.md`](docs/migrate-2.md) for 1.x → 2.0 renames.
 <!-- adoption-canonical:end -->
 
 ## Buy vs build: why not only SQL checks

@@ -7,7 +7,7 @@ import { DatabaseSync } from "node:sqlite";
 import { describe, expect, it, beforeAll, afterAll } from "vitest";
 import { normalizeSpkiPemForSidecar } from "./workflowResultSignature.js";
 import { loadCorpusRun, resolveCorpusRootReal } from "./debugCorpus.js";
-import { createDecisionGate } from "./decisionGate.js";
+import { createDecisionGateImpl } from "./decisionGate.js";
 import { writeRunBundleFromDecisionGate } from "./agentRunBundle.js";
 import { verifyRunBundleSignature } from "./verifyRunBundleSignature.js";
 
@@ -41,7 +41,7 @@ describe("DecisionGate run bundle write", () => {
     const runId = "hook_run";
     const outDir = join(bundleParent, runId);
     try {
-      const gate = createDecisionGate({
+      const gate = createDecisionGateImpl({
         workflowId: wfId,
         registryPath,
         databaseUrl: dbPath,
@@ -90,7 +90,7 @@ describe("DecisionGate run bundle write", () => {
     writeFileSync(keyPath, privatePem, "utf8");
     writeFileSync(pubPath, normalizeSpkiPemForSidecar(publicPem), "utf8");
     try {
-      const gate = createDecisionGate({
+      const gate = createDecisionGateImpl({
         workflowId: wfId,
         registryPath,
         databaseUrl: dbPath,

@@ -37,8 +37,8 @@ for (const rel of ["README.md", "llms.txt"]) {
     console.error(`${rel}: adoption region must not reference verifyAgentskeptic`);
     failed = true;
   }
-  if (!/createDecisionGate/.test(region)) {
-    console.error(`${rel}: adoption region must reference createDecisionGate`);
+  if (!/createDecisionGate/.test(region) && !/AgentSkeptic/.test(region)) {
+    console.error(`${rel}: adoption region must reference createDecisionGate (legacy) or AgentSkeptic (v2)`);
     failed = true;
   }
 }

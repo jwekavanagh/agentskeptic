@@ -1,13 +1,17 @@
-"""AgentSkeptic Python package: in-process verification kernel + single ``verify()`` entrypoint."""
+"""AgentSkeptic Python package: in-process verification kernel + `AgentSkeptic` v2 facade."""
 
-from agentskeptic.exceptions import AgentSkepticError, DecisionUnsafeError, LangGraphCheckpointTrustUnsafeError
+from agentskeptic.errors import AGENT_SKEPTIC_ERROR_CODES, AgentSkepticError
+from agentskeptic.exceptions import DecisionUnsafeError, LangGraphCheckpointTrustUnsafeError
+from agentskeptic.sdk import AgentSkeptic
 from agentskeptic.tools.emit_registry import emit_tools_json
 from agentskeptic.verify import verify
 
 __all__ = [
     "verify",
     "emit_tools_json",
+    "AgentSkeptic",
     "AgentSkepticError",
+    "AGENT_SKEPTIC_ERROR_CODES",
     "DecisionUnsafeError",
     "LangGraphCheckpointTrustUnsafeError",
 ]
