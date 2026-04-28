@@ -1,3 +1,10 @@
+# [2.3.0](https://github.com/jwekavanagh/agentskeptic/compare/v2.2.0...v2.3.0) (2026-04-28)
+
+
+### Features
+
+* **loop:** ship canonical local truth loop command ([#28](https://github.com/jwekavanagh/agentskeptic/issues/28)) ([6529dd6](https://github.com/jwekavanagh/agentskeptic/commit/6529dd6d975589c3e0efb32813d5efc5b6c7e0fc))
+
 # [2.2.0](https://github.com/jwekavanagh/agentskeptic/compare/v2.1.0...v2.2.0) (2026-04-28)
 
 
