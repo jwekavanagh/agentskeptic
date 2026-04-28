@@ -23,7 +23,9 @@ def attach_crewai(session: VerificationSession, tool_id_resolver: Callable[[Any]
         tool_id = resolver(ctx)
         tool_input = getattr(ctx, "tool_input", None)
         params: dict[str, Any] = tool_input if isinstance(tool_input, dict) else {}
-        session.append_tool_v1(tool_id, params)
+        session.buffered.append(
+            session.emitter.tool_observed(tool_id=tool_id, params=params, schema_version=1)
+        )
 
     _hook_registered.append(_hook)
     return lambda: None

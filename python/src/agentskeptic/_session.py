@@ -4,6 +4,7 @@ import uuid
 from pathlib import Path
 from typing import Any
 
+from agentskeptic.events import CanonicalEventEmitter
 from agentskeptic.kernel.verify_sqlite import (
     verify_contract_sql_certificate_sqlite,
     verify_langgraph_checkpoint_trust,
@@ -27,23 +28,15 @@ class VerificationSession:
         self.registry = Path(registry)
         self.buffered: list[dict[str, Any]] = []
         self.run_level_reasons: list[dict[str, Any]] = []
-        self._seq = 0
         self._root_run_event_id = str(uuid.uuid4())
+        self.emitter = CanonicalEventEmitter(workflow_id=workflow_id, default_tool_schema_version=1)
         self.last_certificate: dict[str, Any] | None = None
 
     def append_malformed(self, reason: dict[str, Any]) -> None:
         self.run_level_reasons.append(reason)
 
     def append_tool_v1(self, tool_id: str, params: dict[str, Any]) -> None:
-        ev = {
-            "schemaVersion": 1,
-            "workflowId": self.workflow_id,
-            "seq": self._seq,
-            "type": "tool_observed",
-            "toolId": tool_id,
-            "params": params,
-        }
-        self._seq += 1
+        ev = self.emitter.tool_observed(tool_id=tool_id, params=params, schema_version=1)
         self.buffered.append(ev)
 
     def append_tool_v3_langgraph(
@@ -55,21 +48,13 @@ class VerificationSession:
         checkpoint_ns: str,
         checkpoint_id: str,
     ) -> None:
-        ev = {
-            "schemaVersion": 3,
-            "workflowId": self.workflow_id,
-            "runEventId": str(uuid.uuid4()),
-            "type": "tool_observed",
-            "seq": self._seq,
-            "toolId": tool_id,
-            "params": params,
-            "langgraphCheckpoint": {
-                "threadId": thread_id,
-                "checkpointNs": checkpoint_ns,
-                "checkpointId": checkpoint_id,
-            },
-        }
-        self._seq += 1
+        ev = self.emitter.tool_observed_langgraph_checkpoint(
+            tool_id=tool_id,
+            params=params,
+            thread_id=thread_id,
+            checkpoint_ns=checkpoint_ns,
+            checkpoint_id=checkpoint_id,
+        )
         self.buffered.append(ev)
 
     def flush_certificate(self) -> dict[str, Any]:

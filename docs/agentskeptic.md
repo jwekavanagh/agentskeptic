@@ -346,7 +346,7 @@ Relational check authoring and the mapping from product vocabulary to registry c
 
 ### Low-friction integration (runtime)
 
-Primary integration: **`createDecisionGate`** from **`decisionGate.ts`** (package export). Call **`appendRunEvent`** after each tool with one [event line](#event-line-schema). Before irreversible work, call **`await assertSafeForIrreversibleAction()`** (throws **`DecisionUnsafeError`** with a six-line human blocker). **`evaluate()`** returns **`WorkflowResult`**; **`evaluateCertificate()`** returns **`OutcomeCertificateV1`**.
+Primary integration: **`AgentSkeptic.createEmitter`** + **`createDecisionGate`** (or `AgentSkeptic.gate`). Emit canonical events first, append emitted rows to the gate buffer, then run **`gate.assertEmissionQuality()`** before evaluation. Before irreversible work, call **`await assertSafeForIrreversibleAction()`** (throws **`DecisionUnsafeError`** with a six-line human blocker). **`evaluate()`** returns **`WorkflowResult`**; **`evaluateCertificate()`** returns **`OutcomeCertificateV1`**.
 
 **Postgres and SQLite:** pass `databaseUrl` as either a filesystem path (SQLite) or a `postgres://` / `postgresql://` URL. **`consistencyMode: "eventual"`** is supported the same as batch verify. For **MySQL, BigQuery, Microsoft SQL Server**, vector indexes, object storage, HTTP witnesses, and MongoDB verification kinds, see the normative matrix in [`verification-state-stores.md`](verification-state-stores.md).
 
@@ -354,6 +354,7 @@ Normative contracts:
 
 - **`appendRunEvent` input:** Only a JavaScript **non-null object** is schema-validated against the event schema; **strings and primitives are not parsed as NDJSON**—non-objects yield **`MALFORMED_EVENT_LINE`** (same run-level meaning as a bad NDJSON line in batch mode).
 - **`appendRunEvent` return:** Always **`undefined`**.
+- **Compatibility boundary:** Raw `appendRunEvent` objects remain supported as a low-level compatibility surface, but canonical onboarding/default integration is emitter-first (`createEmitter` + `gate.assertEmissionQuality()`).
 - **Parity:** The same events appended in capture order must match **`await verifyWorkflow`** on an NDJSON file containing only those lines for the same `workflowId`, `registryPath`, and `database`.
 
 **Defaults (`truthReport` / `logStep`):** match **`verifyWorkflow`**: override with `truthReport: () => {}` in tests; pass explicit `logStep` if you need per-step stderr JSON.
@@ -374,7 +375,8 @@ For CI, audits, or logs written as NDJSON:
 2. After **each** tool call, append one JSON object line to your NDJSON file (see [Event line schema](#event-line-schema)).
 3. Maintain `tools.json` with one entry per `toolId` your workflows emit.
 4. Optionally validate the registry (and optionally resolution vs NDJSON) without a database: `node dist/cli.js validate-registry --registry <path>` or with `--events` and `--workflow-id` (see [Registry validation (`validate-registry`) — normative](#registry-validation-validate-registry--normative)).
-5. Run:
+5. Validate emission quality before verify: `node dist/cli.js emit-lint --workflow-id <id> --events <path>` (same error-envelope contract as other operational failures).
+6. Run:
 
 ```bash
 npm run build

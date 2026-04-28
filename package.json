@@ -86,6 +86,7 @@
     "conformance:gate": "node conformance/assert-supported-100.mjs",
     "docs:generate:capabilities": "node scripts/generate-capability-docs.mjs",
     "docs:check:capabilities": "node scripts/generate-capability-docs.mjs --check",
+    "measure:emission-onboarding-metrics": "node scripts/measure-emission-onboarding-metrics.mjs",
     "release:dry": "semantic-release --dry-run",
     "lock:align-esbuild-nested": "node scripts/align-esbuild-kit-lock-nested.mjs",
     "prepare": "npx --yes patch-package@8.0.1 && node scripts/patch-lhci-punycode.mjs && husky"
