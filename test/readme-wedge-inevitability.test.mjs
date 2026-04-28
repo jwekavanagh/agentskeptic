@@ -53,7 +53,7 @@ describe("readme adoption + wedge", () => {
     const a1 = readme.indexOf("<!-- adoption-canonical:end -->");
     assert.ok(a0 >= 0 && a1 > a0, "adoption markers missing");
     const region = readme.slice(a0, a1);
-    assert.match(region, /import \{ AgentSkeptic \} from "agentskeptic"/);
+    assert.match(region, /import \{[^}]*\bAgentSkeptic\b[^}]*\} from "agentskeptic"/);
   });
 
   it("O4 README: no npm start above ## Advanced", () => {
