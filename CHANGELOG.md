@@ -1,3 +1,10 @@
+# [2.4.0](https://github.com/jwekavanagh/agentskeptic/compare/v2.3.0...v2.4.0) (2026-04-28)
+
+
+### Features
+
+* **ci:** unified verification:truth runner and merged verification job ([07ac282](https://github.com/jwekavanagh/agentskeptic/commit/07ac282be1b7c2ba8993ca72f41189566c5fe072))
+
 # [2.3.0](https://github.com/jwekavanagh/agentskeptic/compare/v2.2.0...v2.3.0) (2026-04-28)
 
 
