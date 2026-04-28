@@ -16,6 +16,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     marketing.slug,
     ...discoveryPaths,
     "/integrate",
+    "/integrate/guided",
     "/guides",
     "/problems",
     "/compare",

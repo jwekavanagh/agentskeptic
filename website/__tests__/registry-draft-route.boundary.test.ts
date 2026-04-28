@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { NextRequest } from "next/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { parseBootstrapPackInputJson, synthesizeQuickInputUtf8FromOpenAiV1 } from "agentskeptic/bootstrapPackSynthesis";
 
 const callOpenAiMock = vi.hoisted(() => vi.fn());
 const reserveSlotMock = vi.hoisted(() => vi.fn().mockResolvedValue({ ok: true }));
@@ -33,8 +34,8 @@ const branchBFixture = readFileSync(
   "utf8",
 );
 
-const validModelEnvelope = {
-  schemaVersion: 1,
+/** LLM returns partial only; route merges v2 + quickIngestInput. */
+const validLlmPartial = {
   draft: {
     tools: [
       {
@@ -77,7 +78,7 @@ describe("POST /api/integrator/registry-draft", () => {
     reserveSlotMock.mockResolvedValue({ ok: true });
     callOpenAiMock.mockResolvedValue({
       ok: true,
-      contentText: JSON.stringify(validModelEnvelope),
+      contentText: JSON.stringify(validLlmPartial),
     });
   });
 
@@ -145,12 +146,25 @@ describe("POST /api/integrator/registry-draft", () => {
     expect(j.code).toBe("MODEL_OUTPUT_INVALID");
   });
 
-  it("returns 200 and reserves IP slot on happy path", async () => {
+  it("returns 200 with v2 merged response and quickIngestInput on happy path", async () => {
     const res = await POST(jsonPost(branchBFixture, true));
     expect(res.status).toBe(200);
-    const j = (await res.json()) as typeof validModelEnvelope;
-    expect(j.schemaVersion).toBe(1);
+    const j = (await res.json()) as {
+      schemaVersion: number;
+      draft: { tools: Array<{ toolId: string }> };
+      quickIngestInput: { encoding: string; body: string };
+    };
+    expect(j.schemaVersion).toBe(2);
     expect(j.draft.tools[0]!.toolId).toBe("crm.upsert_contact");
+    expect(j.quickIngestInput.encoding).toBe("utf8");
+    expect(j.quickIngestInput.body.length).toBeGreaterThan(0);
+    const golden = JSON.parse(
+      readFileSync(join(repoRoot, "test", "fixtures", "registry-draft", "normalized-bootstrap-golden.json"), "utf8"),
+    );
+    const expected = synthesizeQuickInputUtf8FromOpenAiV1(
+      parseBootstrapPackInputJson(JSON.stringify(golden)),
+    );
+    expect(j.quickIngestInput.body).toBe(expected);
     expect(reserveSlotMock).toHaveBeenCalled();
     expect(callOpenAiMock).toHaveBeenCalledTimes(1);
   });

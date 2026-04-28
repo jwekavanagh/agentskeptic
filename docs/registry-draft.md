@@ -14,7 +14,7 @@ Normative contract for the **optional** same-origin **`POST /api/integrator/regi
 
 4. **CLI bootstrap** uses `src/schemaLoad.ts` for `bootstrap-pack-input-v1`. That loader **`addSchema`s the OpenAI tool-call item schema before the bootstrap pack** so `$ref` resolution matches production order.
 
-5. Published npm tarball includes `schemas/` (see root `package.json` `"files"`) so all five JSON files ship with the package.
+5. Published npm tarball includes `schemas/` (see root `package.json` `"files"`) so registry-draft, tools-registry, and related JSON files ship with the package.
 
 ### AJV `addSchema` order (registry-draft instance)
 
@@ -23,7 +23,7 @@ Normative contract for the **optional** same-origin **`POST /api/integrator/regi
 | 1 | `https://agentskeptic.com/schemas/openai-function-tool-call-item-v1.schema.json` |
 | 2 | `https://agentskeptic.com/schemas/bootstrap-pack-input-v1.schema.json` |
 | 3 | `https://agentskeptic.com/schemas/registry-draft-request-v1.schema.json` |
-| 4 | `https://agentskeptic.com/schemas/registry-draft-response-v1.schema.json` |
+| 4 | `https://agentskeptic.com/schemas/registry-draft-response-v2.schema.json` |
 | 5 | `https://agentskeptic.com/schemas/tools-registry.schema.json` |
 
 **Response** uses the **same** factory and order as request: envelope is validated at step 4; `draft.tools` is validated with step 5.
@@ -32,7 +32,9 @@ Normative contract for the **optional** same-origin **`POST /api/integrator/regi
 
 - **Request:** `schemas/registry-draft-request-v1.schema.json` — `oneOf`: `bootstrap_pack_v1` | `openai_tool_calls_v1`; shared `$defs` for `workflowId` and `ddlHint` (`ddlHint` pattern rejects `://`).
 
-- **Response:** `schemas/registry-draft-response-v1.schema.json` — envelope + `draft.tools` as `tools-registry` array.
+- **Response (HTTP):** `schemas/registry-draft-response-v2.schema.json` — `schemaVersion: 2`, `draft.tools` as `tools-registry` array, plus required **`quickIngestInput`**: UTF-8 NDJSON for the `quick` ingest form, computed **deterministically** in [`website/.../registry-draft/route.ts`](../website/src/app/api/integrator/registry-draft/route.ts) from the normalized bootstrap input (same as `synthesizeQuickInputUtf8FromOpenAiV1`). The OpenAI call returns a **partial** object only; the server merges before AJV. Partial shape reference: `schemas/registry-draft-llm-partial-v1.schema.json` (used in `response_format`, not the AJV registry instance).
+
+**Response v2 — `quickIngestInput`:** Present on every **200** after a successful model parse and merge. `body` max length **65536** (aligned with the route request cap). Failing synthesis returns **500** with `code: QUICK_INGEST_SYNTHESIS_FAILED`.
 
 - **Website** imports **`agentskeptic/registryDraft`** only for AJV-backed validation and normalization—no second AJV construction path under `website/` for this route.
 
@@ -43,9 +45,11 @@ Normative contract for the **optional** same-origin **`POST /api/integrator/regi
 - **Body size:** UTF-8 request cap **65536** bytes.
 - **Per-IP hourly cap:** `REGISTRY_DRAFT_IP_CAP` and `reserveRegistryDraftIpSlot` in [`website/src/lib/ossClaimRateLimits.ts`](../website/src/lib/ossClaimRateLimits.ts). A slot is reserved only after the request **JSON validates**; each successful reservation can proceed to OpenAI. Over the cap for that IP in the current UTC hour → **429** (no model call). Tune the constant deliberately for onboarding friction vs. token spend.
 
-## NDJSON synthesis (tests)
+## NDJSON synthesis (server + tests)
 
-- Single NDJSON authority for quick-ingest synthesis: `synthesizeQuickInputUtf8FromOpenAiV1` (exported via **`agentskeptic/bootstrapPackSynthesis`**).
+- Single NDJSON authority for quick-ingest synthesis: `synthesizeQuickInputUtf8FromOpenAiV1` (exported via **`agentskeptic/bootstrapPackSynthesis`**). The hosted route appends the same bytes as **`quickIngestInput.body`** in the v2 response.
+
+- **Integrator UX:** [guided-first-verification.md](guided-first-verification.md) — one-page flow; no separate manual synthesis step in the default path.
 
 - **`test/registry-draft-outcome-chain.test.mjs`** must obtain the NDJSON buffer **only** from `synthesizeQuickInputUtf8FromOpenAiV1(parsed)` when asserting the CLI `quick` path.
 
