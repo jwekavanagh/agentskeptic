@@ -10,8 +10,7 @@ This document is the authoritative specification for the MVP. The product verifi
 
 ## Why this shape
 
-- **NDJSON events**: One line per tool invocation provides a concrete “observe each step” capture surface that any agent stack can implement by appending JSON after each tool call.
-- **Tool registry (`tools.json`)**: Keeps “intent → expected state” inside the product using RFC 6901 JSON Pointers into `params`, so events do not carry caller-supplied expectation blobs.
+- **Contract members.** The shape, version, and hash of NDJSON events and the `tools.json` registry are the [Verification Contract Manifest](contract.md). Operational behavior follows below.
 - **SQLite via `node:sqlite`**: Read-only `SELECT` against a file path gives reproducible ground truth in CI. The reference plan named `better-sqlite3`; this repo uses Node’s built-in module (**Node ≥ 22.13**) to avoid native compilation on constrained environments while preserving the same reconciliation rules as Postgres (see [SQL connector contract](#sql-connector-contract)).
 - **Postgres via `pg` (batch/CLI only)**: `verifyWorkflow` can target PostgreSQL using a single `pg.Client` per run, session read-only guards (`applyPostgresVerificationSessionGuards`), then verification `SELECT`s only. The in-process hook does **not** use Postgres (see [Postgres verification (batch and CLI)](#postgres-verification-batch-and-cli)).
 
@@ -24,7 +23,7 @@ This table defines **where** each concern is authoritative. Other markdown may s
 | **Quick Verify** (`agentskeptic quick`, inferred units, `quick-verify-report`, export registry array) | [`quick-verify-normative.md`](quick-verify-normative.md), [`schemas/quick-verify-report.schema.json`](../schemas/quick-verify-report.schema.json) | Product SSOT: [`verification-product.md`](verification-product.md); README summarizes; behavior must match the normative doc. |
 | **Bootstrap pack** (`agentskeptic bootstrap`, `BootstrapPackInput` v1, pack directory layout, exit I/O) | [`bootstrap-pack-normative.md`](bootstrap-pack-normative.md), [`schemas/bootstrap-pack-input-v1.schema.json`](../schemas/bootstrap-pack-input-v1.schema.json) | This document lists the subcommand in usage only; flags, stdout/stderr, and exit codes are normative in `bootstrap-pack-normative.md` only. |
 | **Correctness definition** (`correctnessDefinition` on truth report and quick units; forward MUST text + `enforceableProjection`) | [`correctness-definition-normative.md`](correctness-definition-normative.md), [`schemas/workflow-truth-report.schema.json`](../schemas/workflow-truth-report.schema.json) (`$defs.correctnessDefinitionV1`) | Implementation: `src/correctnessDefinition.ts`, `src/correctnessDefinitionTemplates.ts`; human stderr includes `correctness_definition:` after `failure_explanation:` when non-null. |
-| **Emitted wire shape** (property names, types, `schemaVersion`, `verificationRequest` variants, `evidenceSummary` keys as JSON) | [`schemas/workflow-engine-result.schema.json`](../schemas/workflow-engine-result.schema.json), [`schemas/workflow-result.schema.json`](../schemas/workflow-result.schema.json), [`schemas/tools-registry.schema.json`](../schemas/tools-registry.schema.json) | Markdown describes behavior; it must not introduce fields or types absent from these schemas. |
+| **Emitted wire shape** (property names, types, `schemaVersion`, `verificationRequest` variants, `evidenceSummary` keys as JSON) | [`schemas/workflow-engine-result.schema.json`](../schemas/workflow-engine-result.schema.json), [`schemas/workflow-result.schema.json`](../schemas/workflow-result.schema.json); contract members named in [`docs/contract.md`](contract.md) | Markdown describes behavior; it must not introduce fields or types absent from these schemas. |
 | **Reason code literals** | `src/wireReasonCodes.ts` (exported constants) | Docs list the same strings; no duplicate definitions with different meanings. |
 | **Runtime semantics — row verification** (`sql_row`, `sql_effects`, `sql_row_absent`: SQL shapes, `identityEq` / `filterEq`, count + `sampleRows` for absent failures, strong vs eventual polling, `ROW_PRESENT_WHEN_FORBIDDEN`, `FORBIDDEN_ROWS_STILL_PRESENT_WITHIN_WINDOW`, `matchedRowCount` on absent paths) | **This document only** | [`relational-verification.md`](relational-verification.md) must **not** define or duplicate row-absent or row-level evidence semantics; it links here for row semantics instead. |
 | **Runtime semantics — relational verification** (`sql_relational`: `related_exists` / `matchEq`, `aggregate`, `join_count`, `anti_join`; parameter order; `ORPHAN_ROW_DETECTED`; `orphanRowCount` + relational `sampleRows`) | [`relational-verification.md`](relational-verification.md) **only** | This document references relational checks at a high level and links there for normative relational SQL and outcomes—**no** second normative definition of `anti_join` / `matchEq` behavior. |
@@ -37,7 +36,7 @@ This subsection maps **outcome verification** product acceptance criteria to thi
 | Acceptance theme | Where it appears in the product |
 |------------------|----------------------------------|
 | Expected outcome checked against **actual system state** (SQL rows), not an agent success flag | Each logical `tool_observed` step yields a read-only keyed `SELECT` + field checks; results drive `WorkflowResult.steps[].status`, `reasons`, and `evidenceSummary` (see [Reconciler rule table](#reconciler-rule-table-sql_row) and `reconciler.ts`). |
-| Expectations come from **registry + params**, not from the event line | [`schemas/event.schema.json`](../schemas/event.schema.json) forbids embedded expectation payloads on events; `resolveExpectation` builds `verificationRequest` from `tools.json` and `tool_observed.params`. |
+| Expectations come from **registry + params**, not from the event line | The event line schema (member `event` in [`docs/contract.md`](contract.md)) forbids embedded expectation payloads; `resolveExpectation` builds `verificationRequest` from `tools.json` and `tool_observed.params`. |
 | **Clear verification result per step** | Machine: `WorkflowResult.steps[]` (`status`, `reasons`, `verificationRequest`, `evidenceSummary`) and `workflowTruthReport.steps[]` (`outcomeLabel`, `observedStateSummary`, `verifyTarget`, …). Human: [Human truth report](#human-truth-report) lines `seq=` / `tool=` / four reconciliation prefixes (`declared:` … `verification_verdict:`) / `reference_code:`. |
 | **Not successfully verified** when state does not match | Non-`verified` step statuses (`missing`, `inconsistent`, `incomplete_verification`, `partially_verified`, `uncertain`) with reasons; see [Workflow status](#workflow-status-prd-aligned) rollup. |
 | **Absent record** | Typically `ROW_ABSENT` → step `missing` → truth `FAILED_ROW_MISSING`. |
@@ -712,18 +711,9 @@ Reason codes for **`eventSequenceIntegrity`** (wire **`message`** strings) are S
 
 ## Event line schema
 
-File: [`schemas/event.schema.json`](../schemas/event.schema.json).
-
-The file is a **`oneOf`** union:
-
-- **`schemaVersion` `1`**, **`type` `tool_observed`**: legacy tool line (no `runEventId`). Same required fields as before: `workflowId`, `seq`, `toolId`, `params`.
-- **`schemaVersion` `2`**: every branch requires `workflowId`, `runEventId` (non-empty string), and `type`. Optional `parentRunEventId` (non-empty string when present) must reference the **`runEventId` of a strictly earlier line** in the same workflow’s `runEvents` capture order (see [End-to-end execution visibility](#end-to-end-execution-visibility-normative)). **`v1` `tool_observed` lines do not have a wire `runEventId` and cannot be referenced as `parentRunEventId` targets**; use **`schemaVersion` `2` `tool_observed`** to link causality through a tool call.
-
-**`type` values (v2):** `tool_observed` (also requires `seq`, `toolId`, `params`), `model_turn` (`status`: `completed` \| `error` \| `aborted` \| `incomplete`), `retrieval` (`source`, `status`: `ok` \| `empty` \| `error`), `control` (`controlKind`: `branch` \| `loop` \| `interrupt` \| `gate` \| `run_completed`; optional `label`; optional `decision`: `taken` \| `skipped` for branch/gate), `tool_skipped` (`toolId`, `reason`).
+Normative shape and member identity: see the [Verification Contract Manifest](contract.md), member `event` (canonical schema file at [`schemas/event.schema.json`](../schemas/event.schema.json), hashed by the manifest). Runtime behavior follows below.
 
 **SQL verification** consumes only **`type` `tool_observed`** lines (v1 or v2); other types are ignored for reconciliation but appear in **`runEvents`** and execution traces.
-
-**Not allowed on the event:** `expectation` / `verification` objects — the resolver must derive verification from the registry.
 
 **Optional summaries:** `model_turn.summary`, `retrieval.querySummary`, etc. may contain sensitive text; **redact** before retention outside the trust boundary (same policy as `params`).
 
@@ -785,7 +775,7 @@ Two observations **match** iff `toolId` is `===` and `canonicalJsonForParams(par
 
 ## Tool registry
 
-File: [`schemas/tools-registry.schema.json`](../schemas/tools-registry.schema.json).
+Normative shape and member identity: see the [Verification Contract Manifest](contract.md), member `toolsRegistry` (canonical schema file at [`schemas/tools-registry.schema.json`](../schemas/tools-registry.schema.json), hashed by the manifest). Runtime behavior follows below.
 
 Each entry:
 

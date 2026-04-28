@@ -145,6 +145,8 @@ function buildDiscoveryPayload(root) {
   const llmsBlob = `https://github.com/${owner}/${repo}/blob/${DISCOVERY_LLM_BRANCH}/llms.txt`;
   const integratorGuideSsotRaw = `https://raw.githubusercontent.com/${owner}/${repo}/refs/heads/${DISCOVERY_LLM_BRANCH}/docs/integrate.md`;
   const openapiRaw = `https://raw.githubusercontent.com/${owner}/${repo}/refs/heads/${DISCOVERY_LLM_BRANCH}/schemas/openapi-commercial-v1.yaml`;
+  const contractManifestCanonical = `${canonicalOrigin}/contract/v1.json`;
+  const contractManifestRaw = `https://raw.githubusercontent.com/${owner}/${repo}/refs/heads/${DISCOVERY_LLM_BRANCH}/schemas/contract/v1.json`;
   const llms = /** @type {{ intentPhrases: string[]; notFor: string[]; relatedQueries: string[] }} */ (
     discovery.llms
   );
@@ -164,6 +166,8 @@ function buildDiscoveryPayload(root) {
       llmsRaw,
       llmsBlob,
       integratorGuideSsotRaw,
+      contractManifestCanonical,
+      contractManifestRaw,
     },
     appendix: {
       slug: String(discovery.slug),
@@ -255,6 +259,8 @@ function renderLlmsTextFromPayload(payload) {
     `- Source repository: ${links.repo}`,
     `- npm package: ${links.npm}`,
     `- llms.txt (repo raw): ${links.llmsRaw}`,
+    `- Verification Contract Manifest (canonical): ${links.contractManifestCanonical}`,
+    `- Verification Contract Manifest (repo raw): ${links.contractManifestRaw}`,
     "",
   ];
   const base = lines.join("\n");

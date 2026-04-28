@@ -36,3 +36,4 @@ runNpmScript("sync:public-product-anchors");
 runNode("scripts/sync-integrator-docs-embedded.mjs");
 runNode("scripts/sync-epistemic-contract-website.mjs");
 runNode("scripts/sync-buyer-authority-surfaces.mjs");
+runNode("scripts/sync-contract-manifest-static.mjs");

@@ -1,5 +1,7 @@
 # Hosted registry draft — SSOT
 
+> **Members named here are part of the [Verification Contract Manifest](contract.md).** This document is operational SSOT for the draft route only; contract identity, version, and hashing live in the manifest.
+
 Normative contract for the **optional** same-origin **`POST /api/integrator/registry-draft`** surface: JSON Schema `$id` / `$ref` policy, **fixed** AJV `addSchema` order, request vs response validation, synthesis import rules for tests, and the **commercial validation harness** markers that prove wiring without Vitest grepping the script.
 
 **Audience:** engineers changing schemas, `agentskeptic/registryDraft`, `agentskeptic/bootstrapPackSynthesis`, `scripts/validate-commercial-funnel.mjs`, or the root `node:test` harness files.

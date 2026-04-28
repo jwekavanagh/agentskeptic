@@ -4,7 +4,6 @@
   "description": "AgentSkeptic compares agent claims with real downstream state — databases, APIs, object stores, and vector stores — and returns a clear verdict.",
   "license": "MIT",
   "type": "module",
-  "x-agentskeptic-decision-ready-contract": "1",
   "workspaces": [
     "website"
   ],
@@ -166,5 +165,10 @@
     "read-only",
     "agent",
     "workflow"
-  ]
+  ],
+  "verificationContractManifest": {
+    "version": "1.0.1",
+    "manifestSha256": "c5f23ec43576716c4b9a13e752cd2962a78bb4b4da1f9e521f911e15dfd80268",
+    "url": "https://agentskeptic.com/contract/v1.json"
+  }
 }

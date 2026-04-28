@@ -89,7 +89,8 @@ export type SchemaValidatorName =
   | "compare-run-manifest-v1"
   | "regression-artifact-v1"
   | "bootstrap-pack-input-v1"
-  | "openai-function-tool-call-item-v1";
+  | "openai-function-tool-call-item-v1"
+  | "contract-manifest";
 
 const validatorCache: Partial<Record<SchemaValidatorName, ValidateFunction>> = {};
 
@@ -206,6 +207,8 @@ export function loadSchemaValidator(name: SchemaValidatorName): ValidateFunction
     case "bootstrap-pack-input-v1":
       compileSchemaFile("openai-function-tool-call-item-v1", "openai-function-tool-call-item-v1.schema.json");
       return compileSchemaFile(name, "bootstrap-pack-input-v1.schema.json");
+    case "contract-manifest":
+      return compileSchemaFile(name, "contract-manifest.schema.json");
     default: {
       const _exhaustive: never = name;
       return _exhaustive;

@@ -60,6 +60,8 @@ Read-only checks at verify time—not color.
 - Source repository: https://github.com/jwekavanagh/agentskeptic
 - npm package: https://www.npmjs.com/package/agentskeptic
 - llms.txt (repo raw): https://raw.githubusercontent.com/jwekavanagh/agentskeptic/refs/heads/main/llms.txt
+- Verification Contract Manifest (canonical): https://agentskeptic.com/contract/v1.json
+- Verification Contract Manifest (repo raw): https://raw.githubusercontent.com/jwekavanagh/agentskeptic/refs/heads/main/schemas/contract/v1.json
 
 ## Indexable guides
 - https://agentskeptic.com/guides/ai-agent-wrong-crm-data

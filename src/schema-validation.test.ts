@@ -594,4 +594,45 @@ describe("JSON Schemas (SSOT)", () => {
     };
     expect(vo(staleOut)).toBe(true);
   });
+
+  it("validates contract-manifest meta-schema against committed manifest", () => {
+    const v = loadSchemaValidator("contract-manifest");
+    const manifest = JSON.parse(
+      readFileSync(path.join(root, "schemas", "contract", "v1.json"), "utf8"),
+    );
+    expect(v(manifest)).toBe(true);
+  });
+
+  it("rejects contract-manifest missing history", () => {
+    const v = loadSchemaValidator("contract-manifest");
+    const bad = {
+      $schema: "https://agentskeptic.com/schemas/contract-manifest.schema.json",
+      manifestVersion: "1.0.0",
+      publicUrl: "https://agentskeptic.com/contract/v1.json",
+      productPackage: "agentskeptic",
+      members: {
+        event: {
+          role: "event-line",
+          schemaPath: "schemas/event.schema.json",
+          schemaId: "https://agentskeptic.com/schemas/event.schema.json",
+        },
+        toolsRegistry: {
+          role: "registry",
+          schemaPath: "schemas/tools-registry.schema.json",
+          schemaId: "https://agentskeptic.com/schemas/tools-registry.schema.json",
+        },
+        toolsRegistryExport: {
+          role: "registry-export",
+          schemaPath: "schemas/tools-registry-export.schema.json",
+          schemaId: "https://agentskeptic.com/schemas/tools-registry-export.schema.json",
+        },
+      },
+      examples: {
+        registry: { path: "examples/tools.json" },
+        events: { path: "examples/events.ndjson" },
+      },
+      validatorFingerprint: { library: "ajv", draft: "2020-12" },
+    };
+    expect(v(bad)).toBe(false);
+  });
 });
