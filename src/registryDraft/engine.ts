@@ -65,12 +65,11 @@ export async function generateRegistryDraft(params: {
       }
       llmPartialText = o.contentText;
     }
-  } catch (e) {
-    const msg = e instanceof Error ? e.message : String(e);
+  } catch {
     return {
       ok: false,
       status: 503,
-      body: { code: "PROVIDER_ERROR", message: msg.slice(0, 500) },
+      body: { code: "PROVIDER_ERROR", message: "Draft engine invocation failed." },
     };
   }
 

@@ -62,12 +62,16 @@ export async function callHostedOpenAiRegistryDraftJson(args: {
       { timeouts: [100, 250], fetchFn },
     );
   } catch (e) {
-    const msg = e instanceof Error ? e.message : String(e);
     clearTimeout(t);
-    if (msg.includes("abort") || ac.signal.aborted) {
+    if (ac.signal.aborted) {
       return { ok: false, status: 503, message: "PROVIDER_TIMEOUT" };
     }
-    return { ok: false, status: 503, message: msg.slice(0, 500) };
+    const nm = e instanceof Error ? e.name : "";
+    const msg = e instanceof Error ? e.message : String(e);
+    if (nm === "AbortError" || /\babort\b/i.test(msg)) {
+      return { ok: false, status: 503, message: "PROVIDER_TIMEOUT" };
+    }
+    return { ok: false, status: 503, message: "OPENAI_FETCH_FAILED" };
   } finally {
     clearTimeout(t);
   }

@@ -55,12 +55,16 @@ export async function callLocalOllamaRegistryDraftJson(args: {
       { timeouts: [100, 250], fetchFn },
     );
   } catch (e) {
-    const msg = e instanceof Error ? e.message : String(e);
     clearTimeout(tm);
-    if (ac.signal.aborted || msg.includes("abort")) {
+    if (ac.signal.aborted) {
       return { ok: false, status: 503, message: "PROVIDER_TIMEOUT" };
     }
-    return { ok: false, status: 503, message: msg.slice(0, 500) };
+    const nm = e instanceof Error ? e.name : "";
+    const msg = e instanceof Error ? e.message : String(e);
+    if (nm === "AbortError" || /\babort\b/i.test(msg)) {
+      return { ok: false, status: 503, message: "PROVIDER_TIMEOUT" };
+    }
+    return { ok: false, status: 503, message: "OLLAMA_FETCH_FAILED" };
   } finally {
     clearTimeout(tm);
   }
