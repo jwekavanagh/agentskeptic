@@ -34,6 +34,12 @@ function run(dir, args) {
   });
 }
 
+/** @param {string} semver */
+function bumpPatch(semver) {
+  const [maj, min, pat] = semver.split(".").map(Number);
+  return `${maj}.${min}.${pat + 1}`;
+}
+
 test("--write refuses to seal after member change (CONTRACT_MANIFEST_BUMP_REQUIRED, exit 7)", () => {
   const dir = buildFixture();
   const memberPath = join(dir, "schemas", "event.schema.json");
@@ -45,6 +51,11 @@ test("--write refuses to seal after member change (CONTRACT_MANIFEST_BUMP_REQUIR
 });
 
 test("--bump patch + --sync-package-pin produces a valid manifest that --check accepts", () => {
+  const baseline = JSON.parse(
+    readFileSync(join(root, "schemas", "contract", "v1.json"), "utf8"),
+  );
+  const expectedNext = bumpPatch(baseline.manifestVersion);
+
   const dir = buildFixture();
   const memberPath = join(dir, "schemas", "event.schema.json");
   writeFileSync(memberPath, readFileSync(memberPath, "utf8") + "\n", "utf8");
@@ -60,7 +71,7 @@ test("--bump patch + --sync-package-pin produces a valid manifest that --check a
   const manifest = JSON.parse(
     readFileSync(join(dir, "schemas", "contract", "v1.json"), "utf8"),
   );
-  assert.equal(manifest.manifestVersion, "1.0.1");
-  assert.equal(manifest.history.length, 2);
-  assert.equal(manifest.history[manifest.history.length - 1].manifestVersion, "1.0.1");
+  assert.equal(manifest.manifestVersion, expectedNext);
+  assert.equal(manifest.history.length, baseline.history.length + 1);
+  assert.equal(manifest.history[manifest.history.length - 1].manifestVersion, expectedNext);
 });
