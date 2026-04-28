@@ -9,6 +9,7 @@ import { metadata as acquisitionMetadata } from "@/app/database-truth-vs-traces/
 import { generateMetadata as generateExampleSlugMetadata } from "@/app/examples/[slug]/page";
 import { metadata as guidesHubMetadata } from "@/app/guides/page";
 import { generateMetadata as generateGuideSlugMetadata } from "@/app/guides/[slug]/page";
+import { metadata as integrateGuidedMetadata } from "@/app/integrate/guided/layout";
 import { metadata as integrateMetadata } from "@/app/integrate/page";
 import { metadata as homeMetadata } from "@/app/page";
 import { generateMetadata as generatePricingMetadata } from "@/app/pricing/page";
@@ -62,6 +63,7 @@ describe("metadata matrix (merge gate)", () => {
     add("/privacy", privacyMetadata);
     add("/terms", termsMetadata);
     add("/integrate", integrateMetadata);
+    add("/integrate/guided", integrateGuidedMetadata);
     add("/database-truth-vs-traces", acquisitionMetadata);
     add("/guides", guidesHubMetadata);
     add("/compare", compareHubMetadata);

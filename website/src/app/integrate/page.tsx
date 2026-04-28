@@ -24,6 +24,20 @@ export default function IntegratePage() {
   return (
     <main className="integrate-main integrate-prose" data-testid="integrate-page">
       <h1>{siteMetadata.integrate.title}</h1>
+      <section
+        className="integrate-registry-draft-secondary"
+        data-testid="integrate-guided-cta"
+        aria-label="Guided first verification"
+      >
+        <p className="lede">
+          <strong>Fastest first run:</strong>{" "}
+          <Link className="btn" href="/integrate/guided" data-testid="integrate-guided-link">
+            Guided: generate registry and quick input
+          </Link>{" "}
+          — one page to produce a <code>tools.json</code> draft, the matching <code>quick</code> ingest, and a single local
+          verify command.
+        </p>
+      </section>
       <p className="lede integrate-benefit-lede">
         <strong>{siteMetadata.integrate.description}</strong>
       </p>

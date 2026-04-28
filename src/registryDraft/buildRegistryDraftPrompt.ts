@@ -12,7 +12,7 @@ export function buildRegistryDraftPrompt(
   return `You are drafting a tools.json registry for AgentSkeptic verification. Output is NOT executed on the server and is NOT truth.
 
 Rules:
-- Return ONLY JSON (no markdown fences, no prose). Top level: schemaVersion (integer 1), draft, assumptions, warnings, disclaimer, model.
+- Return ONLY JSON (no markdown fences, no prose). Top level: draft, assumptions, warnings, disclaimer, model. Do NOT include schemaVersion, quickIngestInput, or any other keys — the server adds those.
 - draft.tools is a JSON array (min length 1). Each element MUST be an object with EXACTLY these three keys — no aliases, no extra keys:
   1) toolId (string, non-empty; use the function name from the bootstrap input, e.g. "crm.upsert_contact")
   2) effectDescriptionTemplate (string; describe the side effect; you may use JSON Pointer fragments like {/recordId} in the text)
@@ -23,7 +23,7 @@ Rules:
 - assumptions and warnings are string arrays (may be empty). disclaimer is a non-empty string (state human review required). model is { "provider": "openai", "model": "<model id you used>" }.
 
 Minimal structural example (placeholders — replace with values inferred from the bootstrap input):
-{"schemaVersion":1,"draft":{"tools":[{"toolId":"namespace.tool_name","effectDescriptionTemplate":"Upsert row {/recordId} with fields {/fields}","verification":{"kind":"sql_row","table":{"const":"contacts"},"identityEq":[{"column":{"const":"id"},"value":{"pointer":"/recordId"}}],"requiredFields":{"pointer":"/fields"}}}]},"assumptions":[],"warnings":[],"disclaimer":"Draft only; review before use.","model":{"provider":"openai","model":"gpt-4o-mini"}}
+{"draft":{"tools":[{"toolId":"namespace.tool_name","effectDescriptionTemplate":"Upsert row {/recordId} with fields {/fields}","verification":{"kind":"sql_row","table":{"const":"contacts"},"identityEq":[{"column":{"const":"id"},"value":{"pointer":"/recordId"}}],"requiredFields":{"pointer":"/fields"}}}]},"assumptions":[],"warnings":[],"disclaimer":"Draft only; review before use.","model":{"provider":"openai","model":"gpt-4o-mini"}}
 
 Do not claim execution correctness.
 
