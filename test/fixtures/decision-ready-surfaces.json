@@ -20,6 +20,7 @@
     { "repoRelativePath": "test/fixtures/github-heading-slug-vectors.json", "mustContain": "\"Decision-ready ProductionComplete (normative)\"" },
     { "repoRelativePath": "test/fixtures/adoption-item5-normative-line.txt", "mustContain": "5. **Success criteria (normative):**" },
     { "repoRelativePath": "test/decision-ready-surfaces-manifest.test.mjs", "mustContain": "decision-ready-surfaces.json" },
-    { "repoRelativePath": "package.json", "mustContain": "\"x-agentskeptic-decision-ready-contract\": \"1\"" }
+    { "repoRelativePath": "package.json", "mustContain": "\"verificationContractManifest\"" },
+    { "repoRelativePath": "schemas/contract/v1.json", "mustContain": "\"manifestVersion\":" }
   ]
 }

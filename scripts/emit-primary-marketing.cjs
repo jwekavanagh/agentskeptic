@@ -29,7 +29,22 @@ const TOKENS = [
   "__DISTRIBUTION_NPM_URL__",
   "__OPENAPI_SELF_URL__",
   "__SERVERS_ORIGIN__",
+  "__CONTRACT_URL__",
+  "__CONTRACT_VERSION__",
+  "__CONTRACT_SHA__",
 ];
+
+const CONTRACT_MANIFEST_PATH = join(ROOT, "schemas", "contract", "v1.json");
+
+function loadContractManifestPin() {
+  const m = JSON.parse(readFileSync(CONTRACT_MANIFEST_PATH, "utf8"));
+  const head = m.history[m.history.length - 1];
+  return {
+    url: String(m.publicUrl),
+    version: String(head.manifestVersion),
+    manifestSha256: String(head.manifestSha256),
+  };
+}
 
 /**
  * @param {string} haystack
@@ -148,6 +163,8 @@ function writeAgentsMd(anchors, discovery) {
   const branch = dp.DISCOVERY_LLM_BRANCH;
   const llmsRaw = `https://raw.githubusercontent.com/${owner}/${repo}/refs/heads/${branch}/llms.txt`;
   const openapiRaw = `https://raw.githubusercontent.com/${owner}/${repo}/refs/heads/${branch}/schemas/openapi-commercial-v1.yaml`;
+  const contractRaw = `https://raw.githubusercontent.com/${owner}/${repo}/refs/heads/${branch}/schemas/contract/v1.json`;
+  const contractPin = loadContractManifestPin();
   const body = `# AGENTS
 
 Normative **public distribution** and anchor sync: [\`docs/public-distribution.md\`](docs/public-distribution.md) (same content as ${url}).
@@ -157,6 +174,8 @@ Normative **public distribution** and anchor sync: [\`docs/public-distribution.m
 - Committed \`llms.txt\` at repo root (same bytes as site \`/llms.txt\` after prebuild sync).
 - Raw GitHub \`llms.txt\`: ${llmsRaw}
 - OpenAPI YAML (repo raw): ${openapiRaw}
+- Verification Contract Manifest (canonical): ${contractPin.url}
+- Verification Contract Manifest (repo raw): ${contractRaw}
 - Acquisition page (canonical): ${acquisitionUrl}
 `;
   writeFileSync(join(ROOT, "AGENTS.md"), body, "utf8");
@@ -189,6 +208,8 @@ function syncPrimaryMarketing() {
   if (!productSemver) {
     throw new Error("emit-primary-marketing: package.json missing version (OpenAPI __PRODUCT_VERSION__)");
   }
+  const contractPin = loadContractManifestPin();
+
   let mid = template;
   mid = mid.replace(PRODUCT_VERSION_TOKEN, JSON.stringify(productSemver));
   mid = mid.replace("__IDENTITY_ONE_LINER__", escaped);
@@ -196,6 +217,9 @@ function syncPrimaryMarketing() {
   mid = mid.replace("__DISTRIBUTION_INTEGRATE_URL__", integrateUrl);
   mid = mid.replace("__DISTRIBUTION_REPO_URL__", anchors.gitRepositoryUrl);
   mid = mid.replace("__DISTRIBUTION_NPM_URL__", anchors.npmPackageUrl);
+  mid = mid.replace("__CONTRACT_URL__", contractPin.url);
+  mid = mid.replace("__CONTRACT_VERSION__", JSON.stringify(contractPin.version));
+  mid = mid.replace("__CONTRACT_SHA__", JSON.stringify(contractPin.manifestSha256));
 
   const repoYaml = mid
     .replace("__SERVERS_ORIGIN__", canonicalOrigin)
@@ -264,6 +288,7 @@ function syncPrimaryMarketing() {
     `- **Canonical site:** ${canonicalOrigin}`,
     `- **Integrate:** ${integrateUrl}`,
     `- **OpenAPI (canonical):** ${openapiSelfCanonical}`,
+    `- **Verification Contract Manifest:** ${contractPin.url}`,
     `- **llms.txt (agents, site):** ${canonicalOrigin}/llms.txt`,
     `- **llms.txt (repo, raw):** ${pl.llmsRaw}`,
     `- **llms.txt (repo, blob):** ${pl.llmsBlob}`,

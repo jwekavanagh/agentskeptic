@@ -123,6 +123,7 @@ Read-only checks at verify time—not color.
 - **Canonical site:** https://agentskeptic.com
 - **Integrate:** https://agentskeptic.com/integrate
 - **OpenAPI (canonical):** https://agentskeptic.com/openapi-commercial-v1.yaml
+- **Verification Contract Manifest:** https://agentskeptic.com/contract/v1.json
 - **llms.txt (agents, site):** https://agentskeptic.com/llms.txt
 - **llms.txt (repo, raw):** https://raw.githubusercontent.com/jwekavanagh/agentskeptic/refs/heads/main/llms.txt
 - **llms.txt (repo, blob):** https://github.com/jwekavanagh/agentskeptic/blob/main/llms.txt
@@ -301,6 +302,7 @@ Everything beyond core contract verification lives in **[`docs/agentskeptic.md`]
 
 | Doc | Purpose |
 |-----|---------|
+| [`docs/contract.md`](docs/contract.md) | **Verification Contract Manifest** SSOT — names, hashes, and versions the event/registry/registry-export schemas; one URL, one CI gate |
 | [`docs/epistemic-contract.md`](docs/epistemic-contract.md) | **Normative epistemic contract** (grounded output vs funnel; ranking limits; telemetry proxies)—single authored source; other docs link or generate from here |
 | [README — Buy vs build](#buy-vs-build-why-not-only-sql-checks) | Canonical **buy vs build** narrative (failure mode, scripts limits, Quick → Contract) |
 | [`docs/agentskeptic.md`](docs/agentskeptic.md) | Authoritative CLI and behavior reference (SSOT) |

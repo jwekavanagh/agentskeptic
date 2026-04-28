@@ -1,0 +1,51 @@
+{
+  "$schema": "https://agentskeptic.com/schemas/contract-manifest.schema.json",
+  "examples": {
+    "events": {
+      "path": "examples/events.ndjson"
+    },
+    "registry": {
+      "path": "examples/tools.json"
+    }
+  },
+  "history": [
+    {
+      "exampleSha256": {
+        "events": "6e36c6faa758cdffc53093959a71cb60aa3ecf153ada5a7006997bcef0e6215b",
+        "registry": "e3abd4965f1dc5d78cb1e1bc3a548cd0c02e746c626c2691a9292242e1a0c159"
+      },
+      "introducedAt": "2026-04-28",
+      "manifestSha256": "5017579f4372b349278841e1528076db44131a3c7e68075aea7f6a461ca0f415",
+      "manifestVersion": "1.0.0",
+      "memberSha256": {
+        "event": "7873d26c3702e10c217608268f57782302b2800ebf23d85bae56a5edc9517a6e",
+        "toolsRegistry": "94453738ac7dddc912db2342de16d357f37be8fde0bffefdfdc11e75ac292801",
+        "toolsRegistryExport": "350ee52d3a1db92257c4577d43f145f5ea945a356fb70b630db0b16cb7849c3a"
+      }
+    }
+  ],
+  "manifestVersion": "1.0.0",
+  "members": {
+    "event": {
+      "role": "event-line",
+      "schemaId": "https://agentskeptic.com/schemas/event.schema.json",
+      "schemaPath": "schemas/event.schema.json"
+    },
+    "toolsRegistry": {
+      "role": "registry",
+      "schemaId": "https://agentskeptic.com/schemas/tools-registry.schema.json",
+      "schemaPath": "schemas/tools-registry.schema.json"
+    },
+    "toolsRegistryExport": {
+      "role": "registry-export",
+      "schemaId": "https://agentskeptic.com/schemas/tools-registry-export.schema.json",
+      "schemaPath": "schemas/tools-registry-export.schema.json"
+    }
+  },
+  "productPackage": "agentskeptic",
+  "publicUrl": "https://agentskeptic.com/contract/v1.json",
+  "validatorFingerprint": {
+    "draft": "2020-12",
+    "library": "ajv"
+  }
+}
