@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentskeptic.com/schemas/local-run-history-index-v1.schema.json",
+  "title": "LocalRunHistoryIndexV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "runs"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "runs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "workflowId",
+          "capturedAt",
+          "runDir",
+          "workflowResultPath",
+          "eventsPath",
+          "outcomeCertificatePath"
+        ],
+        "properties": {
+          "workflowId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "capturedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "runDir": {
+            "type": "string",
+            "minLength": 1
+          },
+          "workflowResultPath": {
+            "type": "string",
+            "minLength": 1
+          },
+          "eventsPath": {
+            "type": "string",
+            "minLength": 1
+          },
+          "outcomeCertificatePath": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    }
+  }
+}
