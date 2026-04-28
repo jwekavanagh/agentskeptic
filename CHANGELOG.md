@@ -1,3 +1,16 @@
+# [2.0.0](https://github.com/jwekavanagh/agentskeptic/compare/v1.4.0...v2.0.0) (2026-04-28)
+
+
+* feat(registry-draft)!: unified draft engine and response schema v3 ([7a6f482](https://github.com/jwekavanagh/agentskeptic/commit/7a6f482510314b8abe3793058afe6d1eb65e70d8))
+
+
+### BREAKING CHANGES
+
+* registry-draft responses use schema v3; the v2 JSON schema file is removed.
+
+## Validation
+Local: `npm run test:node:sqlite` (build, node guards, full SQLite node:test suite incl. draft gates).
+
 # [1.4.0](https://github.com/jwekavanagh/agentskeptic/compare/v1.3.0...v1.4.0) (2026-04-28)
 
 
