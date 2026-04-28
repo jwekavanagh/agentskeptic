@@ -14,6 +14,7 @@ export const sqliteNodeTestFiles = [
   "test/decisionGate.test.mjs",
   "test/workflowTruthReport.test.mjs",
   "test/cli.test.mjs",
+  "test/loop-cli.test.mjs",
   "test/cli-version.test.mjs",
   "test/post-product-activation-install-id.test.mjs",
   "test/workflow-lineage-classify.test.mjs",

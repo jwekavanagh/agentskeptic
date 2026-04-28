@@ -73,6 +73,7 @@ import { runRegistryDraftCliAndExit } from "./registryDraft/runRegistryDraftCli.
 import { runBootstrapSubcommand } from "./bootstrap/runBootstrapSubcommand.js";
 import { runBatchVerifyWithTelemetrySubcommand } from "./verify/batchVerifyTelemetrySubcommand.js";
 import { runCrossingSubcommand } from "./crossing/runCrossingSubcommand.js";
+import { runLoopSubcommand } from "./loop/runLoopSubcommand.js";
 import { maybeEmitOssClaimTicketUrlToStderr } from "./telemetry/maybeEmitOssClaimTicketUrl.js";
 import { classifyWorkflowLineage } from "./funnel/workflowLineageClassify.js";
 import { postProductActivationEvent } from "./telemetry/postProductActivationEvent.js";
@@ -101,10 +102,35 @@ Exit codes:
   --help, -h  print this message and exit 0`;
 }
 
+function usageLoop(): string {
+  return `Usage:
+  agentskeptic loop --workflow-id <id> --events <path> --registry <path> (--db <sqlitePath> | --postgres-url <url>)
+    [--consistency strong|eventual] [--verification-window-ms <int>] [--poll-interval-ms <int>] [--max-history-runs <int>]
+
+Canonical local truth loop:
+  - runs verification against your real database
+  - emits normalized verdict: TRUSTED | NOT TRUSTED | UNKNOWN
+  - includes contextual next action on NOT TRUSTED/UNKNOWN
+  - auto-compares against latest compatible prior run
+  - stores local run history for future comparisons
+
+Exit codes:
+  0  TRUSTED
+  1  NOT TRUSTED
+  2  UNKNOWN (verification incomplete/not established)
+  3  operational failure
+
+  --help, -h  print this message and exit 0`;
+}
+
 function usageVerify(): string {
   return `Usage:
+  agentskeptic loop --workflow-id <id> --events <path> --registry <path> (--db <sqlitePath> | --postgres-url <url>)
+    [--consistency strong|eventual] [--verification-window-ms <int>] [--poll-interval-ms <int>] [--max-history-runs <int>]
+    (recommended default local truth loop; emits TRUSTED | NOT TRUSTED | UNKNOWN + auto-compare + run history)
+
   agentskeptic quick --input <path> (--postgres-url <url> | --db <sqlitePath>) --export-registry <path> [--emit-events <path>] [--workflow-id <id>]
-    (zero-config path; structured tool activity + read-only SQL; see docs/quick-verify-normative.md)
+    (advanced/specialized path; structured tool activity + read-only SQL; see docs/quick-verify-normative.md)
 
   agentskeptic bootstrap --input <path> (--db <sqlitePath> | --postgres-url <url>) --out <path>
     (BootstrapPackInput v1 JSON → contract pack + in-process verify; see docs/bootstrap-pack-normative.md)
@@ -114,10 +140,10 @@ function usageVerify(): string {
 
   agentskeptic crossing --bootstrap-input <path> --pack-out <path> (--db <sqlitePath> | --postgres-url <url>) [--no-human-report]
   agentskeptic crossing --workflow-id <id> --events <path> --registry <path> (--db <sqlitePath> | --postgres-url <url>) [--no-human-report]
-    (canonical integrator crossing: bootstrap-led or pack-led; see docs/crossing-normative.md)
+    (specialized integrator crossing flow; see docs/crossing-normative.md)
 
   agentskeptic verify-integrator-owned --workflow-id <id> --events <path> --registry <path> (--db <sqlitePath> | --postgres-url <url>)
-    (same flags as batch verify below; rejects bundled example fixture paths with exit 2 — see docs/agentskeptic.md Integrator-owned gate)
+    (specialized compatibility command; rejects bundled example fixture paths with exit 2 — see docs/agentskeptic.md Integrator-owned gate)
 
   agentskeptic --workflow-id <id> --events <path> --registry <path> --db <sqlitePath>
   agentskeptic --workflow-id <id> --events <path> --registry <path> --postgres-url <url>
@@ -1180,6 +1206,14 @@ async function main(): Promise<void> {
   }
   if (args[0] === "quick") {
     await runQuickSubcommand(args.slice(1));
+    return;
+  }
+  if (args[0] === "loop") {
+    if (args.slice(1).includes("--help") || args.slice(1).includes("-h")) {
+      console.log(usageLoop());
+      process.exit(0);
+    }
+    await runLoopSubcommand(args.slice(1));
     return;
   }
   if (args[0] === "crossing") {

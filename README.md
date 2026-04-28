@@ -144,9 +144,15 @@ This is the fastest way to see **`ROW_ABSENT`** versus **verified** on the same 
 
 **Prerequisite:** **Node.js ≥ 22.13** (built-in [`node:sqlite`](https://nodejs.org/api/sqlite.html)), or use [Docker](#docker-quickstart-optional) below.
 
-**Fast first run on your own DB (bundled quickstart example):** after `npm install` and `npm run build`, run **`npm run partner-quickstart`** from the repo root (SQLite temp DB). Commands reference: **[`docs/partner-quickstart-commands.md`](docs/partner-quickstart-commands.md)**; narrative: **[`docs/first-run-integration.md`](docs/first-run-integration.md)** and **`/integrate`** on the site.
+**Fast first run on your own DB (canonical local truth loop):** after `npm install` and `npm run build`, run:
 
-**Integrator-owned output:** The demo above is pedagogy. Default path: **`agentskeptic crossing`** — see **`docs/crossing-normative.md`**. For verification on **your** NDJSON, registry, and authoritative SQLite or Postgres, follow **[`docs/decision-gate.md`](docs/decision-gate.md)** after **`npm run build`**. Standalone **`agentskeptic verify-integrator-owned`** remains for explicit pack-led parity and CI (same flags as contract batch verify; rejects shipped example fixture triples with exit **2** and stderr **`INTEGRATOR_OWNED_GATE`**—see **`docs/agentskeptic.md`** Integrator-owned gate).
+```bash
+agentskeptic loop --workflow-id <id> --events <path> --registry <path> --db <sqlitePath>
+```
+
+This single command verifies state, emits **TRUSTED / NOT TRUSTED / UNKNOWN**, shows a next action when non-trusted, persists local run history, and auto-compares against your latest compatible prior run. Normative operator contract: **[`docs/local-feedback-loop.md`](docs/local-feedback-loop.md)**.
+
+**Advanced compatibility paths:** `agentskeptic quick`, `agentskeptic crossing`, and `agentskeptic verify-integrator-owned` remain supported for specialized workflows and CI parity; they are no longer the default local operator path.
 
 ```bash
 npm install
@@ -231,17 +237,17 @@ Retries, partial failures, and race conditions mean a success flag in a trace is
 
 ## Contract path (registry + events)
 
-**CLI:** after **`npm install`** and **`npm run build`**, use **`agentskeptic`** (or **`npx agentskeptic`**, or **`node dist/cli.js`**). Postgres: **`--postgres-url`** instead of **`--db`** (exactly one).
+**CLI:** after **`npm install`** and **`npm run build`**, use **`agentskeptic loop`** as the default local command (or `node dist/cli.js loop`). Postgres: **`--postgres-url`** instead of **`--db`** (exactly one).
 
 Typical integration:
 
 1. Emit **one NDJSON line per tool observation** (see [Event line schema](docs/agentskeptic.md#event-line-schema)).
 2. Add a **registry** entry per `toolId` (start from **`examples/templates/`**).
-3. Run verification:
+3. Run the local truth loop:
 
 ```bash
 npm run build
-agentskeptic --workflow-id <id> --events <path> --registry <path> --db <sqlitePath>
+agentskeptic loop --workflow-id <id> --events <path> --registry <path> --db <sqlitePath>
 ```
 
 Replay the bundled files: **`wf_complete`** / **`examples/events.ndjson`** / **`examples/tools.json`** / **`examples/demo.db`** (same flags as above).
