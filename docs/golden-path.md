@@ -8,6 +8,10 @@ This is the single canonical onboarding path for AgentSkeptic:
 
 All other stack combinations are contract-based only and are out of scope for this first-run path.
 
+<!-- epistemic-contract:consumer:golden-path -->
+**Epistemic framing (pointer only):** [`epistemic-contract.md`](epistemic-contract.md) — then follow adoption and product SSOT below.
+<!-- /epistemic-contract:consumer:golden-path -->
+
 ## 1) Clone and install
 
 ```bash
