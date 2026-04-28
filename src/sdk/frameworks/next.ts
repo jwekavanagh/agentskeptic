@@ -4,6 +4,8 @@ import type { DecisionGate } from "../../decisionGate.js";
 export type CreateNextRouteHandlerOptions = {
   /** When the request has no `workflowId` in JSON body, use this gate id. */
   defaultWorkflowId?: string;
+  /** When true, enforce run-event integrity before handler response is returned. */
+  strictEmissionQuality?: boolean;
 };
 
 /**
@@ -16,6 +18,7 @@ export function createNextRouteHandler<T>(
   options?: CreateNextRouteHandlerOptions,
 ): (req: Request) => Promise<Response> {
   const fallbackId = options?.defaultWorkflowId ?? "api";
+  const strictEmissionQuality = options?.strictEmissionQuality ?? false;
   return async (req: Request) => {
     let workflowId = fallbackId;
     const ct = req.headers.get("content-type") ?? "";
@@ -36,6 +39,9 @@ export function createNextRouteHandler<T>(
     }
     const gate = skeptic.gate({ workflowId });
     const out = await handler(gate, req);
+    if (strictEmissionQuality) {
+      gate.assertEmissionQuality();
+    }
     return Response.json(out as object);
   };
 }

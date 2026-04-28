@@ -106,6 +106,8 @@ export const sqliteNodeTestFiles = [
   "test/validate-commercial-funnel-registry-draft-harness.test.mjs",
   "test/visitor-problem-outcome.test.mjs",
   "test/website-gate-modules.contract.test.mjs",
+  "test/emit-lint-cli.test.mjs",
+  "test/emitter-first-doc-guard.test.mjs",
 ];
 
 export const postgresNodeTestFiles = [

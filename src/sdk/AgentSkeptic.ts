@@ -14,6 +14,8 @@ import {
 } from "../commercial/licensePreflight.js";
 import type { WorkflowResult } from "../types.js";
 import type { OutcomeCertificateV1 } from "../outcomeCertificate.js";
+import { CanonicalEventEmitter } from "./events/CanonicalEventEmitter.js";
+import type { EventSink } from "./events/types.js";
 
 export type AgentSkepticOptions = Omit<CreateDecisionGateOptions, "workflowId">;
 
@@ -59,5 +61,18 @@ export class AgentSkeptic {
   /** Current-month usage for the authenticated API key (commercial only). */
   async currentUsage(): Promise<CurrentUsageResponse> {
     return fetchCurrentUsage();
+  }
+
+  /** Canonical event emitter for faithful event production. */
+  createEmitter(options: {
+    workflowId: string;
+    sink: EventSink;
+    defaultToolObservedSchemaVersion?: 1 | 2;
+  }): CanonicalEventEmitter {
+    return new CanonicalEventEmitter({
+      workflowId: options.workflowId,
+      sink: options.sink,
+      defaultToolObservedSchemaVersion: options.defaultToolObservedSchemaVersion,
+    });
   }
 }

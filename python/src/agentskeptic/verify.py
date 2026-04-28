@@ -80,12 +80,14 @@ def verify(
                     cp_id = str(checkpoint.get("id") or "unknown-checkpoint")
                 else:
                     cp_id = str(getattr(checkpoint, "id", None) or "unknown-checkpoint")
-                session.append_tool_v3_langgraph(
-                    tid,
-                    p,
-                    thread_id=thread_id,
-                    checkpoint_ns=checkpoint_ns,
-                    checkpoint_id=cp_id,
+                session.buffered.append(
+                    session.emitter.tool_observed_langgraph_checkpoint(
+                        tool_id=tid,
+                        params=p,
+                        thread_id=thread_id,
+                        checkpoint_ns=checkpoint_ns,
+                        checkpoint_id=cp_id,
+                    )
                 )
                 assert orig_put is not None
                 return orig_put(config, checkpoint, metadata, new_versions)

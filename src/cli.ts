@@ -9,7 +9,7 @@ import {
   formatOperationalMessage,
 } from "./failureCatalog.js";
 import { buildRegressionArtifactFromCompareManifest, stringifyRegressionArtifact } from "./regressionArtifact.js";
-import { buildExecutionTraceView, formatExecutionTraceText } from "./executionTrace.js";
+import { assertValidRunEventParentGraph, buildExecutionTraceView, formatExecutionTraceText } from "./executionTrace.js";
 import { loadEventsForWorkflow } from "./loadEvents.js";
 import { verifyWorkflow } from "./pipeline.js";
 import { argValue, argValues, parseBatchVerifyCliArgs, parseQuickCliArgs } from "./cliArgv.js";
@@ -218,6 +218,23 @@ Exit codes:
   --help, -h  print this message and exit 0`;
 }
 
+function usageEmitLint(): string {
+  return `Usage:
+  agentskeptic emit-lint --workflow-id <id> --events <path>
+
+Checks emitter-quality invariants before verification:
+  - event schema validity (via shared loader)
+  - runEventId uniqueness and parentRunEventId ordering/referential integrity
+  - workflow-scoped tool_observed presence
+  - malformed line count == 0
+
+Exit codes:
+  0  pass
+  3  operational failure (stderr: JSON envelope)
+
+  --help, -h  print this message and exit 0`;
+}
+
 function assertExecutionTraceArgsWellFormed(args: string[]): void {
   const allowed = new Set([
     "--workflow-id",
@@ -370,6 +387,55 @@ function runExecutionTraceSubcommand(args: string[]): void {
     console.log(JSON.stringify(view));
   }
   process.exit(0);
+}
+
+function runEmitLintSubcommand(args: string[]): void {
+  if (args.includes("--help") || args.includes("-h")) {
+    console.log(usageEmitLint());
+    process.exit(0);
+  }
+  const workflowId = argValue(args, "--workflow-id");
+  const eventsPath = argValue(args, "--events");
+  if (!workflowId || !eventsPath) {
+    writeCliError(
+      CLI_OPERATIONAL_CODES.EMIT_LINT_USAGE,
+      "emit-lint requires --workflow-id <id> and --events <path>.",
+    );
+    process.exit(3);
+  }
+  try {
+    const load = loadEventsForWorkflow(eventsPath, workflowId);
+    if (load.malformedEventLineCount > 0) {
+      throw new TruthLayerError(
+        CLI_OPERATIONAL_CODES.EMIT_LINT_FAILED,
+        `Malformed event lines detected: ${String(load.malformedEventLineCount)}.`,
+      );
+    }
+    assertValidRunEventParentGraph(load.runEvents);
+    if (load.events.length === 0) {
+      throw new TruthLayerError(
+        CLI_OPERATIONAL_CODES.EMIT_LINT_FAILED,
+        "No schema-valid tool_observed events found for workflow in emit-lint input.",
+      );
+    }
+    process.stdout.write(
+      `${JSON.stringify({
+        ok: true,
+        workflowId,
+        runEventCount: load.runEvents.length,
+        toolObservedCount: load.events.length,
+      })}\n`,
+    );
+    process.exit(0);
+  } catch (e) {
+    if (e instanceof TruthLayerError) {
+      writeCliError(e.code, e.message);
+      process.exit(3);
+    }
+    const msg = e instanceof Error ? e.message : String(e);
+    writeCliError(CLI_OPERATIONAL_CODES.EMIT_LINT_FAILED, formatOperationalMessage(msg));
+    process.exit(3);
+  }
 }
 
 function usageCompare(): string {
@@ -1153,6 +1219,10 @@ async function main(): Promise<void> {
 
   if (args[0] === "validate-registry") {
     runValidateRegistrySubcommand(args.slice(1));
+    return;
+  }
+  if (args[0] === "emit-lint") {
+    runEmitLintSubcommand(args.slice(1));
     return;
   }
 

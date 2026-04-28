@@ -1,6 +1,7 @@
 import path from "node:path";
 import { parseVerificationDatabaseUrl } from "./verificationDatabaseUrl.js";
 import { CLI_OPERATIONAL_CODES, runLevelIssue } from "./failureCatalog.js";
+import { assertValidRunEventParentGraph } from "./executionTrace.js";
 import {
   buildOutcomeCertificateFromWorkflowResult,
   type OutcomeCertificateV1,
@@ -33,6 +34,7 @@ export type CreateDecisionGateOptions = {
 export type DecisionGate = {
   appendRunEvent(value: unknown): void;
   toNdjsonUtf8(): Buffer;
+  assertEmissionQuality(): void;
   evaluate(): Promise<WorkflowResult>;
   evaluateCertificate(): Promise<OutcomeCertificateV1>;
   assertSafeForIrreversibleAction(): Promise<void>;
@@ -77,6 +79,22 @@ export function createDecisionGateImpl(options: CreateDecisionGateOptions): Deci
       parts.push(`${JSON.stringify(ev)}\n`);
     }
     return Buffer.from(parts.join(""), "utf8");
+  };
+
+  api.assertEmissionQuality = (): void => {
+    if (runLevelReasons.length > 0) {
+      throw new TruthLayerError(
+        CLI_OPERATIONAL_CODES.EMIT_LINT_FAILED,
+        "Buffered run events contain malformed inputs from appendRunEvent.",
+      );
+    }
+    if (bufferedRunEvents.length === 0) {
+      throw new TruthLayerError(
+        CLI_OPERATIONAL_CODES.EMIT_LINT_FAILED,
+        "No buffered run events are available for emission-quality checks.",
+      );
+    }
+    assertValidRunEventParentGraph(bufferedRunEvents);
   };
 
   api.evaluate = async (): Promise<WorkflowResult> => {

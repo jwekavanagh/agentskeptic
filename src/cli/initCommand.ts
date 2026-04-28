@@ -104,7 +104,7 @@ ${pkgScript}
     const appDir = join(cwd, "src", "app", "api", "agentskeptic-verify");
     mkdirSync(appDir, { recursive: true });
     const routeSrc = `import { join } from "node:path";
-import { AgentSkeptic } from "agentskeptic";
+import { AgentSkeptic, BufferSink } from "agentskeptic";
 import { createNextRouteHandler } from "agentskeptic/next";
 
 const skeptic = new AgentSkeptic({
@@ -115,17 +115,29 @@ const skeptic = new AgentSkeptic({
 export const POST = createNextRouteHandler(
   skeptic,
   async (gate, req) => {
-    const body = (await req.json()) as { events?: Array<Record<string, unknown>> };
-    for (const ev of body.events ?? []) {
-      gate.appendRunEvent(ev);
+    const body = (await req.json()) as {
+      workflowId?: string;
+      observations?: Array<{ toolId: string; params: Record<string, unknown> }>;
+    };
+    const sink = new BufferSink();
+    const emitter = skeptic.createEmitter({
+      workflowId: body.workflowId ?? "wf_complete",
+      sink,
+      defaultToolObservedSchemaVersion: 2,
+    });
+    for (const obs of body.observations ?? []) {
+      await emitter.emitToolObserved({ toolId: obs.toolId, params: obs.params });
     }
+    await emitter.finalizeRun();
+    for (const ev of sink.snapshot()) gate.appendRunEvent(ev);
+    gate.assertEmissionQuality();
     const certificate = await gate.evaluateCertificate();
     return {
       stateRelation: certificate.stateRelation,
       runKind: certificate.runKind,
     };
   },
-  { defaultWorkflowId: "wf_complete" },
+  { defaultWorkflowId: "wf_complete", strictEmissionQuality: true },
 );
 `;
     writeFileSync(join(appDir, "route.ts"), routeSrc, "utf8");

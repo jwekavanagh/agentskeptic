@@ -96,6 +96,8 @@ export { AgentSkepticError, agentSkepticErrorEntries, lookupErrorCodeMeta } from
 export type { ErrorCodeEntry, AgentSkepticErrorCode } from "./sdk/errors.js";
 export { AgentSkeptic } from "./sdk/AgentSkeptic.js";
 export type { AgentSkepticOptions } from "./sdk/AgentSkeptic.js";
+export { CanonicalEventEmitter, BufferSink, NdjsonFileSink } from "./sdk/events/index.js";
+export type { EventSink, EventEmitterInit } from "./sdk/events/index.js";
 export {
   CLI_OPERATIONAL_CODES,
   OPERATIONAL_MESSAGE_MAX_CHARS,
