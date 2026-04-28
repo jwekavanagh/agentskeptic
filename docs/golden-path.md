@@ -67,4 +67,5 @@ Keep these files in your app:
 
 - Canonical product guidance: [`integrate.md`](integrate.md)
 - Guided browser drafting flow (subordinate, optional): [`guided-first-verification.md`](guided-first-verification.md)
+- Decision-ready production framing: [`adoption-epistemics.md`](adoption-epistemics.md)
 - Verification semantics and contract framing: [`epistemic-contract.md`](epistemic-contract.md)
