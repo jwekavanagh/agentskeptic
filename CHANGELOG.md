@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/jwekavanagh/agentskeptic/compare/v1.1.3...v1.2.0) (2026-04-28)
+
+
+### Features
+
+* unified version integrity (merge gate, OpenAPI, CLI --version, post-PyPI verify) ([#20](https://github.com/jwekavanagh/agentskeptic/issues/20)) ([61c99a8](https://github.com/jwekavanagh/agentskeptic/commit/61c99a8ff104bdf597bbf3d2143a6c1ba7593af6))
+
 ## [1.1.3](https://github.com/jwekavanagh/agentskeptic/compare/v1.1.2...v1.1.3) (2026-04-27)
 
 
