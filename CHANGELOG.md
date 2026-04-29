@@ -1,3 +1,10 @@
+## [3.3.1](https://github.com/jwekavanagh/agentskeptic/compare/v3.3.0...v3.3.1) (2026-04-29)
+
+
+### Bug Fixes
+
+* **website:** ship commercial plans with /account serverless bundle ([#34](https://github.com/jwekavanagh/agentskeptic/issues/34)) ([5311ded](https://github.com/jwekavanagh/agentskeptic/commit/5311ded68f327f9cdb9eb81af1d5783753b04309))
+
 # [3.3.0](https://github.com/jwekavanagh/agentskeptic/compare/v3.2.0...v3.3.0) (2026-04-29)
 
 
