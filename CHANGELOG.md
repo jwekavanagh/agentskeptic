@@ -1,3 +1,10 @@
+# [3.3.0](https://github.com/jwekavanagh/agentskeptic/compare/v3.2.0...v3.3.0) (2026-04-29)
+
+
+### Features
+
+* **website:** ship paste-first verify experience ([#33](https://github.com/jwekavanagh/agentskeptic/issues/33)) ([0e1832f](https://github.com/jwekavanagh/agentskeptic/commit/0e1832fe2c8e46c28cf8c4241f21747d2a2cc795))
+
 # [3.2.0](https://github.com/jwekavanagh/agentskeptic/compare/v3.1.0...v3.2.0) (2026-04-29)
 
 
