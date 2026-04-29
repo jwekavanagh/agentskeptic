@@ -7,8 +7,8 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { exportBuyerFacingProjection } from "../src/lib/buyerTruth.ts";
-import { loadCommercialPlans } from "../src/lib/plans.ts";
+import { exportBuyerFacingProjection } from "../src/lib/buyerTruth";
+import { loadCommercialPlans } from "../src/lib/plans";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const websiteRoot = join(here, "..");

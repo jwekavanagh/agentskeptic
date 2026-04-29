@@ -64,10 +64,10 @@ function formatCount(n: number): string {
 }
 
 export function loadBuyerTruth(): BuyerTruthV1 {
-  return buyerTruthJson as BuyerTruthV1;
+  return buyerTruthJson as unknown as BuyerTruthV1;
 }
 
-function interpolate(template: string, vars: Record<string, string>): string {
+export function interpolate(template: string, vars: Record<string, string>): string {
   let s = template;
   for (const [k, v] of Object.entries(vars)) {
     const re = new RegExp(`{{\\s*${k}\\s*}}`, "g");
