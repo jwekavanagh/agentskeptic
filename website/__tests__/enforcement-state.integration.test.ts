@@ -54,6 +54,55 @@ function getFsmRow(wf: string): MockFsmRow {
   return fsmRows.map.get(wf)!;
 }
 
+/** Matches reserve-route.entitlement integration pattern so Bearer wf_sk_test authenticates via DB lookup mocks. */
+const LOOKUP = "test_key_lookup_sha256_hex_64_chars________________________________";
+
+vi.mock("@/lib/apiKeyCrypto", () => ({
+  sha256HexApiKeyLookupFingerprint: () => LOOKUP,
+  verifyApiKey: () => true,
+}));
+
+vi.mock("@/db/client", () => ({
+  db: {
+    insert: () => ({
+      values: () => Promise.resolve(undefined),
+    }),
+    update: () => ({
+      set: () => ({
+        where: () => Promise.resolve(undefined),
+      }),
+    }),
+    select: () => ({
+      from: () => ({
+        innerJoin: () => ({
+          where: () => ({
+            limit: () =>
+              Promise.resolve([
+                {
+                  key: {
+                    id: state.principal.keyId,
+                    keyHash: "scrypt$ignored",
+                    keyLookupSha256: LOOKUP,
+                    status: state.principal.status,
+                    scopes: state.principal.scopes,
+                    label: state.principal.label,
+                    expiresAt: null as Date | null,
+                  },
+                  user: {
+                    id: state.principal.userId,
+                    plan: state.principal.user.plan,
+                    subscriptionStatus: state.principal.user.subscriptionStatus,
+                    stripePriceId: state.principal.user.stripePriceId,
+                  },
+                },
+              ]),
+          }),
+        }),
+      }),
+    }),
+  },
+}));
+
 function parseGovernanceBody(body: unknown) {
   if (!body || typeof body !== "object") return null;
   const b = body as Record<string, unknown>;
