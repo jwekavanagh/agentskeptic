@@ -94,7 +94,13 @@ export type SchemaValidatorName =
   | "local-run-history-index-v1"
   | "trust-decision-record-v1"
   | "trust-certificate-snapshot-v1"
-  | "material-truth-v1";
+  | "material-truth-v1"
+  | "decision-evidence-bundle-manifest-v1"
+  | "decision-evidence-human-layer-v1"
+  | "decision-evidence-exit-v1"
+  | "decision-evidence-attestation-v1"
+  | "decision-evidence-next-action-v1"
+  | "decision-bundle-validation-v1";
 
 const validatorCache: Partial<Record<SchemaValidatorName, ValidateFunction>> = {};
 
@@ -222,6 +228,18 @@ export function loadSchemaValidator(name: SchemaValidatorName): ValidateFunction
       return compileSchemaFile(name, "trust-decision-record-v1.schema.json");
     case "material-truth-v1":
       return compileSchemaFile(name, "material-truth-v1.schema.json");
+    case "decision-evidence-bundle-manifest-v1":
+      return compileSchemaFile(name, "decision-evidence-bundle-manifest-v1.schema.json");
+    case "decision-evidence-human-layer-v1":
+      return compileSchemaFile(name, "decision-evidence-human-layer-v1.schema.json");
+    case "decision-evidence-exit-v1":
+      return compileSchemaFile(name, "decision-evidence-exit-v1.schema.json");
+    case "decision-evidence-attestation-v1":
+      return compileSchemaFile(name, "decision-evidence-attestation-v1.schema.json");
+    case "decision-evidence-next-action-v1":
+      return compileSchemaFile(name, "decision-evidence-next-action-v1.schema.json");
+    case "decision-bundle-validation-v1":
+      return compileSchemaFile(name, "decision-bundle-validation-v1.schema.json");
     default: {
       const _exhaustive: never = name;
       return _exhaustive;

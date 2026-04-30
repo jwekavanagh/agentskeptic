@@ -33,7 +33,11 @@ export default async function GovernancePage() {
   return (
     <main>
       <h1>Governance</h1>
-      <p className="u-mb-1">Read-only baseline and event timeline with evidence links.</p>
+      <p className="u-mb-1">
+        Read-only baseline and event timeline. Export returns JSON schemaVersion 2 including decision evidence alignment (
+        <Link href="https://github.com/jwekavanagh/agentskeptic/blob/main/docs/decision-evidence-bundle.md">docs</Link>
+        ).
+      </p>
       <div className="card u-mb-1">
         <h2>Baselines</h2>
         {baselines.length === 0 ? <p>No baselines yet.</p> : null}
@@ -47,7 +51,7 @@ export default async function GovernancePage() {
             <div><strong>reliance_class:</strong> {b.needsRebaseline ? "provisional" : "eligible"}</div>
             <div className="u-mt-half">
               <Link href={`/api/v1/governance/export?workflow_id=${encodeURIComponent(b.workflowId)}`}>
-                Download Audit Bundle
+                Export governance JSON
               </Link>
             </div>
           </div>
@@ -66,7 +70,9 @@ export default async function GovernancePage() {
             <div><strong>drift_status:</strong> {e.event === "drift_detected" ? "drift" : "ok"}</div>
             <div><strong>reliance_class:</strong> {relianceClassFromMetadata(e.metadata)}</div>
             <div className="u-mt-half">
-              <Link href={`/api/v1/governance/export?workflow_id=${encodeURIComponent(e.workflowId)}`}>View Evidence</Link>
+              <Link href={`/api/v1/governance/export?workflow_id=${encodeURIComponent(e.workflowId)}`}>
+                Export governance JSON
+              </Link>
             </div>
           </div>
         ))}

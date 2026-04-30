@@ -108,6 +108,9 @@ export type ParsedBatchVerifyCli = {
   shareReportOrigin: string | undefined;
   /** When true, batch verify emits the LangGraph checkpoint trust Outcome Certificate contract (v3 wire only). */
   langgraphCheckpointTrust: boolean;
+  writeDecisionBundleDir: string | undefined;
+  decisionAttestationPath: string | undefined;
+  decisionNextActionPath: string | undefined;
 };
 
 /**
@@ -148,6 +151,10 @@ export function parseBatchVerifyCliArgs(args: string[]): ParsedBatchVerifyCli {
     );
   }
 
+  const writeDecisionBundleDir = argValue(args, "--write-decision-bundle");
+  const decisionAttestationPath = argValue(args, "--decision-attestation");
+  const decisionNextActionPath = argValue(args, "--decision-next-action");
+
   const projectRoot = process.cwd();
   return {
     workflowId,
@@ -162,6 +169,9 @@ export function parseBatchVerifyCliArgs(args: string[]): ParsedBatchVerifyCli {
     signPrivateKeyPath,
     shareReportOrigin: parseOptionalShareReportOrigin(args),
     langgraphCheckpointTrust,
+    writeDecisionBundleDir,
+    decisionAttestationPath,
+    decisionNextActionPath,
   };
 }
 
@@ -174,6 +184,9 @@ export type ParsedQuickCli = {
   postgresUrl: string | undefined;
   shareReportOrigin: string | undefined;
   noHumanReport: boolean;
+  writeDecisionBundleDir: string | undefined;
+  decisionAttestationPath: string | undefined;
+  decisionNextActionPath: string | undefined;
 };
 
 /**
@@ -206,5 +219,8 @@ export function parseQuickCliArgs(args: string[]): ParsedQuickCli {
     postgresUrl,
     shareReportOrigin: parseOptionalShareReportOrigin(args),
     noHumanReport: args.includes("--no-human-report"),
+    writeDecisionBundleDir: argValue(args, "--write-decision-bundle"),
+    decisionAttestationPath: argValue(args, "--decision-attestation"),
+    decisionNextActionPath: argValue(args, "--decision-next-action"),
   };
 }

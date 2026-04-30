@@ -22,7 +22,9 @@ function run() {
   writeFileSync(snapPath, `${JSON.stringify(projection, null, 2)}\n`, "utf8");
 
   const rawBytes = readFileSync(buyerTruthPath);
-  const sha = createHash("sha256").update(rawBytes).digest("hex");
+  // Hash LF-normalized JSON bytes so CI (LF) and Windows checkouts (CRLF) agree.
+  const normalizedForHash = rawBytes.toString("utf8").replace(/\r\n/g, "\n");
+  const sha = createHash("sha256").update(Buffer.from(normalizedForHash, "utf8")).digest("hex");
   const hashPath = join(websiteRoot, "src", "generated", "buyerTruthCodegenHash.ts");
   writeFileSync(
     hashPath,

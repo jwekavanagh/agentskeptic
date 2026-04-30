@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentskeptic.com/schemas/decision-evidence-exit-v1.schema.json",
+  "title": "DecisionEvidenceExitV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "exitCode", "cliConvention"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "exitCode": { "type": "integer", "minimum": 0, "maximum": 3 },
+    "cliConvention": { "const": "outcome_certificate_v1" }
+  }
+}

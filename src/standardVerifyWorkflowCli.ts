@@ -1,4 +1,4 @@
-import { formatDistributionFooter } from "./distributionFooter.js";
+import { formatContractVerifyStderrForStderrLine } from "./decisionEvidenceHumanLayer.js";
 import { writeSync } from "node:fs";
 import {
   CLI_OPERATIONAL_CODES,
@@ -201,7 +201,7 @@ export async function runStandardVerifyWorkflowCliToTerminalResult(options: {
         ),
       );
     }
-    io.stderrLine(`${certificate.humanReport}\n${formatDistributionFooter()}`);
+    io.stderrLine(formatContractVerifyStderrForStderrLine(certificate));
   }
 
   return { certificate, workflowResult };

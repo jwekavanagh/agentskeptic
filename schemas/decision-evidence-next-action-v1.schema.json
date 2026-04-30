@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentskeptic.com/schemas/decision-evidence-next-action-v1.schema.json",
+  "title": "DecisionEvidenceNextActionV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "summary", "createdAt"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "summary": { "type": "string", "minLength": 1 },
+    "ticketUrl": { "type": "string" },
+    "createdAt": { "type": "string", "format": "date-time" }
+  }
+}
