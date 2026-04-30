@@ -1,3 +1,10 @@
+## [3.3.3](https://github.com/jwekavanagh/agentskeptic/compare/v3.3.2...v3.3.3) (2026-04-30)
+
+
+### Bug Fixes
+
+* **website:** account page tolerates missing api_key_v2 table ([#36](https://github.com/jwekavanagh/agentskeptic/issues/36)) ([42340ee](https://github.com/jwekavanagh/agentskeptic/commit/42340ee7d560ab505e3018c96998e436c9af1818))
+
 ## [3.3.2](https://github.com/jwekavanagh/agentskeptic/compare/v3.3.1...v3.3.2) (2026-04-29)
 
 
