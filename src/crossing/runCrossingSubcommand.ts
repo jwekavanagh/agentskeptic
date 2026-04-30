@@ -207,6 +207,3 @@ export async function runCrossingSubcommand(args: string[]): Promise<void> {
     },
   });
 }
-
-// Explicit re-export keeps compiled dist surface stable for CLI imports.
-export { runCrossingSubcommand };
