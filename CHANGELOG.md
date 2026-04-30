@@ -1,3 +1,10 @@
+# [3.4.0](https://github.com/jwekavanagh/agentskeptic/compare/v3.3.3...v3.4.0) (2026-04-30)
+
+
+### Features
+
+* **cli:** decision evidence bundle and governance export v2 ([#37](https://github.com/jwekavanagh/agentskeptic/issues/37)) ([a68cfb0](https://github.com/jwekavanagh/agentskeptic/commit/a68cfb0de8d9af01fd2b4db234efcc2b3c6cc38c))
+
 ## [3.3.3](https://github.com/jwekavanagh/agentskeptic/compare/v3.3.2...v3.3.3) (2026-04-30)
 
 
