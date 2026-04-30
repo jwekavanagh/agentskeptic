@@ -11,7 +11,7 @@
 | Integrator stdout / stderr / exit codes | `outcome-certificate-integrator.md` |
 | Share POST/GET | `shareable-verification-reports.md` + normative share note in `outcome-certificate-normative.md` |
 
-**Decision-ready ProductionComplete** remains defined only in [`adoption-epistemics.md`](adoption-epistemics.md#decision-ready-productioncomplete-normative) (artifacts **A1–A5**); **A1** is the terminal **Outcome Certificate v1** on stdout for contract verify.
+**Decision-ready ProductionComplete** remains defined only in [`adoption-epistemics.md`](adoption-epistemics.md#decision-ready-productioncomplete-normative) (artifacts **A1–A5**); **A1** is the terminal **Outcome Certificate v1** on stdout for contract verify. Operational file layout for retained proof: [`decision-evidence-bundle.md`](decision-evidence-bundle.md).
 
 <!-- buyer-surface-trust-production-implications:begin -->
 

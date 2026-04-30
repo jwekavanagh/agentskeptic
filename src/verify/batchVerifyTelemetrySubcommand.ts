@@ -21,7 +21,10 @@ import { runLicensePreflightIfNeeded } from "../commercial/licensePreflight.js";
 import { postVerifyOutcomeBeacon } from "../commercial/postVerifyOutcomeBeacon.js";
 import { classifyBatchVerifyWorkload } from "../commercial/verifyWorkloadClassify.js";
 import { LICENSE_PREFLIGHT_ENABLED } from "../generated/commercialBuildFlags.js";
-import { formatDistributionFooter } from "../distributionFooter.js";
+import {
+  formatContractVerifyStderrForStderrLine,
+  formatContractVerifyStderrForStderrWrite,
+} from "../decisionEvidenceHumanLayer.js";
 import { maybeEmitOssClaimTicketUrlToStderr } from "../telemetry/maybeEmitOssClaimTicketUrl.js";
 import { classifyWorkflowLineage } from "../funnel/workflowLineageClassify.js";
 import { postProductActivationEvent } from "../telemetry/postProductActivationEvent.js";
@@ -37,6 +40,7 @@ import {
   emitOutcomeCertificateCliAndExitByStateRelation,
   runStandardVerifyWorkflowCliToTerminalResult,
 } from "../standardVerifyWorkflowCli.js";
+import { writeDecisionEvidenceBundle } from "../decisionEvidenceBundle/index.js";
 
 function terminalStatusFromCertificate(
   c: import("../outcomeCertificate.js").OutcomeCertificateV1,
@@ -48,6 +52,40 @@ function terminalStatusFromCertificate(
 
 function writeCliError(code: string, message: string): void {
   console.error(cliErrorEnvelope(code, formatOperationalMessage(message)));
+}
+
+function maybeWriteDecisionEvidenceBundle(
+  parsedBatch: ParsedBatchVerifyCli,
+  certificate: OutcomeCertificateV1,
+  runId: string,
+): void {
+  if (parsedBatch.writeDecisionBundleDir === undefined) return;
+  try {
+    let attestation: unknown | undefined;
+    let nextAction: unknown | undefined;
+    if (parsedBatch.decisionAttestationPath !== undefined) {
+      attestation = JSON.parse(readFileSync(path.resolve(parsedBatch.decisionAttestationPath), "utf8")) as unknown;
+    }
+    if (parsedBatch.decisionNextActionPath !== undefined) {
+      nextAction = JSON.parse(readFileSync(path.resolve(parsedBatch.decisionNextActionPath), "utf8")) as unknown;
+    }
+    writeDecisionEvidenceBundle({
+      outDir: parsedBatch.writeDecisionBundleDir,
+      certificate,
+      noHumanReport: parsedBatch.noHumanReport,
+      runId,
+      ...(attestation !== undefined ? { attestation } : {}),
+      ...(nextAction !== undefined ? { nextAction } : {}),
+    });
+  } catch (e) {
+    if (e instanceof TruthLayerError) {
+      writeCliError(e.code, e.message);
+      process.exit(3);
+    }
+    const msg = e instanceof Error ? e.message : String(e);
+    writeCliError(CLI_OPERATIONAL_CODES.INTERNAL_ERROR, formatOperationalMessage(msg));
+    process.exit(3);
+  }
 }
 
 export async function runBatchVerifyWithTelemetrySubcommand(
@@ -167,13 +205,13 @@ export async function runBatchVerifyWithTelemetrySubcommand(
           throw new Error(CLI_EXITED_AFTER_ERROR);
         }
         if (!parsedBatch.noHumanReport) {
-          batchIo.stderrLine(`${certificate.humanReport}\n${formatDistributionFooter()}`);
+          batchIo.stderrLine(formatContractVerifyStderrForStderrLine(certificate));
         }
       } else if (!parsedBatch.noHumanReport) {
-        process.stderr.write(`${certificate.humanReport}\n${formatDistributionFooter()}\n`);
+        process.stderr.write(formatContractVerifyStderrForStderrWrite(certificate));
       }
     } else if (!parsedBatch.noHumanReport && parsedBatch.shareReportOrigin === undefined) {
-      process.stderr.write(`${certificate.humanReport}\n${formatDistributionFooter()}\n`);
+      process.stderr.write(formatContractVerifyStderrForStderrWrite(certificate));
     }
     const terminalStatus = terminalStatusFromCertificate(certificate);
     await postProductActivationEvent({
@@ -223,6 +261,7 @@ export async function runBatchVerifyWithTelemetrySubcommand(
           parsedBatch.workflowId,
           eligibility.certificateReasons,
         );
+        maybeWriteDecisionEvidenceBundle(parsedBatch, certificate, batchActivationRunId);
         await finishCertificateTelemetryAndExit(certificate, undefined, "ineligibleCertificateOnly");
       } catch (e) {
         if (e instanceof Error && e.message === CLI_EXITED_AFTER_ERROR) return;
@@ -291,6 +330,7 @@ export async function runBatchVerifyWithTelemetrySubcommand(
               ),
       io: batchIo,
     });
+    maybeWriteDecisionEvidenceBundle(parsedBatch, certificate, batchActivationRunId);
     await finishCertificateTelemetryAndExit(certificate, workflowResult, "afterStandardRunner");
   } catch (e) {
     if (e instanceof Error && e.message === CLI_EXITED_AFTER_ERROR) return;

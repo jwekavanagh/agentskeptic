@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentskeptic.com/schemas/decision-evidence-human-layer-v1.schema.json",
+  "title": "DecisionEvidenceHumanLayerV1",
+  "oneOf": [
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schemaVersion", "kind", "text"],
+      "properties": {
+        "schemaVersion": { "const": 1 },
+        "kind": { "const": "report" },
+        "text": { "type": "string" }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schemaVersion", "kind", "reason"],
+      "properties": {
+        "schemaVersion": { "const": 1 },
+        "kind": { "const": "suppressed" },
+        "reason": { "const": "no_human_report" }
+      }
+    }
+  ]
+}

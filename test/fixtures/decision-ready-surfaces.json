@@ -3,6 +3,7 @@
   "surfaces": [
     { "repoRelativePath": "docs/adoption-epistemics.md", "mustContain": "### Decision-ready ProductionComplete (normative)" },
     { "repoRelativePath": "docs/adoption-epistemics.md", "mustContain": "5. **Success criteria (normative):** Meet **Decision-ready ProductionComplete**" },
+    { "repoRelativePath": "docs/decision-evidence-bundle.md", "mustContain": "Decision evidence bundle" },
     { "repoRelativePath": "docs/first-run-integration.md", "mustContain": "adoption-epistemics.md#decision-ready-productioncomplete-normative" },
     { "repoRelativePath": "docs/verification-product.md", "mustContain": "Decision-ready ProductionComplete" },
     { "repoRelativePath": "docs/golden-path.md", "mustContain": "adoption-epistemics.md#decision-ready-productioncomplete-normative" },

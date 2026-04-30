@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentskeptic.com/schemas/decision-bundle-validation-v1.schema.json",
+  "title": "DecisionBundleValidationV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "kind", "status", "bundleDir", "completeness", "errors"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "kind": { "const": "decision_bundle_validation" },
+    "status": {
+      "type": "string",
+      "enum": ["complete", "partial", "invalid"]
+    },
+    "bundleDir": { "type": "string", "minLength": 1 },
+    "completeness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "artifacts"],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["complete", "partial", "invalid"]
+        },
+        "artifacts": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["a4Present", "a5Present", "a5Required"],
+          "properties": {
+            "a4Present": { "type": "boolean" },
+            "a5Present": { "type": "boolean" },
+            "a5Required": { "type": "boolean" }
+          }
+        }
+      }
+    },
+    "errors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["code", "message"],
+        "properties": {
+          "code": { "type": "string" },
+          "message": { "type": "string" }
+        }
+      }
+    }
+  }
+}

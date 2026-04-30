@@ -76,6 +76,8 @@ Use this checklist when a human operator assists an integrator to reach **Produc
 
 4. **Ownership.** The integrator (or operator assisting them) owns retention of A1–A5; the repository cannot assert Decision-ready ProductionComplete in CI without those artifacts.
 
+**Operational packaging (CLI):** [`decision-evidence-bundle.md`](decision-evidence-bundle.md) describes the **Decision evidence bundle** directory layout (opt-in `--write-decision-bundle`) and how it relates to these artifacts.
+
 **This repository cannot automate step 3–5 on integrator production systems** without their credentials and data; CI proves **PatternComplete** and **IntegrateSpineComplete** shapes only.
 
 ## Negative validation (what “not solved” means here)

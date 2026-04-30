@@ -40,6 +40,9 @@ const sampleParsed: ParsedBatchVerifyCli = {
   writeRunBundleDir: undefined,
   signPrivateKeyPath: undefined,
   langgraphCheckpointTrust: false,
+  writeDecisionBundleDir: undefined,
+  decisionAttestationPath: undefined,
+  decisionNextActionPath: undefined,
 };
 
 const sampleResult = {

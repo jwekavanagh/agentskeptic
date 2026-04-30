@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { and, eq, gte, lte } from "drizzle-orm";
+import { and, desc, eq, gte, lte } from "drizzle-orm";
+import type { OutcomeCertificateV1 } from "agentskeptic";
+import { computeCompletenessFromParts } from "agentskeptic/decisionEvidenceBundle";
+import { loadSchemaValidator } from "agentskeptic/schemaLoad";
 import { auth } from "@/auth";
 import { db } from "@/db/client";
 import { enforcementBaselines, enforcementEvents, governanceEvidence } from "@/db/schema";
+import pkg from "../../../../../../package.json";
 
 export async function GET(req: NextRequest) {
   const session = await auth();
@@ -65,9 +69,77 @@ export async function GET(req: NextRequest) {
     : [];
   const evidenceById = new Map(evidenceRows.map((e) => [e.id, e] as const));
 
+  const latestEvidenceRows = await db
+    .select({ certificateJson: governanceEvidence.certificateJson })
+    .from(governanceEvidence)
+    .where(and(eq(governanceEvidence.userId, session.user.id), eq(governanceEvidence.workflowId, workflowId)))
+    .orderBy(desc(governanceEvidence.createdAt))
+    .limit(1);
+
+  let certificate: OutcomeCertificateV1 | null = null;
+  let certificateValid = false;
+  const rawCert = latestEvidenceRows[0]?.certificateJson;
+  if (rawCert !== null && rawCert !== undefined && typeof rawCert === "object") {
+    const validateCert = loadSchemaValidator("outcome-certificate-v1");
+    if (validateCert(rawCert)) {
+      certificateValid = true;
+      certificate = rawCert as OutcomeCertificateV1;
+    }
+  }
+
+  const computed = computeCompletenessFromParts({
+    certificateValid,
+    coreFilesPresent: certificate !== null && certificateValid,
+    certificate,
+    a4Present: false,
+    a5Present: false,
+  });
+
+  const manifestPayload = {
+    schemaVersion: 1 as const,
+    bundleKind: "decision_evidence" as const,
+    producer: { name: "agentskeptic-web", version: pkg.version },
+    createdAt: new Date().toISOString(),
+    workflowId,
+    completeness: {
+      status: computed.status,
+      artifacts: computed.artifacts,
+    },
+  };
+
+  const validateManifest = loadSchemaValidator("decision-evidence-bundle-manifest-v1");
+  if (!validateManifest(manifestPayload)) {
+    return NextResponse.json(
+      {
+        code: "INTERNAL_ERROR",
+        message: `decision evidence manifest invalid: ${JSON.stringify(validateManifest.errors ?? [])}`,
+      },
+      { status: 500 },
+    );
+  }
+
+  const decisionEvidenceExport = {
+    manifest: manifestPayload,
+    embedded: {
+      outcomeCertificate: certificate,
+      exit: {
+        kind: "hosted_not_recorded" as const,
+        reason: "Exit codes are client-local for CLI verify; not persisted in governance_evidence.",
+      },
+      humanLayer: certificate
+        ? ({ kind: "from_certificate" as const, text: certificate.humanReport })
+        : ({
+            kind: "missing" as const,
+            reason: "No governance_evidence row available for embedding.",
+          }),
+      attestation: null,
+      nextAction: null,
+    },
+  };
+
   const baseline = baselineRows[0] ?? null;
   const payload = {
-    schemaVersion: 1,
+    schemaVersion: 2,
     generatedAt: new Date().toISOString(),
     userId: session.user.id,
     workflowId,
@@ -77,6 +149,7 @@ export async function GET(req: NextRequest) {
       ...e,
       evidence: e.evidenceId ? evidenceById.get(e.evidenceId) ?? null : null,
     })),
+    decisionEvidenceExport,
   };
   return NextResponse.json(payload, { status: 200 });
 }

@@ -80,11 +80,13 @@ import { postProductActivationEvent } from "./telemetry/postProductActivationEve
 import { runFunnelAnonCliAndExit } from "./cli/runFunnelAnonSet.js";
 import { fetchCurrentUsage } from "./commercial/getCurrentUsage.js";
 import { AGENTSKEPTIC_CLI_SEMVER } from "./publicDistribution.generated.js";
+import { formatValidationStdout, validateDecisionEvidenceBundle, writeDecisionEvidenceBundle } from "./decisionEvidenceBundle/index.js";
 
 function usageQuick(): string {
   return `Usage:
   agentskeptic quick --input <path> (--postgres-url <url> | --db <sqlitePath>) --export-registry <path>
     [--emit-events <path>] [--workflow-id <id>] [--share-report-origin <https://host>] [--no-human-report]
+    [--write-decision-bundle <dir>] [--decision-attestation <path>] [--decision-next-action <path>]
 
   Input must contain structured tool activity (tool names and parameters extractable as JSON). Verification uses read-only SQL against the database you pass.
 
@@ -193,8 +195,14 @@ Exit codes:
   Multi-scenario assurance sweep and staleness gate (see docs/agentskeptic.md).
 
 Advanced / optional (persisted runs, signing, local UI, plan/git checks):
-  --write-run-bundle <dir>   After a successful verify (schema-valid WorkflowResult), write a canonical run directory: events.ndjson (byte copy of --events), workflow-result.json (emitted result), agent-run.json (SHA-256 manifest). Directory is created if missing. Requires exit 0–2 (operational failure skips the write).
+  --write-run-bundle <dir>   Technical run bundle: events.ndjson (byte copy of --events), workflow-result.json, agent-run.json (SHA-256 manifest). Directory is created if missing. Requires exit 0–2 (operational failure skips the write).
   --sign-ed25519-private-key <path>   With --write-run-bundle only: PKCS#8 PEM Ed25519 private key; also writes workflow-result.sig.json and manifest schemaVersion 2.
+  --write-decision-bundle <dir>   Decision evidence bundle (outcome certificate, exit, human-layer, manifest; see docs/decision-evidence-bundle.md). Opt-in.
+  --decision-attestation <path>   Optional JSON merged into attestation.json when --write-decision-bundle is set.
+  --decision-next-action <path>   Optional JSON merged into next-action.json when --write-decision-bundle is set.
+
+  agentskeptic decision-bundle validate <dir>
+  Validates decision evidence bundle layout and completeness. Stdout: one JSON line. Exit 0 complete, 1 partial, 2 invalid, 3 operational.
 
   verify-bundle-signature --run-dir <dir> --public-key <path>
   Verify signed bundle (Ed25519 + manifest v2). Exit 0 if valid; exit 3 with JSON envelope on failure.
@@ -646,6 +654,9 @@ async function runQuickSubcommand(args: string[]): Promise<void> {
     postgresUrl,
     shareReportOrigin,
     noHumanReport,
+    writeDecisionBundleDir,
+    decisionAttestationPath,
+    decisionNextActionPath,
   } = pq;
   const activationRunId =
     process.env.AGENTSKEPTIC_RUN_ID?.trim() ||
@@ -757,6 +768,34 @@ async function runQuickSubcommand(args: string[]): Promise<void> {
     workflowId: workflowIdQuick,
     humanReportOptions: quickHumanOpts,
   });
+  if (writeDecisionBundleDir !== undefined) {
+    try {
+      let attestation: unknown | undefined;
+      let nextAction: unknown | undefined;
+      if (decisionAttestationPath !== undefined) {
+        attestation = JSON.parse(readFileSync(path.resolve(decisionAttestationPath), "utf8")) as unknown;
+      }
+      if (decisionNextActionPath !== undefined) {
+        nextAction = JSON.parse(readFileSync(path.resolve(decisionNextActionPath), "utf8")) as unknown;
+      }
+      writeDecisionEvidenceBundle({
+        outDir: writeDecisionBundleDir,
+        certificate,
+        noHumanReport,
+        runId: activationRunId,
+        ...(attestation !== undefined ? { attestation } : {}),
+        ...(nextAction !== undefined ? { nextAction } : {}),
+      });
+    } catch (e) {
+      if (e instanceof TruthLayerError) {
+        writeCliError(e.code, e.message);
+        process.exit(3);
+      }
+      const msg = e instanceof Error ? e.message : String(e);
+      writeCliError(CLI_OPERATIONAL_CODES.INTERNAL_ERROR, formatOperationalMessage(msg));
+      process.exit(3);
+    }
+  }
   if (shareReportOrigin !== undefined) {
     const shareRes = await postPublicVerificationReport(shareReportOrigin, {
       schemaVersion: 2,
@@ -1152,11 +1191,58 @@ function runPlanTransitionSubcommand(args: string[]): void {
   process.exit(2);
 }
 
+function runDecisionBundleValidateSubcommand(rest: string[]): void {
+  if (rest.includes("--help") || rest.includes("-h")) {
+    console.log(`Usage:
+  agentskeptic decision-bundle validate <dir>
+
+Exit codes:
+  0  complete
+  1  partial
+  2  invalid
+  3  operational failure
+
+Stdout: one JSON line (decision_bundle_validation v1).
+
+  --help, -h  print this message and exit 0`);
+    process.exit(0);
+  }
+  const dir = rest[0];
+  if (!dir) {
+    writeCliError(CLI_OPERATIONAL_CODES.CLI_USAGE, "decision-bundle validate requires <dir>.");
+    process.exit(3);
+  }
+  if (rest.length > 1) {
+    writeCliError(CLI_OPERATIONAL_CODES.CLI_USAGE, "Too many arguments.");
+    process.exit(3);
+  }
+  try {
+    const line = validateDecisionEvidenceBundle(dir);
+    console.log(formatValidationStdout(line));
+    if (line.status === "complete") process.exit(0);
+    if (line.status === "partial") process.exit(1);
+    process.exit(2);
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    writeCliError(CLI_OPERATIONAL_CODES.INTERNAL_ERROR, formatOperationalMessage(msg));
+    process.exit(3);
+  }
+}
+
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
   if (args[0] === "--version" || args[0] === "-V") {
     console.log(AGENTSKEPTIC_CLI_SEMVER);
     process.exit(0);
+  }
+  if (args[0] === "decision-bundle") {
+    const rest = args.slice(1);
+    if (rest[0] === "validate") {
+      runDecisionBundleValidateSubcommand(rest.slice(1));
+      return;
+    }
+    writeCliError(CLI_OPERATIONAL_CODES.CLI_USAGE, "Unknown decision-bundle subcommand.");
+    process.exit(3);
   }
   if (args[0] === "init") {
     const { runInitCommand } = await import("./cli/initCommand.js");
