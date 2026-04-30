@@ -1,3 +1,15 @@
+# [3.6.0](https://github.com/jwekavanagh/agentskeptic/compare/v3.5.0...v3.6.0) (2026-04-30)
+
+
+### Bug Fixes
+
+* **replay:** stabilize quickVerify threshold import in replay gate ([#40](https://github.com/jwekavanagh/agentskeptic/issues/40)) ([cf6b3b0](https://github.com/jwekavanagh/agentskeptic/commit/cf6b3b00294997ab5d33ce8e8ca738e6ecba5e74))
+
+
+### Features
+
+* **verification:** hosted enforcement lifecycle FSM ([#39](https://github.com/jwekavanagh/agentskeptic/issues/39)) ([8e97097](https://github.com/jwekavanagh/agentskeptic/commit/8e9709716aed820422e017e553a42ff5fca0f835))
+
 # [3.5.0](https://github.com/jwekavanagh/agentskeptic/compare/v3.4.0...v3.5.0) (2026-04-30)
 
 
