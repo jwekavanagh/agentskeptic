@@ -18,6 +18,14 @@ function isToolObserved(ev: RunEvent): ev is ToolObservedEvent {
   return ev.type === "tool_observed";
 }
 
+/** Coarse scan for v3 LangGraph tool lines when AJV rejects (keeps generic-verify guard aligned with intent). */
+function lineSignalsV3ToolObservedForWorkflow(parsed: unknown, workflowId: string): boolean {
+  if (!parsed || typeof parsed !== "object") return false;
+  const o = parsed as Record<string, unknown>;
+  if (o.workflowId !== workflowId || o.type !== "tool_observed" || o.schemaVersion !== 3) return false;
+  return typeof o.langgraphCheckpoint === "object" && o.langgraphCheckpoint !== null;
+}
+
 export function loadEventsForWorkflow(
   eventsFilePath: string,
   workflowId: string,
@@ -127,7 +135,10 @@ export function eventsFileHasSchemaV3ToolObservedForWorkflow(
     } catch {
       continue;
     }
-    if (!validateEvent(parsed)) continue;
+    if (!validateEvent(parsed)) {
+      if (lineSignalsV3ToolObservedForWorkflow(parsed, workflowId)) return true;
+      continue;
+    }
     const ev = parsed as RunEvent;
     if (ev.type !== "tool_observed" || ev.workflowId !== workflowId) continue;
     if (ev.schemaVersion === 3) return true;
