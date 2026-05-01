@@ -5,7 +5,7 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 /** Expected accessible names — literals live only here (v2 /integrate layout). */
-const EXPECT_SCAFFOLD_H2 = "Scaffold then verify (canonical v2 path)";
+const EXPECT_PRIMARY_ACTIVATION_H2 = "Activate to proof (canonical)";
 const EXPECT_PRODUCT_WIRE_H2 = "Product completion: wire your emitters";
 
 const FORBIDDEN_IN_MAIN = [
@@ -24,11 +24,11 @@ describe("/integrate completion semantics (RTL)", () => {
     vi.clearAllMocks();
   });
 
-  it("scaffold+verify is primary h2; wire emitters h2; framework spine section contains activation; main omits forbidden phrases", () => {
+  it("activation-to-proof is primary h2; wire emitters h2; framework spine section contains activation; main omits forbidden phrases", () => {
     const { container } = render(<IntegratePage />);
     const main = screen.getByRole("main");
     const h2s = within(main).getAllByRole("heading", { level: 2 });
-    expect(h2s[0]?.textContent).toBe(EXPECT_SCAFFOLD_H2);
+    expect(h2s[0]?.textContent).toBe(EXPECT_PRIMARY_ACTIVATION_H2);
     expect(within(main).getByRole("heading", { level: 2, name: EXPECT_PRODUCT_WIRE_H2 })).toBeTruthy();
     expect(within(main).queryByRole("heading", { level: 2, name: "Mechanical spine checkpoint (not product completion)" })).toBeNull();
 
