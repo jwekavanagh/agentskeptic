@@ -1,3 +1,9 @@
+## [4.1.1](https://github.com/jwekavanagh/agentskeptic/compare/v4.1.0...v4.1.1) (2026-05-01)
+
+### Bug Fixes
+
+* **release-package:** declare pypi GitHub environment for Trusted Publishing OIDC ([#46](https://github.com/jwekavanagh/agentskeptic/issues/46)) ([5bff57d](https://github.com/jwekavanagh/agentskeptic/commit/5bff57d7a453b3068a6bf55f4f32c564e308925d))
+
 ## [4.1.0](https://github.com/jwekavanagh/agentskeptic/compare/v4.0.1...v4.1.0) (2026-05-01)
 
 ### Features
