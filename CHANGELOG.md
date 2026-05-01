@@ -1,3 +1,17 @@
+## [4.0.0](https://github.com/jwekavanagh/agentskeptic/compare/v3.7.0...v4.0.0) (2026-05-01)
+
+### ⚠ BREAKING CHANGES
+
+* trust-lean OSS v4 kernel and website-owned registry draft
+
+### Features
+
+* trust-lean OSS v4 kernel and website-owned registry draft ([6001bb8](https://github.com/jwekavanagh/agentskeptic/commit/6001bb80ff577e6fe0fe88d0f9520013cddc1e7d))
+
+### Bug Fixes
+
+* **release:** conventionalcommits preset for analyzer and notes ([#43](https://github.com/jwekavanagh/agentskeptic/issues/43)) ([d3ad6e1](https://github.com/jwekavanagh/agentskeptic/commit/d3ad6e1948a458a34d1406b2c0529191586b441a))
+
 # [4.0.0](https://github.com/jwekavanagh/agentskeptic/compare/v3.7.0...v4.0.0) (2026-04-30)
 
 ### ⚠ BREAKING CHANGES
