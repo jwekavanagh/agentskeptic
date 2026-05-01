@@ -1,3 +1,9 @@
+## [4.1.0](https://github.com/jwekavanagh/agentskeptic/compare/v4.0.1...v4.1.0) (2026-05-01)
+
+### Features
+
+* **verify:** ship S3 and Mongo witnesses and truthful copy ([e761488](https://github.com/jwekavanagh/agentskeptic/commit/e76148801a47ce8a7984d5698c34c5d079884310))
+
 ## [4.0.1](https://github.com/jwekavanagh/agentskeptic/compare/v4.0.0...v4.0.1) (2026-05-01)
 
 ### Bug Fixes
