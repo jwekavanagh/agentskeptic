@@ -11,7 +11,7 @@ This document is the **single normative source** for **`agentskeptic crossing`**
 - **Outcome:** A qualified integrator completes **one** integrator-owned verification on non-bundled paths with the **same semantics** as the final phase of standalone **`agentskeptic verify-integrator-owned`** (same `WorkflowResult` schema and batch verify path).
 - **Product-activation telemetry** for that **final** phase uses the **`verify_integrator_owned`** subcommand discriminator (same as standalone **`verify-integrator-owned`**). See [`funnel-observability.md`](funnel-observability.md).
 
-**Advanced / CI (not the default integrator story):** **`agentskeptic bootstrap`** and **`agentskeptic verify-integrator-owned`** remain supported; docs must not present standalone bootstrap exit 0 as sufficient “activation” without crossing or an explicit integrator-owned verify.
+**Advanced / CI (not the default integrator story):** **`agentskeptic bootstrap`** (legacy compatibility) and **`agentskeptic verify-integrator-owned`** remain supported. **`agentskeptic activate`** is the canonical pack builder with exportable **`proof/`**; docs must not treat **legacy** **`bootstrap` exit 0** alone as sufficient “activation” without **`activate`**, **crossing**, or an explicit integrator-owned verify where the product story demands it.
 
 ## Invocation shapes (mutually exclusive)
 

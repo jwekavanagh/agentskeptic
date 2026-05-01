@@ -10,6 +10,8 @@ All other stack combinations are contract-based only and are out of scope for th
 
 Default decision-gate path reference: [README — Default path: DecisionGate before you act](../README.md#default-path-decisiongate-before-you-act).
 
+The CLI reference app’s golden path aligns with **`agentskeptic activate`** for pack-led proofs: deterministic contract outcomes plus exportable **`proof/`** bundles when you rehearse workflows against a real database.
+
 <!-- epistemic-contract:consumer:golden-path -->
 **Epistemic framing (pointer only):** [`epistemic-contract.md`](epistemic-contract.md) — then follow adoption and product SSOT below.
 <!-- /epistemic-contract:consumer:golden-path -->

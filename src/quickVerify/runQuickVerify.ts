@@ -7,7 +7,7 @@ import type { CorrectnessDefinitionV1, ToolRegistryEntry, VerificationRequest, V
 import { connectPostgresVerificationClient } from "../sqlReadBackend.js";
 import { canonicalToolsArrayUtf8, stableStringify } from "./canonicalJson.js";
 import { bucketsForAction } from "./decomposeUnits.js";
-import { dedupeActions, ingestActivityUtf8 } from "./ingest.js";
+import { dedupeActions, ingestActivityUtf8, type FlatScalar } from "./ingest.js";
 import { planRowUnit } from "./rowUnit.js";
 import { planRelationalFromFlat } from "./relationalPlan.js";
 import type { SchemaCatalog } from "./schemaCatalogTypes.js";
@@ -90,6 +90,37 @@ function rollupVerdict(
   if (units.some((u) => u.verdict === "fail")) return "fail";
   if (units.every((u) => u.verdict === "verified")) return "pass";
   return "uncertain";
+}
+
+/**
+ * Provisional quick verify may intentionally use an under-specified row request (identity only). Contract replay
+ * must still carry non-PK field expectations when `fields.*` flat keys are present so full verify can surface
+ * VALUE_MISMATCH (bootstrap pack / activation).
+ */
+function augmentExportVerificationRequest(
+  provisional: VerificationRequest,
+  flat: Record<string, FlatScalar>,
+  tableColumnNames: string[],
+  pkColumns: string[],
+): VerificationRequest {
+  if (Object.keys(provisional.requiredFields).length > 0) return provisional;
+  const pkSet = new Set(pkColumns);
+  const rf: Record<string, VerificationScalar> = {};
+  const flatPaths = [...Object.keys(flat)].sort(compareUtf16Id);
+  for (const fk of flatPaths) {
+    if (!fk.startsWith("fields.") || fk.indexOf(".", "fields.".length) !== -1) continue;
+    const colName = fk.slice("fields.".length);
+    if (pkSet.has(colName) || !tableColumnNames.includes(colName)) continue;
+    const raw = flat[fk] ?? null;
+    let vs: VerificationScalar | undefined;
+    if (raw === null) vs = null;
+    else if (typeof raw === "boolean") vs = raw;
+    else if (typeof raw === "number") vs = Number.isFinite(raw) ? raw : undefined;
+    else if (typeof raw === "string") vs = raw;
+    if (vs !== undefined) rf[colName] = vs;
+  }
+  if (Object.keys(rf).length === 0) return provisional;
+  return { ...provisional, requiredFields: rf };
 }
 
 function buildSummary(verdict: string, units: QuickVerifyReport["units"], ingest: QuickVerifyReport["ingest"]): string {
@@ -280,8 +311,26 @@ export async function runQuickVerify(opts: RunQuickVerifyOptions): Promise<RunQu
             tid = `quick:${uid}:${n++}`;
           }
           if (exportedLegacy) {
-            exportTools.push(exportSqlRowTool(tid, plan.request));
-            contractExports.push({ toolId: tid, kind: "sql_row", request: plan.request });
+            const colsForExport = await catalog.listColumns(b.tableName);
+            const colNamesForExport = colsForExport.map((c) => c.name).sort(compareUtf16Id);
+            const pkSetForExport = new Set(plan.request.identityEq.map((e) => e.column));
+            const exportRowRequest = augmentExportVerificationRequest(
+              plan.request,
+              b.flat,
+              colNamesForExport,
+              [...pkSetForExport],
+            );
+            exportTools.push(exportSqlRowTool(tid, exportRowRequest));
+            const qvFieldsSortedLegacy: Record<string, VerificationScalar> = {};
+            for (const k of Object.keys(exportRowRequest.requiredFields).sort(compareUtf16Id)) {
+              qvFieldsSortedLegacy[k] = exportRowRequest.requiredFields[k]!;
+            }
+            contractExports.push({
+              toolId: tid,
+              kind: "sql_row",
+              request: exportRowRequest,
+              syntheticParams: buildSyntheticRowParams(action.params, qvFieldsSortedLegacy),
+            });
           } else if (exportedPointer && pointerSynthetic && pointerSpecs) {
             exportTools.push(exportSqlRowParamPointerTool(tid, plan.request.table, pointerSpecs));
             contractExports.push({

@@ -72,14 +72,17 @@ describe("integrate spine L0 contract", () => {
 
   it("L0 has no batch-only wf_integrate_spine verify line", () => {
     const t = readFileSync(templatePath, "utf8");
-    const bad = /^node dist\/cli\.js --workflow-id wf_integrate_spine/m;
+    const badNode = /^node dist\/cli\.js --workflow-id wf_integrate_spine/m;
+    const badDirect = /\bdist\/cli\.js --workflow-id wf_integrate_spine/;
     for (const line of t.split(/\r?\n/)) {
-      if (!line.includes("wf_integrate_spine") || !line.includes("node dist/cli.js")) continue;
+      if (!line.includes("wf_integrate_spine")) continue;
+      if (!line.includes("dist/cli.js") && !line.includes("node dist/cli.js")) continue;
       assert.ok(
         line.includes("crossing"),
         `spine wf_integrate_spine line must use crossing, got: ${line}`,
       );
-      assert.ok(!bad.test(line.trim()), "must not be bare batch verify for wf_integrate_spine");
+      assert.ok(!badNode.test(line.trim()), "must not be bare batch verify for wf_integrate_spine");
+      assert.ok(!badDirect.test(line.trim()), 'must route wf_integrate_spine through crossing after dist/cli.js');
     }
   });
 });

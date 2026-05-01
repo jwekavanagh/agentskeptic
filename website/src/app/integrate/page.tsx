@@ -67,34 +67,39 @@ export default function IntegratePage() {
         optional telemetry (same checklist appears at the top of beacon-eligible pages).
       </p>
 
-      <h2>Scaffold then verify (canonical v2 path)</h2>
+      <h2>Activate to proof (canonical)</h2>
       <p>
-        Run <code>agentskeptic init</code> to emit <code>agentskeptic/tools.json</code>, <code>agentskeptic/events.ndjson</code>,
-        and a seeded <code>demo.db</code>, then add the documented <code>verify</code> script. For pack-led NDJSON replay
-        without scaffolding, see <code>agentskeptic crossing</code> in{" "}
-        <a href="https://github.com/jwekavanagh/agentskeptic/blob/main/docs/crossing-normative.md" rel="noopener noreferrer" target="_blank">
-          crossing-normative.md
-        </a>
-        .
+        Use <code>agentskeptic activate</code> with BootstrapPackInput v1 JSON and your database URL. It progresses through
+        provisional inference, contract verification, and writes exportable bundles under <code>proof/</code> in your{" "}
+        <code>--out</code> directory (<code>run/</code>, <code>decision/</code>). For replay-only flows when you already have{" "}
+        <code>events.ndjson</code> and <code>tools.json</code>, see <code>agentskeptic crossing</code> below.
       </p>
       <pre id="integrate-crossing-commands" className="integrate-pack-command" data-testid="integrate-crossing-commands">
         {p.packLedCommand}
       </pre>
       <p>
         <a href={p.githubDeepLink} rel="noopener noreferrer" target="_blank" data-testid="integrate-gh-deep-link">
-          Crossing contract
+          Integrator SSOT
         </a>
       </p>
-      <p>This one command does three things:</p>
+      <p>
+        What <code>agentskeptic activate</code> does:
+      </p>
       <ul>
-        <li>Reads your structured tool activity (NDJSON)</li>
+        <li>Loads your BootstrapPackInput v1 JSON and a readable SQLite or Postgres URL.</li>
+        <li>Runs provisional inference (read-only SQL), synthesizes the contract pack, then replays full contract verification.</li>
         <li>
-          Maps it against your stores using <code>tools.json</code>
+          On contract termination (exit <code>0</code>, <code>1</code>, or <code>2</code>), writes exportable bundles under{" "}
+          <code>proof/run</code>, <code>proof/decision</code>, and <code>proof/activation.manifest.json</code> inside{" "}
+          <code>--out</code>.
         </li>
-        <li>Runs read-only verification and returns a clear result</li>
       </ul>
       <p>
-        Success = <code>exit 0</code> with <code>VERDICT: complete</code> and <code>trust: TRUSTED</code>.
+        Success = <code>exit 0</code> with <code>VERDICT: complete</code> and <code>trust: TRUSTED</code>. For{" "}
+        <code>agentskeptic activate</code>, exit <code>0</code> pairs with <code>trustTerminal=decision_ready</code> in{" "}
+        <code>proof/activation.manifest.json</code>; exits <code>1</code>/<code>2</code> still retain <code>proof/</code> with{" "}
+        <code>contract_inconsistent</code> or <code>contract_incomplete</code>. <code>agentskeptic crossing</code> behavior is
+        unchanged.
       </p>
       <p className="muted">
         Failure surfaces explicit issues like <code>ROW_ABSENT</code> instead of letting silent gaps reach production.
@@ -171,7 +176,7 @@ export default function IntegratePage() {
       <h2>Full documentation</h2>
       <p>
         <a href={p.githubDeepLink} rel="noopener noreferrer" target="_blank">
-          Crossing contract
+          Integrator SSOT
         </a>{" "}
         ·{" "}
         <a href={p.githubFirstRunLink} rel="noopener noreferrer" target="_blank" data-testid="integrate-gh-first-run">

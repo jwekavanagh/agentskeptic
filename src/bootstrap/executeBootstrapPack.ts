@@ -22,6 +22,11 @@ import { parseBootstrapPackInputJson } from "./parseBootstrapPackInput.js";
 import { synthesizeQuickInputUtf8FromOpenAiV1 } from "./synthesizeQuickInputFromOpenAiV1.js";
 import type { ParsedBootstrapCli } from "./bootstrapCliArgs.js";
 
+export type ExecuteBootstrapPackOptions = {
+  /** Outer `activate` reserves preflight; kernel skips duplicated license reserve. Defaults to `run_here`. */
+  preflight?: "run_here" | "caller_reserved";
+};
+
 export function cleanupOutDirFromPath(outResolved: string): void {
   try {
     rmSync(outResolved, { recursive: true, force: true });
@@ -37,6 +42,7 @@ export type ExecuteBootstrapPackSuccess = {
   registryPath: string;
   outResolved: string;
   exportedToolCount: number;
+  workflowResult: WorkflowResult;
 };
 
 export type ExecuteBootstrapPackFailure =
@@ -52,11 +58,12 @@ export type ExecuteBootstrapPackFailure =
 /**
  * Core bootstrap pack build + in-process contract verify.
  * On success (`pack_ready`), leaves `outResolved` on disk.
- * On `verify_terminal`, leaves `outResolved` on disk until the caller exits (caller must cleanup via exit hook).
- * On `operational`, cleans up `outResolved` when it was created.
+ * On `verify_terminal`, retains `outResolved` (`proof/` inspectable via `agentskeptic activate`; legacy `bootstrap` never writes proof).
+ * On `bootstrap_cli_error` staging failures, callers may remove `outResolved` per cleanup rules internal to this routine.
  */
 export async function executeBootstrapPack(
   parsed: ParsedBootstrapCli,
+  opts: ExecuteBootstrapPackOptions = {},
 ): Promise<ExecuteBootstrapPackSuccess | ExecuteBootstrapPackFailure> {
   const outResolved = path.resolve(parsed.outPath);
   if (existsSync(outResolved)) {
@@ -91,19 +98,22 @@ export async function executeBootstrapPack(
     throw e;
   }
 
-  try {
-    await runLicensePreflightIfNeeded("verify");
-  } catch (e) {
-    if (e instanceof TruthLayerError) {
-      return { kind: "bootstrap_cli_error", exitCode: 3, code: e.code, message: e.message };
+  const preflightMode = opts.preflight ?? "run_here";
+  if (preflightMode !== "caller_reserved") {
+    try {
+      await runLicensePreflightIfNeeded("verify");
+    } catch (e) {
+      if (e instanceof TruthLayerError) {
+        return { kind: "bootstrap_cli_error", exitCode: 3, code: e.code, message: e.message };
+      }
+      const msg = e instanceof Error ? e.message : String(e);
+      return {
+        kind: "bootstrap_cli_error",
+        exitCode: 3,
+        code: CLI_OPERATIONAL_CODES.INTERNAL_ERROR,
+        message: formatOperationalMessage(msg),
+      };
     }
-    const msg = e instanceof Error ? e.message : String(e);
-    return {
-      kind: "bootstrap_cli_error",
-      exitCode: 3,
-      code: CLI_OPERATIONAL_CODES.INTERNAL_ERROR,
-      message: formatOperationalMessage(msg),
-    };
   }
 
   mkdirSync(outResolved, { recursive: false });
@@ -231,6 +241,7 @@ export async function executeBootstrapPack(
       registryPath: toolsPath,
       outResolved,
       exportedToolCount: contractExports.length,
+      workflowResult: result,
     };
   }
 

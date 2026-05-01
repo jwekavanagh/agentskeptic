@@ -119,7 +119,7 @@ export async function runStandardVerifyWorkflowCliToTerminalResult(options: {
     workflowResult: WorkflowResult;
     certificate: OutcomeCertificateV1;
   }>;
-  maybeWriteBundle?: (result: WorkflowResult) => void;
+  maybeWriteBundle?: (result: WorkflowResult, certificate: OutcomeCertificateV1) => void;
   /** When set, human stderr is deferred until after a successful POST to this origin. */
   shareReportOrigin?: string;
   io?: Partial<StandardVerifyWorkflowCliIo>;
@@ -175,7 +175,7 @@ export async function runStandardVerifyWorkflowCliToTerminalResult(options: {
 
   if (options.maybeWriteBundle !== undefined) {
     try {
-      options.maybeWriteBundle(workflowResult);
+      options.maybeWriteBundle(workflowResult, certificate);
     } catch (e) {
       if (e instanceof TruthLayerError) {
         abortVerifyCli(io, writeCliError, e.code, e.message);
@@ -218,7 +218,7 @@ export async function runStandardVerifyWorkflowCliToTerminalResult(options: {
  */
 export async function runStandardVerifyWorkflowCliFlow(options: {
   runVerify: () => Promise<WorkflowResult>;
-  maybeWriteBundle?: (result: WorkflowResult) => void;
+  maybeWriteBundle?: (result: WorkflowResult, certificate: OutcomeCertificateV1) => void;
   /** When set, human stderr is deferred until after a successful POST to this origin. */
   shareReportOrigin?: string;
   io?: Partial<StandardVerifyWorkflowCliIo>;

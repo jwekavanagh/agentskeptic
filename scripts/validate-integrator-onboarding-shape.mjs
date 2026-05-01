@@ -14,6 +14,20 @@ function fail(msg) {
   process.exit(1);
 }
 
+const marketingPath = join(root, "config", "marketing.json");
+const marketingRaw = JSON.parse(readFileSync(marketingPath, "utf8"));
+const plc = marketingRaw.integratePage?.packLedCommand;
+if (typeof plc !== "string" || !plc.includes("agentskeptic activate")) {
+  fail("config/marketing.json integratePage.packLedCommand must include the substring agentskeptic activate");
+}
+const actPos = plc.indexOf("activate");
+const crossPos = plc.indexOf("crossing");
+if (actPos === -1 || crossPos === -1 || actPos >= crossPos) {
+  fail(
+    `config/marketing.json integratePage.packLedCommand must list activate before crossing (positions ${String(actPos)} / ${String(crossPos)})`,
+  );
+}
+
 const pc = readFileSync(join(root, "website", "src", "content", "productCopy.ts"), "utf8");
 if (/\brunCaption\b/.test(pc) || /\brunHeading\b/.test(pc)) {
   fail("productCopy.ts must not define runCaption or runHeading");

@@ -37,3 +37,10 @@ website/.env.local
 .agents/
 
 examples/.canonical-verify-run/
+
+# Operator-local verification receipts (gitignored)
+artifacts/agentskeptic-receipts/
+
+# Accidental GitHub Actions job log exports (do not commit)
+job-*.log
+

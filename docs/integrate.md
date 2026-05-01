@@ -2,9 +2,27 @@
 
 **Start here (canonical):** [golden-path.md](golden-path.md) (executable Next.js + Postgres reference with deterministic pass/fail verification).
 
-Optional accelerator: [guided-first-verification.md](guided-first-verification.md) (browser flow for draft + quick ingest generation).
+Optional accelerator: [/integrate/guided](https://agentskeptic.com/integrate/guided) in the hosted app (raw doc: **[integrate.md](integrate.md)** — this file).
 
 This document is the **single supported starting point** for shipping AgentSkeptic in application code. Hosted trust capture (blocked-decision records + alerts) lives in **[trust-authority-layer.md](trust-authority-layer.md)**. Older split guides are stubs that redirect here.
+
+## Activation
+
+Canonical CLI: **`agentskeptic activate`** with the same flags as **`agentskeptic bootstrap`** (`--input`, `--db` or `--postgres-url`, `--out`) and **`BootstrapPackInput` v1** JSON ([bootstrap-pack-normative.md](bootstrap-pack-normative.md)).
+
+On contract-terminated exits (**0 / 1 / 2**), **`activate`** writes **`${out}/proof/run/`**, **`${out}/proof/decision/`**, and **`${out}/proof/activation.manifest.json`**, emits three **`AGENTSKEPTIC_ACTIVATION …`** stderr lines (before any human certificate stderr on terminal verify), and (commercial npm) **`POST`s** verify-outcome with **`subcommand: "activate"`** and required nested **`activation`** mirroring the disk manifest (**snake_case** on the wire).
+
+**Legacy:** **`agentskeptic bootstrap`** runs the same `executeBootstrapPack` kernel with inner license preflight only; it never emits **`proof/`**, manifest, machine activation lines, or verify-outcome **`activation`** payloads. Migrate scripts to **`activate`** for exportable activation evidence.
+
+**Stage ids (shared vocabulary):** `ingest_input`, `provisional_infer`, `contract_verify`, `proof_export`.
+
+**Trust labels:** `n_a`, `provisional_pass`, `decision_ready`, `contract_inconsistent`, `contract_incomplete`.
+
+Quick-path bootstrap failures (**quick ≠ pass**, no exportable tools, empty **`tool_calls`**, pack write failures) emit a single **`AGENTSKEPTIC_ACTIVATION stage=provisional_infer trust_terminal=blocked`** line for **`activate`**, then the existing bootstrap JSON **`stderr`** envelope (no **`proof/`**).
+
+HTTP contract (reference): [`schemas/openapi-commercial-v1.yaml`](../schemas/openapi-commercial-v1.yaml) — **`VerifyOutcomeRequestV2.activation`**.
+
+Disk manifest schema: [`schemas/activation-manifest-v1.schema.json`](../schemas/activation-manifest-v1.schema.json).
 
 ## Product shape
 

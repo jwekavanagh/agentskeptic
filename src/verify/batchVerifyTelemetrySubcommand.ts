@@ -16,6 +16,7 @@ import { verifyWorkflow } from "../pipeline.js";
 import { TruthLayerError } from "../truthLayerError.js";
 import type { LoadEventsResult, WorkflowResult } from "../types.js";
 import { writeRunBundleCli } from "../writeRunBundleCli.js";
+import { writeContractProofArtifacts } from "./writeContractProofArtifacts.js";
 import { newActivationHttpCorrelationId } from "../commercial/activationCorrelation.js";
 import { runLicensePreflightIfNeeded } from "../commercial/licensePreflight.js";
 import { postVerifyOutcomeBeacon } from "../commercial/postVerifyOutcomeBeacon.js";
@@ -387,18 +388,40 @@ export async function runBatchVerifyWithTelemetrySubcommand(
           }
         : undefined,
       maybeWriteBundle:
-        parsedBatch.writeRunBundleDir === undefined
+        parsedBatch.writeRunBundleDir === undefined &&
+        parsedBatch.writeDecisionBundleDir === undefined
           ? undefined
-          : (wfResult: WorkflowResult) =>
-              writeRunBundleCli(
-                parsedBatch.writeRunBundleDir!,
-                readFileSync(path.resolve(parsedBatch.eventsPath)),
-                wfResult,
-                parsedBatch.signPrivateKeyPath,
-              ),
+          : (wfResult: WorkflowResult, certificate: OutcomeCertificateV1) => {
+              if (
+                parsedBatch.writeRunBundleDir !== undefined &&
+                parsedBatch.writeDecisionBundleDir !== undefined
+              ) {
+                writeContractProofArtifacts({
+                  proofRunDir: parsedBatch.writeRunBundleDir,
+                  proofDecisionDir: parsedBatch.writeDecisionBundleDir,
+                  eventsPath: parsedBatch.eventsPath,
+                  workflowResult: wfResult,
+                  certificate,
+                  runBundleSignKeyPath: parsedBatch.signPrivateKeyPath,
+                });
+                return;
+              }
+              if (parsedBatch.writeRunBundleDir !== undefined) {
+                writeRunBundleCli(
+                  parsedBatch.writeRunBundleDir,
+                  readFileSync(path.resolve(parsedBatch.eventsPath)),
+                  wfResult,
+                  parsedBatch.signPrivateKeyPath,
+                );
+              }
+            },
       io: verifyRunnerIo,
     });
-    maybeWriteDecisionEvidenceBundle(parsedBatch, certificate, batchActivationRunId);
+    if (
+      !(parsedBatch.writeRunBundleDir !== undefined && parsedBatch.writeDecisionBundleDir !== undefined)
+    ) {
+      maybeWriteDecisionEvidenceBundle(parsedBatch, certificate, batchActivationRunId);
+    }
     await finishCertificateTelemetryAndExit(certificate, workflowResult, "afterStandardRunner");
   } catch (e) {
     if (e instanceof Error && e.message === CLI_EXITED_AFTER_ERROR) return;

@@ -43,7 +43,7 @@ const matrix = [
 function assertNoBatchOnlySpineLine(content, label) {
   assert.ok(content.includes(O1), `${label} must contain O1 crossing spine terminal line`);
   for (const line of content.split(/\r?\n/)) {
-    if (!line.includes("wf_integrate_spine") || !line.includes("node dist/cli.js")) continue;
+    if (!line.includes("wf_integrate_spine") || !line.includes("dist/cli.js")) continue;
     assert.ok(
       line.includes("crossing"),
       `${label}: wf_integrate_spine line must use crossing: ${line}`,

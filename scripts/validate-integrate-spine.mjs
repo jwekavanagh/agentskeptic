@@ -4,7 +4,7 @@
  * Normative: docs/first-run-integration.md (Integrate spine).
  */
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, dirname, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -58,6 +58,37 @@ function resolveBash() {
 
 const bashPath = resolveBash();
 
+/**
+ * 8.3 short path avoids MSYS/Git-Bash splitting `Program Files` argv for `node dist/cli.js …` invocations.
+ * Path is passed via env (not interpolated into the cmd line) so CodeQL does not treat it as incompletely escaped.
+ */
+function windowsShortExePath(winPath) {
+  const envName = "AGENTSKEPTIC_VALIDATE_INTEGRATE_SPINE_TARGET";
+  const r = spawnSync("cmd.exe", ["/d", "/s", "/c", `for %I in ("%${envName}%") do @echo %~sI`], {
+    encoding: "utf8",
+    env: { ...process.env, [envName]: winPath },
+  });
+  if (r.status === 0 && r.stdout) {
+    const lines = String(r.stdout)
+      .split(/\r?\n/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const last = lines[lines.length - 1];
+    if (last && /\.exe$/i.test(last) && !last.includes("*")) return last;
+  }
+  return winPath;
+}
+
+/**
+ * Pin a space-free node.exe copy under the ephemeral work dir for Git Bash argv stability on Windows hosts.
+ */
+function prepareIntegrateSpineNodeShim(workDir) {
+  if (process.platform !== "win32") return process.execPath;
+  const shim = join(workDir, "integrate-spine-node.exe");
+  copyFileSync(process.execPath, shim);
+  return windowsShortExePath(shim);
+}
+
 /** Validator-only: after clone, L0.5 may be missing from file:// clone until committed; sync from host root. */
 function validatorHarnessShellBody(templateUtf8) {
   const inject = `cd agentskeptic || cd workspace
@@ -70,22 +101,47 @@ fi
 if [ -n "\${INTEGRATE_SPINE_HOST_ROOT:-}" ]; then
   cp "\$INTEGRATE_SPINE_HOST_ROOT/scripts/partner-quickstart-verify.mjs" scripts/partner-quickstart-verify.mjs
 fi
+if [ -n "\${INTEGRATE_SPINE_HOST_ROOT:-}" ] && [ ! -f schemas/activation-manifest-v1.schema.json ] && [ -f "\$INTEGRATE_SPINE_HOST_ROOT/schemas/activation-manifest-v1.schema.json" ]; then
+  mkdir -p schemas
+  cp "\$INTEGRATE_SPINE_HOST_ROOT/schemas/activation-manifest-v1.schema.json" schemas/
+fi
 `;
-  if (!templateUtf8.includes("cd agentskeptic\n")) {
+  const nl = templateUtf8.replace(/\r\n/g, "\n");
+  if (!nl.includes("cd agentskeptic\n")) {
     throw new Error("integrate template must contain cd agentskeptic newline");
   }
-  return templateUtf8.replace("cd agentskeptic\n", inject);
+  return nl.replace("cd agentskeptic\n", inject);
+}
+
+/**
+ * file:// clone compiles committed HEAD only; `npm start` runs `npm run build` again and would overwrite dist with a tree
+ * that may lack branch-local CLI (e.g. activate). Overlay host dist before spine exercises activate/crossing.
+ */
+function injectHostDistOverlayBeforeFirstRunVerify(scriptBody) {
+  const needle = "npm run first-run-verify\n";
+  const insert = `# validate-integrate-spine harness: overlay host dist (clone build reflects HEAD; branch may carry uncommitted CLI)
+if [ -n "\${INTEGRATE_SPINE_HOST_ROOT:-}" ] && [ -d "\$INTEGRATE_SPINE_HOST_ROOT/dist" ]; then
+  rm -rf dist
+  cp -R "\$INTEGRATE_SPINE_HOST_ROOT/dist" ./dist
+fi
+`;
+  if (!scriptBody.includes(needle)) {
+    throw new Error("integrate spine script must contain npm run first-run-verify newline");
+  }
+  return scriptBody.replace(needle, insert + needle);
 }
 
 function runFullSpine(workDir, extraEnv) {
+  const spineNodeExe = prepareIntegrateSpineNodeShim(workDir);
   const raw = readFileSync(templatePath, "utf8");
-  const scriptBody = validatorHarnessShellBody(raw);
+  const scriptBody = injectHostDistOverlayBeforeFirstRunVerify(validatorHarnessShellBody(raw));
   const scriptPath = join(workDir, "integrate-spine.sh");
   writeFileSync(scriptPath, scriptBody, "utf8");
   const env = {
     ...process.env,
     ...extraEnv,
     INTEGRATE_SPINE_HOST_ROOT: root,
+    INTEGRATE_SPINE_NODE: spineNodeExe,
   };
   if (!Object.prototype.hasOwnProperty.call(extraEnv, "AGENTSKEPTIC_VERIFY_DB")) {
     delete env.AGENTSKEPTIC_VERIFY_DB;
@@ -130,7 +186,7 @@ function casePositive() {
     if (existsSync(outPack)) {
       rmSync(outPack, { recursive: true, force: true });
     }
-    const b = spawnSync(process.execPath, [cliPath, "bootstrap", "--input", bootstrapInput, "--db", dbPath, "--out", outPack], {
+    const b = spawnSync(process.execPath, [cliPath, "activate", "--input", bootstrapInput, "--db", dbPath, "--out", outPack], {
       cwd: root,
       encoding: "utf8",
       maxBuffer: 20 * 1024 * 1024,
@@ -166,7 +222,7 @@ function caseMismatch() {
   if (existsSync(outPack)) {
     rmSync(outPack, { recursive: true, force: true });
   }
-  const b = spawnSync(process.execPath, [cliPath, "bootstrap", "--input", bootstrapInput, "--db", badDb, "--out", outPack], {
+    const b = spawnSync(process.execPath, [cliPath, "activate", "--input", bootstrapInput, "--db", badDb, "--out", outPack], {
     cwd: root,
     encoding: "utf8",
     maxBuffer: 20 * 1024 * 1024,
@@ -193,6 +249,13 @@ function caseMissingEnv() {
 }
 
 function main() {
+  if (!existsSync(cliPath)) {
+    fail("dist/cli.js missing at repo root; run npm run build before validate-integrate-spine");
+  }
+  const hostDist = join(root, "dist");
+  if (!existsSync(hostDist)) {
+    fail("dist/ missing at repo root; run npm run build before validate-integrate-spine");
+  }
   try {
     casePositive();
     caseMismatch();

@@ -39,7 +39,9 @@ export const phases = {
   },
   nodeTestSqlite: () => {
     const files = sqliteNodeTestFiles.map((f) => f.replace(/\\/g, "/")).join(" ");
-    run(`node --test --test-force-exit ${files}`);
+    // One test file worker at a time: avoids parallel contention on bundled example DB paths
+    // and other filesystem fixtures while keeping subtests within each file sequential.
+    run(`node --test --test-force-exit --test-concurrency=1 ${files}`);
   },
   nodeTestPostgres: () => {
     const files = postgresNodeTestFiles.map((f) => f.replace(/\\/g, "/")).join(" ");

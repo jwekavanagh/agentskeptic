@@ -56,6 +56,14 @@ steps:
 <!-- adoption-canonical:start -->
 ## Default path: DecisionGate before you act
 
+Canonical **activation** from `BootstrapPackInput` v1 + a readable database URL (`agentskeptic activate` writes `proof/` under `--out` on exits 0–2; **`agentskeptic bootstrap`** is the legacy verb with the same kernel but no proof subtree — see [`docs/bootstrap-pack-normative.md`](docs/bootstrap-pack-normative.md)):
+
+```bash
+npx agentskeptic activate --input ./path/to/workflow-bootstrap-input.json \
+  --db ./path/to/readable.sqlite \
+  --out ./path/to/agent-pack
+```
+
 ### Lifecycle
 
 1. Keep **`agentskeptic/tools.json`** in version control; update when `toolId` → SQL mapping changes.

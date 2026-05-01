@@ -180,13 +180,13 @@ export default function IntegrateGuidedPage() {
       <p className="lede muted">
         <Link href="/integrate">Back to Get started</Link> ·{" "}
         <a
-          href="https://raw.githubusercontent.com/jwekavanagh/agentskeptic/refs/heads/main/docs/guided-first-verification.md"
+          href="https://raw.githubusercontent.com/jwekavanagh/agentskeptic/refs/heads/main/docs/integrate.md"
           rel="noopener noreferrer"
           target="_blank"
         >
-          How this works
+          integrate.md
         </a>{" "}
-        (docs)
+        (raw)
       </p>
 
       {unavailable && (

@@ -72,7 +72,7 @@ import { LICENSE_PREFLIGHT_ENABLED } from "./generated/commercialBuildFlags.js";
 import { formatDistributionFooter } from "./distributionFooter.js";
 import { postPublicVerificationReport } from "./shareReport/postPublicVerificationReport.js";
 import { runRegistryDraftCliAndExit } from "./registryDraft/runRegistryDraftCli.js";
-import { runBootstrapSubcommand } from "./bootstrap/runBootstrapSubcommand.js";
+import { runActivateSubcommand, runBootstrapSubcommand } from "./bootstrap/runBootstrapSubcommand.js";
 import { runBatchVerifyWithTelemetrySubcommand } from "./verify/batchVerifyTelemetrySubcommand.js";
 import { runCrossingSubcommand } from "./crossing/runCrossingSubcommand.js";
 import { runLoopSubcommand } from "./loop/runLoopSubcommand.js";
@@ -129,15 +129,18 @@ Exit codes:
 
 function usageVerify(): string {
   return `Usage:
+  agentskeptic activate --input <path> (--db <sqlitePath> | --postgres-url <url>) --out <path>
+    (canonical activation: BootstrapPackInput v1 + proof/ subtree on exits 0–2; normative docs/bootstrap-pack-normative.md)
+
+  agentskeptic bootstrap --input <path> (--db <sqlitePath> | --postgres-url <url>) --out <path>
+    (legacy compatibility: same kernel as activate without proof/ or activation manifest — see docs/bootstrap-pack-normative.md)
+
   agentskeptic loop --workflow-id <id> --events <path> --registry <path> (--db <sqlitePath> | --postgres-url <url>)
     [--consistency strong|eventual] [--verification-window-ms <int>] [--poll-interval-ms <int>] [--max-history-runs <int>]
     (recommended default local truth loop; emits TRUSTED | NOT TRUSTED | UNKNOWN + auto-compare + run history)
 
   agentskeptic quick --input <path> (--postgres-url <url> | --db <sqlitePath>) --export-registry <path> [--emit-events <path>] [--workflow-id <id>]
     (advanced/specialized path; structured tool activity + read-only SQL; see docs/quick-verify-normative.md)
-
-  agentskeptic bootstrap --input <path> (--db <sqlitePath> | --postgres-url <url>) --out <path>
-    (BootstrapPackInput v1 JSON → contract pack + in-process verify; see docs/bootstrap-pack-normative.md)
 
   agentskeptic registry-draft --provider hosted_openai|local_ollama --request <registry-draft-request.json> [--out <dir>]
     (DraftEngine assisted draft tools.json + deterministic quick-ingest NDJSON JSON to stdout — see docs/registry-draft.md)
@@ -1319,7 +1322,8 @@ Stdout: one JSON line (decision_bundle_validation v1).
 }
 
 async function main(): Promise<void> {
-  const args = process.argv.slice(2);
+  /** Bash on Windows sometimes forwards argv tokens with stray `\r` from CRLF script lines */
+  const args = process.argv.slice(2).map((a) => a.replace(/\r+$/, ""));
   if (args[0] === "--version" || args[0] === "-V") {
     console.log(AGENTSKEPTIC_CLI_SEMVER);
     process.exit(0);
@@ -1398,6 +1402,10 @@ async function main(): Promise<void> {
   }
   if (args[0] === "crossing") {
     await runCrossingSubcommand(args.slice(1));
+    return;
+  }
+  if (args[0] === "activate") {
+    await runActivateSubcommand(args.slice(1));
     return;
   }
   if (args[0] === "bootstrap") {

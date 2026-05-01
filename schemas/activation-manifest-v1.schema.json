@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentskeptic.com/schemas/activation-manifest-v1.schema.json",
+  "title": "Agentskeptic activation manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "cliCommand", "workflowId", "trustTerminal", "finishedAt", "stages"],
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "const": 1
+    },
+    "cliCommand": {
+      "type": "string",
+      "enum": ["activate"]
+    },
+    "workflowId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "trustTerminal": {
+      "type": "string",
+      "enum": ["decision_ready", "contract_inconsistent", "contract_incomplete"]
+    },
+    "finishedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "stages": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "prefixItems": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "status", "trustLabel"],
+          "properties": {
+            "id": { "type": "string", "const": "ingest_input" },
+            "status": { "type": "string", "enum": ["complete", "failed", "skipped"] },
+            "trustLabel": { "type": "string", "enum": ["n_a", "provisional_pass", "decision_ready", "contract_inconsistent", "contract_incomplete"] }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "status", "trustLabel"],
+          "properties": {
+            "id": { "type": "string", "const": "provisional_infer" },
+            "status": { "type": "string", "enum": ["complete", "failed", "skipped"] },
+            "trustLabel": { "type": "string", "enum": ["n_a", "provisional_pass", "decision_ready", "contract_inconsistent", "contract_incomplete"] }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "status", "trustLabel"],
+          "properties": {
+            "id": { "type": "string", "const": "contract_verify" },
+            "status": { "type": "string", "enum": ["complete", "failed", "skipped"] },
+            "trustLabel": { "type": "string", "enum": ["n_a", "provisional_pass", "decision_ready", "contract_inconsistent", "contract_incomplete"] }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "status", "trustLabel"],
+          "properties": {
+            "id": { "type": "string", "const": "proof_export" },
+            "status": { "type": "string", "enum": ["complete", "failed", "skipped"] },
+            "trustLabel": { "type": "string", "enum": ["n_a", "provisional_pass", "decision_ready", "contract_inconsistent", "contract_incomplete"] }
+          }
+        }
+      ]
+    }
+  }
+}

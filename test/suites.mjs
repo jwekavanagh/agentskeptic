@@ -48,6 +48,8 @@ export const sqliteNodeTestFiles = [
   "test/langgraph-reference-emitter-before-cli-spawn.test.mjs",
   "test/langgraph-checkpoint-trust-terminal.contract.test.mjs",
   "test/langgraph-ineligible-certificate.import-guard.test.mjs",
+  // Heavy activate/bootstrap matrix after LangGraph contracts (stable ordering + lighter coupling).
+  "test/activate-matrix.test.mjs",
   "test/removed-script-names-ban.test.mjs",
   "test/docs-workflow-result-normative-prose.test.mjs",
   "test/enforce-oss-forbidden.test.mjs",
