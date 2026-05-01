@@ -1,3 +1,9 @@
+## [4.0.1](https://github.com/jwekavanagh/agentskeptic/compare/v4.0.0...v4.0.1) (2026-05-01)
+
+### Bug Fixes
+
+* **ci:** light path for release churn and tag-scoped PyPI ([81b7ad4](https://github.com/jwekavanagh/agentskeptic/commit/81b7ad4eca950dd2eab1c5ea5e3ad7ad1f401128))
+
 ## [4.0.0](https://github.com/jwekavanagh/agentskeptic/compare/v3.7.0...v4.0.0) (2026-05-01)
 
 ### ⚠ BREAKING CHANGES
