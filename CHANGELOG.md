@@ -1,3 +1,10 @@
+# [3.7.0](https://github.com/jwekavanagh/agentskeptic/compare/v3.6.0...v3.7.0) (2026-05-01)
+
+
+### Features
+
+* **cli:** canonical activation journey and spine validator harness ([ca26480](https://github.com/jwekavanagh/agentskeptic/commit/ca26480ee2ae56a3865e82c84db5d73c9988bb99))
+
 # [3.6.0](https://github.com/jwekavanagh/agentskeptic/compare/v3.5.0...v3.6.0) (2026-04-30)
 
 
