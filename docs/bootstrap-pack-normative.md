@@ -1,8 +1,8 @@
-# Bootstrap pack (normative)
+# Activate / bootstrap pack (normative)
 
-Single source of truth for the **`agentskeptic bootstrap`** subcommand: flags, stdin/stdout/stderr, exit codes, input/output contracts, staging rules, and trust inheritance from Quick Verify and batch verify.
+Single source of truth for **`agentskeptic activate`** (canonical activation + exportable **`proof/`**) and the legacy **`agentskeptic bootstrap`** verb (same **`BootstrapPackInput` v1** kernel without proof export): flags, stdin/stdout/stderr, exit codes, pack layout, **`proof/`** subtree rules, **`activation.manifest.json`**, commercial verify-outcome beacon coupling, staging, and trust inheritance.
 
-**Audience:** engineers implementing or testing the CLI; integrators using bootstrap to obtain a first contract pack without hand-authoring `tools.json` or production `events.ndjson`.
+**Audience:** engineers implementing or testing the CLI; integrators obtaining a first contract pack without hand-authoring `tools.json` or production **`events.ndjson`**, plus operators who want machine-readable activation evidence beside the pack.
 
 **Not in scope:** unstructured log ingestion. Bootstrap accepts only **`BootstrapPackInput` v1** (JSON). Arbitrary text logs remain out of scope per [verification-product.md](verification-product.md).
 
@@ -13,10 +13,14 @@ Single source of truth for the **`agentskeptic bootstrap`** subcommand: flags, s
 ## CLI invocation
 
 ```text
+agentskeptic activate --input <path> (--db <sqlitePath> | --postgres-url <url>) --out <path>
+
 agentskeptic bootstrap --input <path> (--db <sqlitePath> | --postgres-url <url>) --out <path>
 ```
 
-No other flags in v1. **`--help` / `-h`** print usage and exit `0`.
+No other flags in v1 beyond the shared **`BootstrapPackCli`** grammar (`--help` / `-h` print usage and exit **`0`**).
+
+**Recommended:** **`activate`** for onboarding and CI proofs. **`bootstrap`** remains a **legacy compatibility** verb—it is **not** an alias: same argv parser and **`executeBootstrapPack`** kernel, but **no** **`proof/`**, **no** **`activation.manifest.json`**, **no** **`AGENTSKEPTIC_ACTIVATION`** machine stderr lines (except untouched bootstrap error paths), **no** verify-outcome **`activation`** POST, and a different license-preflight reservation pattern (inner preflight only).
 
 ---
 
@@ -24,7 +28,9 @@ No other flags in v1. **`--help` / `-h`** print usage and exit `0`.
 
 | Topic | Authoritative location |
 |-------|-------------------------|
-| `bootstrap` flags, I/O, exit codes, staging, success definition | **This file** |
+| `activate` / `bootstrap` flags, I/O, exit codes, staging, success definition, **`proof/`** | **This file** |
+| Disk manifest schema | `schemas/activation-manifest-v1.schema.json` |
+| Verify-outcome beacon **`activation`** (HTTP) | `schemas/openapi-commercial-v1.yaml` → **`VerifyOutcomeRequestV2`** |
 | `BootstrapPackInput` v1 JSON | This file **Contract appendix** + `schemas/bootstrap-pack-input-v1.schema.json` (schema must not contradict the appendix) |
 | Optional hosted registry draft (website API, absolute schema `$ref` / AJV order, commercial harness) | [registry-draft.md](registry-draft.md) |
 | Quick thresholds, `--export-registry` byte identity | [quick-verify-normative.md](quick-verify-normative.md) |
@@ -42,27 +48,32 @@ No other flags in v1. **`--help` / `-h`** print usage and exit `0`.
 ## Staging and `--out` directory
 
 - **`--out`** must **not** exist before invocation (neither file nor directory). If it exists → exit **`3`**, code **`BOOTSTRAP_OUT_EXISTS`**.
-- After validation, the implementation creates **`--out`** and writes pack files. On any **non-zero** exit after the directory was created, the implementation **removes** `--out` recursively (best-effort) so partial packs are not left behind.
+- After validation, the implementation creates **`--out`** and writes pack files.
+- **Contract terminal exits** (**`verifyWorkflow`** returned **`inconsistent`** / **`incomplete`** / **`complete`** after pack materialization): **`--out` is retained** so integrators can inspect the pack and (for **`activate`**) the **`proof/`** subtree. This supersedes any older “always delete `--out` on non-zero” behavior for those paths.
+- **Early bootstrap CLI errors** (quick not pass, zero exportable tools, unreadable input, pack write failure before a stable contract certificate path, **etc.**): existing cleanup **may still remove **`--out`** best-effort (same semantics as legacy bootstrap).
 
 ---
 
 ## stdout / stderr (summary)
 
-| Exit | stdout | stderr |
-|------|--------|--------|
-| `0` | One minified JSON line: **`BootstrapStdoutEnvelope` v1** | Empty |
-| `1` | Same as `verify` for `status === "inconsistent"` | Same as `verify` (human truth report + distribution footer) |
-| `2a` | Same as `verify` for `status === "incomplete"` | Same as `verify` |
-| `2b` | Empty | One line `cliErrorEnvelope` (Quick not pass, or zero exportable tools) |
-| `3` | Empty | One line `cliErrorEnvelope` |
+| Exit | Verb | stdout | stderr (high level) |
+|------|------|--------|-----------------------|
+| `0` (`pack_ready`) | **`activate`** | **`agentskeptic_activate_result`** envelope | Three **`AGENTSKEPTIC_ACTIVATION …`** machine lines (**no** trailing human stderr on this path today) |
+| `0` (`pack_ready`) | **`bootstrap`** | **`agentskeptic_bootstrap_result`** envelope | Empty |
+| `1`–`2` (`verify_terminal`) | **`activate`** | Outcome Certificate v1 (**same stdout** semantics as **`verify`**) | Machine **`AGENTSKEPTIC_ACTIVATION`** block first, **`proof/`** subtree present, **then** the normal human truth report + footer |
+| `1`–`2` (`verify_terminal`) | **`bootstrap`** | Outcome Certificate v1 (**same stdout** semantics as **`verify`**) | Human truth report + footer **only** (no proof subtree) |
+| `2b` / `3` (bootstrap CLI operational) | **`activate`** | Empty (or operational envelope policy per code) | For quick-path blocks: **`AGENTSKEPTIC_ACTIVATION stage=provisional_infer trust_terminal=blocked`** + JSON **`cliErrorEnvelope`** when applicable |
+| `2b` / `3` (bootstrap CLI operational) | **`bootstrap`** | per legacy table | **`cliErrorEnvelope`** |
 
-Implementation must use **`runStandardVerifyWorkflowCliFlow`** (or equivalent single call path) for exit **`1`** / **`2a`** so stdout/stderr cannot drift from `verify`. Exit **`2b`** and **`3`** use **`writeCliError`** / **`cliErrorEnvelope`** only.
+Implementation ties **`verify_terminal`** contract stdout/stderr to the existing **`emitVerifyWorkflowCliJsonAndExitByStatus`** path so certificate bytes cannot drift from **`verify`**. **`activate`** inserts deterministic machine stderr + filesystem **`proof/`** **before** that human/certificate sequence on terminal contract exits.
 
 ---
 
 ## Commercial / OSS
 
-**`bootstrap`** uses the same **`runLicensePreflightIfNeeded("verify")`** path as **`agentskeptic quick`** (no new entitlement dimension in v1).
+- **`bootstrap`:** **`runLicensePreflightIfNeeded("verify")`** runs **inside** **`executeBootstrapPack`** (same entitlement dimension as **`quick`**).
+- **`activate`:** outer **`runLicensePreflightIfNeeded("verify")`** reserves the run id, then **`executeBootstrapPack(..., { preflight: "caller_reserved" })`** skips the inner duplicate.
+- **Verify-outcome beacon:** commercial builds POST **`/api/v1/funnel/verify-outcome`** with **`subcommand: "activate"`** and **required** nested **`activation`** on **`activate`** terminal rows **1–3** (see OpenAPI). OSS builds skip the POST but still write **`activation.manifest.json`** on disk when **`activate`** reaches a contract terminal state.
 
 ---
 

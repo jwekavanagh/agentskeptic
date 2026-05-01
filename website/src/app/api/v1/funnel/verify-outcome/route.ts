@@ -61,6 +61,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     terminal_status,
     workload_class,
     subcommand,
+    activation,
   } = parsed.data;
 
   const resvRows = await db
@@ -112,14 +113,26 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         {
           event: "licensed_verify_outcome",
           userId,
-          metadata: buildLicensedVerifyOutcomeMetadata({
-            terminal_status,
-            workload_class,
-            subcommand,
-            workflow_id,
-            trust_decision,
-            reason_codes,
-          }),
+          metadata: buildLicensedVerifyOutcomeMetadata(
+            subcommand === "activate"
+              ? {
+                  terminal_status,
+                  workload_class,
+                  subcommand: "activate",
+                  workflow_id,
+                  trust_decision,
+                  reason_codes,
+                  activation: activation!,
+                }
+              : {
+                  terminal_status,
+                  workload_class,
+                  subcommand,
+                  workflow_id,
+                  trust_decision,
+                  reason_codes,
+                },
+          ),
         },
         tx,
       );

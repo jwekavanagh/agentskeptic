@@ -42,8 +42,10 @@ if (linkCount !== 1) {
 
 const seedPath = path.join(root, "examples", "partner-quickstart", "partner.seed.sql");
 const schemaPath = path.join(root, "examples", "partner-quickstart", "partner.schema-only.sql");
-const seed = readFileSync(seedPath, "utf8");
-const schemaOnly = readFileSync(schemaPath, "utf8");
+/** Normalize CRLF so the prefix rule holds on Windows checkouts without weakening the invariant. */
+const nl = (s) => s.replace(/\r\n/g, "\n");
+const seed = nl(readFileSync(seedPath, "utf8"));
+const schemaOnly = nl(readFileSync(schemaPath, "utf8"));
 const prefix = schemaOnly.trimEnd() + "\n";
 if (!seed.startsWith(prefix)) {
   fail("partner.seed.sql must start with partner.schema-only.sql content + single newline");

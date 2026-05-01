@@ -52,7 +52,7 @@
   "site": {
     "integrate": {
       "title": "Get started",
-      "description": "See the truth behind the green trace — in one command."
+      "description": "Bring workflow input plus a readable database URL; exit with retained pack and trusted proof artifacts under ./proof/."
     },
     "openGraph": {
       "image": {
@@ -81,7 +81,7 @@
     }
   },
   "integratePage": {
-    "packLedCommand": "npx agentskeptic init --framework none --database sqlite --yes\n\n# Pack-led replay (after scaffold):\nnpx agentskeptic crossing \\\n  --workflow-id YOUR_WORKFLOW_ID \\\n  --events ./path/to/events.ndjson \\\n  --registry ./path/to/tools.json \\\n  --db ./path/to/readable.sqlite",
+    "packLedCommand": "npx agentskeptic activate --input ./path/to/workflow-bootstrap-input.json \\\n  --db ./path/to/readable.sqlite \\\n  --out ./path/to/agent-pack\n\n# Replay only (advanced): NDJSON pack you already authored\nnpx agentskeptic crossing \\\n  --workflow-id YOUR_WORKFLOW_ID \\\n  --events ./path/to/events.ndjson \\\n  --registry ./path/to/tools.json \\\n  --db ./path/to/readable.sqlite",
     "githubDeepLink": "https://github.com/jwekavanagh/agentskeptic/blob/main/docs/integrate.md",
     "githubFirstRunLink": "https://github.com/jwekavanagh/agentskeptic/blob/main/docs/integrate.md"
   },

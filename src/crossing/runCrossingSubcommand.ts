@@ -7,11 +7,7 @@ import {
 } from "../failureCatalog.js";
 import { TruthLayerError } from "../truthLayerError.js";
 import { parseBootstrapCliArgs } from "../bootstrap/bootstrapCliArgs.js";
-import {
-  cleanupOutDirFromPath,
-  executeBootstrapPack,
-  writeBootstrapOperationalFailure,
-} from "../bootstrap/executeBootstrapPack.js";
+import { executeBootstrapPack, writeBootstrapOperationalFailure } from "../bootstrap/executeBootstrapPack.js";
 import { formatDistributionFooter } from "../distributionFooter.js";
 import { emitVerifyWorkflowCliJsonAndExitByStatus } from "../standardVerifyWorkflowCli.js";
 import { runBatchVerifyWithTelemetrySubcommand } from "../verify/batchVerifyTelemetrySubcommand.js";
@@ -138,15 +134,13 @@ export async function runCrossingSubcommand(args: string[]): Promise<void> {
     if (outcome.kind === "verify_terminal") {
       process.stderr.write(`${outcome.truthBuffered}\n`);
       process.stderr.write(formatDistributionFooter());
-      const exitWithCleanup = (code: number): void => {
-        cleanupOutDirFromPath(outcome.outResolved);
-        process.exit(code);
-      };
       emitVerifyWorkflowCliJsonAndExitByStatus(outcome.result, {
         consoleLog: (line) => {
           console.log(line);
         },
-        exit: exitWithCleanup,
+        exit: (code: number): void => {
+          process.exit(code);
+        },
       });
       return;
     }
@@ -199,7 +193,18 @@ export async function runCrossingSubcommand(args: string[]): Promise<void> {
     writeCrossingUsageAndExit("Provide exactly one of --db or --postgres-url.");
   }
 
-  await runBatchVerifyWithTelemetrySubcommand(args, {
+  const batchArgs = [
+    "--workflow-id",
+    wf,
+    "--events",
+    path.resolve(ev),
+    "--registry",
+    path.resolve(reg),
+    ...(db ? ["--db", path.resolve(db)] : ["--postgres-url", pu!]),
+    ...(noHumanReport ? ["--no-human-report"] : []),
+  ];
+
+  await runBatchVerifyWithTelemetrySubcommand(batchArgs, {
     telemetrySubcommand: "verify_integrator_owned",
     rejectBundled: true,
     stderrAppendBeforeStdout: (_result: WorkflowResult) => {

@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "workflowId": "wf_contract_inconsistent_bootstrap_demo",
+  "openaiChatCompletion": {
+    "choices": [
+      {
+        "message": {
+          "role": "assistant",
+          "tool_calls": [
+            {
+              "id": "call_contract_inconsistent_demo",
+              "type": "function",
+              "function": {
+                "name": "crm.upsert_contact",
+                "arguments": "{\"recordId\":\"c_bad\",\"fields\":{\"name\":\"Bob\",\"status\":\"active\"}}"
+              }
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

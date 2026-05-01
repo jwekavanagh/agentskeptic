@@ -34,17 +34,17 @@ npm run first-run-verify
 
 **Partner quickstart (copy-paste commands SSOT):** [partner-quickstart-commands.md](partner-quickstart-commands.md) — `npm run partner-quickstart`, Postgres, LangGraph oracle, and integrator-owned gate examples. LangGraph-shaped emitters vs repo truth: [`langgraph-reference-boundaries.md`](langgraph-reference-boundaries.md#langgraph-reference-documentation-boundaries).
 
-## Step 3: Bootstrap fixture and `wf_bootstrap_fixture`
+## Step 3: Fixture activation and `wf_bootstrap_fixture`
 
-The activation shell uses a temp `--out` and a copied DB (`$ADOPT_DB`); the bootstrap input path is exactly:
+The activation shell uses a temp `--out` and a copied DB (`$ADOPT_DB`). From the repo directory it prepends `dirname("$INTEGRATE_SPINE_NODE")` to `PATH` (validator pins Node on Windows; see `scripts/templates/integrate-activation-shell.bash`), then runs **`node dist/cli.js`** for activate, bare batch, and crossing. Mid-script equivalents:
 
-`node dist/cli.js bootstrap --input test/fixtures/bootstrap-pack/input.json --db examples/demo.db --out "$OUT"`  
+`node dist/cli.js activate --input test/fixtures/bootstrap-pack/input.json --db examples/demo.db --out "$OUT"`  
 then `node dist/cli.js --workflow-id wf_bootstrap_fixture --events "$OUT/events.ndjson" --registry "$OUT/tools.json" --db "$ADOPT_DB"`.
 
 ## Step 4: Optional integrate spine and crossing
 
-On your integrator database, run bootstrap and the pack-led **crossing** for `wf_integrate_spine` (see [crossing-normative.md](crossing-normative.md) and `scripts/templates/integrate-activation-shell.bash` on `main`).
+On your integrator database, run **activate** and the pack-led **crossing** for `wf_integrate_spine` (see [crossing-normative.md](crossing-normative.md) and `scripts/templates/integrate-activation-shell.bash` on `main`).
 
 ---
 
-The full L0 script **exit code is 0** iff every step completes, including the **final** `node dist/cli.js bootstrap … --input examples/integrate-your-db/bootstrap-input.json` and the following **`crossing`** pack-led on `"$AGENTSKEPTIC_VERIFY_DB"` (same event/registry/db flags as contract batch verify; integrator-owned gate per [`agentskeptic.md`](agentskeptic.md) Integrator-owned gate; final-phase telemetry matches **`verify_integrator_owned`** per [`crossing-normative.md`](crossing-normative.md)).
+The full L0 script **exit code is 0** iff every step completes, including the **final** `node dist/cli.js activate … --input examples/integrate-your-db/bootstrap-input.json` and **`node dist/cli.js crossing …`** against `"$AGENTSKEPTIC_VERIFY_DB"` (same event/registry/db flags as contract batch verify; integrator-owned gate per [`agentskeptic.md`](agentskeptic.md) Integrator-owned gate; final-phase telemetry matches **`verify_integrator_owned`** per [`crossing-normative.md`](crossing-normative.md)).

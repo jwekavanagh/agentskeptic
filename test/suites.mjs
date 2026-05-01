@@ -42,6 +42,7 @@ export const sqliteNodeTestFiles = [
   "test/bundle-signature-cli-write.test.mjs",
   "test/quick-verify.sqlite.test.mjs",
   "test/bootstrap-pack.test.mjs",
+  "test/activate-matrix.test.mjs",
   "test/crossing-cli.test.mjs",
   "test/quickVerifyPostbuildGate.test.mjs",
   "test/npm-scripts-contract.test.mjs",

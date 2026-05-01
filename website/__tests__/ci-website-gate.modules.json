@@ -1,4 +1,5 @@
 [
+  "./funnelVerifyOutcome.contract.test.ts",
   "./langgraph-reference-primacy.dom.test.tsx",
   "./langgraph-lct-stories.contract.test.tsx",
   "./langgraph-certificate-panel.contract.test.tsx",

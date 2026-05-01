@@ -37,3 +37,7 @@ website/.env.local
 .agents/
 
 examples/.canonical-verify-run/
+
+# Operator-local verification receipts (gitignored)
+artifacts/agentskeptic-receipts/
+
