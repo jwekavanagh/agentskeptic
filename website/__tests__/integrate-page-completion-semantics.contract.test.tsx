@@ -5,7 +5,8 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 /** Expected accessible names — literals live only here (v2 /integrate layout). */
-const EXPECT_PRIMARY_ACTIVATION_H2 = "Activate to proof (canonical)";
+const EXPECT_PRIMARY_TRUTH_H2 = "Truth check (primary)";
+const EXPECT_ADVANCED_ACTIVATION_H2 = "Exportable activation and packs (advanced)";
 const EXPECT_PRODUCT_WIRE_H2 = "Product completion: wire your emitters";
 
 const FORBIDDEN_IN_MAIN = [
@@ -24,11 +25,15 @@ describe("/integrate completion semantics (RTL)", () => {
     vi.clearAllMocks();
   });
 
-  it("activation-to-proof is primary h2; wire emitters h2; framework spine section contains activation; main omits forbidden phrases", () => {
+  it("truth-check is primary h2; advanced activation h2; wire emitters h2; framework spine section contains init block; main omits forbidden phrases", () => {
     const { container } = render(<IntegratePage />);
     const main = screen.getByRole("main");
     const h2s = within(main).getAllByRole("heading", { level: 2 });
-    expect(h2s[0]?.textContent).toBe(EXPECT_PRIMARY_ACTIVATION_H2);
+    expect(h2s[0]?.textContent).toBe(EXPECT_PRIMARY_TRUTH_H2);
+    expect(h2s[1]?.textContent).toBe(EXPECT_ADVANCED_ACTIVATION_H2);
+    const truthPre = within(main).getByTestId("integrate-truth-check-commands");
+    const crossingPre = within(main).getByTestId("integrate-crossing-commands");
+    expect(truthPre.compareDocumentPosition(crossingPre) & Node.DOCUMENT_POSITION_FOLLOWING).toBeGreaterThan(0);
     expect(within(main).getByRole("heading", { level: 2, name: EXPECT_PRODUCT_WIRE_H2 })).toBeTruthy();
     expect(within(main).queryByRole("heading", { level: 2, name: "Mechanical spine checkpoint (not product completion)" })).toBeNull();
 

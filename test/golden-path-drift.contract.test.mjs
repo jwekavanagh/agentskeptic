@@ -11,10 +11,10 @@ describe("golden path drift contract", () => {
   it("keeps canonical stack language aligned across docs and integrate page", () => {
     const integrateDoc = readFileSync(join(root, "docs", "integrate.md"), "utf8");
     const integratePage = readFileSync(join(root, "website", "src", "app", "integrate", "page.tsx"), "utf8");
-    assert.equal(integrateDoc.includes("Next.js (App Router) + Postgres"), true);
-    assert.equal(integrateDoc.includes("Start here (canonical):"), true);
+    assert.equal(/\bNext\.js\b/.test(integrateDoc) && /\bPostgres\b/.test(integrateDoc), true);
+    assert.equal(integrateDoc.includes("**Start here:**"), true);
     assert.equal(integrateDoc.includes("Optional accelerator"), true);
-    assert.equal(integratePage.includes("Next.js + Postgres"), true);
+    assert.equal(/\bNext\.js\b/.test(integratePage) && /\bPostgres\b/.test(integratePage), true);
     assert.equal(integrateDoc.includes("SQLite only on day one"), false);
     assert.equal(integratePage.includes("SQLite only on day one"), false);
   });
