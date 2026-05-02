@@ -14,7 +14,7 @@ import { runQuickVerify } from "../dist/quickVerify/runQuickVerify.js";
 import { canonicalToolsArrayUtf8 } from "../dist/quickVerify/canonicalJson.js";
 import { loadSchemaValidator } from "../dist/schemaLoad.js";
 
-const validateOutcomeCertificate = loadSchemaValidator("outcome-certificate-v1");
+const validateOutcomeCertificate = loadSchemaValidator("outcome-certificate-v2");
 
 /** Last stdout line that looks like a single JSON object (Outcome Certificate from `quick` / batch verify). */
 function parseOutcomeCertificateStdout(stdout) {
