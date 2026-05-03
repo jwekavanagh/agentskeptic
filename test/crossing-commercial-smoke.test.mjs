@@ -29,7 +29,7 @@ function spawnCli(args) {
 }
 
 describe("crossing commercial smoke (harness license mock)", () => {
-  it("bootstrap-led exits 0; single Outcome Certificate v1/v2 or WorkflowResult stdout; pack artifacts exist", () => {
+  it("bootstrap-led exits 0; single Outcome Certificate v1–v3 or WorkflowResult stdout; pack artifacts exist", () => {
     const tmp = mkdtempSync(join(tmpdir(), "crossing-commercial-"));
     try {
       const dbPath = join(tmp, "db.sqlite");
@@ -45,13 +45,16 @@ describe("crossing commercial smoke (harness license mock)", () => {
       const isCert =
         typeof wr.schemaVersion === "number" &&
         wr.schemaVersion >= 1 &&
-        wr.schemaVersion <= 2 &&
+        wr.schemaVersion <= 3 &&
         typeof wr.stateRelation === "string" &&
         Object.prototype.hasOwnProperty.call(wr, "humanReport");
       if (isCert) {
         assert.equal(wr.stateRelation, "matches_expectations");
         assert.equal(wr.workflowId, "wf_bootstrap_fixture");
         assert.equal(wr.runKind, "contract_sql");
+        if (wr.schemaVersion === 3) {
+          assert.ok(wr.failureSpine && typeof wr.failureSpine === "object");
+        }
       } else {
         assert.equal(wr.status, "complete");
       }
