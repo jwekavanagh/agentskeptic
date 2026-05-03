@@ -113,4 +113,12 @@ describe("stableStringify golden", () => {
   it("sorts object keys UTF-16", () => {
     expect(stableStringify({ b: 1, a: 2 })).toBe('{"a":2,"b":1}');
   });
+
+  it("omits object keys with undefined values (JSON.stringify parity)", () => {
+    expect(stableStringify({ a: 1, b: undefined })).toBe('{"a":1}');
+  });
+
+  it("serializes undefined array elements as null (JSON.stringify parity)", () => {
+    expect(stableStringify([1, undefined, 2])).toBe("[1,null,2]");
+  });
 });
