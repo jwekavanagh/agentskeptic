@@ -1,3 +1,13 @@
+## [5.0.0](https://github.com/jwekavanagh/agentskeptic/compare/v4.2.0...v5.0.0) (2026-05-03)
+
+### ⚠ BREAKING CHANGES
+
+* **cli:** outcome certificate v2 evidence completeness (#49)
+
+### Features
+
+* **cli:** outcome certificate v2 evidence completeness ([#49](https://github.com/jwekavanagh/agentskeptic/issues/49)) ([be3fd20](https://github.com/jwekavanagh/agentskeptic/commit/be3fd20b353e8fdaee9abbc9994a63a5141c2dc4))
+
 ## [5.0.0](https://github.com/jwekavanagh/agentskeptic/compare/v4.2.0...v5.0.0) (2026-05-02)
 
 ### ⚠ BREAKING CHANGES
