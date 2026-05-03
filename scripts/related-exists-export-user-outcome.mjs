@@ -62,12 +62,16 @@ try {
   const isOutcomeCert =
     typeof batch.schemaVersion === "number" &&
     batch.schemaVersion >= 1 &&
-    batch.schemaVersion <= 2 &&
+    batch.schemaVersion <= 3 &&
     typeof batch.stateRelation === "string" &&
     Object.prototype.hasOwnProperty.call(batch, "humanReport");
   if (isOutcomeCert) {
     if (batch.stateRelation !== "matches_expectations") {
       console.error("expected certificate stateRelation matches_expectations, got", batch.stateRelation);
+      process.exit(1);
+    }
+    if (batch.schemaVersion === 3 && (batch.failureSpine == null || typeof batch.failureSpine !== "object")) {
+      console.error("expected v3 Outcome Certificate to include failureSpine object");
       process.exit(1);
     }
   } else if (batch.status !== "complete") {
