@@ -1,4 +1,5 @@
 import { PLAN_TRANSITION_WORKFLOW_ID } from "./planTransitionConstants.js";
+import { deriveQuickRemediationAlignment } from "./actionableFailure.js";
 import { policyFragment } from "./failureExplanation.js";
 import { formatOperationalMessage } from "./failureCatalog.js";
 import type { VerificationRequest } from "./types.js";
@@ -98,32 +99,6 @@ function mapRunContextCodeToContract(code: string): RunContextProjection["requir
         `Unknown run_context primary code for correctness contract: ${code}`,
       );
   }
-}
-
-function quickRemediationAlignment(sortedReasonCodes: string[]): CorrectnessRemediationAlignment {
-  const c = sortedReasonCodes[0] ?? "";
-  if (c === "CONNECTOR_ERROR") {
-    return { recommendedAction: "improve_read_connectivity", automationSafe: false };
-  }
-  if (
-    c === "MAPPING_FAILED" ||
-    c.startsWith("RESOLVE_") ||
-    c.includes("REGISTRY") ||
-    c === "UNKNOWN_TOOL"
-  ) {
-    return { recommendedAction: "correct_verification_inputs", automationSafe: false };
-  }
-  if (
-    c === "ROW_ABSENT" ||
-    c === "VALUE_MISMATCH" ||
-    c === "DUPLICATE_ROWS" ||
-    c === "RELATIONAL_EXPECTATION_MISMATCH" ||
-    c === "RELATIONAL_SCALAR_UNUSABLE" ||
-    c === "ROW_PRESENT_WHEN_FORBIDDEN"
-  ) {
-    return { recommendedAction: "reconcile_downstream_state", automationSafe: false };
-  }
-  return { recommendedAction: "manual_review", automationSafe: false };
 }
 
 /** Batch / contract verification path: non-null iff `failureExplanation` is non-null. */
@@ -329,7 +304,7 @@ export function buildQuickUnitCorrectnessDefinition(opts: {
 }): CorrectnessDefinitionV1 {
   const sortedRc = sortUniqueCodes(opts.reasonCodes);
   const rcStr = sortedRc.join(",");
-  const ra = quickRemediationAlignment(sortedRc);
+  const ra = deriveQuickRemediationAlignment(sortedRc);
 
   if (opts.kind === "row") {
     if (opts.sqlRowRequest !== undefined) {

@@ -10,7 +10,7 @@ Single source of truth for **public persisted reports**, the **`POST /api/public
 
 ## Trust boundary and privacy
 
-- **POST (new writes):** body must match **`schemas/public-verification-report-v3.schema.json`** (`schemaVersion` **3** + **`certificate`** = **Outcome Certificate v2** including **`evidenceCompleteness`**). **There is no redaction**: tool parameters and human-readable lines may contain secrets.
+- **POST (new writes):** body must match **`schemas/public-verification-report-v3.schema.json`** (`schemaVersion` **3** + **`certificate`** = **Outcome Certificate v3** including **`evidenceCompleteness`**). **There is no redaction**: tool parameters and human-readable lines may contain secrets.
 - **GET (legacy rows):** older rows may store **`public-verification-report-v1`** payloads (`kind: workflow` \| `quick`) or **`public-verification-report-v2`**. **`VerificationReportView`** renders them read-only; those paths are **frozen** (security fixes only; owner: website maintainers).
 - Reports are **immutable** after insert (no update API).
 
@@ -21,7 +21,7 @@ Single source of truth for **public persisted reports**, the **`POST /api/public
 
 ## Wire: POST `/api/public/verification-reports`
 
-- **Request body:** UTF-8 JSON matching **`public-verification-report-v3`**: **`{ "schemaVersion": 3, "certificate": <OutcomeCertificateV2> }`** (see [`outcome-certificate-normative.md`](outcome-certificate-normative.md)). **`schemaVersion` 1 / 2 POST bodies are rejected** with **400**.
+- **Request body:** UTF-8 JSON matching **`public-verification-report-v3`**: **`{ "schemaVersion": 3, "certificate": <OutcomeCertificateV3> }`** (see [`outcome-certificate-normative.md`](outcome-certificate-normative.md)). **`schemaVersion` 1 / 2 POST bodies are rejected** with **400**.
 - **Maximum body size:** **393216** bytes (384 KiB) measured on the raw request bytes before parse. Larger bodies → **413** with JSON **`{ "error": "payload_too_large" }`** (when parse succeeded enough to return JSON).
 - **Feature gate:** when **`PUBLIC_VERIFICATION_REPORTS_ENABLED`** is not exactly **`1`**, **`POST`** returns **503** with minimal JSON **`{ "error": "server_error" }`** or empty body per handler; **`GET /r/{id}`** returns **404** for every id (including valid UUID shape) so callers cannot probe enabled state.
 

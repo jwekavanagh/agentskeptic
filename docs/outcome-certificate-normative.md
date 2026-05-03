@@ -1,19 +1,19 @@
-# Outcome Certificate v2 — normative (public contract)
+# Outcome Certificate v3 — normative (public contract)
 
 This document is the **sole product authority** for the **Outcome Certificate**: trust boundary, field semantics, the **`highStakesReliance` derivation table**, and the canonical **`evidenceCompleteness`** object. Engine internals (`WorkflowResult`, reconciler codes, NDJSON) remain in [`agentskeptic.md`](agentskeptic.md).
 
-**v3 wire (authoritative for current builds):** top-level **`schemaVersion`** is **`3`** only—**there is no v4**. Optional **`correctnessDefinition`** on the certificate mirrors [`workflowTruthReport.correctnessDefinition`](../schemas/workflow-truth-report.schema.json#/$defs/correctnessDefinitionV1) when present (attestation / storage). Optional **`evidenceCompleteness.rerunReadiness`** is defined in [`schemas/evidence-completeness-v1.schema.json`](../schemas/evidence-completeness-v1.schema.json).
+**v3 wire (authoritative for current builds):** top-level **`schemaVersion`** is **`3`** only—**there is no v4**. Optional **`correctnessDefinition`** on the certificate mirrors [`workflowTruthReport.correctnessDefinition`](../schemas/workflow-truth-report.schema.json#/$defs/correctnessDefinitionV1) when present (attestation / storage). Additive **`evidenceCompleteness.remediationItems[]`** and **`evidenceCompleteness.rerunPath`** are defined in [`schemas/evidence-completeness-v1.schema.json`](../schemas/evidence-completeness-v1.schema.json). They remain optional in schema for old artifact compatibility, but current producers must emit both on failed or not-established certificates.
 
 ## Trust boundary (unchanged intent)
 
 - The certificate proves **observed SQL state vs expectations** derived from structured tool activity and the registry (contract) or inferred mapping (quick preview)—**not** that a tool executed, and **not** generic observability.
 - Verification is a **snapshot** at read time.
 
-## Top-level fields (v2)
+## Top-level fields (v3)
 
 | Field | Meaning |
 |-------|---------|
-| `schemaVersion` | Wire version; must be **`2`** for this document’s stdout contract. |
+| `schemaVersion` | Wire version; must be **`3`** for this document’s stdout contract. |
 | `workflowId` | Workflow under verification. |
 | `runKind` | `contract_sql` (registry-backed), `contract_sql_langgraph_checkpoint_trust` (LangGraph checkpoint trust; v3 NDJSON wire only), or `quick_preview` (inferred). |
 | `checkpointVerdicts` | Optional; present on eligible LangGraph checkpoint trust runs after SQL. Omitted for ineligible LangGraph (A2). |
@@ -24,7 +24,25 @@ This document is the **sole product authority** for the **Outcome Certificate**:
 | `explanation` | `{ headline, details[] }` with stable `code` + `message` pairs (forensics). |
 | `steps` | Per-step plain language: declared action, expected outcome, observed outcome. |
 | `humanReport` | Byte-stable human rendering including the **`=== evidence_completeness ===`** … **`=== end evidence_completeness ===`** anchored block alongside the structural truth summary. |
-| **`evidenceCompleteness`** | **Required.** Canonical five-question summary: blocker category (`blockerCategory`), quick rollup signal (`quickSignal`), verified/unverified claims, missing inputs (`missingInputs[]`), and next actions (`nextActions`). Schema fragment: **`schemas/evidence-completeness-v1.schema.json`**. |
+| **`evidenceCompleteness`** | **Required.** Canonical convergence object: blocker category (`blockerCategory`), quick rollup signal (`quickSignal`), verified/unverified claims, missing inputs (`missingInputs[]`), summary next actions (`nextActions`), complete failed-check remediation (`remediationItems[]`), and primary conditional rerun path (`rerunPath`). Schema fragment: **`schemas/evidence-completeness-v1.schema.json`**. |
+
+## Evidence completeness remediation
+
+`nextActions[]` is a backward-compatible summary. The complete failed-check resolution contract is **`evidenceCompleteness.remediationItems[]`**.
+
+For every new certificate where `stateRelation !== "matches_expectations"`, producers must emit:
+
+- **`remediationItems[]`** with one item per failed run-level issue, event-sequence issue, run-context blocker, failed step, failed effect, quick-ingest blocker, or non-verified quick unit.
+- **`rerunPath`** with the primary conditional rerun path.
+
+Each item includes the failed check, reason codes, user-facing action text, expected state summary, automation class, manual-review prompt when required, and item-level rerun path. Automation classes are descriptive only:
+
+| Class | Meaning |
+|-------|---------|
+| `read_only_retry` | Safe automatic action is limited to retrying read-only verification with the same inputs after the read-only prerequisite is restored. |
+| `input_regeneration_candidate` | Inputs may be repaired outside the verifier; AgentSkeptic does not rewrite them. |
+| `human_write_required` | A human or external system must change state before rerun; AgentSkeptic does not mutate data. |
+| `never_auto_mutate` | Manual judgment is required; do not automate mutation from this result. |
 
 ### `highStakesReliance` derivation (normative)
 
@@ -48,7 +66,7 @@ Materialized `highStakesReliance` **must** equal `derive(runKind, stateRelation)
 
 ## JSON Schemas
 
-- **Certificate (stdout — current product):** [`schemas/outcome-certificate-v2.schema.json`](../schemas/outcome-certificate-v2.schema.json)
+- **Certificate (stdout — current product):** [`schemas/outcome-certificate-v3.schema.json`](../schemas/outcome-certificate-v3.schema.json)
 - **Evidence completeness fragment:** [`schemas/evidence-completeness-v1.schema.json`](../schemas/evidence-completeness-v1.schema.json)
 - **`OutcomeCertificate` v1 (frozen legacy):** [`schemas/outcome-certificate-v1.schema.json`](../schemas/outcome-certificate-v1.schema.json) — **regression tooling and historical pinned tests only**, not validators for live CLI or website ingestion.
 
@@ -58,7 +76,7 @@ Structured quick output conforms to **`schemas/quick-verify-report.schema.json`*
 
 ## Share envelope v3 (POST new writes only)
 
-[`schemas/public-verification-report-v3.schema.json`](../schemas/public-verification-report-v3.schema.json) — POST body **`{ "schemaVersion": 3, "certificate": <OutcomeCertificateV2> }`**. Older **v1 / v2** rows may still be served by **`GET /r/{id}`** (frozen renderer); **new ingestion accepts v3 only** (v2 POST bodies return **400**).
+[`schemas/public-verification-report-v3.schema.json`](../schemas/public-verification-report-v3.schema.json) — POST body **`{ "schemaVersion": 3, "certificate": <OutcomeCertificateV3> }`**. Older **v1 / v2** rows may still be served by **`GET /r/{id}`** (frozen renderer); **new ingestion accepts v3 only** (v2 POST bodies return **400**).
 
 ## Hosted enforcement lifecycle (verification FSM)
 
@@ -79,7 +97,7 @@ This section anchors **commercial hosted workflow posture** keyed by `(user_id, 
 }
 ```
 
-- **`outcome_certificate`** MUST be **`Outcome Certificate v2`** (`schemaVersion` **2**) including **`evidenceCompleteness`**.
+- **`outcome_certificate`** MUST be **`Outcome Certificate v3`** (`schemaVersion` **3**) including **`evidenceCompleteness`**.
 - Requests naming **`outcome_certificate_v1`** or **`schema_version` 2** are rejected with **400** (single stable **`detail`** string in OpenAPI / route).
 
 ### Material truth

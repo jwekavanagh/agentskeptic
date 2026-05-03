@@ -591,6 +591,64 @@ export type RerunReadiness =
   | "reconcile_state_before_rerun"
   | "manual_review_before_rerun";
 
+export type AutomationClass =
+  | "read_only_retry"
+  | "input_regeneration_candidate"
+  | "human_write_required"
+  | "never_auto_mutate";
+
+export type RerunPathType =
+  | "same_input_verify"
+  | "after_input_fix_verify"
+  | "after_state_fix_verify"
+  | "after_manual_review_verify"
+  | "no_rerun_needed";
+
+export type RerunPath = {
+  type: RerunPathType;
+  sameInputs: boolean;
+  prerequisite: string;
+  meaningfulWhen: string;
+  readinessLabel: string;
+};
+
+export type RemediationItemScope =
+  | "run_level"
+  | "event_sequence"
+  | "run_context"
+  | "step"
+  | "effect"
+  | "quick_unit"
+  | "quick_ingest";
+
+export type RemediationItem = {
+  id: string;
+  scope: RemediationItemScope;
+  primary: boolean;
+  failedCheck: string;
+  reasonCodes: string[];
+  reason: string;
+  recommendedAction: RecommendedActionCode;
+  actionText: string;
+  expectedState: {
+    summary: string;
+    projectionKind?: CorrectnessEnforcementKind;
+  };
+  automation: {
+    class: AutomationClass;
+    label: string;
+    boundary: string;
+  };
+  humanReview: {
+    required: boolean;
+    decisionPrompt?: string;
+    hypotheses?: string[];
+    knownFacts?: string[];
+    evidenceToInspect?: string[];
+  };
+  rerunPath: RerunPath;
+};
+
 export type RemediationNextAction = {
   id: string;
   text: string;
@@ -600,6 +658,8 @@ export type RemediationDecision = {
   actionableFailure: ActionableFailure;
   orderedNextActions: RemediationNextAction[];
   rerunReadiness: RerunReadiness;
+  remediationItems: RemediationItem[];
+  rerunPath: RerunPath;
 };
 
 export type FailureAnalysisEvidenceItem = {

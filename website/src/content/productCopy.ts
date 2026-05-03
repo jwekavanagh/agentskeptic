@@ -462,7 +462,7 @@ export const productBriefPage = {
         "Run verification against a read-only snapshot of your data.",
       ],
       outro:
-        "You get a structured Outcome Certificate (JSON) with machine fields for trust and remediation, plus a human-readable report appendix — or a non-zero exit code. The check happens at verification time, not from trace color.",
+        "You get a structured Outcome Certificate (JSON) with machine fields for trust and remediation. Every failed check includes expected state, action, automation boundary, and rerun condition. The check happens at verification time, not from trace color.",
     },
     {
       id: "scenarios" as const,

@@ -2,7 +2,7 @@
  * Canonical evidence completeness object (schemas/evidence-completeness-v1.schema.json).
  */
 
-import type { EvidenceGapPrimary, RemediationDecision, RerunReadiness, WorkflowResult } from "./types.js";
+import type { EvidenceGapPrimary, RemediationDecision, RemediationItem, RerunPath, RerunReadiness, WorkflowResult } from "./types.js";
 import { userPhraseForReasonCode } from "./verificationUserPhrases.js";
 import { redactEvidenceString } from "./redactEvidenceString.js";
 import { classifyWorkflowBlocker, collectWorkflowCodes } from "./workflowFailureSignals.js";
@@ -28,6 +28,8 @@ export type EvidenceCompletenessJson = {
   missingInputs: Array<{ code: string; hint: string }>;
   nextActions: Array<{ id: string; text: string }>;
   rerunReadiness?: RerunReadiness;
+  rerunPath?: RerunPath;
+  remediationItems?: RemediationItem[];
 };
 
 function capList(lines: string[], max: number, eachMax: number): string[] {
@@ -87,6 +89,8 @@ export function buildEvidenceCompletenessFromWorkflowResult(
   };
   if (!(result.status === "complete" && truth.failureAnalysis === null)) {
     out.rerunReadiness = decision.rerunReadiness;
+    out.rerunPath = decision.rerunPath;
+    out.remediationItems = decision.remediationItems;
   }
   return out;
 }
@@ -185,6 +189,8 @@ export function buildEvidenceCompletenessFromQuickReport(
   };
   if (verdict !== "pass") {
     out.rerunReadiness = decision.rerunReadiness;
+    out.rerunPath = decision.rerunPath;
+    out.remediationItems = decision.remediationItems;
   }
   return out;
 }
@@ -195,6 +201,8 @@ export function buildEvidenceCompletenessForIneligibleLangGraph(params: {
   details: Array<{ code: string; message: string }>;
 }): EvidenceCompletenessJson {
   const { headline, details } = params;
+  const actionText =
+    "Repair NDJSON capture so checkpoint trust receives schema-valid schemaVersion 3 tool_observed lines for this workflow, then rerun verify.";
   return {
     schemaVersion: 1,
     blockerCategory: "verification_incomplete",
@@ -208,10 +216,45 @@ export function buildEvidenceCompletenessForIneligibleLangGraph(params: {
     nextActions: [
       {
         id: "fix_langgraph_eligibility",
-        text: redactEvidenceString(
-          "Repair NDJSON capture so checkpoint trust receives schema-valid schemaVersion 3 tool_observed lines for this workflow, then rerun verify.",
-          500,
-        ),
+        text: redactEvidenceString(actionText, 500),
+      },
+    ],
+    rerunReadiness: "fix_inputs_before_rerun",
+    rerunPath: {
+      type: "after_input_fix_verify",
+      sameInputs: false,
+      prerequisite: "Registry, events, tool parameters, or verification inputs are corrected.",
+      meaningfulWhen: "The corrected inputs express the expected state the verifier should check.",
+      readinessLabel: "Rerun verify after registry, events, tool parameters, or verification inputs are corrected.",
+    },
+    remediationItems: [
+      {
+        id: "quick_ingest",
+        scope: "quick_ingest",
+        primary: true,
+        failedCheck: "LangGraph checkpoint trust eligibility",
+        reasonCodes: details.slice(0, 8).map((d) => redactEvidenceString(d.code, 128)),
+        reason: redactEvidenceString(headline, 1024),
+        recommendedAction: "fix_event_ingest_and_steps",
+        actionText: redactEvidenceString(actionText, 500),
+        expectedState: {
+          summary: "Expected schema-valid schemaVersion 3 tool_observed lines for this workflow.",
+        },
+        automation: {
+          class: "input_regeneration_candidate",
+          label:
+            "Automation candidate: repair inputs outside the verifier; AgentSkeptic will not mutate external systems.",
+          boundary:
+            "AgentSkeptic is a read-only verifier. It does not mutate databases, rewrite inputs, or execute remediation.",
+        },
+        humanReview: { required: false },
+        rerunPath: {
+          type: "after_input_fix_verify",
+          sameInputs: false,
+          prerequisite: "Registry, events, tool parameters, or verification inputs are corrected.",
+          meaningfulWhen: "The corrected inputs express the expected state the verifier should check.",
+          readinessLabel: "Rerun verify after registry, events, tool parameters, or verification inputs are corrected.",
+        },
       },
     ],
   };

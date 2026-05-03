@@ -1,10 +1,52 @@
 import { z } from "zod";
 
+const rerunPathSchema = z.object({
+  type: z.enum([
+    "same_input_verify",
+    "after_input_fix_verify",
+    "after_state_fix_verify",
+    "after_manual_review_verify",
+    "no_rerun_needed",
+  ]),
+  sameInputs: z.boolean(),
+  prerequisite: z.string(),
+  meaningfulWhen: z.string(),
+  readinessLabel: z.string(),
+});
+
 const actionableFailureSchema = z.object({
   category: z.string(),
   severity: z.string(),
   recommendedAction: z.string(),
   automationSafe: z.boolean(),
+});
+
+const remediationItemSchema = z.object({
+  id: z.string(),
+  scope: z.enum(["run_level", "event_sequence", "run_context", "step", "effect", "quick_unit", "quick_ingest"]),
+  primary: z.boolean(),
+  failedCheck: z.string(),
+  reasonCodes: z.array(z.string()),
+  reason: z.string(),
+  recommendedAction: z.string(),
+  actionText: z.string(),
+  expectedState: z.object({
+    summary: z.string(),
+    projectionKind: z.string().optional(),
+  }),
+  automation: z.object({
+    class: z.enum(["read_only_retry", "input_regeneration_candidate", "human_write_required", "never_auto_mutate"]),
+    label: z.string(),
+    boundary: z.string(),
+  }),
+  humanReview: z.object({
+    required: z.boolean(),
+    decisionPrompt: z.string().optional(),
+    hypotheses: z.array(z.string()).optional(),
+    knownFacts: z.array(z.string()).optional(),
+    evidenceToInspect: z.array(z.string()).optional(),
+  }),
+  rerunPath: rerunPathSchema,
 });
 
 const failureSpineSchema = z
@@ -20,6 +62,8 @@ const evidenceCompletenessSchema = z
     blockerCategory: z.string(),
     nextActions: z.array(z.object({ id: z.string(), text: z.string() })),
     rerunReadiness: z.string().optional(),
+    rerunPath: rerunPathSchema.optional(),
+    remediationItems: z.array(remediationItemSchema).optional(),
   })
   .passthrough();
 
