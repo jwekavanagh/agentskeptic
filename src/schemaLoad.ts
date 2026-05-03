@@ -237,8 +237,9 @@ export function loadSchemaValidator(name: SchemaValidatorName): ValidateFunction
       compileSchemaFile("outcome-certificate-v1", "outcome-certificate-v1.schema.json");
       return compileSchemaFile(name, "public-verification-report-v2.schema.json");
     case "public-verification-report-v3":
-      compileSchemaFile("evidence-completeness-v1", "evidence-completeness-v1.schema.json");
-      compileSchemaFile("outcome-certificate-v3", "outcome-certificate-v3.schema.json");
+      // Must use loadSchemaValidator (not compileSchemaFile) so outcome-certificate-v3 cross-$refs
+      // (failure-spine-v1, workflow-truth fragments, evidence-completeness) register before compile.
+      loadSchemaValidator("outcome-certificate-v3");
       return compileSchemaFile(name, "public-verification-report-v3.schema.json");
     case "openai-function-tool-call-item-v1":
       return compileSchemaFile(name, "openai-function-tool-call-item-v1.schema.json");
