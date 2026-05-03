@@ -1,3 +1,9 @@
+## [6.2.0](https://github.com/jwekavanagh/agentskeptic/compare/v6.1.0...v6.2.0) (2026-05-03)
+
+### Features
+
+* add guided remediation rerun loop ([#54](https://github.com/jwekavanagh/agentskeptic/issues/54)) ([5064037](https://github.com/jwekavanagh/agentskeptic/commit/5064037521f0aab39d0d874aab82744509e850e8))
+
 ## [6.1.0](https://github.com/jwekavanagh/agentskeptic/compare/v6.0.1...v6.1.0) (2026-05-03)
 
 ### Features
