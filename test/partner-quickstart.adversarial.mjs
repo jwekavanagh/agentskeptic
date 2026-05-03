@@ -52,7 +52,7 @@ describe("partner-quickstart adversarial (schema-only sqlite)", () => {
     const isCert =
       typeof obj.schemaVersion === "number" &&
       obj.schemaVersion >= 1 &&
-      obj.schemaVersion <= 2 &&
+      obj.schemaVersion <= 3 &&
       typeof obj.stateRelation === "string" &&
       Object.prototype.hasOwnProperty.call(obj, "humanReport");
     if (isCert) {
@@ -64,6 +64,12 @@ describe("partner-quickstart adversarial (schema-only sqlite)", () => {
         Array.isArray(details) && details.some((x) => x && x.code === "ROW_ABSENT"),
         "expected ROW_ABSENT in certificate explanation.details",
       );
+      if (obj.schemaVersion === 3) {
+        assert.ok(
+          obj.failureSpine && typeof obj.failureSpine === "object",
+          "v3 certificate must include failureSpine",
+        );
+      }
     } else {
       assert.equal(obj.status, "inconsistent");
       const step0 = obj.steps?.[0];
