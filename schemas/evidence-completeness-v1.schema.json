@@ -79,6 +79,175 @@
         "manual_review_before_rerun"
       ]
     },
+    "rerunPath": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "sameInputs", "prerequisite", "meaningfulWhen", "readinessLabel"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "same_input_verify",
+            "after_input_fix_verify",
+            "after_state_fix_verify",
+            "after_manual_review_verify",
+            "no_rerun_needed"
+          ]
+        },
+        "sameInputs": { "type": "boolean" },
+        "prerequisite": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "meaningfulWhen": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "readinessLabel": { "type": "string", "minLength": 1, "maxLength": 256 }
+      }
+    },
+    "remediationItems": {
+      "type": "array",
+      "maxItems": 32,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "scope",
+          "primary",
+          "failedCheck",
+          "reasonCodes",
+          "reason",
+          "recommendedAction",
+          "actionText",
+          "expectedState",
+          "automation",
+          "humanReview",
+          "rerunPath"
+        ],
+        "properties": {
+          "id": { "type": "string", "minLength": 1, "maxLength": 128 },
+          "scope": {
+            "type": "string",
+            "enum": ["run_level", "event_sequence", "run_context", "step", "effect", "quick_unit", "quick_ingest"]
+          },
+          "primary": { "type": "boolean" },
+          "failedCheck": { "type": "string", "minLength": 1, "maxLength": 256 },
+          "reasonCodes": {
+            "type": "array",
+            "maxItems": 8,
+            "items": { "type": "string", "minLength": 1, "maxLength": 128 }
+          },
+          "reason": { "type": "string", "minLength": 1, "maxLength": 1024 },
+          "recommendedAction": {
+            "type": "string",
+            "enum": [
+              "none",
+              "manual_review",
+              "deduplicate",
+              "reconcile_downstream_state",
+              "correct_verification_inputs",
+              "improve_read_connectivity",
+              "resolve_multi_effect_failures",
+              "align_tool_observations",
+              "fix_event_ingest_and_steps",
+              "fix_event_sequence_order",
+              "fix_run_context_controls",
+              "fix_cli_usage",
+              "fix_registry_events_or_compare_files",
+              "fix_verification_database_connection",
+              "fix_saved_workflow_json",
+              "fix_compare_workflow_inputs",
+              "fix_execution_trace_structure",
+              "fix_verification_policy_and_hook",
+              "fix_plan_document_and_patterns",
+              "fix_plan_transition_cli_and_refs",
+              "upgrade_git_or_retry_git"
+            ]
+          },
+          "actionText": { "type": "string", "minLength": 1, "maxLength": 500 },
+          "expectedState": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["summary"],
+            "properties": {
+              "summary": { "type": "string", "minLength": 1, "maxLength": 1024 },
+              "projectionKind": {
+                "type": "string",
+                "enum": [
+                  "run_ingest_integrity",
+                  "event_capture_integrity",
+                  "run_context_fairness",
+                  "step_sql_expectation",
+                  "plan_transition_expectation",
+                  "quick_inferred_sql_row",
+                  "quick_inferred_relational",
+                  "quick_mapping_gap"
+                ]
+              }
+            }
+          },
+          "automation": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["class", "label", "boundary"],
+            "properties": {
+              "class": {
+                "type": "string",
+                "enum": [
+                  "read_only_retry",
+                  "input_regeneration_candidate",
+                  "human_write_required",
+                  "never_auto_mutate"
+                ]
+              },
+              "label": { "type": "string", "minLength": 1, "maxLength": 256 },
+              "boundary": { "type": "string", "minLength": 1, "maxLength": 512 }
+            }
+          },
+          "humanReview": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["required"],
+            "properties": {
+              "required": { "type": "boolean" },
+              "decisionPrompt": { "type": "string", "minLength": 1, "maxLength": 512 },
+              "hypotheses": {
+                "type": "array",
+                "maxItems": 6,
+                "items": { "type": "string", "minLength": 1, "maxLength": 512 }
+              },
+              "knownFacts": {
+                "type": "array",
+                "maxItems": 12,
+                "items": { "type": "string", "minLength": 1, "maxLength": 512 }
+              },
+              "evidenceToInspect": {
+                "type": "array",
+                "maxItems": 8,
+                "items": { "type": "string", "minLength": 1, "maxLength": 512 }
+              }
+            }
+          },
+          "rerunPath": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["type", "sameInputs", "prerequisite", "meaningfulWhen", "readinessLabel"],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "same_input_verify",
+                  "after_input_fix_verify",
+                  "after_state_fix_verify",
+                  "after_manual_review_verify",
+                  "no_rerun_needed"
+                ]
+              },
+              "sameInputs": { "type": "boolean" },
+              "prerequisite": { "type": "string", "minLength": 1, "maxLength": 512 },
+              "meaningfulWhen": { "type": "string", "minLength": 1, "maxLength": 512 },
+              "readinessLabel": { "type": "string", "minLength": 1, "maxLength": 256 }
+            }
+          }
+        }
+      }
+    },
     "nextActions": {
       "type": "array",
       "minItems": 1,

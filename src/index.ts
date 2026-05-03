@@ -39,7 +39,14 @@ export type {
 } from "./outcomeCertificate.js";
 export { AUTOMATION_BOUNDARY_CONNECTOR, remediationMessageForRecommendedAction } from "./remediationMessage.js";
 export { deriveRemediationDecisionFromQuickReport, deriveRemediationDecisionFromWorkflowResult } from "./actionableFailure.js";
-export type { RemediationDecision, RerunReadiness, RemediationNextAction } from "./types.js";
+export type {
+  AutomationClass,
+  RemediationDecision,
+  RemediationItem,
+  RemediationNextAction,
+  RerunPath,
+  RerunReadiness,
+} from "./types.js";
 export {
   buildFailureSpineFromIneligibleLangGraph,
   buildFailureSpineFromQuickReport,

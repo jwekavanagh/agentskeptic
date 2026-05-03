@@ -7,7 +7,7 @@ Commercial governance semantics (material truth hash, baseline lifecycle, shared
 
 ## Strict validator pins (consumer migration)
 
-Consumers who compile or pin **exact bytes** of [`https://agentskeptic.com/schemas/outcome-certificate-v3.schema.json`](https://agentskeptic.com/schemas/outcome-certificate-v3.schema.json) (or a fork) with **`additionalProperties: false`** at the certificate root will **reject** payloads that add new optional keys until that pinned schema file is updated and redeployed. Emitters may send superset JSON first; strict validators must **repin** the canonical schema URL when adopting optional fields such as **`correctnessDefinition`** or extra **`evidenceCompleteness`** keys.
+Consumers who compile or pin **exact bytes** of [`https://agentskeptic.com/schemas/outcome-certificate-v3.schema.json`](https://agentskeptic.com/schemas/outcome-certificate-v3.schema.json) (or a fork) with **`additionalProperties: false`** at the certificate root will **reject** payloads that add new optional keys until that pinned schema file is updated and redeployed. Emitters may send superset JSON first; strict validators must **repin** the canonical schema URL when adopting optional fields such as **`correctnessDefinition`** or additive **`evidenceCompleteness.remediationItems[]`** / **`evidenceCompleteness.rerunPath`** keys.
 
 ## Retaining decision evidence
 
@@ -15,14 +15,14 @@ Use **`--write-decision-bundle`** for a portable directory (outcome certificate,
 
 ## CLI (batch contract verify)
 
-- **stdout:** one JSON line — **Outcome Certificate v2** (**`schemas/outcome-certificate-v2.schema.json`**).
-- **stderr:** **`truth_check_verdict:`** line (contract primary path) followed by **`humanReport`** (includes anchored **`=== evidence_completeness ===`** … **`=== end evidence_completeness ===`** block) plus distribution footer lines (when not `--no-human-report`) — ordering details: **[`docs/integrate.md`](integrate.md)**.
+- **stdout:** one JSON line — **Outcome Certificate v3** (**`schemas/outcome-certificate-v3.schema.json`**).
+- **stderr:** **`truth_check_verdict:`** line (contract primary path) followed by **`humanReport`** (includes anchored **`=== evidence_completeness ===`** … **`=== end evidence_completeness ===`** block) plus distribution footer lines (when not `--no-human-report`) — ordering details: **[`docs/integrate.md`](integrate.md)**. Failed current certificates render **`Remediation items:`** under those anchors; each item has **`Failed check:`**, **`Expected state:`**, **`Automation:`**, and **`Rerun:`** lines.
 - **Exit codes:** `0` = `matches_expectations`; `1` = `does_not_match`; `2` = `not_established`; `3` = operational error.
 - **LangGraph checkpoint trust:** pass **`--langgraph-checkpoint-trust`** for the same argv shape; stdout is always one Outcome Certificate with **`runKind: "contract_sql_langgraph_checkpoint_trust"`** (see [`langgraph-checkpoint-trust.md`](langgraph-checkpoint-trust.md)). **Ineligible** LangGraph runs never enter the standard batch verify runner (certificate-only path: no database, no engine reconciliation). Generic verify without the flag exits **`3`** with empty stdout if the file contains **v3** `tool_observed` lines for the selected workflow.
 
 ## CLI (quick verify)
 
-- **stdout:** **Quick Verify report** (**`QuickVerifyReport`**, **`schemaVersion` 5**) including the same **`evidenceCompleteness`** object shape as certificates, then (when chaining to certificate paths) adapters may synthesize **`OutcomeCertificate`** v2 carrying that completeness.
+- **stdout:** **Quick Verify report** (**`QuickVerifyReport`**, **`schemaVersion` 5**) including the same **`evidenceCompleteness`** object shape as certificates, then (when chaining to certificate paths) adapters may synthesize **`OutcomeCertificate`** v3 carrying that completeness.
 - **stderr:** anchored quick rollup block **and** completeness anchors for operator-facing narration.
 
 When **`agentskeptic quick`** emits **`QuickVerifyReport` JSON only**, treat **`humanReport`/anchors** guidance as applying wherever the CLI merges quick human output (`formatQuickVerifyHumanReport`)—see **`docs/quick-verify-normative.md`**.
@@ -32,7 +32,7 @@ When **`agentskeptic quick`** emits **`QuickVerifyReport` JSON only**, treat **`
 Body must be **v3** only:
 
 ```json
-{ "schemaVersion": 3, "certificate": { /* OutcomeCertificateV2 */ } }
+{ "schemaVersion": 3, "certificate": { /* OutcomeCertificateV3 */ } }
 ```
 
 Legacy **v2** POST bodies return **400**. Response: **`{ "schemaVersion": 3, "id": "<uuid>", "url": "https://…/r/<uuid>" }`**.
@@ -40,6 +40,12 @@ Legacy **v2** POST bodies return **400**. Response: **`{ "schemaVersion": 3, "id
 ## semver note (breaking)
 
 Removing the legacy **`formatDecisionBlockerForHumans`** export is a **MAJOR** semver change for **`agentskeptic`** (`5.x`): consumers should read **`certificate.evidenceCompleteness`** JSON and anchored stderr instead of importing six-line formatters.
+
+## Remediation consumption
+
+Treat **`evidenceCompleteness.remediationItems[]`** as the complete convergence list. **`nextActions[]`** remains a primary summary for older consumers and compact display. Rerun guidance is conditional, for example **`Rerun verify after downstream state matches the expected state.`** or **`Rerun verify with the same inputs after the read-only prerequisite is restored.`**
+
+If **`humanReview.required`** is true, do not apply automated writes; show **`humanReview.decisionPrompt`** and inspect the listed hypotheses/facts before changing state or inputs. Automation class **`read_only_retry`** permits only read-only verification retry with the same inputs after the read prerequisite is restored; other classes require external input repair, external state repair, or manual judgment.
 
 ## Licensing
 

@@ -2,6 +2,9 @@ import { compareUtf16Id } from "../resolveExpectation.js";
 
 /** UTF-16 key sort for stable JSON objects (same as canonical params). */
 export function stableStringify(value: unknown): string {
+  if (value === undefined) {
+    return "null";
+  }
   if (value === null || typeof value !== "object") {
     return JSON.stringify(value);
   }
@@ -9,7 +12,9 @@ export function stableStringify(value: unknown): string {
     return `[${value.map((x) => stableStringify(x)).join(",")}]`;
   }
   const obj = value as Record<string, unknown>;
-  const keys = Object.keys(obj).sort(compareUtf16Id);
+  const keys = Object.keys(obj)
+    .filter((k) => obj[k] !== undefined)
+    .sort(compareUtf16Id);
   return `{${keys.map((k) => `${JSON.stringify(k)}:${stableStringify(obj[k])}`).join(",")}}`;
 }
 

@@ -19,6 +19,10 @@ export function CertificateRemediationPanel(props: CertificateRemediationPanelPr
   const af = certificate.failureSpine.actionableFailure;
   const ec = certificate.evidenceCompleteness;
   const primaryLine = ec.nextActions[0]?.text ?? "";
+  const remediationItems = [...(ec.remediationItems ?? [])].sort((a, b) => {
+    if (a.primary !== b.primary) return a.primary ? -1 : 1;
+    return a.id.localeCompare(b.id);
+  });
   const showAutomationBoundary =
     af.automationSafe && af.recommendedAction === "improve_read_connectivity";
 
@@ -28,23 +32,42 @@ export function CertificateRemediationPanel(props: CertificateRemediationPanelPr
       <p data-testid="remediation-primary-action" className="lede">
         {primaryLine}
       </p>
+      {remediationItems.length > 0 ? (
+        <div className="remediation-items" data-testid="remediation-items">
+          {remediationItems.map((item) => (
+            <section key={item.id} className="remediation-item">
+              <h3>{item.failedCheck}</h3>
+              <dl className="remediation-dl">
+                <dt>Action</dt>
+                <dd>{item.actionText}</dd>
+                <dt>Expected state</dt>
+                <dd>{item.expectedState.summary}</dd>
+                <dt>Automation</dt>
+                <dd>{item.automation.label}</dd>
+                <dt>Rerun</dt>
+                <dd>{item.rerunPath.readinessLabel}</dd>
+                {item.humanReview.required && item.humanReview.decisionPrompt !== undefined ? (
+                  <>
+                    <dt>Manual review</dt>
+                    <dd>{item.humanReview.decisionPrompt}</dd>
+                  </>
+                ) : null}
+              </dl>
+            </section>
+          ))}
+        </div>
+      ) : null}
       <dl className="remediation-dl">
         <dt>Failure category</dt>
         <dd>{af.category}</dd>
         <dt>Severity</dt>
         <dd>{af.severity}</dd>
-        <dt>Recommended action</dt>
-        <dd>
-          <code>{af.recommendedAction}</code>
-        </dd>
-        <dt>Automation-safe</dt>
-        <dd>{af.automationSafe ? "yes" : "no"}</dd>
         <dt>Evidence gap</dt>
         <dd>{ec.blockerCategory}</dd>
-        {ec.rerunReadiness !== undefined ? (
+        {ec.rerunPath !== undefined && remediationItems.length === 0 ? (
           <>
-            <dt>Rerun readiness</dt>
-            <dd>{ec.rerunReadiness}</dd>
+            <dt>Rerun</dt>
+            <dd>{ec.rerunPath.readinessLabel}</dd>
           </>
         ) : null}
       </dl>

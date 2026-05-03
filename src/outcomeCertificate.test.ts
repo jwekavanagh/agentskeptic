@@ -12,9 +12,18 @@ import {
   deriveHighStakesReliance,
   formatOutcomeCertificateHuman,
 } from "./outcomeCertificate.js";
+import type { StepOutcome, WorkflowEngineResult, WorkflowResult } from "./types.js";
+import { createEmptyVerificationRunContext } from "./verificationRunContext.js";
+import { finalizeEmittedWorkflowResult } from "./workflowTruthReport.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, "..");
+
+const strongPolicy = {
+  consistencyMode: "strong" as const,
+  verificationWindowMs: 0,
+  pollIntervalMs: 0,
+};
 
 function seedTempSqliteDb(): { dbPath: string; cleanup: () => void } {
   const dir = mkdtempSync(join(tmpdir(), "outcome-cert-"));
@@ -26,6 +35,40 @@ function seedTempSqliteDb(): { dbPath: string; cleanup: () => void } {
   return {
     dbPath,
     cleanup: () => rmSync(dir, { recursive: true, force: true }),
+  };
+}
+
+function baseEngine(step: StepOutcome, status: WorkflowEngineResult["status"] = "inconsistent"): WorkflowEngineResult {
+  return {
+    schemaVersion: 8,
+    workflowId: "wf_synthetic",
+    status,
+    runLevelReasons: [],
+    verificationPolicy: strongPolicy,
+    eventSequenceIntegrity: { kind: "normal" },
+    verificationRunContext: createEmptyVerificationRunContext(),
+    steps: [step],
+  };
+}
+
+function sqlStep(code: string, message: string, status: StepOutcome["status"] = "inconsistent"): StepOutcome {
+  return {
+    seq: 0,
+    toolId: "crm.upsert_contact",
+    intendedEffect: { narrative: "Upsert contact c_missing" },
+    observedExecution: { paramsCanonical: "{}" },
+    verificationRequest: {
+      kind: "sql_row",
+      table: "contacts",
+      identityEq: [{ column: "id", value: "c_missing" }],
+      requiredFields: { status: "active" },
+    },
+    status,
+    reasons: [{ code, message }],
+    evidenceSummary: { rowCount: 0 },
+    repeatObservationCount: 1,
+    evaluatedObservationOrdinal: 1,
+    failureDiagnostic: "workflow_execution",
   };
 }
 
@@ -78,8 +121,119 @@ describe("outcomeCertificate", () => {
       const certificate = buildOutcomeCertificateFromWorkflowResult(result, "contract_sql");
       expect(certificate.stateRelation).toBe("does_not_match");
       expect(certificate.highStakesReliance).toBe("prohibited");
+      const item = certificate.evidenceCompleteness.remediationItems?.[0];
+      expect(item).toMatchObject({
+        id: "step:0",
+        scope: "step",
+        humanReview: {
+          required: true,
+          decisionPrompt: "Decide which hypothesis explains the mismatch before changing state or inputs.",
+        },
+        automation: {
+          class: "never_auto_mutate",
+          label: "Manual judgment required; do not automate mutation from this result.",
+        },
+        rerunPath: {
+          type: "after_manual_review_verify",
+          sameInputs: false,
+        },
+      });
+      expect(certificate.humanReport).toContain(
+        "Manual review: Decide which hypothesis explains the mismatch before changing state or inputs.",
+      );
     } finally {
       cleanup();
     }
+  });
+
+  it("producer invariant rejects failed certificates without remediationItems", async () => {
+    const { dbPath, cleanup } = seedTempSqliteDb();
+    try {
+      const result = await verifyWorkflow({
+        workflowId: "wf_missing",
+        eventsPath: join(root, "examples", "events.ndjson"),
+        registryPath: join(root, "examples", "tools.json"),
+        database: { kind: "sqlite", path: dbPath },
+        logStep: () => {},
+        truthReport: () => {},
+      });
+      const certificate = buildOutcomeCertificateFromWorkflowResult(result, "contract_sql");
+      const malformed = {
+        ...certificate,
+        evidenceCompleteness: {
+          ...certificate.evidenceCompleteness,
+          remediationItems: undefined,
+        },
+      };
+      expect(() => assertOutcomeCertificateInvariants(malformed)).toThrow(
+        "failed outcome certificate missing evidenceCompleteness.remediationItems",
+      );
+    } finally {
+      cleanup();
+    }
+  });
+
+  it("multi-effect failures emit item-level remediation instead of aggregate-only prose", () => {
+    const raw = readFileSync(join(root, "test/golden/wf_multi_all_fail.stdout.json"), "utf8");
+    const result = JSON.parse(raw) as WorkflowResult;
+    const certificate = buildOutcomeCertificateFromWorkflowResult(result, "contract_sql");
+    const items = certificate.evidenceCompleteness.remediationItems ?? [];
+    expect(items.map((i) => i.id)).toEqual(["effect:0:primary", "effect:0:secondary"]);
+    expect(items[0]).toMatchObject({
+      id: "effect:0:primary",
+      scope: "effect",
+      recommendedAction: "reconcile_downstream_state",
+      rerunPath: { type: "after_state_fix_verify", sameInputs: false },
+    });
+    expect(certificate.humanReport).toContain("Remediation items:");
+    expect(certificate.humanReport).toContain(
+      "- effect:0:primary: Fix downstream database or service state to match declared expectations, then rerun verify.",
+    );
+  });
+
+  it("connector failures are read-only retry with same inputs", () => {
+    const result = finalizeEmittedWorkflowResult(
+      baseEngine(
+        sqlStep("CONNECTOR_ERROR", "Read-only connector failed", "incomplete_verification"),
+        "incomplete",
+      ),
+    );
+    const certificate = buildOutcomeCertificateFromWorkflowResult(result, "contract_sql");
+    const item = certificate.evidenceCompleteness.remediationItems?.[0];
+    expect(item).toMatchObject({
+      id: "step:0",
+      recommendedAction: "improve_read_connectivity",
+      automation: {
+        class: "read_only_retry",
+        label: "Safe automatic action: retry read-only verification with the same inputs.",
+      },
+      rerunPath: { type: "same_input_verify", sameInputs: true },
+    });
+    expect(certificate.humanReport).toContain(
+      "Automation: Safe automatic action: retry read-only verification with the same inputs.",
+    );
+  });
+
+  it("determinate state mismatch is human-write-required with after-state-fix rerun", () => {
+    const result = finalizeEmittedWorkflowResult(
+      baseEngine(sqlStep("DUPLICATE_ROWS", "Duplicate rows matched key")),
+    );
+    const certificate = buildOutcomeCertificateFromWorkflowResult(result, "contract_sql");
+    const item = certificate.evidenceCompleteness.remediationItems?.[0];
+    expect(item).toMatchObject({
+      recommendedAction: "deduplicate",
+      automation: {
+        class: "human_write_required",
+        label: "Human or external system must change state; AgentSkeptic will not mutate data.",
+      },
+      rerunPath: {
+        type: "after_state_fix_verify",
+        sameInputs: false,
+        readinessLabel: "Rerun verify after downstream state matches the expected state.",
+      },
+    });
+    expect(certificate.humanReport).toContain(
+      "Rerun: Rerun verify after downstream state matches the expected state.",
+    );
   });
 });

@@ -21,20 +21,26 @@ import type { QuickVerifyReport } from "./quickVerify/runQuickVerify.js";
 import { redactEvidenceString } from "./redactEvidenceString.js";
 import { classifyWorkflowBlocker, collectWorkflowCodes } from "./workflowFailureSignals.js";
 import { workflowResultToEngineSlice } from "./workflowResultSlice.js";
-import { remediationMessageForRecommendedAction } from "./remediationMessage.js";
+import { AUTOMATION_BOUNDARY_CONNECTOR, remediationMessageForRecommendedAction } from "./remediationMessage.js";
 import type {
   ActionableFailure,
   ActionableFailureCategory,
   ActionableFailureSeverity,
+  AutomationClass,
   EvidenceGapPrimary,
   FailureAnalysisBase,
+  FailureAnalysis,
   RecommendedActionCode,
   RemediationDecision,
+  RemediationItem,
   RemediationNextAction,
+  RerunPath,
+  RerunPathType,
   RerunReadiness,
   WorkflowEngineResult,
   WorkflowResult,
   WorkflowStatus,
+  WorkflowTruthStep,
 } from "./types.js";
 
 export const ACTIONABLE_FAILURE_CATEGORIES = [
@@ -558,6 +564,454 @@ function nextActionEntry(code: RecommendedActionCode): RemediationNextAction {
   };
 }
 
+const AUTOMATION_LABELS: Record<AutomationClass, string> = {
+  read_only_retry: "Safe automatic action: retry read-only verification with the same inputs.",
+  input_regeneration_candidate:
+    "Automation candidate: repair inputs outside the verifier; AgentSkeptic will not mutate external systems.",
+  human_write_required: "Human or external system must change state; AgentSkeptic will not mutate data.",
+  never_auto_mutate: "Manual judgment required; do not automate mutation from this result.",
+};
+
+const AUTOMATION_BOUNDARY =
+  "AgentSkeptic is a read-only verifier. It does not mutate databases, rewrite inputs, or execute remediation.";
+
+const RERUN_LABELS: Record<RerunPathType, string> = {
+  same_input_verify: "Rerun verify with the same inputs after the read-only prerequisite is restored.",
+  after_input_fix_verify:
+    "Rerun verify after registry, events, tool parameters, or verification inputs are corrected.",
+  after_state_fix_verify: "Rerun verify after downstream state matches the expected state.",
+  after_manual_review_verify:
+    "Rerun verify after a human reviewer chooses and applies the correct fix path.",
+  no_rerun_needed: "No rerun is required for this trusted outcome.",
+};
+
+function sortUniqueStrings(values: readonly string[]): string[] {
+  return [...new Set(values.filter((v) => v.length > 0))].sort((a, b) => a.localeCompare(b));
+}
+
+function primaryCode(codes: readonly string[]): string {
+  return codes[0] ?? "";
+}
+
+function automationClassForAction(row: RemediationRow, code: string): AutomationClass {
+  if (row.automationSafe && row.recommendedAction === "improve_read_connectivity") return "read_only_retry";
+  const action = row.recommendedAction;
+  switch (action) {
+    case "correct_verification_inputs":
+    case "fix_event_ingest_and_steps":
+    case "fix_event_sequence_order":
+    case "fix_run_context_controls":
+    case "fix_cli_usage":
+    case "fix_registry_events_or_compare_files":
+    case "fix_verification_database_connection":
+    case "fix_saved_workflow_json":
+    case "fix_compare_workflow_inputs":
+    case "fix_execution_trace_structure":
+    case "fix_verification_policy_and_hook":
+    case "fix_plan_document_and_patterns":
+    case "fix_plan_transition_cli_and_refs":
+    case "upgrade_git_or_retry_git":
+      return "input_regeneration_candidate";
+    case "reconcile_downstream_state":
+    case "deduplicate":
+      return "human_write_required";
+    case "improve_read_connectivity":
+      return code === SQL_VERIFICATION_OUTCOME_CODE.CONNECTOR_ERROR ? "read_only_retry" : "input_regeneration_candidate";
+    case "manual_review":
+    case "resolve_multi_effect_failures":
+    case "align_tool_observations":
+      return "never_auto_mutate";
+    case "none":
+      return "read_only_retry";
+    default:
+      return "never_auto_mutate";
+  }
+}
+
+function rerunPathTypeForAction(row: RemediationRow, automationClass: AutomationClass): RerunPathType {
+  if (row.recommendedAction === "none") return "no_rerun_needed";
+  if (automationClass === "read_only_retry") return "same_input_verify";
+  if (automationClass === "human_write_required") return "after_state_fix_verify";
+  if (automationClass === "never_auto_mutate") return "after_manual_review_verify";
+  return "after_input_fix_verify";
+}
+
+function rerunPathForType(type: RerunPathType): RerunPath {
+  switch (type) {
+    case "same_input_verify":
+      return {
+        type,
+        sameInputs: true,
+        prerequisite: "Read-only database or witness connectivity is restored.",
+        meaningfulWhen: "The same captured events, registry, workflow, and read target can be checked again.",
+        readinessLabel: RERUN_LABELS[type],
+      };
+    case "after_input_fix_verify":
+      return {
+        type,
+        sameInputs: false,
+        prerequisite: "Registry, events, tool parameters, or verification inputs are corrected.",
+        meaningfulWhen: "The corrected inputs express the expected state the verifier should check.",
+        readinessLabel: RERUN_LABELS[type],
+      };
+    case "after_state_fix_verify":
+      return {
+        type,
+        sameInputs: false,
+        prerequisite: "Downstream state has been reconciled to the expected state.",
+        meaningfulWhen: "The database or external witness state should now satisfy the verification expectation.",
+        readinessLabel: RERUN_LABELS[type],
+      };
+    case "after_manual_review_verify":
+      return {
+        type,
+        sameInputs: false,
+        prerequisite: "A human reviewer chooses and applies the correct fix path.",
+        meaningfulWhen: "The reviewer has resolved which hypothesis is true and updated state or inputs accordingly.",
+        readinessLabel: RERUN_LABELS[type],
+      };
+    case "no_rerun_needed":
+      return {
+        type,
+        sameInputs: true,
+        prerequisite: "Verification is already trusted under the configured rules.",
+        meaningfulWhen: "No failed check blocks trust.",
+        readinessLabel: RERUN_LABELS[type],
+      };
+  }
+}
+
+function rowForCodes(scope: RemediationItem["scope"], codes: readonly string[]): RemediationRow {
+  const list = [...codes];
+  switch (scope) {
+    case "run_level":
+    case "quick_ingest":
+      return remediationForRunLevelItem(list);
+    case "event_sequence":
+      return remediationForEventSequenceItem(list);
+    case "run_context":
+      return remediationForRunContextItem(list);
+    case "step":
+    case "effect":
+    case "quick_unit":
+      return remediationForStepOrEffectItem(list);
+  }
+}
+
+export function deriveQuickRemediationAlignment(reasonCodes: readonly string[]): {
+  recommendedAction: RecommendedActionCode;
+  automationSafe: boolean;
+} {
+  const sorted = sortUniqueStrings(reasonCodes);
+  const c = sorted[0] ?? "";
+  if (c === "CONNECTOR_ERROR") return { recommendedAction: "improve_read_connectivity", automationSafe: false };
+  if (c === "MAPPING_FAILED" || c.startsWith("RESOLVE_") || c.includes("REGISTRY") || c === "UNKNOWN_TOOL") {
+    return { recommendedAction: "correct_verification_inputs", automationSafe: false };
+  }
+  if (
+    c === "ROW_ABSENT" ||
+    c === "VALUE_MISMATCH" ||
+    c === "DUPLICATE_ROWS" ||
+    c === "RELATIONAL_EXPECTATION_MISMATCH" ||
+    c === "RELATIONAL_SCALAR_UNUSABLE" ||
+    c === "ROW_PRESENT_WHEN_FORBIDDEN"
+  ) {
+    return { recommendedAction: "reconcile_downstream_state", automationSafe: false };
+  }
+  return { recommendedAction: "manual_review", automationSafe: false };
+}
+
+function itemAutomation(row: RemediationRow, code: string): RemediationItem["automation"] {
+  const cls = automationClassForAction(row, code);
+  return {
+    class: cls,
+    label: AUTOMATION_LABELS[cls],
+    boundary: cls === "read_only_retry" ? AUTOMATION_BOUNDARY_CONNECTOR : AUTOMATION_BOUNDARY,
+  };
+}
+
+function reviewForItem(opts: {
+  action: RecommendedActionCode;
+  fa: FailureAnalysis | null | undefined;
+  evidenceToInspect: string[];
+}): RemediationItem["humanReview"] {
+  const required = opts.action === "manual_review";
+  if (!required) return { required: false };
+  const hypotheses =
+    opts.fa?.alternativeHypotheses?.map((h) => `origin=${h.primaryOrigin}: ${h.rationale}`).slice(0, 6) ?? [];
+  return {
+    required: true,
+    decisionPrompt: "Decide which hypothesis explains the mismatch before changing state or inputs.",
+    ...(hypotheses.length ? { hypotheses } : {}),
+    knownFacts:
+      opts.fa !== null && opts.fa !== undefined
+        ? [
+            `primary_origin=${opts.fa.primaryOrigin}`,
+            `confidence=${opts.fa.confidence}`,
+            `summary=${opts.fa.summary}`,
+          ].slice(0, 12)
+        : undefined,
+    evidenceToInspect: opts.evidenceToInspect.slice(0, 8),
+  };
+}
+
+function makeRemediationItem(opts: {
+  id: string;
+  scope: RemediationItem["scope"];
+  primary: boolean;
+  failedCheck: string;
+  reasonCodes: string[];
+  reason: string;
+  expectedSummary: string;
+  projectionKind?: RemediationItem["expectedState"]["projectionKind"];
+  row?: RemediationRow;
+  fa?: FailureAnalysis | null;
+  evidenceToInspect: string[];
+  forceManualReview?: boolean;
+}): RemediationItem {
+  const codes = sortUniqueStrings(opts.reasonCodes).slice(0, 8);
+  const row = opts.forceManualReview ? MANUAL_REMEDIATION : (opts.row ?? rowForCodes(opts.scope, codes));
+  const automation = itemAutomation(row, primaryCode(codes));
+  const rerunPath = rerunPathForType(rerunPathTypeForAction(row, automation.class));
+  const actionText = redactEvidenceString(remediationMessageForRecommendedAction(row.recommendedAction), 500);
+  return {
+    id: redactEvidenceString(opts.id, 128),
+    scope: opts.scope,
+    primary: opts.primary,
+    failedCheck: redactEvidenceString(opts.failedCheck, 256),
+    reasonCodes: codes.map((c) => redactEvidenceString(c, 128)),
+    reason: redactEvidenceString(opts.reason || "Verification check did not pass.", 1024),
+    recommendedAction: row.recommendedAction,
+    actionText,
+    expectedState: {
+      summary: redactEvidenceString(opts.expectedSummary || "Expected state must satisfy the verification contract.", 1024),
+      ...(opts.projectionKind !== undefined ? { projectionKind: opts.projectionKind } : {}),
+    },
+    automation,
+    humanReview: reviewForItem({
+      action: row.recommendedAction,
+      fa: opts.fa,
+      evidenceToInspect: opts.evidenceToInspect,
+    }),
+    rerunPath,
+  };
+}
+
+function primaryEvidenceKey(fa: FailureAnalysis | null | undefined): string | null {
+  const ev = fa?.evidence[0];
+  if (ev === undefined) return null;
+  if (ev.scope === "step" && ev.seq !== undefined) return `step:${ev.seq}`;
+  if (ev.scope === "effect" && ev.seq !== undefined && ev.effectId !== undefined) return `effect:${ev.seq}:${ev.effectId}`;
+  if (ev.scope === "run_level") return "run_level";
+  if (ev.scope === "event_sequence") return "event_sequence";
+  if (ev.scope === "run_context") return "run_context";
+  return null;
+}
+
+function effectReasonCodes(effect: NonNullable<WorkflowTruthStep["effects"]>[number]): string[] {
+  return effect.reasons.map((r) => r.code);
+}
+
+function stepReasonCodes(step: WorkflowTruthStep): string[] {
+  return step.reasons.map((r) => r.code);
+}
+
+function stepExpectedSummary(step: WorkflowTruthStep): string {
+  return `Expected state: ${step.verifyTarget ?? step.intendedEffect.narrative}; observed: ${step.observedStateSummary}`;
+}
+
+function effectExpectedSummary(step: WorkflowTruthStep, effectId: string): string {
+  return `Expected effect ${effectId} within ${step.verifyTarget ?? step.intendedEffect.narrative}; observed: ${step.observedStateSummary}`;
+}
+
+function buildWorkflowRemediationItems(result: WorkflowResult): RemediationItem[] {
+  if (result.status === "complete" && result.workflowTruthReport.failureAnalysis === null) return [];
+  const truth = result.workflowTruthReport;
+  const fa = truth.failureAnalysis;
+  const primaryKey = primaryEvidenceKey(fa);
+  const projectionKind = truth.correctnessDefinition?.enforcementKind;
+  const primaryExpected = truth.correctnessDefinition?.mustAlwaysHold;
+  const items: RemediationItem[] = [];
+
+  if (truth.runLevelIssues.length > 0) {
+    const codes = truth.runLevelIssues.map((r) => r.code);
+    items.push(
+      makeRemediationItem({
+        id: "run_level",
+        scope: "run_level",
+        primary: primaryKey === "run_level",
+        failedCheck: "run-level verification input",
+        reasonCodes: codes,
+        reason: truth.runLevelIssues.map((r) => r.message).join("; "),
+        expectedSummary:
+          primaryKey === "run_level" && primaryExpected !== undefined
+            ? primaryExpected
+            : "Expected a valid captured run with no run-level ingest or planning failures.",
+        projectionKind: primaryKey === "run_level" ? projectionKind : undefined,
+        fa,
+        evidenceToInspect: ["workflowTruthReport.runLevelIssues", "workflowTruthReport.failureAnalysis"],
+      }),
+    );
+  }
+
+  if (truth.eventSequence.kind === "irregular") {
+    const codes = truth.eventSequence.issues.map((r) => r.code);
+    items.push(
+      makeRemediationItem({
+        id: "event_sequence",
+        scope: "event_sequence",
+        primary: primaryKey === "event_sequence",
+        failedCheck: "event sequence",
+        reasonCodes: codes,
+        reason: truth.eventSequence.issues.map((r) => r.message).join("; "),
+        expectedSummary:
+          primaryKey === "event_sequence" && primaryExpected !== undefined
+            ? primaryExpected
+            : "Expected monotonic, coherent event capture for this workflow.",
+        projectionKind: primaryKey === "event_sequence" ? projectionKind : undefined,
+        fa,
+        evidenceToInspect: ["workflowTruthReport.eventSequence", "eventSequenceIntegrity"],
+      }),
+    );
+  }
+
+  for (const ev of fa?.evidence ?? []) {
+    if (ev.scope !== "run_context") continue;
+    const codes = ev.codes ?? [];
+    items.push(
+      makeRemediationItem({
+        id: `run_context:${ev.ingestIndex ?? 0}`,
+        scope: "run_context",
+        primary: primaryKey === "run_context",
+        failedCheck: `run context before ingest ${ev.ingestIndex ?? "unknown"}`,
+        reasonCodes: codes,
+        reason: `Run context failed before the evaluated observation: ${codes.join(",")}`,
+        expectedSummary:
+          primaryKey === "run_context" && primaryExpected !== undefined
+            ? primaryExpected
+            : "Expected retrieval, model, control, and tool context to allow fair verification.",
+        projectionKind: primaryKey === "run_context" ? projectionKind : undefined,
+        fa,
+        evidenceToInspect: ["workflowTruthReport.executionPathFindings", "verificationRunContext"],
+      }),
+    );
+  }
+
+  for (const step of truth.steps) {
+    if (step.outcomeLabel === "VERIFIED") continue;
+    if (step.effects !== undefined && step.effects.length > 0) {
+      for (const effect of step.effects) {
+        if (effect.outcomeLabel === "VERIFIED") continue;
+        const id = `effect:${step.seq}:${effect.id}`;
+        const codes = effectReasonCodes(effect);
+        items.push(
+          makeRemediationItem({
+            id,
+            scope: "effect",
+            primary: primaryKey === id,
+            failedCheck: `Failed check: effect ${effect.id} on step ${step.seq}`,
+            reasonCodes: codes,
+            reason: effect.reasons[0]?.message ?? effect.outcomeLabel,
+            expectedSummary: effectExpectedSummary(step, effect.id),
+            fa: null,
+            evidenceToInspect: [
+              `workflowTruthReport.steps[seq=${step.seq}].effects[id=${effect.id}]`,
+              `workflowTruthReport.steps[seq=${step.seq}].observedStateSummary`,
+            ],
+          }),
+        );
+      }
+      continue;
+    }
+
+    const id = `step:${step.seq}`;
+    const codes = stepReasonCodes(step);
+    items.push(
+      makeRemediationItem({
+        id,
+        scope: "step",
+        primary: primaryKey === id,
+        failedCheck: `Failed check: step ${step.seq}${step.toolId ? ` (${step.toolId})` : ""}`,
+        reasonCodes: codes,
+        reason: step.reasons[0]?.message ?? step.outcomeLabel,
+        expectedSummary: primaryKey === id && primaryExpected !== undefined ? primaryExpected : stepExpectedSummary(step),
+        projectionKind: primaryKey === id ? projectionKind : undefined,
+        fa: primaryKey === id ? fa : null,
+        evidenceToInspect: [
+          `workflowTruthReport.steps[seq=${step.seq}]`,
+          "workflowTruthReport.failureExplanation",
+          "workflowTruthReport.correctnessDefinition",
+        ],
+        forceManualReview:
+          primaryKey === id &&
+          fa !== null &&
+          fa !== undefined &&
+          fa.actionableFailure.recommendedAction === "manual_review",
+      }),
+    );
+  }
+
+  if (items.length === 0 && fa !== null) {
+    items.push(
+      makeRemediationItem({
+        id: "failure_analysis",
+        scope: "run_level",
+        primary: true,
+        failedCheck: "verification failure analysis",
+        reasonCodes: fa.evidence[0]?.codes ?? ["UNCLASSIFIED_GAP"],
+        reason: fa.summary,
+        expectedSummary: primaryExpected ?? "Expected state must satisfy the verification contract.",
+        projectionKind,
+        fa,
+        evidenceToInspect: ["workflowTruthReport.failureAnalysis"],
+        forceManualReview: true,
+      }),
+    );
+  }
+  return items.slice(0, 32);
+}
+
+function buildQuickRemediationItems(report: QuickVerifyReport): RemediationItem[] {
+  if (report.verdict === "pass") return [];
+  const items: RemediationItem[] = [];
+  if (report.ingest.reasonCodes.length > 0 || report.units.length === 0) {
+    const codes = report.ingest.reasonCodes.length ? report.ingest.reasonCodes : ["INGEST_NO_STRUCTURED_TOOL_ACTIVITY"];
+    const row = deriveQuickRemediationAlignment(codes);
+    items.push(
+      makeRemediationItem({
+        id: "quick_ingest",
+        scope: "quick_ingest",
+        primary: true,
+        failedCheck: "quick verify ingest",
+        reasonCodes: codes,
+        reason: codes.join(","),
+        expectedSummary: "Expected structured tool activity that can be mapped into provisional read-only SQL checks.",
+        row,
+        evidenceToInspect: ["quick.ingest.reasonCodes", "quick.units"],
+      }),
+    );
+  }
+  for (const unit of report.units) {
+    if (unit.verdict === "verified") continue;
+    const row = deriveQuickRemediationAlignment(unit.reasonCodes);
+    items.push(
+      makeRemediationItem({
+        id: `quick:${unit.unitId}`,
+        scope: "quick_unit",
+        primary: items.length === 0,
+        failedCheck: `Failed check: quick unit ${unit.unitId}`,
+        reasonCodes: unit.reasonCodes.length ? unit.reasonCodes : [`quick_unit_${unit.verdict}`],
+        reason: unit.reconciliation.verification_verdict,
+        expectedSummary: unit.correctnessDefinition?.mustAlwaysHold ?? unit.reconciliation.expected,
+        projectionKind: unit.correctnessDefinition?.enforcementKind,
+        row,
+        evidenceToInspect: [`quick.units[id=${unit.unitId}]`, "quick.evidenceCompleteness"],
+      }),
+    );
+  }
+  return items.slice(0, 32);
+}
+
 function buildOrderedNextActionsWorkflow(
   result: WorkflowResult,
   primary: RecommendedActionCode,
@@ -717,6 +1171,8 @@ export function deriveRemediationDecisionFromWorkflowResult(result: WorkflowResu
       actionableFailure: noneFailure,
       orderedNextActions: [nextActionEntry("none")],
       rerunReadiness: "rerun_ready_same_inputs",
+      remediationItems: [],
+      rerunPath: rerunPathForType("no_rerun_needed"),
     };
   }
 
@@ -729,7 +1185,9 @@ export function deriveRemediationDecisionFromWorkflowResult(result: WorkflowResu
   const blocker = classifyWorkflowBlocker(result);
   const orderedNextActions = buildOrderedNextActionsWorkflow(result, actionableFailure.recommendedAction);
   const rerunReadiness = deriveRerunReadinessWorkflow(actionableFailure, blocker, result.status);
-  return { actionableFailure, orderedNextActions, rerunReadiness };
+  const remediationItems = buildWorkflowRemediationItems(result);
+  const rerunPath = remediationItems.find((i) => i.primary)?.rerunPath ?? remediationItems[0]?.rerunPath ?? rerunPathForType("after_manual_review_verify");
+  return { actionableFailure, orderedNextActions, rerunReadiness, remediationItems, rerunPath };
 }
 
 export function deriveRemediationDecisionFromQuickReport(
@@ -748,7 +1206,14 @@ export function deriveRemediationDecisionFromQuickReport(
   const blocker = classifyQuickPreviewBlocker(quickSignal, report.verdict);
   const orderedNextActions = buildOrderedNextActionsQuick(report, actionableFailure.recommendedAction);
   const rerunReadiness = deriveRerunReadinessQuick(blocker, report.verdict, actionableFailure);
-  return { actionableFailure, orderedNextActions, rerunReadiness };
+  const remediationItems = buildQuickRemediationItems(report);
+  const rerunPath =
+    report.verdict === "pass"
+      ? rerunPathForType("no_rerun_needed")
+      : remediationItems.find((i) => i.primary)?.rerunPath ??
+        remediationItems[0]?.rerunPath ??
+        rerunPathForType("after_manual_review_verify");
+  return { actionableFailure, orderedNextActions, rerunReadiness, remediationItems, rerunPath };
 }
 
 export type PerRunActionable = {

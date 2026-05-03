@@ -463,7 +463,7 @@ export interface components {
         OssClaimContinuationRequest: {
             claim_secret: string;
         };
-        /** @description POST accepts schemaVersion 3 only: { "schemaVersion": 3, "certificate": <OutcomeCertificateV2> } per schemas/public-verification-report-v3.schema.json. Legacy envelope POST bodies return HTTP 400. */
+        /** @description POST accepts schemaVersion 3 only: { "schemaVersion": 3, "certificate": <OutcomeCertificateV3> } per schemas/public-verification-report-v3.schema.json. Legacy envelope POST bodies return HTTP 400. */
         PublicVerificationReportCreate: {
             [key: string]: unknown;
         };

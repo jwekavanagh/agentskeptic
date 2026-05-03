@@ -494,6 +494,17 @@ export function assertOutcomeCertificateInvariants(certificate: OutcomeCertifica
   ) {
     throw new Error("outcome_certificate: evidenceCompleteness malformed");
   }
+  if (certificate.stateRelation !== "matches_expectations") {
+    if (
+      certificate.evidenceCompleteness.remediationItems === undefined ||
+      certificate.evidenceCompleteness.remediationItems.length === 0
+    ) {
+      throw new Error("failed outcome certificate missing evidenceCompleteness.remediationItems");
+    }
+    if (certificate.evidenceCompleteness.rerunPath === undefined) {
+      throw new Error("failed outcome certificate missing evidenceCompleteness.rerunPath");
+    }
+  }
   if (!certificate.humanReport.includes(EVIDENCE_COMPLETENESS_BEGIN)) {
     throw new Error("outcome_certificate: humanReport must contain evidence_completeness anchors");
   }

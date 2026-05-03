@@ -932,7 +932,7 @@ components:
       additionalProperties: false
     PublicVerificationReportCreate:
       description: >
-        POST accepts schemaVersion 3 only: { "schemaVersion": 3, "certificate": <OutcomeCertificateV2> } per
+        POST accepts schemaVersion 3 only: { "schemaVersion": 3, "certificate": <OutcomeCertificateV3> } per
         schemas/public-verification-report-v3.schema.json. Legacy envelope POST bodies return HTTP 400.
       type: object
       additionalProperties: true

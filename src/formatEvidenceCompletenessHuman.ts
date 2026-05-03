@@ -11,7 +11,7 @@ export const EVIDENCE_COMPLETENESS_BEGIN = "=== evidence_completeness ===" as co
 export const EVIDENCE_COMPLETENESS_END = "=== end evidence_completeness ===" as const;
 
 /** Max body lines between anchors (excluding boundary lines). */
-export const EVIDENCE_COMPLETENESS_MAX_LINES = 22 as const;
+export const EVIDENCE_COMPLETENESS_MAX_LINES = 48 as const;
 
 export function formatEvidenceCompletenessHuman(
   ec: EvidenceCompletenessJson,
@@ -46,8 +46,33 @@ export function formatEvidenceCompletenessHuman(
     if (lines.length >= 1 + EVIDENCE_COMPLETENESS_MAX_LINES) break;
     lines.push(`  - ${n.text}`);
   }
-  if (ec.rerunReadiness !== undefined && lines.length < 1 + EVIDENCE_COMPLETENESS_MAX_LINES) {
+  if (ec.remediationItems !== undefined && ec.remediationItems.length > 0) {
+    lines.push("Remediation items:");
+    for (const item of ec.remediationItems.slice(0, 8)) {
+      if (lines.length >= 1 + EVIDENCE_COMPLETENESS_MAX_LINES) break;
+      lines.push(`  - ${item.id}: ${item.actionText}`);
+      if (lines.length >= 1 + EVIDENCE_COMPLETENESS_MAX_LINES) break;
+      lines.push(`    Failed check: ${item.failedCheck}`);
+      if (lines.length >= 1 + EVIDENCE_COMPLETENESS_MAX_LINES) break;
+      lines.push(`    Expected state: ${item.expectedState.summary}`);
+      if (lines.length >= 1 + EVIDENCE_COMPLETENESS_MAX_LINES) break;
+      lines.push(`    Automation: ${item.automation.label}`);
+      if (lines.length >= 1 + EVIDENCE_COMPLETENESS_MAX_LINES) break;
+      lines.push(`    Rerun: ${item.rerunPath.readinessLabel}`);
+      if (item.humanReview.required && item.humanReview.decisionPrompt !== undefined) {
+        if (lines.length >= 1 + EVIDENCE_COMPLETENESS_MAX_LINES) break;
+        lines.push(`    Manual review: ${item.humanReview.decisionPrompt}`);
+      }
+    }
+  } else if (ec.rerunReadiness !== undefined && lines.length < 1 + EVIDENCE_COMPLETENESS_MAX_LINES) {
     lines.push(`Rerun readiness: ${ec.rerunReadiness}`);
+  }
+  if (
+    ec.rerunPath !== undefined &&
+    (ec.remediationItems === undefined || ec.remediationItems.length === 0) &&
+    lines.length < 1 + EVIDENCE_COMPLETENESS_MAX_LINES
+  ) {
+    lines.push(`Rerun: ${ec.rerunPath.readinessLabel}`);
   }
   lines.push(
     `Trust boundary: runKind=${ctx.runKind} highStakesReliance=${ctx.highStakesReliance} (see certificate fields for normative meaning).`,

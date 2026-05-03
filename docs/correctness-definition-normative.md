@@ -31,7 +31,7 @@ This document is the **behavioral single source of truth** for `workflowTruthRep
 - **`run_ingest_integrity` / `event_capture_integrity`:** `primaryFailureCodes` or `forbiddenEventSequenceCodes` plus `workflowId` and `verificationPolicyFragment` are **sufficient** to build ingest or capture CI gates that reject bad runs **before** verification.
 - **`run_context_fairness`:** `ingestIndex`, `requiredUpstreamContract`, and `primaryRunContextCodes` are **sufficient** to document upstream prerequisites for fair tool evaluation.
 - **`quick_inferred_sql_row` / `quick_inferred_relational`:** `sqlRowRequest` or relational fields are **sufficient** to build a provisional or exported registry check (subject to Quick Verify coverage limits in [`docs/verification-product.md`](verification-product.md)).
-- **`quick_mapping_gap`:** Projection is **sufficient** to choose among extending structured tool activity, adding an explicit registry tool, or `manual_review`—see `remediationAlignment`.
+- **`quick_mapping_gap`:** Projection is **sufficient** to choose among extending structured tool activity, adding an explicit registry tool, or `manual_review`—see `remediationAlignment` and the matching `evidenceCompleteness.remediationItems[]` quick item.
 
 ## `requiredUpstreamContract` (run context)
 
@@ -107,15 +107,15 @@ Implementation fills `<placeholders>` deterministically. Anchors **`CD_TPL_*`** 
 
 ## `remediationAlignment` (Quick Verify)
 
-Deterministic map from lexicographically first `reasonCodes` entry on the unit:
+Quick Verify uses the same remediation policy as the certificate convergence surface in `actionableFailure.ts`. Unit-level `correctnessDefinition.remediationAlignment.recommendedAction` must match the corresponding `evidenceCompleteness.remediationItems[]` quick-unit item. Deterministic map from the unit reason code set:
 
 | Reason prefix / code | `recommendedAction` |
 |----------------------|---------------------|
 | `CONNECTOR_ERROR` | `improve_read_connectivity` |
-| `MAPPING_FAILED`, `UNKNOWN`, registry/resolve style codes | `correct_verification_inputs` |
+| `MAPPING_FAILED`, `UNKNOWN_TOOL`, registry/resolve style codes | `correct_verification_inputs` |
 | `ROW_ABSENT`, `VALUE_MISMATCH`, `DUPLICATE_ROWS`, relational mismatch codes | `reconcile_downstream_state` |
 | Else | `manual_review` |
 
-(`automationSafe` is always `false` for quick non-pass units.)
+Quick unit `automationSafe` remains `false`; user-facing automation class is emitted on `evidenceCompleteness.remediationItems[].automation`.
 
-Batch path copies `failureAnalysis.actionableFailure` unchanged.
+Batch path copies `failureAnalysis.actionableFailure` unchanged for the primary failure and emits per-check remediation items for the full failed-check list.

@@ -1,6 +1,6 @@
-# AgentSkeptic integrator guide (v2 SSOT)
+# AgentSkeptic integrator guide (v3 SSOT)
 
-**Start here:** run **`agentskeptic quick`** first for a cheap, preview-only read on captured activity when you can, then run **one contract truth check** — compare structured tool activity to your database with **`agentskeptic check`** (CLI) or **`AgentSkeptic.check`** (TypeScript). Read the **Outcome Certificate** on stdout (**v2**, includes **`evidenceCompleteness`**) and the **`truth_check_verdict`** line on stderr.
+**Start here:** run **`agentskeptic quick`** first for a cheap, preview-only read on captured activity when you can, then run **one contract truth check** — compare structured tool activity to your database with **`agentskeptic check`** (CLI) or **`AgentSkeptic.check`** (TypeScript). Read the **Outcome Certificate** on stdout (**v3**, includes **`evidenceCompleteness`**) and the **`truth_check_verdict`** line on stderr.
 
 Optional accelerator: [/integrate/guided](https://agentskeptic.com/integrate/guided) in the hosted app (this file is the raw integrator SSOT).
 
@@ -10,7 +10,7 @@ Hosted trust capture (blocked-decision records + alerts) lives in **[trust-autho
 
 **Goal:** answer “what happened on the wire?” before you invest in registry authoring.
 
-- Run **`agentskeptic quick`** on your capture (SQLite or Postgres) and read **`QuickVerifyReport`** stdout (**`schemaVersion` 5**). The same **`evidenceCompleteness`** shape appears on quick output and on contract certificates — use it for blocker category, missing actionable inputs, **`quickSignal`** (“did SQL verification run meaningfully?” vs ingest/mapping stalls), and **`nextActions`**.
+- Run **`agentskeptic quick`** on your capture (SQLite or Postgres) and read **`QuickVerifyReport`** stdout (**`schemaVersion` 5**). The same **`evidenceCompleteness`** shape appears on quick output and on contract certificates — use it for blocker category, missing actionable inputs, **`quickSignal`** (“did SQL verification run meaningfully?” vs ingest/mapping stalls), summary **`nextActions`**, and complete **`remediationItems[]`** when checks fail.
 - Human stderr includes the quick anchor block plus the shared **`=== evidence_completeness ===`** section (see **`docs/outcome-certificate-integrator.md`**).
 - **Preview boundary:** `quick_preview` stays **`highStakesReliance: prohibited`**; graduate to contract **`check`** below when reviews need decision-grade permission.
 
