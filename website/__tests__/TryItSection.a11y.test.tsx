@@ -19,9 +19,9 @@ describe("VerifyPageClient a11y", () => {
   it("disables run button while loading", async () => {
     mockFetch(
       () =>
-        new Promise(() => {
+        new Promise<Response>(() => {
           /* never resolves */
-        }) as Promise<Response>,
+        }),
     );
     render(<VerifyPageClient />);
     const btn = screen.getByRole("button", { name: "Run verification" });
@@ -30,12 +30,13 @@ describe("VerifyPageClient a11y", () => {
   });
 
   it("shows API errors in alert region", async () => {
-    mockFetch(async () => ({
-      ok: false,
-      status: 500,
-      headers: new Headers({ "x-request-id": "test-req-1" }),
-      text: async () => JSON.stringify({ ok: false, error: "VERIFY_ENGINE_FAILED" }),
-    } as Response));
+    mockFetch(
+      async () =>
+        new Response(JSON.stringify({ ok: false, error: "VERIFY_ENGINE_FAILED" }), {
+          status: 500,
+          headers: { "x-request-id": "test-req-1" },
+        }),
+    );
     render(<VerifyPageClient />);
     fireEvent.click(screen.getByRole("button", { name: "Run verification" }));
     await waitFor(() => {
@@ -47,21 +48,21 @@ describe("VerifyPageClient a11y", () => {
   });
 
   it("renders contradiction headline on successful default response", async () => {
-    mockFetch(async () => ({
-      ok: true,
-      status: 200,
-      headers: new Headers(),
-      text: async () =>
-        JSON.stringify({
-          ok: true,
-          workflowId: "wf_missing",
-          humanReport: "ROW_ABSENT: expected row is missing.",
-          certificate: {
-            stateRelation: "does_not_match",
-            explanation: { headline: "Expected row is missing.", details: [{ code: "ROW_ABSENT" }] },
-          },
-        }),
-    } as Response));
+    mockFetch(
+      async () =>
+        new Response(
+          JSON.stringify({
+            ok: true,
+            workflowId: "wf_missing",
+            humanReport: "ROW_ABSENT: expected row is missing.",
+            certificate: {
+              stateRelation: "does_not_match",
+              explanation: { headline: "Expected row is missing.", details: [{ code: "ROW_ABSENT" }] },
+            },
+          }),
+          { status: 200, headers: { "content-type": "application/json" } },
+        ),
+    );
     render(<VerifyPageClient />);
     expect(screen.getByLabelText("Verification events NDJSON")).toHaveValue(EXAMPLE_WF_MISSING_NDJSON);
     fireEvent.click(screen.getByRole("button", { name: "Run verification" }));
