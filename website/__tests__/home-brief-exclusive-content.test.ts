@@ -24,7 +24,7 @@ describe("home vs brief exclusive content", { timeout: 300_000 }, () => {
     await ensureMarketingSiteRunning();
   });
 
-  it("matrix: brief has visitor+terminal+sections; home has stakes+tryit", async () => {
+  it("matrix: brief has visitor+terminal+sections; home has try-it and not brief section titles", async () => {
     const home = await getSiteHtml("/");
     const brief = await getSiteHtml(marketing.slug);
     const homeText = mainText(home);
@@ -61,8 +61,8 @@ describe("home vs brief exclusive content", { timeout: 300_000 }, () => {
     expect(home).toContain('data-testid="home-try-it"');
     expect(brief).not.toContain('data-testid="home-try-it"');
 
-    expect(homeText).toContain(productCopy.homeStakes.sectionTitle);
-    expect(briefText).not.toContain(productCopy.homeStakes.sectionTitle);
+    expect(homeText).toContain("Paste events. Verify reality.");
+    expect(briefText).not.toContain("Paste events. Verify reality.");
 
     const navPrimary = home.indexOf('aria-label="Primary"');
     expect(navPrimary).toBeGreaterThanOrEqual(0);

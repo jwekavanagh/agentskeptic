@@ -371,11 +371,7 @@ export const whenToUseDecisionBox = {
   ],
 } as const;
 
-export const trustStripPills = [
-  "Read-only by default",
-  "Verifier does not write your stores",
-  "Structured verdict artifacts",
-] as const;
+export const trustStripPills = ["Read-only by default", "Structured verdict artifacts"] as const;
 
 /**
  * Primary homepage copy (canonical for `/`). Stubs for the same topics remain in
@@ -401,9 +397,9 @@ const homepageDisplay = {
   mechanism: {
     intro: "Add this as a read-only gate in minutes:",
     items: [
-      "Agents emit structured tool activity (JSON/NDJSON) as they work.",
-      "You map tool ids to the stores they touch (for example in tools.json).",
-      "Verification re-reads those stores and returns a deterministic outcome you can script in CI and HTTP.",
+      "Agents emit structured tool activity as they work.",
+      "You map tool ids to the stores they touch.",
+      "AgentSkeptic re-reads those stores and returns a deterministic outcome you can script in CI.",
     ] as const,
     worksWith: bt.homepageCopy.mechanismWorksWith,
     notObservability: "It compares state to claims, not a full APM, distributed tracing, or log aggregation product.",

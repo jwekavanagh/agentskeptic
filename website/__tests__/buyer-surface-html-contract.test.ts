@@ -42,10 +42,10 @@ describe("buyer-surface HTML contracts (R2–R6)", { timeout: 300_000 }, () => {
     expect(hrefs).toEqual(expected);
   });
 
-  it("homepage trust strip has four keyed testids (R3)", async () => {
+  it("homepage closing footer has four keyed testids github → npm → docs → pricing (R3)", async () => {
     const html = await getSiteHtml("/");
-    for (const key of ["integrate", "openapi", "npm", "github"]) {
-      expect(html).toContain(`data-testid="home-trust-strip-${key}"`);
+    for (const key of ["github", "npm", "docs", "pricing"]) {
+      expect(html).toContain(`data-testid="home-footer-${key}"`);
     }
   });
 
