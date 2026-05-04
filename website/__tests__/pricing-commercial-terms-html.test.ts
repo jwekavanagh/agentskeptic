@@ -35,7 +35,9 @@ describe("pricing page HTML (plans + comparison)", { timeout: 300_000 }, () => {
     const $ = cheerio.load(html);
     const recap = $('[data-testid="pricing-hero-recap"]');
     for (const pill of productCopy.trustStripPills) {
-      expect(recap.text()).toContain(pill);
+      const needle =
+        typeof pill === "string" ? pill : `${pill.title} ${pill.supporting}`.replace(/\s+/g, " ").trim();
+      expect(recap.text()).toContain(needle);
     }
   });
 });

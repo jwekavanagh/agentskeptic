@@ -5,5 +5,5 @@
     "Run verification on your workflow; green exit and verdict are product success.",
     "Set AGENTSKEPTIC_TELEMETRY=0 to disable opt-in activity posts; they never change verification results."
   ],
-  "telemetryIcingLine": "Optional telemetry helps connect browser demos and CLI verification. It never affects verification results and can be disabled."
+  "telemetryIcingLine": "Optional telemetry connects browser demos and CLI verification. It never affects verification results and can be disabled."
 }

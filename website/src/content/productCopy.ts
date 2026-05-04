@@ -351,9 +351,14 @@ export const whenToUseDecisionBox = {
 } as const;
 
 export const trustStripPills = [
-  "Read-only by default",
-  "Verifier does not write your stores",
-  "Structured verdict artifacts",
+  {
+    title: "Read-only by default",
+    supporting: "Verifier does not write to your stores",
+  },
+  {
+    title: "Structured verdict artifacts",
+    supporting: "Deterministic JSON you can inspect, save, and use in CI",
+  },
 ] as const;
 
 /**
@@ -380,9 +385,9 @@ const homepageDisplay = {
   mechanism: {
     intro: "Add this as a read-only gate in minutes:",
     items: [
-      "Agents emit structured tool activity as they work.",
-      "You map tool ids to the stores they touch.",
-      "AgentSkeptic re-reads those stores and returns a deterministic outcome you can script in CI.",
+      "Agents emit structured tool activity.",
+      "You map tool IDs to the stores they affect.",
+      "AgentSkeptic re-reads those stores and returns a deterministic outcome for CI.",
     ] as const,
     worksWith: bt.homepageCopy.mechanismWorksWith,
     notObservability: "It compares state to claims, not a full APM, distributed tracing, or log aggregation product.",
@@ -552,7 +557,7 @@ export const productCopy = {
 
   homeHeroExampleLabel: "Example: Missing write",
   homeHeroFailureCaption:
-    "The agent reported a successful CRM contact update, but the row is missing from the database.",
+    "The agent reported a successful CRM contact update. AgentSkeptic checked the database and found the row was missing.",
 
   fitAndLimits: {
     sectionTitle: "Who it's for",

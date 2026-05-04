@@ -1214,6 +1214,23 @@ main {
   font-size: 0.84rem;
   color: var(--brand-navy-ink);
 }
+.trust-pills li.trust-pill-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.2rem;
+  border-radius: 12px;
+  max-width: min(100%, 22rem);
+}
+.trust-pill-headline {
+  font-weight: 600;
+}
+.trust-pill-supporting {
+  display: block;
+  font-size: 0.8rem;
+  line-height: 1.35;
+  font-weight: 400;
+}
 
 .value-triptych {
   display: grid;

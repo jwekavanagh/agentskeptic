@@ -57,9 +57,9 @@ export default async function HomePage() {
           <div className="home-hero-copy">
             <h1 id="hero-heading">{productCopy.hero.title}</h1>
             <p className="lede">{productCopy.heroOutcome}</p>
+            <p className="lede">{productCopy.heroMechanism}</p>
             <p className="lede home-hero-supporting-outcome">
-              Catch missing DB writes before release with read-only verification against your actual
-              stores.
+              Catch missing DB writes before release with read-only verification against your real stores.
             </p>
             <p className="home-cta-row" data-testid="home-hero-cta-row">
               <a
@@ -99,7 +99,7 @@ export default async function HomePage() {
                 <span className="home-hero-flow-sep" aria-hidden="true">
                   →
                 </span>
-                <span>Store check</span>
+                <span>Store checked</span>
                 <span className="home-hero-flow-sep" aria-hidden="true">
                   →
                 </span>
@@ -107,7 +107,7 @@ export default async function HomePage() {
               </div>
             </div>
             <details className="home-hero-raw-json">
-              <summary>Example verification details (JSON)</summary>
+              <summary>Example verification details</summary>
               <pre
                 className="home-hero-terminal-pre"
                 aria-label="Example verification failure JSON; verdict failed"

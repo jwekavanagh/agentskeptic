@@ -12,8 +12,8 @@
   "heroTitle": "Trust reality, not traces.",
   "heroSubtitle": "Declared tool effects vs read-only store facts.",
   "visitorProblemAnswer": "Traces say success. Your data often disagrees. Read-only checks at verify time compare tool claims to stored state—before you ship or bill.",
-  "heroOutcome": "Your agents say the workflow succeeded.",
-  "heroMechanism": "Your database says otherwise.",
+  "heroOutcome": "Your agent says the workflow succeeded.",
+  "heroMechanism": "AgentSkeptic checks whether the database actually changed.",
   "guaranteeFootnote": "Read-only checks; not which call wrote.",
   "heroPositioning": "Post-condition verification for AI-agent workflows.",
   "siteDefaultMetadata": {
