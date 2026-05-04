@@ -129,32 +129,32 @@
   "problemIndex": [
     {
       "moment": "Green trace, bad data",
-      "symptom": "Green LangGraph trace but missing Postgres row.",
+      "symptom": "A LangGraph trace looks successful, but the Postgres row is missing.",
       "primaryRoute": "/guides/trace-green-postgres-row-missing"
     },
     {
       "moment": "Tool ok, CRM wrong",
-      "symptom": "Tool loop success, CRM state wrong.",
+      "symptom": "A tool loop reports success, but CRM state is wrong.",
       "primaryRoute": "/guides/tool-loop-success-crm-state-wrong"
     },
     {
       "moment": "CI green, no write",
-      "symptom": "After CI passes, the database side effect never landed.",
+      "symptom": "CI passes, but the database write never landed.",
       "primaryRoute": "/guides/ci-green-logs-row-absent"
     },
     {
       "moment": "Pre-prod read-only gate",
-      "symptom": "Pre-production read-only SQL gate.",
+      "symptom": "Add a read-only SQL gate before production.",
       "primaryRoute": "/guides/pre-production-read-only-sql-gate"
     },
     {
       "moment": "LangGraph data check",
-      "symptom": "Debug Postgres after LangGraph.",
+      "symptom": "Debug Postgres state after a LangGraph run.",
       "primaryRoute": "/guides/debug-postgres-after-langgraph"
     },
     {
       "moment": "Webhook vs ledger",
-      "symptom": "Stripe webhooks vs database rows.",
+      "symptom": "Compare Stripe webhooks with database rows.",
       "primaryRoute": "/guides/stripe-webhook-database-alignment"
     }
   ],
