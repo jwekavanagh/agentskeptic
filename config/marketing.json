@@ -52,7 +52,7 @@
   "site": {
     "integrate": {
       "title": "Get started",
-      "description": "Run one truth check against your database (agentskeptic check); optional activation packs export proof/ for commercial evidence."
+      "description": "Run a single verification that compares what your agents and tools claimed against your actual stored state."
     },
     "openGraph": {
       "image": {

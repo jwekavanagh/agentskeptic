@@ -41,19 +41,17 @@ describe("marketing public route DOM invariants", { timeout: 300_000 }, () => {
     expect(BANNED.test(text)).toBe(false);
   });
 
-  it("integrate has pack-led pre, optional spine section, and GitHub doc links", async () => {
+  it("integrate has truth-check pre and GitHub doc link", async () => {
     const html = await getSiteHtml("/integrate");
     const $ = cheerio.load(html);
     const $main = $("main.integrate-main");
-    // Page includes a second <pre> inside the optional spine section (activation shell); O1 crossing command is this node only.
-    const $packPre = $main.find('[data-testid="integrate-crossing-commands"]');
-    expect($packPre.length).toBe(1);
-    const packNorm = $packPre.text().replace(/\s+/g, " ");
-    const cmdNorm = marketing.integratePage.packLedCommand.replace(/\s+/g, " ").trim();
-    expect(packNorm).toContain(cmdNorm);
-    expect($main.find("section.integrate-optional-spine").length).toBe(1);
+    const $truthPre = $main.find('[data-testid="integrate-truth-check-commands"]');
+    expect($truthPre.length).toBe(1);
+    const truthNorm = $truthPre.text().replace(/\s+/g, " ");
+    const checkNorm = marketing.integratePage.truthCheckCommand.replace(/\s+/g, " ").trim();
+    expect(truthNorm).toContain(checkNorm);
+    expect($main.find("section.integrate-optional-spine").length).toBe(0);
     expect($main.find("details").length).toBe(0);
-    expect($main.find('[data-testid="integrator-activation-commands"]').length).toBe(1);
     const gh = $main.find('a[href^="https://github.com/"]');
     expect(gh.length).toBeGreaterThanOrEqual(1);
     const hrefs = gh
