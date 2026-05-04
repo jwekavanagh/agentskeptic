@@ -175,44 +175,44 @@ export const learnHub = {
     {
       href: "/guides/ai-agent-wrong-crm-data",
       title: "AI agent updated the CRM — but the record never landed",
-      caption: "Verify values before you trust the customer data.",
+      caption: "Verify CRM writes before you trust customer data.",
     },
     {
       href: "/guides/scenario-green-trace-row-missing",
       title: "LangGraph trace looks healthy — but state is wrong",
-      caption: "Catch missing or stale rows—or vector metadata.",
+      caption: "Catch missing or stale rows and vector metadata.",
     },
     {
       href: "/guides/scenario-ci-green-side-effect-missing",
       title: "CI passed, but the side effect is missing",
-      caption: "Green logs don't mean your store updated.",
+      caption: "Check whether the store actually updated.",
     },
     {
       href: "/guides/tool-loop-success-crm-state-wrong",
       title: 'Tool loop said "success" — CRM or ledger disagrees',
-      caption: "Close the gap between declared activity and stored state.",
+      caption: "Compare declared activity with stored state.",
     },
     {
       href: "/guides/scenario-stripe-webhook-ledger-mismatch",
       title: "Stripe webhook returned 200 — but your ledger is off",
-      caption: "Reconcile external callbacks with your internal records before settlement.",
+      caption: "Reconcile external callbacks with internal records before settlement.",
     },
   ],
   debug: [
     {
       href: "/guides/debug-postgres-after-langgraph",
       title: "Debug after LangGraph or agent runs",
-      caption: "A practical checklist to reconcile traces with persisted rows and state.",
+      caption: "Reconcile traces with persisted rows and state.",
     },
     {
       href: "/guides/first-run-verification",
       title: "First-run verification on your own data",
-      caption: "Run the first deterministic check on your own stores with minimal setup.",
+      caption: "Run your first deterministic check with minimal setup.",
     },
     {
       href: "/guides/pre-production-read-only-sql-gate",
       title: "Add a pre-production read-only gate",
-      caption: "Add a stop-ship gate that verifies state before release.",
+      caption: "Verify state before release.",
     },
   ],
 } as const;
@@ -497,11 +497,11 @@ export const productCopy = {
   guaranteeProductBriefCtaLabel: "How it works",
 
   /** Learn hub (`/guides`) first line under H1 (UI-only). */
-  learnHubPrimaryLede: "Real problems, real fixes.",
+  learnHubPrimaryLede: "Real problems. Real fixes.",
 
   /** Guides hub second lede (UI-only). */
   guidesHubSupportingSentence:
-    `Guides that turn "it looked fine in the trace" into "here's exactly what to check before it reaches production."`,
+    "Guides for checking stored state before agent failures reach production.",
 
   /** Muted line after Learn hub supporting lede — pairs with `/compare`. */
   guidesHubCompareLead: "When you want bundles versus single checks in one view, use",
