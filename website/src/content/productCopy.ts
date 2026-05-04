@@ -530,16 +530,10 @@ export const productCopy = {
 
   /** `/problems` metadata (UI-only; list body comes from `config/marketing.json` `problemIndex`). */
   problemsPageMetadata: {
-    title: "Problems the product routes to",
+    title: "Problems",
     description:
-      "Buyer moments from `config/marketing.json` `problemIndex`—each row links to a guide and related site paths.",
+      "Problem index: trace-versus-state symptoms with links to guides.",
   },
-
-  /** Visible text around the `/compare` link on `/problems`. */
-  problemsHubIntroLead:
-    "These buyer moments are published in discovery order; each row links to a primary guide and related paths on this site. When you want bundles versus single checks in one place, use",
-
-  problemsHubIntroTrail: ".",
 
   homeWhatCatches: {
     sectionTitle: homepageDisplay.homeWhatCatches.sectionTitle,

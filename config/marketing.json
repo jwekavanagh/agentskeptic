@@ -129,48 +129,33 @@
   "problemIndex": [
     {
       "moment": "Green trace, bad data",
-      "primaryRoute": "/guides/trace-green-postgres-row-missing",
-      "relatedRoutes": ["/integrate", "/database-truth-vs-traces"]
+      "symptom": "Green LangGraph trace but missing Postgres row.",
+      "primaryRoute": "/guides/trace-green-postgres-row-missing"
     },
     {
       "moment": "Tool ok, CRM wrong",
-      "primaryRoute": "/guides/tool-loop-success-crm-state-wrong",
-      "relatedRoutes": ["/integrate", "/pricing"]
+      "symptom": "Tool loop success, CRM state wrong.",
+      "primaryRoute": "/guides/tool-loop-success-crm-state-wrong"
     },
     {
       "moment": "CI green, no write",
-      "primaryRoute": "/guides/ci-green-logs-row-absent",
-      "relatedRoutes": ["/guides/ci-green-missing-database-side-effect", "/integrate"]
+      "symptom": "After CI passes, the database side effect never landed.",
+      "primaryRoute": "/guides/ci-green-logs-row-absent"
     },
     {
       "moment": "Pre-prod read-only gate",
-      "primaryRoute": "/guides/pre-production-read-only-sql-gate",
-      "relatedRoutes": ["/integrate", "/pricing"]
-    },
-    {
-      "moment": "AI CRM data wrong",
-      "primaryRoute": "/guides/ai-agent-wrong-crm-data",
-      "relatedRoutes": ["/database-truth-vs-traces"]
-    },
-    {
-      "moment": "Params vs store",
-      "primaryRoute": "/guides/automation-success-database-mismatch",
-      "relatedRoutes": ["/integrate"]
+      "symptom": "Pre-production read-only SQL gate.",
+      "primaryRoute": "/guides/pre-production-read-only-sql-gate"
     },
     {
       "moment": "LangGraph data check",
-      "primaryRoute": "/guides/debug-postgres-after-langgraph",
-      "relatedRoutes": ["/guides/verify-langgraph-workflows", "/integrate"]
+      "symptom": "Debug Postgres after LangGraph.",
+      "primaryRoute": "/guides/debug-postgres-after-langgraph"
     },
     {
       "moment": "Webhook vs ledger",
-      "primaryRoute": "/guides/stripe-webhook-database-alignment",
-      "relatedRoutes": ["/pricing"]
-    },
-    {
-      "moment": "CI green, no effect",
-      "primaryRoute": "/guides/scenario-ci-green-side-effect-missing",
-      "relatedRoutes": ["/guides/ci-green-missing-database-side-effect", "/integrate"]
+      "symptom": "Stripe webhooks vs database rows.",
+      "primaryRoute": "/guides/stripe-webhook-database-alignment"
     }
   ],
   "llms": {
