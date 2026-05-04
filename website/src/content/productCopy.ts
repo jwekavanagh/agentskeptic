@@ -350,7 +350,11 @@ export const whenToUseDecisionBox = {
   ],
 } as const;
 
-export const trustStripPills = ["Read-only by default", "Structured verdict artifacts"] as const;
+export const trustStripPills = [
+  "Read-only by default",
+  "Verifier does not write your stores",
+  "Structured verdict artifacts",
+] as const;
 
 /**
  * Primary homepage copy (canonical for `/`). Stubs for the same topics remain in

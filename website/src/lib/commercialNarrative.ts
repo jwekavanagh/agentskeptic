@@ -210,7 +210,7 @@ export function getPricingPageViewModel(catalog: CommercialPlansFile): {
       recommended: id === recommendedPlanId,
     };
   });
-  const metadataDescription = [m.positioning, heroN.subtitle, heroN.subtitleSecondary]
+  const metadataDescription = [m.positioning]
     .map((s) => s.replace(/\s+/g, " ").trim())
     .filter(Boolean)
     .join(" ");
