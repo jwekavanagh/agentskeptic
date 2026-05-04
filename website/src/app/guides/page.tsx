@@ -1,3 +1,8 @@
+import {
+  MarketingContentLink,
+  MarketingLinkItem,
+  MarketingLinkList,
+} from "@/components/marketing/MarketingLinkList";
 import { MarketingPageHeader } from "@/components/marketing/MarketingPageHeader";
 import { MarketingPageShell } from "@/components/marketing/MarketingPageShell";
 import { MarketingSection } from "@/components/marketing/MarketingSection";
@@ -29,30 +34,24 @@ export default function GuidesHubPage() {
 
       <MarketingSection aria-labelledby="learn-popular-heading">
         <h2 id="learn-popular-heading">{learnHub.popularHeading}</h2>
-        <ul className="mechanism-list guide-hub-list">
+        <MarketingLinkList>
           {learnHub.popular.map((g) => (
-            <li key={g.href}>
-              <Link href={g.href} className="guide-hub-link">
-                <span className="guide-hub-link-title">{g.title}</span>
-                <span className="muted guide-hub-link-caption">{g.caption}</span>
-              </Link>
-            </li>
+            <MarketingLinkItem key={g.href}>
+              <MarketingContentLink href={g.href} title={g.title} lines={[g.caption]} />
+            </MarketingLinkItem>
           ))}
-        </ul>
+        </MarketingLinkList>
       </MarketingSection>
 
       <MarketingSection aria-labelledby="learn-debug-heading">
         <h2 id="learn-debug-heading">{learnHub.debugHeading}</h2>
-        <ul className="mechanism-list guide-hub-list">
+        <MarketingLinkList>
           {learnHub.debug.map((g) => (
-            <li key={g.href}>
-              <Link href={g.href} className="guide-hub-link">
-                <span className="guide-hub-link-title">{g.title}</span>
-                <span className="muted guide-hub-link-caption">{g.caption}</span>
-              </Link>
-            </li>
+            <MarketingLinkItem key={g.href}>
+              <MarketingContentLink href={g.href} title={g.title} lines={[g.caption]} />
+            </MarketingLinkItem>
           ))}
-        </ul>
+        </MarketingLinkList>
       </MarketingSection>
 
       <MarketingSection className="learn-hub-cta" aria-labelledby="learn-closing-heading">

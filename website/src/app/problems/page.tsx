@@ -1,4 +1,9 @@
 import { DiscoveryArticleJsonLd } from "@/components/discovery/DiscoveryArticleJsonLd";
+import {
+  MarketingContentLink,
+  MarketingLinkItem,
+  MarketingLinkList,
+} from "@/components/marketing/MarketingLinkList";
 import { MarketingPageHeader } from "@/components/marketing/MarketingPageHeader";
 import { MarketingPageShell } from "@/components/marketing/MarketingPageShell";
 import { conversionSpine, productCopy } from "@/content/productCopy";
@@ -33,21 +38,25 @@ export default function ProblemsPage() {
         path="/problems"
         breadcrumbMiddle={{ name: "Learn", path: "/guides" }}
       />
-      <h1>{productCopy.problemsPageMetadata.title}</h1>
-      <p className="lede">{productCopy.problemsPageMetadata.supportingLine}</p>
-      <ol className="mechanism-list">
+      <MarketingPageHeader
+        title={productCopy.problemsPageMetadata.title}
+        description={<p className="lede">{productCopy.problemsPageMetadata.supportingLine}</p>}
+      />
+      <MarketingLinkList>
         {rows.map((row, i) => (
-          <li key={`${row.primaryRoute}-${i}`}>
-            <p>
-              <Link href={row.primaryRoute}>{row.moment}</Link>
-            </p>
-            <p className="muted">{row.symptom}</p>
-            {"verificationCue" in row && typeof row.verificationCue === "string" ? (
-              <p className="muted">{row.verificationCue}</p>
-            ) : null}
-          </li>
+          <MarketingLinkItem key={`${row.primaryRoute}-${i}`}>
+            <MarketingContentLink
+              href={row.primaryRoute}
+              title={row.moment}
+              lines={
+                "verificationCue" in row && typeof row.verificationCue === "string"
+                  ? [row.symptom, row.verificationCue]
+                  : [row.symptom]
+              }
+            />
+          </MarketingLinkItem>
         ))}
-      </ol>
+      </MarketingLinkList>
       <p className="home-cta-row">
         <Link
           href="/integrate"

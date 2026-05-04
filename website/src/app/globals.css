@@ -7,6 +7,8 @@ textarea:focus-visible,
 .btn:focus-visible,
 .link-secondary:focus-visible,
 .link-tertiary:focus-visible,
+.marketing-content-link:focus-visible,
+.marketing-text-link:focus-visible,
 .skip-to-main:focus-visible,
 [data-testid="brand-lockup"]:focus-visible,
 .site-logo:focus-visible,
@@ -678,27 +680,40 @@ button.secondary, .btn.secondary {
   padding-left: 1.25rem;
   max-width: 40rem;
 }
-.guide-hub-list li {
+/* Marketing hub lists: `/guides`, `/problems`, compare hub section titles — shared vertical rhythm */
+.marketing-link-list > li {
   margin: 0.65rem 0;
 }
-.guide-hub-link {
+.marketing-content-link {
   display: block;
   text-decoration: none;
   color: inherit;
 }
-.guide-hub-link:hover .guide-hub-link-title {
+.marketing-content-link:hover .marketing-content-link__title {
   text-decoration: underline;
 }
-.guide-hub-link-title {
+.marketing-content-link__title {
   display: block;
   font-weight: 600;
+  line-height: 1.45;
 }
-.guide-hub-link-caption {
+.marketing-content-link__desc {
   display: block;
   font-size: 0.9rem;
   margin-top: 0.2rem;
-  line-height: 1.35;
+  line-height: 1.45;
   max-width: 38rem;
+}
+.marketing-text-link {
+  font-weight: 600;
+  color: var(--link);
+  text-decoration: underline;
+  text-underline-offset: 0.12em;
+  text-decoration-color: color-mix(in srgb, var(--link) 32%, var(--bg));
+}
+.marketing-text-link:hover {
+  color: var(--link-hover);
+  text-decoration-color: color-mix(in srgb, var(--link-hover) 40%, var(--bg));
 }
 
 /* Learn hub (`/guides`): align with funnel pages — section rhythm, code in bundled list, CTA band */

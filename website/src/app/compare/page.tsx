@@ -1,3 +1,4 @@
+import { MarketingContentLink } from "@/components/marketing/MarketingLinkList";
 import { MarketingPageHeader } from "@/components/marketing/MarketingPageHeader";
 import { MarketingPageShell } from "@/components/marketing/MarketingPageShell";
 import { MarketingSection } from "@/components/marketing/MarketingSection";
@@ -5,7 +6,6 @@ import { conversionSpine } from "@/content/productCopy";
 import { indexableGuideCanonical } from "@/lib/indexableGuides";
 import { brandedMarketingTitle, marketingOpenGraphAndTwitter } from "@/lib/marketingSocialMetadata";
 import type { Metadata } from "next";
-import Link from "next/link";
 
 const compareSegmentTitle = "Compare reliability approaches";
 const comparePublicTitle = brandedMarketingTitle(compareSegmentTitle);
@@ -61,9 +61,7 @@ export default function CompareHubPage() {
       {SECTIONS.map((s) => (
         <MarketingSection key={s.href} aria-labelledby={s.id}>
           <h2 id={s.id}>
-            <Link href={s.href} className="guide-hub-link">
-              <span className="guide-hub-link-title">{s.title}</span>
-            </Link>
+            <MarketingContentLink href={s.href} title={s.title} />
           </h2>
           <p className="lede">{s.contrast}</p>
           <p className="lede">{s.ours}</p>
