@@ -23,7 +23,8 @@ export function SiteFunnelBeacon() {
 export function FirstFiveMinutesAfterMain() {
   const pathname = usePathname() ?? "";
   const basePath = pathname.replace(/\/+$/, "") || "/";
-  if (basePath === "/guides" || basePath === "/pricing" || basePath === "/security") return null;
+  if (basePath === "/guides" || basePath === "/pricing" || basePath === "/security" || basePath === "/privacy")
+    return null;
   const surface = resolveAttributionSurface(pathname);
   if (!surface) return null;
   return <FirstFiveMinutesCallout homeTeaser={pathname === "/"} />;
