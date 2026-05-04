@@ -68,12 +68,12 @@ export function getOutcomeCertificateQuickFactBullet(): string {
 
 export function getSecurityQuickFacts(): {
   title: string;
-  bullets: readonly [string, string, string, string];
+  bullets: readonly [string, string, string];
 } {
   const b = loadBuyerTruth().securityQuickFactsBullets;
   return {
-    title: "Quick facts for buyers",
-    bullets: [b[0], b[1], b[2], b[3]] as const,
+    title: "Trust facts",
+    bullets: [b[0], b[1], b[2]] as const,
   };
 }
 

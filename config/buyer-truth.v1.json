@@ -111,8 +111,7 @@
   "securityQuickFactsBullets": [
     "CLI and verification engine run in your infrastructure against databases you configure; the homepage demo runs bundled fixtures on this server for evaluation only.",
     "Structured tool activity is compared to database query results at verification time; that check does not prove a specific network call caused a row.",
-    "Quick verify is a preview path; contract verification with an Outcome Certificate is what the engine treats as decision-grade for matches — see docs/outcome-certificate-normative.md on GitHub for highStakesReliance rules.",
-    "For buyer trust summaries on this site, use the guides and Problems index linked here first; authoritative field semantics remain in docs/outcome-certificate-normative.md on GitHub (not verification-product.md, which is a legacy redirect)."
+    "Quick verify is a preview path; contract verification with an Outcome Certificate is what the engine treats as decision-grade for matches."
   ],
   "canonicalHref": {
     "verificationSemantics": "https://github.com/jwekavanagh/agentskeptic/blob/main/docs/outcome-certificate-normative.md",

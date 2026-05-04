@@ -571,24 +571,10 @@ export const productCopy = {
 
   productBriefPage,
 
-  /** Security & Trust page — factual only; link out to normative docs for guarantees. */
+  /** Security & Trust page — trust facts and documentation links. */
   securityTrust: {
     title: "Security & Trust",
-    intro: "Buyer-oriented answers live on this site first; GitHub remains the full normative source.",
-    sections: [
-      {
-        heading: "Buyer answers on this site",
-        paragraphs: [
-          "Use the buyer guides, Problems index, and Compare hub linked above for evaluation, metering, and trust boundaries in site-native prose before you widen database access.",
-        ],
-      },
-      {
-        heading: "GitHub as authoritative documentation",
-        paragraphs: [
-          "Verification vocabulary, commercial limits, and incident-class semantics remain normative in the repository SSOT documents linked below—this page does not restate those contracts.",
-        ],
-      },
-    ],
+    sections: [] as readonly { heading: string; paragraphs: readonly string[] }[],
     docLinks: {
       verificationSemanticsHref: bt.canonicalHref.verificationSemantics,
       commercialSsotHref: bt.canonicalHref.commercialSsotDoc,
