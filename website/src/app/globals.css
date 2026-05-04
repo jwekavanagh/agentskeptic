@@ -663,11 +663,21 @@ button.secondary, .btn.secondary {
   font-weight: 600;
 }
 .try-it-select {
-  padding: 0.4rem 0.6rem;
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  min-height: 14rem;
+  padding: 0.5rem 0.65rem;
   border-radius: 8px;
   border: 1px solid var(--border);
   background: var(--surface);
   color: var(--fg);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+    monospace;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  resize: vertical;
 }
 .try-it-run:disabled {
   opacity: 0.6;
