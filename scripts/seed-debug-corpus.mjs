@@ -13,9 +13,18 @@ const corpus = join(root, "examples", "debug-corpus");
 const producer = { name: "agentskeptic", version: "1.2.2" };
 const verifiedAt = "2026-04-23T12:00:00.000Z";
 
+/** Canonical LF bytes for committed NDJSON (Windows CRLF checkout must not leak into manifests). */
+function normalizeLfUtf8(s) {
+  return s.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+}
+
+function lfEventsBuffer(buf) {
+  return Buffer.from(normalizeLfUtf8(buf.toString("utf8")), "utf8");
+}
+
 function eventsLineBytes(workflowId) {
-  const raw = readFileSync(join(root, "examples", "events.ndjson"), "utf8");
-  const lines = raw.split(/\n/).filter((l) => l.length > 0);
+  const raw = normalizeLfUtf8(readFileSync(join(root, "examples", "events.ndjson"), "utf8"));
+  const lines = raw.split("\n").filter((l) => l.length > 0);
   const line = lines.find((l) => {
     try {
       return JSON.parse(l).workflowId === workflowId;
@@ -58,7 +67,7 @@ writeAgentRunBundle({
 });
 
 const wfOk = JSON.parse(readFileSync(join(corpus, "run_ok", "workflow-result.json"), "utf8"));
-const evOk = readFileSync(join(corpus, "run_ok", "events.ndjson"));
+const evOk = lfEventsBuffer(readFileSync(join(corpus, "run_ok", "events.ndjson")));
 const outB = join(corpus, "run_complete_b");
 rmSync(outB, { recursive: true, force: true });
 writeAgentRunBundle({
@@ -71,7 +80,7 @@ writeAgentRunBundle({
 
 const pathNonemptySrc = join(root, "test", "fixtures", "debug-ui-compare", "run_path_nonempty");
 const pathNonemptyWf = JSON.parse(readFileSync(join(pathNonemptySrc, "workflow-result.json"), "utf8"));
-const pathNonemptyEv = readFileSync(join(pathNonemptySrc, "events.ndjson"));
+const pathNonemptyEv = lfEventsBuffer(readFileSync(join(pathNonemptySrc, "events.ndjson")));
 const dstPath = join(corpus, "run_path_nonempty");
 rmSync(dstPath, { recursive: true, force: true });
 writeAgentRunBundle({
@@ -84,7 +93,7 @@ writeAgentRunBundle({
 
 const runOkDir = join(corpus, "run_ok");
 const wfOkCanonical = JSON.parse(readFileSync(join(runOkDir, "workflow-result.json"), "utf8"));
-const evOkCanonical = readFileSync(join(runOkDir, "events.ndjson"));
+const evOkCanonical = lfEventsBuffer(readFileSync(join(runOkDir, "events.ndjson")));
 rmSync(runOkDir, { recursive: true, force: true });
 writeAgentRunBundle({
   outDir: runOkDir,
