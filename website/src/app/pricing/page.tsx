@@ -1,3 +1,5 @@
+import { MarketingPageHeader } from "@/components/marketing/MarketingPageHeader";
+import { MarketingPageShell } from "@/components/marketing/MarketingPageShell";
 import { productCopy } from "@/content/productCopy";
 import { TrustPills } from "@/components/marketing/TrustPills";
 import { enterpriseMailtoHref } from "@/lib/contactSalesEmail";
@@ -28,10 +30,16 @@ export default function PricingPage() {
   const enterpriseMailto = enterpriseMailtoHref();
 
   return (
-    <main className="pricing-page">
-      <h1 className="pricing-hero-title">{vm.heroTitle}</h1>
-      <p className="pricing-positioning">{vm.heroSupporting}</p>
-      <p className="pricing-hero-subtitle">{vm.heroPositioning}</p>
+    <MarketingPageShell variant="pricing">
+      <MarketingPageHeader
+        title={vm.heroTitle}
+        description={
+          <>
+            <p className="pricing-positioning">{vm.heroSupporting}</p>
+            <p className="pricing-hero-subtitle">{vm.heroPositioning}</p>
+          </>
+        }
+      />
       <section className="pricing-hero-block" data-testid="pricing-hero-recap" aria-label="Pricing summary">
         <TrustPills items={productCopy.trustStripPills} />
       </section>
@@ -41,6 +49,6 @@ export default function PricingPage() {
       <PricingClient plans={vm.planRows} enterpriseMailto={enterpriseMailto} />
 
       <PricingCompareTable featureComparison={vm.featureComparison} />
-    </main>
+    </MarketingPageShell>
   );
 }

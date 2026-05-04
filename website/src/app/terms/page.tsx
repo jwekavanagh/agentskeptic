@@ -1,3 +1,4 @@
+import { MarketingPageShell } from "@/components/marketing/MarketingPageShell";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import ReactMarkdown from "react-markdown";
@@ -27,10 +28,10 @@ export default function TermsPage() {
     .replace(/\{\{EFFECTIVE_DATE\}\}/g, meta.effectiveDate)
     .replace(/\{\{TERMS_VERSION\}\}/g, meta.termsVersion);
   return (
-    <main className="integrate-main">
+    <MarketingPageShell variant="document">
       <article className="integrate-prose">
         <ReactMarkdown remarkPlugins={[remarkGfm]}>{body}</ReactMarkdown>
       </article>
-    </main>
+    </MarketingPageShell>
   );
 }

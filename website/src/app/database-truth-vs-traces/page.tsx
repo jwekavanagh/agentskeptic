@@ -1,4 +1,6 @@
 import { DiscoveryArticleJsonLd } from "@/components/discovery/DiscoveryArticleJsonLd";
+import { MarketingPageHeader } from "@/components/marketing/MarketingPageHeader";
+import { MarketingPageShell } from "@/components/marketing/MarketingPageShell";
 import { conversionSpine, productBriefPage } from "@/content/productCopy";
 import marketing from "@/lib/marketing";
 import { indexableGuideCanonical } from "@/lib/indexableGuides";
@@ -64,13 +66,13 @@ export default function DatabaseTruthVsTracesPage() {
   const howSubheading = "subheading" in sHow ? sHow.subheading : undefined;
 
   return (
-    <main className="integrate-main product-brief-page">
+    <MarketingPageShell variant="document" className="product-brief-page">
       <DiscoveryArticleJsonLd
         headline={pb.jsonLdHeadline}
         description={pb.metadata.description}
         path={marketing.slug}
       />
-      <h1 data-testid="acquisition-hero-title">{pb.h1}</h1>
+      <MarketingPageHeader title={pb.h1} headingTestId="acquisition-hero-title" />
       <p className="lede product-brief-tagline">{pb.mainHeadline}</p>
       <div data-testid="visitor-problem-answer">
         {visitorProblemAnswer.split(/\n\n+/).filter(Boolean).map((p) => (
@@ -176,6 +178,6 @@ export default function DatabaseTruthVsTracesPage() {
           </Link>
         </div>
       </section>
-    </main>
+    </MarketingPageShell>
   );
 }

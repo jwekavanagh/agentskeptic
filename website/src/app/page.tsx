@@ -14,6 +14,7 @@ import {
 import { buildHomeClosingFooterLinks } from "@/lib/siteChrome";
 import Link from "next/link";
 import { Fragment } from "react";
+import { MarketingPageShell } from "@/components/marketing/MarketingPageShell";
 import { HomeVerifyCta } from "./home/HomeVerifyCta";
 import { HOME_SECTION_ORDER, type HomeSectionId } from "./page.sections";
 
@@ -181,10 +182,10 @@ export default async function HomePage() {
   };
 
   return (
-    <main>
+    <MarketingPageShell variant="home">
       {HOME_SECTION_ORDER.map((id) => (
         <Fragment key={id}>{sectionRenderers[id]}</Fragment>
       ))}
-    </main>
+    </MarketingPageShell>
   );
 }

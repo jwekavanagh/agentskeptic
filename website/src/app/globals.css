@@ -72,8 +72,85 @@ textarea:focus-visible,
   --danger-border: color-mix(in srgb, var(--danger) 55%, #1f0a0a);
   --card: #ffffff;
   --border: #d0d7e0;
+  --marketing-page-title-size: clamp(1.65rem, 3.2vw, 1.95rem);
+  --marketing-section-h2-size: clamp(1.35rem, 2.2vw, 1.65rem);
+  --marketing-code-bg: var(--card);
+  --marketing-code-border: 1px solid var(--border);
+  --marketing-code-radius: 10px;
+  --marketing-callout-bg: color-mix(in srgb, var(--card) 92%, var(--surface));
   /* Populated by next/font variable on <html> (see layout.tsx). */
   --font-sans: ui-sans-serif, system-ui, sans-serif;
+}
+
+.marketing-shell {
+  box-sizing: border-box;
+}
+.marketing-shell--home {
+  width: 100%;
+}
+.marketing-shell--document {
+  width: 100%;
+}
+
+.marketing-page-header {
+  margin: 0 0 2rem;
+}
+.marketing-page-title {
+  margin: 0;
+  font-size: var(--marketing-page-title-size);
+  line-height: 1.22;
+  letter-spacing: -0.02em;
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+}
+.marketing-page-kicker {
+  margin: 0.35rem 0 0;
+  font-size: 1.125rem;
+  line-height: 1.45;
+  max-width: 42rem;
+}
+.marketing-page-kicker strong {
+  font-weight: 650;
+}
+.marketing-page-kicker > p:first-child {
+  margin-top: 0;
+}
+.marketing-page-description {
+  margin-top: 0.5rem;
+  max-width: 44rem;
+}
+.marketing-page-description > p:first-child {
+  margin-top: 0;
+}
+
+.marketing-code-block {
+  background: var(--marketing-code-bg);
+  border: var(--marketing-code-border);
+  border-radius: var(--marketing-code-radius);
+  padding: 1rem;
+  overflow-x: auto;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 0.85rem;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin: 0;
+}
+.marketing-code-block--scroll {
+  max-height: min(24rem, 56vh);
+  overflow-y: auto;
+}
+
+.integrate-pack-command {
+  background: var(--marketing-code-bg);
+  border: var(--marketing-code-border);
+  border-radius: var(--marketing-code-radius);
+  padding: 1rem;
+  overflow-x: auto;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 0.85rem;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .surface-ghost {
@@ -190,10 +267,12 @@ main {
   flex: 0 0 auto;
 }
 
-.pricing-page .pricing-hero-title {
-  font-size: 1.85rem;
-  line-height: 1.2;
-  margin: 0 0 0.5rem;
+.pricing-page .marketing-page-title {
+  margin-bottom: 0.5rem;
+}
+.pricing-page .marketing-page-kicker .pricing-positioning {
+  margin: 0;
+  max-width: 44rem;
 }
 .pricing-page .pricing-positioning {
   font-size: 1.1rem;
@@ -544,7 +623,7 @@ button.secondary, .btn.secondary {
   letter-spacing: -0.02em;
 }
 .home-section h2 {
-  font-size: clamp(1.35rem, 2.2vw, 1.75rem);
+  font-size: var(--marketing-section-h2-size);
   margin-top: 0;
 }
 .lede {
@@ -660,16 +739,17 @@ button.secondary, .btn.secondary {
   margin: 1rem 0 0.35rem;
 }
 .code-block {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 8px;
+  background: var(--marketing-code-bg);
+  border: var(--marketing-code-border);
+  border-radius: var(--marketing-code-radius);
   padding: 1rem;
   overflow: auto;
-  font-size: 0.8rem;
-  line-height: 1.4;
+  font-size: 0.8125rem;
+  line-height: 1.45;
   margin: 0;
   white-space: pre-wrap;
   word-break: break-word;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
 .code-block-short {
   max-height: 14rem;
@@ -807,9 +887,11 @@ main {
 }
 
 .integrate-main {
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 2rem 1rem;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 .integrate-benefit-lede {
   font-size: 1.125rem;
@@ -828,10 +910,11 @@ main {
 }
 .integrate-prose h1 {
   margin-top: 0;
-  font-size: 1.75rem;
+  font-size: var(--marketing-page-title-size);
+  letter-spacing: -0.02em;
 }
 .integrate-prose h2 {
-  font-size: 1.35rem;
+  font-size: var(--marketing-section-h2-size);
   border-bottom: 1px solid var(--border);
   padding-bottom: 0.25rem;
 }
@@ -851,9 +934,9 @@ main {
   margin: 0.25rem 0;
 }
 .integrate-prose pre {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 8px;
+  background: var(--marketing-code-bg);
+  border: var(--marketing-code-border);
+  border-radius: var(--marketing-code-radius);
   padding: 1rem;
   overflow-x: auto;
   font-size: 0.85rem;
@@ -1037,23 +1120,26 @@ main {
 }
 
 .truth-report-pre {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 8px;
+  background: var(--marketing-code-bg);
+  border: var(--marketing-code-border);
+  border-radius: var(--marketing-code-radius);
   padding: 1rem;
   overflow-x: auto;
   white-space: pre-wrap;
   font-size: 0.85rem;
+  line-height: 1.45;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   max-height: 70vh;
 }
 
 .product-brief-page h1 {
   margin-top: 0;
-  font-size: 1.75rem;
-  line-height: 1.2;
+  font-size: var(--marketing-page-title-size);
+  line-height: 1.22;
+  letter-spacing: -0.02em;
 }
 .product-brief-page h2 {
-  font-size: 1.35rem;
+  font-size: var(--marketing-section-h2-size);
   margin-top: 1.75rem;
   line-height: 1.25;
 }
@@ -1201,18 +1287,24 @@ main {
 }
 .home-hero-example-json {
   margin: 0.35rem 0 0;
+  padding: 0.75rem 1rem;
+  background: var(--marketing-code-bg);
+  border: var(--marketing-code-border);
+  border-radius: var(--marketing-code-radius);
+  box-sizing: border-box;
 }
 .home-hero-terminal-pre {
   max-height: min(24rem, 56vh);
   margin: 0;
-  font-size: 0.82rem;
+  font-size: 0.8125rem;
   line-height: 1.45;
   overflow-x: auto;
   white-space: pre-wrap;
   background: transparent;
   border: none;
-  border-radius: 6px;
-  padding: 0.35rem 0 0;
+  border-radius: 0;
+  padding: 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
 .home-hero-terminal-hit {
   color: var(--danger);

@@ -1,3 +1,6 @@
+import { MarketingCodeBlock } from "@/components/marketing/MarketingCodeBlock";
+import { MarketingPageHeader } from "@/components/marketing/MarketingPageHeader";
+import { MarketingPageShell } from "@/components/marketing/MarketingPageShell";
 import marketing from "@/lib/marketing";
 import { conversionSpine } from "@/content/productCopy";
 import { siteMetadata } from "@/content/siteMetadata";
@@ -22,12 +25,16 @@ export const metadata: Metadata = {
 export default function IntegratePage() {
   const p = marketing.integratePage;
   return (
-    <main className="integrate-main integrate-prose" data-testid="integrate-page">
-      <h1>{siteMetadata.integrate.title}</h1>
-      <p className="lede">{siteMetadata.integrate.description}</p>
-      <p className="lede">
-        Get a deterministic verdict before you ship, bill, or hand off to customers.
-      </p>
+    <MarketingPageShell variant="documentProse" data-testid="integrate-page">
+      <MarketingPageHeader
+        title={siteMetadata.integrate.title}
+        description={
+          <>
+            <p className="lede">{siteMetadata.integrate.description}</p>
+            <p className="lede">Get a deterministic verdict before you ship, bill, or hand off to customers.</p>
+          </>
+        }
+      />
 
       <h2>First proof: contract truth check</h2>
       <p>
@@ -49,13 +56,9 @@ export default function IntegratePage() {
           <code>docs/integrate.md</code>
         </a>
       </p>
-      <pre
-        id="integrate-truth-check-commands"
-        className="integrate-pack-command"
-        data-testid="integrate-truth-check-commands"
-      >
+      <MarketingCodeBlock id="integrate-truth-check-commands" data-testid="integrate-truth-check-commands">
         {p.truthCheckCommand}
-      </pre>
+      </MarketingCodeBlock>
       <p className="home-cta-row">
         <a
           className="btn"
@@ -109,6 +112,6 @@ export default function IntegratePage() {
           <Link href="/guides">Follow the Learn guides to wire the same check into CI.</Link>
         </li>
       </ol>
-    </main>
+    </MarketingPageShell>
   );
 }

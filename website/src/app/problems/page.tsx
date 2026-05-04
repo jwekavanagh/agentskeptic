@@ -1,4 +1,6 @@
 import { DiscoveryArticleJsonLd } from "@/components/discovery/DiscoveryArticleJsonLd";
+import { MarketingPageHeader } from "@/components/marketing/MarketingPageHeader";
+import { MarketingPageShell } from "@/components/marketing/MarketingPageShell";
 import { conversionSpine, productCopy } from "@/content/productCopy";
 import marketing from "@/lib/marketing";
 import { indexableGuideCanonical } from "@/lib/indexableGuides";
@@ -24,7 +26,7 @@ export const metadata: Metadata = {
 export default function ProblemsPage() {
   const rows = marketing.problemIndex;
   return (
-    <main className="integrate-main">
+    <MarketingPageShell variant="documentProse">
       <DiscoveryArticleJsonLd
         headline={productCopy.problemsPageMetadata.title}
         description={productCopy.problemsPageMetadata.description}
@@ -55,6 +57,6 @@ export default function ProblemsPage() {
           {productCopy.ctaTaxonomy.decision}
         </Link>
       </p>
-    </main>
+    </MarketingPageShell>
   );
 }

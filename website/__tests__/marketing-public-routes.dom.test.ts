@@ -14,10 +14,12 @@ registerMarketingSiteTeardown();
 
 const BANNED = /\b(crossing success|PatternComplete|IntegrateSpine|Outcome Certificate|AC-)\b/i;
 
-function mainText(html: string): string {
+function homeMainBannedScanText(html: string): string {
   const $ = cheerio.load(html);
   const $main = $("main").first();
   $main.find("script, style, noscript").remove();
+  /** Trust pills name the artifact explicitly (`Outcome Certificate`). Scan the rest for internal codenames. */
+  $main.find(".trust-pills").remove();
   return $main.text().replace(/\s+/g, " ").trim();
 }
 
@@ -37,7 +39,7 @@ describe("marketing public route DOM invariants", { timeout: 300_000 }, () => {
 
   it("home rendered main has no banned substrings", async () => {
     const html = await getSiteHtml("/");
-    const text = mainText(html);
+    const text = homeMainBannedScanText(html);
     expect(BANNED.test(text)).toBe(false);
   });
 

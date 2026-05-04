@@ -1,3 +1,5 @@
+import { MarketingPageHeader } from "@/components/marketing/MarketingPageHeader";
+import { MarketingPageShell } from "@/components/marketing/MarketingPageShell";
 import { productCopy } from "@/content/productCopy";
 import { siteMetadata } from "@/content/siteMetadata";
 import { getSecurityQuickFacts } from "@/lib/commercialNarrative";
@@ -22,8 +24,8 @@ export default function SecurityPage() {
   const quickFacts = getSecurityQuickFacts();
   const st = productCopy.securityTrust;
   return (
-    <main className="integrate-main">
-      <h1>{st.title}</h1>
+    <MarketingPageShell variant="documentProse">
+      <MarketingPageHeader title={st.title} />
       <section data-testid="security-quick-facts" aria-labelledby="security-quick-facts-title">
         <h2 id="security-quick-facts-title">{quickFacts.title}</h2>
         <ul>
@@ -53,6 +55,6 @@ export default function SecurityPage() {
           </li>
         </ul>
       </section>
-    </main>
+    </MarketingPageShell>
   );
 }

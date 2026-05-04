@@ -1,3 +1,6 @@
+import { MarketingPageHeader } from "@/components/marketing/MarketingPageHeader";
+import { MarketingPageShell } from "@/components/marketing/MarketingPageShell";
+import { MarketingSection } from "@/components/marketing/MarketingSection";
 import { conversionSpine } from "@/content/productCopy";
 import { indexableGuideCanonical } from "@/lib/indexableGuides";
 import { brandedMarketingTitle, marketingOpenGraphAndTwitter } from "@/lib/marketingSocialMetadata";
@@ -43,18 +46,20 @@ const SECTIONS = [
 
 export default function CompareHubPage() {
   return (
-    <main className="integrate-main integrate-prose" data-testid="compare-hub-page">
-      <h1>{compareSegmentTitle}</h1>
-      <p className="integrate-benefit-lede">
-        <strong>Choose the right layer for the failure you need to catch.</strong>
-      </p>
-      <p className="lede">
-        Evals, dashboards, and traces are useful — but they do not prove that the expected data landed in your
-        stores.
-      </p>
+    <MarketingPageShell variant="documentProse" data-testid="compare-hub-page">
+      <MarketingPageHeader
+        title={compareSegmentTitle}
+        kicker={<strong>Choose the right layer for the failure you need to catch.</strong>}
+        description={
+          <p className="lede">
+            Evals, dashboards, and traces are useful — but they do not prove that the expected data landed in your
+            stores.
+          </p>
+        }
+      />
 
       {SECTIONS.map((s) => (
-        <section key={s.href} className="home-section" aria-labelledby={s.id}>
+        <MarketingSection key={s.href} aria-labelledby={s.id}>
           <h2 id={s.id}>
             <Link href={s.href} className="guide-hub-link">
               <span className="guide-hub-link-title">{s.title}</span>
@@ -62,10 +67,10 @@ export default function CompareHubPage() {
           </h2>
           <p className="lede">{s.contrast}</p>
           <p className="lede">{s.ours}</p>
-        </section>
+        </MarketingSection>
       ))}
 
-      <section className="home-section" aria-labelledby="compare-hub-cta-heading">
+      <MarketingSection aria-labelledby="compare-hub-cta-heading">
         <h2 id="compare-hub-cta-heading">Ready to test the difference?</h2>
         <p className="lede">
           Run the missing-write demo and see a green-looking workflow fail against stored state.
@@ -79,7 +84,7 @@ export default function CompareHubPage() {
             Try the missing-write demo
           </a>
         </div>
-      </section>
-    </main>
+      </MarketingSection>
+    </MarketingPageShell>
   );
 }

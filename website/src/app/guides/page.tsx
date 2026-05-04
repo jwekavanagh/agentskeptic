@@ -1,3 +1,6 @@
+import { MarketingPageHeader } from "@/components/marketing/MarketingPageHeader";
+import { MarketingPageShell } from "@/components/marketing/MarketingPageShell";
+import { MarketingSection } from "@/components/marketing/MarketingSection";
 import { conversionSpine, learnHub, productCopy } from "@/content/productCopy";
 import { indexableGuideCanonical } from "@/lib/indexableGuides";
 import { brandedMarketingTitle, marketingOpenGraphAndTwitter } from "@/lib/marketingSocialMetadata";
@@ -17,14 +20,14 @@ export const metadata: Metadata = {
 
 export default function GuidesHubPage() {
   return (
-    <main className="integrate-main integrate-prose learn-hub">
-      <h1>{guidesSegmentTitle}</h1>
-      <p className="integrate-benefit-lede">
-        <strong>{productCopy.learnHubPrimaryLede}</strong>
-      </p>
-      <p className="lede">{productCopy.guidesHubSupportingSentence}</p>
+    <MarketingPageShell variant="documentProse" className="learn-hub">
+      <MarketingPageHeader
+        title={guidesSegmentTitle}
+        kicker={<strong>{productCopy.learnHubPrimaryLede}</strong>}
+        description={<p className="lede">{productCopy.guidesHubSupportingSentence}</p>}
+      />
 
-      <section className="home-section" aria-labelledby="learn-popular-heading">
+      <MarketingSection aria-labelledby="learn-popular-heading">
         <h2 id="learn-popular-heading">{learnHub.popularHeading}</h2>
         <ul className="mechanism-list guide-hub-list">
           {learnHub.popular.map((g) => (
@@ -36,9 +39,9 @@ export default function GuidesHubPage() {
             </li>
           ))}
         </ul>
-      </section>
+      </MarketingSection>
 
-      <section className="home-section" aria-labelledby="learn-debug-heading">
+      <MarketingSection aria-labelledby="learn-debug-heading">
         <h2 id="learn-debug-heading">{learnHub.debugHeading}</h2>
         <ul className="mechanism-list guide-hub-list">
           {learnHub.debug.map((g) => (
@@ -50,9 +53,9 @@ export default function GuidesHubPage() {
             </li>
           ))}
         </ul>
-      </section>
+      </MarketingSection>
 
-      <section className="home-section learn-hub-cta" aria-labelledby="learn-closing-heading">
+      <MarketingSection className="learn-hub-cta" aria-labelledby="learn-closing-heading">
         <h2 id="learn-closing-heading" className="learn-hub-cta-heading">
           {learnHub.closingTitle}
         </h2>
@@ -73,7 +76,7 @@ export default function GuidesHubPage() {
             Try the missing-write demo
           </Link>
         </p>
-      </section>
-    </main>
+      </MarketingSection>
+    </MarketingPageShell>
   );
 }
