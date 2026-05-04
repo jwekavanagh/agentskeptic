@@ -518,13 +518,6 @@ export const productCopy = {
   publicShareReportIntro:
     "Private verification snapshot for sharing in tickets or Slack. This URL is not indexed for search; see Security & Trust for how the site handles data.",
 
-  /** Server intro on `/account` (AccountServerAboveFold); links are composed in TSX. */
-  accountPage: {
-    line1: "Recent verification runs, your plan and usage, and API keys—together in one place.",
-    pricingLinkLabel: "Pricing",
-    integrateLinkLabel: "Get started",
-  } as const,
-
   howItWorks: {
     sectionTitle: "How it works",
     acquisitionDepthLinkLabel: "How it works: traces and database",
@@ -658,14 +651,8 @@ export const productCopy = {
   /** Account client: activation copy and a11y announcements (keep in sync with AccountClient UI). */
   account: {
     monthlyQuotaHeading: "Verification quota (this billing month)",
-    monthlyQuotaYearMonth: (ym: string) => `Billing month: ${ym} (UTC).`,
-    monthlyQuotaKeyLine: (used: number, limitLabel: string) =>
-      `${used} used · included: ${limitLabel} (UTC month)`,
+    monthlyQuotaKeyLine: (used: number, limitLabel: string) => `${used} used · included: ${limitLabel}`,
     monthlyQuotaUnlimited: "Unlimited",
-    monthlyQuotaDistinctDays: (n: number) => `Verification days this month: ${n}.`,
-    /** Shown as `title` on the verification-days line (UTC / quota nuance). */
-    monthlyQuotaDistinctDaysTitle:
-      "Each count is a separate UTC calendar day this billing month when you ran paid verification against your allowance.",
     quotaUrgencyCopy: {
       ok: bt.accountQuotaUrgency.ok,
       notice: bt.accountQuotaUrgency.notice,
@@ -691,33 +678,16 @@ export const productCopy = {
     verificationMetricLine: (n: number) => `This billing month (UTC): ${n} outcome${n === 1 ? "" : "s"} on record.`,
     verificationMonthNoRowsDetail:
       "We see activity for this billing month, but detailed rows are not available here yet—try refreshing in a moment.",
-    activityEmpty:
-      "Nothing recorded for this billing month yet. Create a key below if you need one—the Integrate button is your next step.",
     activityLoadError:
       "We could not load verification activity right now. Refresh the page in a moment; if it keeps happening, contact support.",
-    trustFootnoteLines: [
-      "Billing and subscription details are managed through Stripe; use Manage billing when it appears above.",
-      "How keys and data are handled is summarized on the Security & Trust page—this page does not add new guarantees beyond that page.",
-    ] as const,
-    starterUpgradeBody:
-      "Starter is for trying the product. Paid plans unlock real verification runs, predictable monthly usage, and checks you can rely on in CI and production—not just demos.",
-    monthlyQuotaNoKeyLine:
-      "No active API key yet. Create one below, add it to your environment, then run a verification from Integrate.",
-    apiKeyFlowHeading: "Turn your key into a run",
-    apiKeyFlowSteps: [
-      "Generate an API key below (one-time reveal—copy it immediately).",
-      "Set AGENTSKEPTIC_API_KEY in your environment (WORKFLOW_VERIFIER_API_KEY still works).",
-      "Open Integrate and run npx agentskeptic verify … from your repo (full commands are on that page).",
-    ] as const,
+    monthlyQuotaNoKeyLine: "No active API key yet. Create one below to use licensed verification.",
     primaryVerificationCtaFirstRun: "Run first verification",
-    /** When the user has no key yet; verification CTA stays visible but sets expectations. */
-    primaryVerificationCtaFirstRunNeedsKey: "Run first verification (create a key below first)",
     primaryVerificationCtaAgain: "Run first verification again",
     ossClaimChecklistTitle: "After linking a CLI verification",
     ossClaimChecklistItems: [
       "Your run id and outcome are attached to this account for verification history.",
       "Create an API key below if you need licensed npm verification or reserve quota.",
-      "Use Integrate for copy-paste commands tied to your environment.",
+      "See site guides for environment setup and commands.",
     ] as const,
     ossClaimRunHint: (runId: string) => `Linked run id: ${runId.slice(0, 12)}…`,
     ossClaimStarterCta: "Compare paid plans for licensed verification and monthly allowance",
