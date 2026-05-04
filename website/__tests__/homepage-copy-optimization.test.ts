@@ -23,7 +23,10 @@ describe("homepage copy optimization (key strings)", () => {
     );
     const j = JSON.parse(raw) as { telemetryIntroParagraphs: string[] };
     expect(j.telemetryIntroParagraphs[0]).toBe(
-      "Optional telemetry helps connect browser demos and CLI verification. It never affects verdicts, never writes to your stores, and can be disabled.",
+      "Optional telemetry helps connect browser demos and CLI verification during first setup.",
+    );
+    expect(j.telemetryIntroParagraphs[1]).toBe(
+      "It never affects verdicts, never writes to your stores, and can be disabled.",
     );
   });
 

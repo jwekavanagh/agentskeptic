@@ -1,6 +1,7 @@
 {
   "telemetryIntroParagraphs": [
-    "Optional telemetry helps connect browser demos and CLI verification. It never affects verdicts, never writes to your stores, and can be disabled."
+    "Optional telemetry helps connect browser demos and CLI verification during first setup.",
+    "It never affects verdicts, never writes to your stores, and can be disabled."
   ],
   "checklist": [
     "Visit an allowlisted marketing page or `/integrate` so the site can mint or reuse `funnel_anon_id`.",

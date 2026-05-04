@@ -18,7 +18,7 @@
   },
   "appendix": {
     "slug": "/database-truth-vs-traces",
-    "visitorProblemAnswer": "Traces can say success while your data says otherwise.\n\nAgentSkeptic performs read-only checks at verification time, comparing tool claims against stored state before you ship or bill.",
+    "visitorProblemAnswer": "Traces can say success while your data says otherwise.\n\nAgentSkeptic re-checks the stores your agent claims to have changed, then returns a deterministic Outcome Certificate before you ship, bill, or continue.",
     "intentPhrases": [
       "trace v data",
       "read-only verify",

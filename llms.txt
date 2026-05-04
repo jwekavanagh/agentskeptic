@@ -176,6 +176,6 @@ steps:
 
 ## Visitor problem (canonical answer)
 
-Traces say success while data disagrees.
+Traces can say success while your data says otherwise.
 
-AgentSkeptic read-only: tool claims vs stored state before ship or bill.
+AgentSkeptic re-checks the stores your agent claims to have changed, then returns a deterministic Outcome Certificate before you ship, bill, or continue.

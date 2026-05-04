@@ -1031,6 +1031,12 @@ main {
   margin-top: 1.75rem;
   line-height: 1.25;
 }
+.product-brief-page .product-brief-subheading {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0.35rem 0 0.5rem;
+  line-height: 1.35;
+}
 .product-brief-prose {
   max-width: 75ch;
 }

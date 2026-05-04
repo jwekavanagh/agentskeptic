@@ -36,7 +36,8 @@ export function FirstFiveMinutesCallout({ homeTeaser = false }: FirstFiveMinutes
         <p className="first-five-minutes-sub">
           <Link href="/privacy">Privacy policy</Link>
           {" · "}
-          <Link href="/integrate#agentskeptic-first-five-minutes">Get started: full checklist and CLI</Link>
+          <span>Full setup: </span>
+          <Link href="/integrate#agentskeptic-first-five-minutes">Get started</Link>
         </p>
       </aside>
     );
@@ -54,7 +55,8 @@ export function FirstFiveMinutesCallout({ homeTeaser = false }: FirstFiveMinutes
       <p className="first-five-minutes-sub">
         <Link href="/privacy">Privacy policy</Link>
         {" · "}
-        <Link href="/integrate#agentskeptic-first-five-minutes">Get started: full checklist and CLI</Link>
+        <span>Full setup: </span>
+        <Link href="/integrate#agentskeptic-first-five-minutes">Get started</Link>
       </p>
       <details className="first-five-minutes-details">
         <summary>Telemetry and checklist details</summary>

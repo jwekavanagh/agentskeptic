@@ -1,5 +1,5 @@
 import { DiscoveryArticleJsonLd } from "@/components/discovery/DiscoveryArticleJsonLd";
-import { conversionSpine, productBriefPage, productCopy } from "@/content/productCopy";
+import { conversionSpine, productBriefPage } from "@/content/productCopy";
 import marketing from "@/lib/marketing";
 import { indexableGuideCanonical } from "@/lib/indexableGuides";
 import { marketingOpenGraphAndTwitter } from "@/lib/marketingSocialMetadata";
@@ -53,7 +53,7 @@ function stripBundledTerminalHeadingsForDisplay(success: string, failure: string
 }
 
 export default function DatabaseTruthVsTracesPage() {
-  const { visitorProblemAnswer, shareableTerminalDemo, heroTitle } = marketing;
+  const { visitorProblemAnswer, shareableTerminalDemo } = marketing;
   const pb = productBriefPage;
   const [sProblem, sHow] = pb.sections;
   const { success: rawSuccess, failure: rawFailure } = splitDemoSuccessFailure(shareableTerminalDemo.transcript);
@@ -61,6 +61,7 @@ export default function DatabaseTruthVsTracesPage() {
   if (sProblem.id !== "problem" || sHow.id !== "how") {
     throw new Error("How it works page sections: expected problem then how");
   }
+  const howSubheading = "subheading" in sHow ? sHow.subheading : undefined;
 
   return (
     <main className="integrate-main product-brief-page">
@@ -70,7 +71,7 @@ export default function DatabaseTruthVsTracesPage() {
         path={marketing.slug}
       />
       <h1 data-testid="acquisition-hero-title">{pb.h1}</h1>
-      <p className="lede product-brief-tagline">{heroTitle}</p>
+      <p className="lede product-brief-tagline">{pb.mainHeadline}</p>
       <div data-testid="visitor-problem-answer">
         {visitorProblemAnswer.split(/\n\n+/).filter(Boolean).map((p) => (
           <p key={p.slice(0, 64)} className="lede">
@@ -95,6 +96,11 @@ export default function DatabaseTruthVsTracesPage() {
 
       <section className="home-section" data-testid="acquisition-brief-section-how" aria-labelledby="brief-section-how">
         <h2 id="brief-section-how">{sHow.title}</h2>
+        {howSubheading ? (
+          <h3 className="product-brief-subheading" id="brief-section-how-gate">
+            {howSubheading}
+          </h3>
+        ) : null}
         <p className="lede product-brief-prose">{sHow.intro}</p>
         <ol className="product-brief-numbered">
           {sHow.steps.map((step) => (
@@ -137,27 +143,36 @@ export default function DatabaseTruthVsTracesPage() {
         data-testid="acquisition-run-section"
         aria-labelledby="acquisition-run-heading"
       >
-        <h2 id="acquisition-run-heading">See a failed vs passed run</h2>
+        <h2 id="acquisition-run-heading">{pb.ctaSection.title}</h2>
         <div
           className="product-brief-cta-wrap"
           data-testid={pb.testIds.cta}
           role="group"
-          aria-label="See a failed vs passed run and run first verification"
+          aria-label={pb.ctaSection.ariaLabel}
         >
-          <a
+          <Link
             className="btn"
-            href="/verify"
+            href={pb.ctaSection.failed.href}
             data-testid="acquisition-try-home-demo-cta"
             data-cta-priority={conversionSpine.ctaPriorityPrimaryValue}
           >
-            {productCopy.ctaTaxonomy.awareness}
-          </a>{" "}
+            {pb.ctaSection.failed.label}
+          </Link>{" "}
           <Link
             className="btn secondary"
-            href={productCopy.homeHeroSecondaryCta.href}
+            href={pb.ctaSection.passed.href}
+            data-testid="acquisition-try-passed-demo-cta"
             data-cta-priority={conversionSpine.ctaPrioritySecondaryValue}
           >
-            {productCopy.ctaTaxonomy.decision}
+            {pb.ctaSection.passed.label}
+          </Link>{" "}
+          <Link
+            className="btn secondary"
+            href={pb.ctaSection.integrate.href}
+            data-testid="acquisition-run-first-verification-cta"
+            data-cta-priority={conversionSpine.ctaPrioritySecondaryValue}
+          >
+            {pb.ctaSection.integrate.label}
           </Link>
         </div>
       </section>

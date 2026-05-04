@@ -66,6 +66,8 @@ export type ConversionSpineCtaLabel =
   | "Try interactive demo"
   | "Run the missing-write demo"
   | "See a failed vs passed run"
+  | "See a failed run"
+  | "See a passed run"
   | "Run on sample data in 5 minutes"
   | "Run first verification"
   | "Start free"
@@ -281,6 +283,8 @@ export const conversionSpine = {
     "Try interactive demo",
     "Run the missing-write demo",
     "See a failed vs passed run",
+    "See a failed run",
+    "See a passed run",
     "Run on sample data in 5 minutes",
     "Run first verification",
     "Start free",
@@ -291,7 +295,7 @@ export const conversionSpine = {
   ] as const,
   dominantByRoute: {
     "/": "Run the missing-write demo",
-    "/database-truth-vs-traces": "See a failed vs passed run",
+    "/database-truth-vs-traces": "See a failed run",
     "/integrate": "Run first verification",
     "/pricing": "Start free",
     "/guides": "Run first verification",
@@ -327,7 +331,7 @@ export const homePageHeroSecondaryCta = {
 } as const;
 
 export const ctaTaxonomy = {
-  awareness: "See a failed vs passed run",
+  awareness: "See a failed run",
   topOfFunnel: "Try interactive demo",
   consideration: "Run on sample data in 5 minutes",
   decision: "Run first verification",
@@ -436,16 +440,18 @@ const homepageDisplay = {
 /** Deeper layer after the homepage: `/database-truth-vs-traces` (not in `config/marketing.json` word budget). */
 export const productBriefPage = {
   metadata: {
-    title: "How it works",
+    title: "How AgentSkeptic verifies reality",
     titleSuffix: "AgentSkeptic" as const,
     description:
-      "Read-only verification at verification time: structured tool activity checked against stored state, with a structured Outcome Certificate and bundled success and failure examples.",
+      "Traces are not proof. Stored state is proof. Read-only verification returns a deterministic Outcome Certificate from your stores before release, billing, or continuation—bundled wf_complete and wf_missing examples included.",
   },
-  jsonLdHeadline: "How it works: read-only verification against stored tool claims",
+  jsonLdHeadline: "How AgentSkeptic verifies reality: read-only checks against stored state before ship, bill, or continue",
   testIds: {
     cta: "acquisition-cta-row" as const,
   },
-  h1: "How it works",
+  h1: "How AgentSkeptic verifies reality",
+  /** Shown under H1, before `visitorProblemAnswer` from `config/marketing.json`. */
+  mainHeadline: "Trust stored state, not trace success.",
   /** Placed after the `visitorProblemAnswer` block. */
   introParagraphs: [] as readonly string[],
   sections: [
@@ -453,33 +459,42 @@ export const productBriefPage = {
       id: "problem" as const,
       title: "The problem",
       paragraphs: [
-        "The tool reported “done.”",
+        'The agent said "done."',
+        "The trace turned green.",
         "The graph finished.",
-        "But the customer record may be missing, the ledger may be off, the vector may be stale, or the ticket may not be updated.",
-        "Stored data is what matters.",
+        "But the customer record may still be missing, the ledger may be wrong, the vector may be stale, or the ticket may never have updated.",
+        "Stored data is the source of truth.",
       ],
     },
     {
       id: "how" as const,
       title: "How read-only verification works",
-      intro: "One gate you control:",
+      subheading: "The verification gate",
+      intro: "One read-only gate turns agent claims into stored-state evidence:",
       steps: [
         "Emit structured tool activity for the actions and side effects you care about.",
         "Map tool IDs to real stores in a lightweight `tools.json` registry.",
         "Run verification against a read-only snapshot of your data.",
         "Get a structured Outcome Certificate with trust and remediation fields.",
       ],
-      outro: "The check happens at verification time, not from trace color.",
+      outro: "The check happens at verification time, against stored state — not from trace color.",
     },
   ],
   terminal: {
-    beforeTitle: "Terminal proof: success vs failure",
+    beforeTitle: "Terminal proof: same claim, different reality",
     intro: [
-      "Bundled `wf_complete` and `wf_missing` examples use the same verification engine as your own runs.",
+      "The bundled `wf_complete` and `wf_missing` examples run through the same verification engine your own workflows use.",
     ],
   },
   disclaimer:
-    "Read-only verification checks stored state at verification time. It does not prove which specific call caused a write.",
+    "Important: read-only verification proves whether the expected state exists at verification time. It does not attribute causality to a specific tool call.",
+  ctaSection: {
+    title: "See proof, then verify",
+    ariaLabel: "See a failed run, see a passed run, and run first verification",
+    failed: { href: "/examples/wf-missing" as const, label: "See a failed run" as const },
+    passed: { href: "/examples/wf-complete" as const, label: "See a passed run" as const },
+    integrate: { href: "/integrate" as const, label: "Run first verification" as const },
+  },
 } as const;
 
 export const productCopy = {
