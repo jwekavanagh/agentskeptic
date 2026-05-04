@@ -37,7 +37,7 @@ function formatIncludedLine(p: PlanRow): string {
   if (p.includedMonthly === null) {
     return "Custom";
   }
-  return `${p.includedMonthly.toLocaleString()} verifications / month (included, per key)`;
+  return `${p.includedMonthly.toLocaleString()} verifications / month included per key`;
 }
 
 export function PricingClient({
@@ -114,6 +114,7 @@ export function PricingClient({
             />{" "}
             Monthly
           </label>
+          <span aria-hidden="true"> · </span>
           <label>
             <input
               type="radio"
@@ -124,7 +125,7 @@ export function PricingClient({
                 setBillingInterval("yearly");
               }}
             />{" "}
-            Annual (save 20%)
+            Annual — save 20%
           </label>
         </p>
       ) : null}
