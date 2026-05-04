@@ -18,7 +18,7 @@
   },
   "appendix": {
     "slug": "/database-truth-vs-traces",
-    "visitorProblemAnswer": "Traces can say success while your data says otherwise.\n\nAgentSkeptic re-checks the stores your agent claims to have changed, then returns a deterministic Outcome Certificate before you ship, bill, or continue.",
+    "visitorProblemAnswer": "Traces can show success while stored data disagrees.\n\nAgentSkeptic re-checks the stores your agent claims to change, then returns a deterministic Outcome Certificate before you ship.",
     "intentPhrases": [
       "trace v data",
       "read-only verify",
@@ -37,38 +37,38 @@
     "problemIndex": [
       {
         "moment": "Green trace, bad data",
-        "symptom": "A LangGraph trace finishes successfully, but the Postgres row is missing or stale.",
-        "verificationCue": "Verify the row that matters before you trust the run.",
+        "symptom": "Trace succeeds, but the Postgres row is missing or stale.",
+        "verificationCue": "Verify the row before you trust the run.",
         "primaryRoute": "/guides/trace-green-postgres-row-missing"
       },
       {
         "moment": "Tool OK, CRM wrong",
-        "symptom": "A tool loop reports success, but the CRM record is missing, stale, or mismatched.",
-        "verificationCue": "Compare declared tool activity with the customer data actually stored.",
+        "symptom": "Tool loop succeeds, but the CRM record is wrong or missing.",
+        "verificationCue": "Match tool claims to stored customer data.",
         "primaryRoute": "/guides/tool-loop-success-crm-state-wrong"
       },
       {
         "moment": "CI green, no write",
-        "symptom": "CI passes, but the database write never landed.",
-        "verificationCue": "Fail the release when the expected stored state is absent.",
+        "symptom": "CI passes, but the write never landed.",
+        "verificationCue": "Fail when expected stored state is absent.",
         "primaryRoute": "/guides/ci-green-logs-row-absent"
       },
       {
         "moment": "Pre-production read-only gate",
-        "symptom": "Add a read-only SQL verification gate before production.",
-        "verificationCue": "Check real stored state without writing to your systems.",
+        "symptom": "Add read-only SQL verification before production.",
+        "verificationCue": "Read stored state without writes.",
         "primaryRoute": "/guides/pre-production-read-only-sql-gate"
       },
       {
         "moment": "LangGraph data check",
-        "symptom": "Debug Postgres state after a LangGraph run.",
-        "verificationCue": "Reconcile trace success with rows, checkpoints, and persisted state.",
+        "symptom": "Inspect Postgres after a LangGraph run.",
+        "verificationCue": "Reconcile trace success with persisted rows.",
         "primaryRoute": "/guides/debug-postgres-after-langgraph"
       },
       {
         "moment": "Webhook vs ledger",
-        "symptom": "Stripe returns 200, but the ledger row is missing, duplicated, or wrong.",
-        "verificationCue": "Compare external callbacks with internal records before settlement.",
+        "symptom": "Stripe 200, but the ledger row is wrong or missing.",
+        "verificationCue": "Match webhooks to internal records before settlement.",
         "primaryRoute": "/guides/stripe-webhook-database-alignment"
       }
     ],

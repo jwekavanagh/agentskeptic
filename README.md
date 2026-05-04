@@ -7,9 +7,9 @@
 
 Tool effects vs read-only store facts.
 
-Traces can say success while your data says otherwise.
+Traces can show success while stored data disagrees.
 
-AgentSkeptic re-checks the stores your agent claims to have changed, then returns a deterministic Outcome Certificate before you ship, bill, or continue.
+AgentSkeptic re-checks the stores your agent claims to change, then returns a deterministic Outcome Certificate before you ship.
 
 ### Bundled terminal proof
 

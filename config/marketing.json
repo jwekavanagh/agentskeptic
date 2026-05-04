@@ -11,19 +11,19 @@
   "readmeTitle": "AgentSkeptic — state vs trace",
   "heroTitle": "Trust reality, not traces.",
   "heroSubtitle": "Tool effects vs read-only store facts.",
-  "visitorProblemAnswer": "Traces can say success while your data says otherwise.\n\nAgentSkeptic re-checks the stores your agent claims to have changed, then returns a deterministic Outcome Certificate before you ship, bill, or continue.",
+  "visitorProblemAnswer": "Traces can show success while stored data disagrees.\n\nAgentSkeptic re-checks the stores your agent claims to change, then returns a deterministic Outcome Certificate before you ship.",
   "heroOutcome": "Agents can report success while the database is still wrong.",
   "heroMechanism": "AgentSkeptic re-checks your real stores and fails CI before missing writes reach production.",
   "guaranteeFootnote": "Read-only checks; not which call wrote.",
   "heroPositioning": "Post-condition verification for AI-agent workflows.",
   "siteDefaultMetadata": {
     "title": "AgentSkeptic",
-    "description": "Structured tool activity vs downstream state at verify time: SQL (SQLite, Postgres, MySQL), HTTP witnesses, supported vector indexes, MongoDB documents, and S3-compatible objects when configured—deterministic verdict artifacts (see verification-state-stores.md)."
+    "description": "Tool activity vs downstream state at verify: SQL, HTTP, vectors, documents, S3 objects—deterministic verdict artifacts (verification-state-stores.md)."
   },
   "homepageAcquisitionCtaLabel": "How it works",
   "pageMetadata": {
     "title": "Traces vs state",
-    "description": "Structured tool activity vs downstream state at verify time: SQL (SQLite, Postgres, MySQL), HTTP witnesses, supported vector indexes, MongoDB documents, and S3-compatible objects when configured—deterministic verdict artifacts (see verification-state-stores.md)."
+    "description": "Tool activity vs downstream state at verify: SQL, HTTP, vectors, documents, S3 objects—deterministic verdict artifacts (verification-state-stores.md)."
   },
   "readmeFold": {
     "templateLines": [
@@ -82,9 +82,9 @@
     }
   },
   "integratePage": {
-    "truthCheckCommand": "npx agentskeptic check --workflow-id YOUR_WORKFLOW_ID \\\n  --project ./your-app \\\n  --db ./path/to/readable.sqlite\n\n# Use explicit paths when your events or registry are outside the project default:\n# npx agentskeptic check --workflow-id YOUR_WORKFLOW_ID \\\n#   --events ./agentskeptic/events.ndjson \\\n#   --registry ./agentskeptic/tools.json \\\n#   --db ./path/to/readable.sqlite",
+    "truthCheckCommand": "npx agentskeptic check --workflow-id YOUR_WORKFLOW_ID \\\n  --project ./your-app \\\n  --db ./path/to/readable.sqlite",
     "quickVerifyCommand": "npx agentskeptic quick \\\n  --input path/to/quick-input.ndjson \\\n  --export-registry path/to/tools.json \\\n  --db path/to/readable.sqlite \\\n  --no-human-report",
-    "packLedCommand": "npx agentskeptic activate --input ./path/to/workflow-bootstrap-input.json \\\n  --db ./path/to/readable.sqlite \\\n  --out ./path/to/agent-pack\n\n# Replay only (advanced): NDJSON pack you already authored\nnpx agentskeptic crossing \\\n  --workflow-id YOUR_WORKFLOW_ID \\\n  --events ./path/to/events.ndjson \\\n  --registry ./path/to/tools.json \\\n  --db ./path/to/readable.sqlite",
+    "packLedCommand": "npx agentskeptic activate --input ./path/to/workflow-bootstrap-input.json \\\n  --db ./path/to/readable.sqlite \\\n  --out ./path/to/agent-pack\n\nnpx agentskeptic crossing \\\n  --workflow-id YOUR_WORKFLOW_ID \\\n  --events ./path/to/events.ndjson \\\n  --registry ./path/to/tools.json \\\n  --db ./path/to/readable.sqlite",
     "githubDeepLink": "https://github.com/jwekavanagh/agentskeptic/blob/main/docs/integrate.md",
     "githubFirstRunLink": "https://github.com/jwekavanagh/agentskeptic/blob/main/docs/integrate.md"
   },
@@ -130,38 +130,38 @@
   "problemIndex": [
     {
       "moment": "Green trace, bad data",
-      "symptom": "A LangGraph trace finishes successfully, but the Postgres row is missing or stale.",
-      "verificationCue": "Verify the row that matters before you trust the run.",
+      "symptom": "Trace succeeds, but the Postgres row is missing or stale.",
+      "verificationCue": "Verify the row before you trust the run.",
       "primaryRoute": "/guides/trace-green-postgres-row-missing"
     },
     {
       "moment": "Tool OK, CRM wrong",
-      "symptom": "A tool loop reports success, but the CRM record is missing, stale, or mismatched.",
-      "verificationCue": "Compare declared tool activity with the customer data actually stored.",
+      "symptom": "Tool loop succeeds, but the CRM record is wrong or missing.",
+      "verificationCue": "Match tool claims to stored customer data.",
       "primaryRoute": "/guides/tool-loop-success-crm-state-wrong"
     },
     {
       "moment": "CI green, no write",
-      "symptom": "CI passes, but the database write never landed.",
-      "verificationCue": "Fail the release when the expected stored state is absent.",
+      "symptom": "CI passes, but the write never landed.",
+      "verificationCue": "Fail when expected stored state is absent.",
       "primaryRoute": "/guides/ci-green-logs-row-absent"
     },
     {
       "moment": "Pre-production read-only gate",
-      "symptom": "Add a read-only SQL verification gate before production.",
-      "verificationCue": "Check real stored state without writing to your systems.",
+      "symptom": "Add read-only SQL verification before production.",
+      "verificationCue": "Read stored state without writes.",
       "primaryRoute": "/guides/pre-production-read-only-sql-gate"
     },
     {
       "moment": "LangGraph data check",
-      "symptom": "Debug Postgres state after a LangGraph run.",
-      "verificationCue": "Reconcile trace success with rows, checkpoints, and persisted state.",
+      "symptom": "Inspect Postgres after a LangGraph run.",
+      "verificationCue": "Reconcile trace success with persisted rows.",
       "primaryRoute": "/guides/debug-postgres-after-langgraph"
     },
     {
       "moment": "Webhook vs ledger",
-      "symptom": "Stripe returns 200, but the ledger row is missing, duplicated, or wrong.",
-      "verificationCue": "Compare external callbacks with internal records before settlement.",
+      "symptom": "Stripe 200, but the ledger row is wrong or missing.",
+      "verificationCue": "Match webhooks to internal records before settlement.",
       "primaryRoute": "/guides/stripe-webhook-database-alignment"
     }
   ],

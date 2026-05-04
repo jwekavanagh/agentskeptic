@@ -11,7 +11,8 @@ describe("homepage copy optimization (key strings)", () => {
       "AgentSkeptic re-checks your real stores and fails CI before missing writes reach production.",
     );
     expect(productCopy.homePageMissingWriteDemoCta).toBe("Run the missing-write demo");
-    expect(productCopy.trustStripPills[1]?.supporting).toContain("Deterministic JSON your CI can fail on");
+    expect(productCopy.trustStripPills[1]?.supporting).toContain("Deterministic Outcome Certificate");
+    expect(productCopy.trustStripPills[1]?.supporting).toContain("fail CI on");
     expect(productCopy.homeHeroFailureCaptionMid).toBe("The database said otherwise.");
     expect(productCopy.homeClosing.sectionTitle).toBe("Ready to verify your first workflow?");
   });

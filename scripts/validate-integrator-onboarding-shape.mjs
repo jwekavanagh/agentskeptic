@@ -62,7 +62,9 @@ if (!page.includes("truthCheckCommand")) fail("integrate/page.tsx must reference
 if (!page.includes('data-testid="integrate-truth-check-commands"')) {
   fail("integrate/page.tsx must define data-testid integrate-truth-check-commands");
 }
-if (!page.includes("<pre")) fail("integrate/page.tsx must contain a <pre> for commands");
+if (!(page.includes("<pre") || page.includes("MarketingCodeBlock"))) {
+  fail("integrate/page.tsx must render commands in a <pre> (or MarketingCodeBlock, which renders <pre>)");
+}
 if (page.includes("IntegrateActivationBlock") || page.includes("IntegrateCrossingCommands")) {
   fail("integrate/page.tsx must not import legacy IntegrateActivationBlock / IntegrateCrossingCommands");
 }
