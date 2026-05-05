@@ -14,6 +14,7 @@ import {
   type BundleSignatureCode,
 } from "./bundleSignatureCodes.js";
 import {
+  lfCanonicalUtf8Payload,
   sha256Hex,
   AGENT_RUN_FILENAME,
   EVENTS_FILENAME,
@@ -96,7 +97,8 @@ export function verifyRunBundleSignature(
     const msg = e instanceof Error ? e.message : String(e);
     return fail(BUNDLE_SIGNATURE_MISSING_ARTIFACT, msg);
   }
-  if (evBuf.length !== evSpec.byteLength || sha256Hex(evBuf) !== evSpec.sha256) {
+  const evCanon = lfCanonicalUtf8Payload(evBuf);
+  if (evCanon.length !== evSpec.byteLength || sha256Hex(evCanon) !== evSpec.sha256) {
     return fail(BUNDLE_SIGNATURE_ARTIFACT_INTEGRITY, `${EVENTS_FILENAME} does not match manifest`);
   }
 
@@ -110,7 +112,8 @@ export function verifyRunBundleSignature(
     const msg = e instanceof Error ? e.message : String(e);
     return fail(BUNDLE_SIGNATURE_MISSING_ARTIFACT, msg);
   }
-  if (wrBuf.length !== wrSpec.byteLength || sha256Hex(wrBuf) !== wrSpec.sha256) {
+  const wrCanon = lfCanonicalUtf8Payload(wrBuf);
+  if (wrCanon.length !== wrSpec.byteLength || sha256Hex(wrCanon) !== wrSpec.sha256) {
     return fail(
       BUNDLE_SIGNATURE_ARTIFACT_INTEGRITY,
       `${WORKFLOW_RESULT_FILENAME} does not match manifest`,
@@ -180,7 +183,7 @@ export function verifyRunBundleSignature(
     return fail(BUNDLE_SIGNATURE_SIDECAR_INVALID, "Invalid signatureBase64");
   }
 
-  const ok = verify(null, wrBuf, publicKey, sigBytes);
+  const ok = verify(null, wrCanon, publicKey, sigBytes);
   if (!ok) {
     return fail(BUNDLE_SIGNATURE_CRYPTO_INVALID, "Ed25519 verify failed");
   }

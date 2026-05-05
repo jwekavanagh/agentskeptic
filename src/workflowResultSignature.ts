@@ -6,7 +6,7 @@ import {
   type KeyObject,
 } from "node:crypto";
 import { BUNDLE_SIGNATURE_PRIVATE_KEY_INVALID } from "./bundleSignatureCodes.js";
-import { sha256Hex } from "./agentRunRecord.js";
+import { lfCanonicalUtf8Payload, sha256Hex } from "./agentRunRecord.js";
 import { TruthLayerError } from "./truthLayerError.js";
 
 /** LF endings; trim outer whitespace; ensure trailing newline after PEM block. */
@@ -41,8 +41,9 @@ export function buildWorkflowResultSigSidecarBytes(
   }
   const signingPublicKeySpkiPem = normalizeSpkiPemForSidecar(spkiPemRaw);
 
-  const sigBuf = sign(null, workflowResultBytes, privateKey);
-  const signedContentSha256Hex = sha256Hex(workflowResultBytes);
+  const canonicalWorkflow = lfCanonicalUtf8Payload(workflowResultBytes);
+  const sigBuf = sign(null, canonicalWorkflow, privateKey);
+  const signedContentSha256Hex = sha256Hex(canonicalWorkflow);
 
   const payload = {
     algorithm: "ed25519",

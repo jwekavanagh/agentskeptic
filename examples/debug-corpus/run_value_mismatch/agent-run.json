@@ -3,15 +3,15 @@
   "workflowId": "wf_inconsistent",
   "producer": {
     "name": "agentskeptic",
-    "version": "1.2.1"
+    "version": "1.2.2"
   },
   "verifiedAt": "2026-04-23T12:00:00.000Z",
   "schemaVersion": 1,
   "artifacts": {
     "workflowResult": {
       "relativePath": "workflow-result.json",
-      "sha256": "310d1fa92711c1cc999aae9cbfc5313fc7516da38b99c219ac7c261c73c65f41",
-      "byteLength": 6898
+      "sha256": "44045777b947e155ba07827c0c5404cc0f16f4f25ad5260865049dafe4c6ee9e",
+      "byteLength": 6973
     },
     "events": {
       "relativePath": "events.ndjson",

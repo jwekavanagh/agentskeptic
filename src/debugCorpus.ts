@@ -10,6 +10,7 @@ import { isV9RunLevelCodesInconsistent } from "./workflowRunLevelConsistency.js"
 import type { WorkflowResult } from "./types.js";
 import { normalizeToEmittedWorkflowResult } from "./workflowResultNormalize.js";
 import {
+  lfCanonicalUtf8Payload,
   sha256Hex,
   AGENT_RUN_FILENAME,
   EVENTS_FILENAME,
@@ -19,6 +20,15 @@ import {
 } from "./agentRunRecord.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+/** Align `loadCorpusRun` manifest checks with `buildAgentRunRecordForBundle` digests (LF-canonical text). */
+function corpusTextArtifactBytesForIntegrity(absPath: string, bytes: Buffer): Buffer {
+  const base = path.basename(absPath);
+  if (base === WORKFLOW_RESULT_FILENAME || base === EVENTS_FILENAME) {
+    return lfCanonicalUtf8Payload(bytes);
+  }
+  return bytes;
+}
 
 export {
   AGENT_RUN_FILENAME,
@@ -309,7 +319,9 @@ export function loadCorpusRun(corpusRootReal: string, runId: string): CorpusRunO
     };
   }
 
-  if (wrBuf.length !== wrSpec.byteLength) {
+  const wrIntegrity = corpusTextArtifactBytesForIntegrity(wrPathResolved, wrBuf);
+
+  if (wrIntegrity.length !== wrSpec.byteLength) {
     return {
       loadStatus: "error",
       runId,
@@ -317,14 +329,14 @@ export function loadCorpusRun(corpusRootReal: string, runId: string): CorpusRunO
         code: DEBUG_CORPUS_CODES.ARTIFACT_LENGTH_MISMATCH,
         message: `${WORKFLOW_RESULT_FILENAME} byte length does not match ${AGENT_RUN_FILENAME}.`,
         path: wrPathResolved,
-        details: { expected: wrSpec.byteLength, actual: wrBuf.length },
+        details: { expected: wrSpec.byteLength, actual: wrIntegrity.length },
       },
       pathsTried: { agentRun: agentRunPath, workflowResult: wrPathResolved, events: evPathResolved },
       capturedAtEffectiveMs: mtimeMs(wrPathResolved),
     };
   }
 
-  if (sha256Hex(wrBuf) !== wrSpec.sha256) {
+  if (sha256Hex(wrIntegrity) !== wrSpec.sha256) {
     return {
       loadStatus: "error",
       runId,
@@ -370,7 +382,9 @@ export function loadCorpusRun(corpusRootReal: string, runId: string): CorpusRunO
     };
   }
 
-  if (evBuf.length !== evSpec.byteLength) {
+  const evIntegrity = corpusTextArtifactBytesForIntegrity(evPathResolved, evBuf);
+
+  if (evIntegrity.length !== evSpec.byteLength) {
     return {
       loadStatus: "error",
       runId,
@@ -378,14 +392,14 @@ export function loadCorpusRun(corpusRootReal: string, runId: string): CorpusRunO
         code: DEBUG_CORPUS_CODES.ARTIFACT_LENGTH_MISMATCH,
         message: `${EVENTS_FILENAME} byte length does not match ${AGENT_RUN_FILENAME}.`,
         path: evPathResolved,
-        details: { expected: evSpec.byteLength, actual: evBuf.length },
+        details: { expected: evSpec.byteLength, actual: evIntegrity.length },
       },
       pathsTried: { agentRun: agentRunPath, workflowResult: wrPathResolved, events: evPathResolved },
       capturedAtEffectiveMs: capturedAtEffectiveMs(record, wrPathResolved),
     };
   }
 
-  if (sha256Hex(evBuf) !== evSpec.sha256) {
+  if (sha256Hex(evIntegrity) !== evSpec.sha256) {
     return {
       loadStatus: "error",
       runId,
@@ -467,7 +481,7 @@ export function loadCorpusRun(corpusRootReal: string, runId: string): CorpusRunO
 
   let wrParsed: unknown;
   try {
-    wrParsed = JSON.parse(wrBuf.toString("utf8")) as unknown;
+    wrParsed = JSON.parse(wrIntegrity.toString("utf8")) as unknown;
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     return {
