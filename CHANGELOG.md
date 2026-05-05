@@ -44,6 +44,7 @@ Scope the `walk` to your own retention paths; the pattern above updates every st
 
 ### Features
 
+* **web:** shared verification report (`GET /r/{id}`) renders a structured **decision summary** (verdict, headline, primary reason, next action) from Outcome Certificate JSON for v3 envelopes, plus authority copy separating summary vs canonical human report vs machine JSON SSOT; LangGraph panel keeps checkpoint rollups only (explanation lives in the shared summary).
 * **web:** proof-first `/integrate` and `/integrate/guided` activation (quick before contract check, optional Formalize CTA, graduation to `check` / `enforce`); marketing `integratePage.quickVerifyCommand` SSOT and `validate-activation-journey-copy` merge gate
 
 ## [6.3.1](https://github.com/jwekavanagh/agentskeptic/compare/v6.3.0...v6.3.1) (2026-05-04)

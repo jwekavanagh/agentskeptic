@@ -2,7 +2,7 @@
 
 import { CertificateRemediationPanel } from "@/components/verify/CertificateRemediationPanel";
 import { AUTOMATION_BOUNDARY_CONNECTOR } from "@/lib/automationBoundaryConnector";
-import minimalShare from "@/content/embeddedReports/minimal-share-v2.json";
+import minimalShare from "@/content/embeddedReports/minimal-share-v3-envelope.json";
 import { bundledOutcomeCertificateSchema } from "@/lib/verifyBundled.contract";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
@@ -15,7 +15,7 @@ describe("CertificateRemediationPanel", () => {
     cleanup();
   });
 
-  it("Fixture A (minimal-share-v2): primary action + verdict label", () => {
+  it("Fixture A (minimal-share-v3-envelope): primary action + verdict label", () => {
     const env = minimalShare as { certificate: unknown };
     const certificate = bundledOutcomeCertificateSchema.parse(env.certificate);
     render(<CertificateRemediationPanel certificate={certificate} />);

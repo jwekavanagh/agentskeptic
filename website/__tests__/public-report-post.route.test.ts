@@ -55,7 +55,7 @@ describe("POST /api/public/verification-reports", () => {
 
   it("returns 400 for public-verification-report v2 envelope (POST is v3-only)", async () => {
     const inner = JSON.parse(
-      readFileSync(join(getRepoRoot(), "website", "src", "content", "embeddedReports", "minimal-share-v2.json"), "utf8"),
+      readFileSync(join(getRepoRoot(), "website", "src", "content", "embeddedReports", "minimal-share-v3-envelope.json"), "utf8"),
     ).certificate;
     const body = JSON.stringify({ schemaVersion: 2, certificate: inner });
     const req = new NextRequest("http://localhost/api/public/verification-reports", {
@@ -88,7 +88,7 @@ describe("POST /api/public/verification-reports", () => {
   it("returns 201 with schemaVersion, id, url on valid v3 outcome-certificate envelope", async () => {
     const root = getRepoRoot();
     const raw = readFileSync(
-      join(root, "website", "src", "content", "embeddedReports", "minimal-share-v2.json"),
+      join(root, "website", "src", "content", "embeddedReports", "minimal-share-v3-envelope.json"),
       "utf8",
     );
     const req = new NextRequest("http://agentskeptic.com/api/public/verification-reports", {

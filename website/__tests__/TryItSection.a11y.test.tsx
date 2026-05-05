@@ -3,7 +3,7 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { VerifyPageClient } from "@/app/verify/VerifyPageClient";
-import minimalShare from "@/content/embeddedReports/minimal-share-v2.json";
+import minimalShare from "@/content/embeddedReports/minimal-share-v3-envelope.json";
 import { EXAMPLE_WF_MISSING_NDJSON } from "@/lib/verifyDefaultSample";
 import { bundledOutcomeCertificateSchema } from "@/lib/verifyBundled.contract";
 

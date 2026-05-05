@@ -8,7 +8,6 @@ export type LangGraphCertLike = {
   highStakesReliance: string;
   relianceRationale: string;
   intentSummary?: string;
-  explanation: { headline: string; details: { code: string; message: string }[] };
   checkpointVerdicts?: {
     checkpointKey: string;
     verdict: string;
@@ -45,29 +44,12 @@ export function LangGraphCertificatePanel({ certificate }: PanelProps) {
         </div>
         <p style={{ marginTop: "0.5rem" }}>{trunc(c.relianceRationale)}</p>
       </div>
-      <section aria-labelledby="lg-explanation">
-        <h3 id="lg-explanation" className="muted" style={{ fontSize: "0.95rem" }}>
-          Explanation
-        </h3>
-        <p>
-          <strong>{c.explanation.headline}</strong>
-        </p>
-        {c.explanation.details.length > 0 ? (
-          <ul>
-            {c.explanation.details.map((d) => (
-              <li key={`${d.code}-${d.message.slice(0, 40)}`}>
-                <code>{d.code}</code>: {d.message}
-              </li>
-            ))}
-          </ul>
-        ) : null}
-      </section>
       <section aria-labelledby="lg-rollups">
         <h3 id="lg-rollups" className="muted" style={{ fontSize: "0.95rem" }}>
           Checkpoint rollups
         </h3>
         {!hasRollups ? (
-          <p className="muted">No checkpoint rollups; see explanation above.</p>
+          <p className="muted">No checkpoint rollups; see the decision summary and canonical human report.</p>
         ) : (
           <table data-testid="langgraph-checkpoint-table">
             <thead>

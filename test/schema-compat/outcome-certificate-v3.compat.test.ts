@@ -25,14 +25,14 @@ function compileFrozenPreAdditive(): ReturnType<InstanceType<typeof Ajv2020>["co
 
 describe("outcome-certificate-v3 additive compatibility", () => {
   it("P1: certificate without correctnessDefinition validates current schema", () => {
-    const raw = readFileSync(join(root, "website/src/content/embeddedReports/minimal-share-v2.json"), "utf8");
+    const raw = readFileSync(join(root, "website/src/content/embeddedReports/minimal-share-v3-envelope.json"), "utf8");
     const env = JSON.parse(raw) as { certificate: Record<string, unknown> };
     const v = loadSchemaValidator("outcome-certificate-v3");
     expect(v(env.certificate)).toBe(true);
   });
 
   it("P2 + P3: payload with correctnessDefinition passes new schema and fails frozen pre-additive validator", () => {
-    const raw = readFileSync(join(root, "website/src/content/embeddedReports/minimal-share-v2.json"), "utf8");
+    const raw = readFileSync(join(root, "website/src/content/embeddedReports/minimal-share-v3-envelope.json"), "utf8");
     const env = JSON.parse(raw) as { certificate: Record<string, unknown> };
     const withCd = {
       ...env.certificate,
@@ -62,7 +62,7 @@ describe("outcome-certificate-v3 additive compatibility", () => {
   });
 
   it("P4: evidence without rerunReadiness validates evidence schema", () => {
-    const raw = readFileSync(join(root, "website/src/content/embeddedReports/minimal-share-v2.json"), "utf8");
+    const raw = readFileSync(join(root, "website/src/content/embeddedReports/minimal-share-v3-envelope.json"), "utf8");
     const env = JSON.parse(raw) as { certificate: { evidenceCompleteness: unknown } };
     const v = loadSchemaValidator("evidence-completeness-v1");
     expect(v(env.certificate.evidenceCompleteness)).toBe(true);

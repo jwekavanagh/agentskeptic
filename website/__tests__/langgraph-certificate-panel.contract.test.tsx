@@ -38,6 +38,15 @@ describe("LangGraph certificate panel (contract)", () => {
     expect(panel.textContent).toMatch(/No checkpoint rollups/);
   });
 
+  it("B surfaces explanation headline in decision summary; panel does not repeat headline", () => {
+    const human = typeof b.humanReport === "string" ? b.humanReport : "";
+    const headline = b.explanation.headline;
+    render(<VerificationReportView humanText={human} payload={asV3(b)} variant="embed" />);
+    expect(screen.getByTestId("shared-report-headline")).toHaveTextContent(headline);
+    const panel = screen.getByTestId("langgraph-certificate-panel");
+    expect(within(panel).queryByText(headline)).toBeNull();
+  });
+
   it("D shows checkpoint table", () => {
     const human = typeof d.humanReport === "string" ? d.humanReport : "";
     const { container } = render(
