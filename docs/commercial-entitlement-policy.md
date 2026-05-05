@@ -16,7 +16,7 @@ The **published npm** path is gated in **`POST /api/v1/usage/reserve`**. **Start
 
 ## Why stateful `enforce` uses the paid gate
 
-`agentskeptic verify` / `quick` use **`intent=verify`** on reserve for licensed stateless runs. Stateful `agentskeptic enforce` uses **`intent=enforce`**, which requires a **paid** plan (not Starter) and an active subscription (SSOT; see [`commercial-enforce-gate-normative.md`](commercial-enforce-gate-normative.md)).
+`agentskeptic check` / `quick` (and positional compatibility invocation) use **`intent=verify`** on reserve for licensed stateless runs. Stateful `agentskeptic enforce` uses **`intent=enforce`**, which requires a **paid** plan (not Starter) and an active subscription (SSOT; see [`commercial-enforce-gate-normative.md`](commercial-enforce-gate-normative.md)).
 
 ## Why `starter` can `verify` but not `enforce` on commercial npm
 

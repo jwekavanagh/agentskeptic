@@ -22,10 +22,10 @@ Use **`--write-decision-bundle`** for a portable directory (outcome certificate,
 
 ## CLI (quick verify)
 
-- **stdout:** **Quick Verify report** (**`QuickVerifyReport`**, **`schemaVersion` 5**) including the same **`evidenceCompleteness`** object shape as certificates, then (when chaining to certificate paths) adapters may synthesize **`OutcomeCertificate`** v3 carrying that completeness.
+- **stdout:** one JSON line — **Outcome Certificate v3** (**`schemas/outcome-certificate-v3.schema.json`**) with `runKind: "quick_preview"` for quick flows.
 - **stderr:** anchored quick rollup block **and** completeness anchors for operator-facing narration.
 
-When **`agentskeptic quick`** emits **`QuickVerifyReport` JSON only**, treat **`humanReport`/anchors** guidance as applying wherever the CLI merges quick human output (`formatQuickVerifyHumanReport`)—see **`docs/quick-verify-normative.md`**.
+`QuickVerifyReport` remains an internal quick-processing/report structure. User-facing CLI automation should parse the emitted Outcome Certificate JSON on stdout; quick human-report anchor guidance remains in **`docs/quick-verify-normative.md`** (`formatQuickVerifyHumanReport`).
 
 ## Share (`POST /api/public/verification-reports`)
 

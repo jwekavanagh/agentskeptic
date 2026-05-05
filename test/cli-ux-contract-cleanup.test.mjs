@@ -46,6 +46,10 @@ describe("CLI UX contract cleanup guards", () => {
       initSrc.includes('"verify:agentskeptic": "agentskeptic check --workflow-id wf_complete'),
       "init-generated script should use explicit check command",
     );
+    assert.ok(
+      initSrc.includes("npx agentskeptic check --workflow-id wf_complete"),
+      "Next init README snippet should use canonical check command",
+    );
   });
 
   it("README and integrate docs explicitly document receipt side effect", () => {
@@ -55,5 +59,52 @@ describe("CLI UX contract cleanup guards", () => {
 
     assert.ok(readme.includes(required), "README should mention verification receipt path");
     assert.ok(integrate.includes(required), "integrate doc should mention verification receipt path");
+  });
+
+  it("bootstrap template and docs no longer imply agentskeptic verify subcommand", () => {
+    const bootstrapTemplate = readFileSync(
+      join(root, "src", "bootstrap", "bootstrapReadmeTemplate.ts"),
+      "utf8",
+    );
+    assert.equal(
+      /agentskeptic verify --workflow-id/.test(bootstrapTemplate),
+      false,
+      "bootstrap template must not suggest a non-existent agentskeptic verify subcommand",
+    );
+    assert.ok(
+      /agentskeptic check --workflow-id/.test(bootstrapTemplate),
+      "bootstrap template should use agentskeptic check",
+    );
+  });
+
+  it("advanced help keeps fully-qualified verify-bundle-signature command", () => {
+    const cliSrc = readFileSync(join(root, "src", "cli.ts"), "utf8");
+    assert.ok(
+      cliSrc.includes("agentskeptic verify-bundle-signature --run-dir <dir> --public-key <path>"),
+      "help text should include full command name for verify-bundle-signature",
+    );
+  });
+
+  it("selected user-facing docs avoid bare agentskeptic verify command wording", () => {
+    const userFacingFiles = [
+      join(root, "README.md"),
+      join(root, "docs", "integrate.md"),
+      join(root, "docs", "quick-verify-normative.md"),
+      join(root, "docs", "outcome-certificate-integrator.md"),
+      join(root, "docs", "bootstrap-pack-normative.md"),
+      join(root, "docs", "ci-enforcement.md"),
+      join(root, "docs", "commercial.md"),
+      join(root, "docs", "commercial-entitlement-policy.md"),
+      join(root, "docs", "verification-execution-ssot.md"),
+    ];
+    const bareVerifyCmd = /\bagentskeptic verify(?:\s|`|$)/;
+    for (const f of userFacingFiles) {
+      const text = readFileSync(f, "utf8");
+      assert.equal(
+        bareVerifyCmd.test(text),
+        false,
+        `${f} must not imply bare agentskeptic verify subcommand`,
+      );
+    }
   });
 });
