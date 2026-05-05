@@ -57,6 +57,11 @@ export function sha256Hex(bytes: Buffer): string {
   return createHash("sha256").update(bytes).digest("hex");
 }
 
+/** LF-canonical digest input for text artifacts (matches Git `text eol=lf` and `loadCorpusRun` checks). */
+export function lfCanonicalUtf8Payload(bytes: Buffer): Buffer {
+  return Buffer.from(bytes.toString("utf8").replace(/\r\n/g, "\n"), "utf8");
+}
+
 export type BuildAgentRunRecordInput = {
   runId: string;
   workflowId: string;
@@ -80,15 +85,18 @@ export function buildAgentRunRecordForBundle(input: BuildAgentRunRecordInput): A
     ...(input.capturedAt !== undefined && input.capturedAt !== "" ? { capturedAt: input.capturedAt } : {}),
   };
 
+  const workflowDigestBytes = lfCanonicalUtf8Payload(input.workflowResultBytes);
+  const eventsDigestBytes = lfCanonicalUtf8Payload(input.eventsBytes);
+
   const workflowResult: AgentRunRecordV1["artifacts"]["workflowResult"] = {
     relativePath: WORKFLOW_RESULT_RELATIVE,
-    sha256: sha256Hex(input.workflowResultBytes),
-    byteLength: input.workflowResultBytes.length,
+    sha256: sha256Hex(workflowDigestBytes),
+    byteLength: workflowDigestBytes.length,
   };
   const events: AgentRunRecordV1["artifacts"]["events"] = {
     relativePath: EVENTS_RELATIVE,
-    sha256: sha256Hex(input.eventsBytes),
-    byteLength: input.eventsBytes.length,
+    sha256: sha256Hex(eventsDigestBytes),
+    byteLength: eventsDigestBytes.length,
   };
 
   const sigBytes = input.workflowResultSignatureBytes;
