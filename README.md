@@ -287,6 +287,8 @@ Use **`--postgres-url`** instead of **`--db`**; **`-`** as **`--input`** reads s
 
 The **`npm start`** driver prints human report + workflow JSON to **stdout** (one stream for the demo). Normal CLI: machine JSON on **stdout**, human report on **stderr**—[Human truth report](docs/agentskeptic.md#human-truth-report). **Full success/failure transcripts** (same strings as below) are in the [acquisition fold](#your-traces-say-success-your-database-disagrees) at the top of this README.
 
+Operational note: `agentskeptic check` / `agentskeptic quick` persist one verification receipt JSON per run under `artifacts/agentskeptic-receipts/` (write/schema failures are fail-closed with exit 3).
+
 ### Success (`wf_complete`)
 
 *Interpretation:* Under the configured rules, **expected** state matched **observed SQL** for this step—**state alignment**, not proof of execution.
@@ -353,7 +355,7 @@ Everything beyond core contract verification lives in **[`docs/agentskeptic.md`]
 **OSS/unmetered CLI** for single-run verification: clone this repo and use the OSS build (`WF_BUILD_PROFILE=oss` / default `npm run build` artifact). State over-time `enforce` needs the commercial CLI and a paid entitlement.
 <!-- codegen:buyer-truth:end:COMMERCIAL_ENTRY -->
 
-Canonical write-up: **[`docs/commercial.md`](docs/commercial.md)** (npm package, Stripe, keys, telemetry, validation, entitlements; operator metrics in **[`docs/funnel-observability.md`](docs/funnel-observability.md)**—OSS CLI product-activation posts are **opt-in** via **`AGENTSKEPTIC_TELEMETRY=1`** or persisted config; **`AGENTSKEPTIC_TELEMETRY=0`** forces them off). OSS builds in this repo run contract **`verify`** / **`quick`** without a license server for stateless runs. Stateful `agentskeptic enforce` and over-time guarantees require a commercial build per **[`docs/commercial-enforce-gate-normative.md`](docs/commercial-enforce-gate-normative.md)**. Example workflow: **[`examples/github-actions/agentskeptic-commercial.yml`](examples/github-actions/agentskeptic-commercial.yml)**.
+Canonical write-up: **[`docs/commercial.md`](docs/commercial.md)** (npm package, Stripe, keys, telemetry, validation, entitlements; operator metrics in **[`docs/funnel-observability.md`](docs/funnel-observability.md)**—OSS CLI product-activation posts are **opt-in** via **`AGENTSKEPTIC_TELEMETRY=1`** or persisted config; **`AGENTSKEPTIC_TELEMETRY=0`** forces them off). OSS builds in this repo run stateless contract checks via **`agentskeptic check`** (and positional compatibility invocation) / **`quick`** without a license server. Stateful `agentskeptic enforce` and over-time guarantees require a commercial build per **[`docs/commercial-enforce-gate-normative.md`](docs/commercial-enforce-gate-normative.md)**. Example workflow: **[`examples/github-actions/agentskeptic-commercial.yml`](examples/github-actions/agentskeptic-commercial.yml)**.
 
 ## Status, contributing, security
 

@@ -14,7 +14,7 @@ This document is the **narrative SSOT** for the thin commercial layer (website, 
 
 ## Commercial boundary
 
-The **published npm CLI** path for licensed contract **`verify`** and **`quick`** uses a valid API key and a successful **`POST /api/v1/usage/reserve`**. **Starter** includes a **finite free** monthly allowance for licensed **`verify`** (see [`config/commercial-plans.json`](../config/commercial-plans.json)). Stateful **`enforce`** (baseline, drift check, acceptance over time) requires a **paid** plan with an **active** Individual, Team, Business, or Enterprise subscription (Stripe **trialing** counts). The default **OSS** build runs contract **`verify`** / **`quick`** without a license server for single-run outcomes only. **Paid** plans add metered overage after the included amount (Stripe subscription has a base Price + metered overage Price; see `scripts/stripe-bootstrap.mjs`). Full matrix: *Free vs paid boundary* below.
+The **published npm CLI** path for licensed stateless checks via **`check`** (and positional compatibility invocation) and **`quick`** uses a valid API key and a successful **`POST /api/v1/usage/reserve`**. **Starter** includes a **finite free** monthly allowance for licensed stateless checks (see [`config/commercial-plans.json`](../config/commercial-plans.json)). Stateful **`enforce`** (baseline, drift check, acceptance over time) requires a **paid** plan with an **active** Individual, Team, Business, or Enterprise subscription (Stripe **trialing** counts). The default **OSS** build runs stateless contract checks / **`quick`** without a license server for single-run outcomes only. **Paid** plans add metered overage after the included amount (Stripe subscription has a base Price + metered overage Price; see `scripts/stripe-bootstrap.mjs`). Full matrix: *Free vs paid boundary* below.
 
 In-process **`createDecisionGate`** in your application evaluates read-only SQL and **does not** call the reserve API; metering applies to the **CLI entry points** that perform license preflight.
 
@@ -59,13 +59,13 @@ Single matrix for what the **default OSS artifact** vs **published commercial np
 
 ### Programmatic verification vs licensed CLI
 
-In-process **`createDecisionGate`** (library embed in your application) evaluates read-only SQL against buffered structured events and **does not** call **`POST /api/v1/usage/reserve`**. **Licensed** metering applies to the **published npm CLI** entry points that perform license preflight before contract **`verify`**, **`quick`** with lock flags, and **`enforce`**.
+In-process **`createDecisionGate`** (library embed in your application) evaluates read-only SQL against buffered structured events and **does not** call **`POST /api/v1/usage/reserve`**. **Licensed** metering applies to the **published npm CLI** entry points that perform license preflight before stateless contract checks (**`check`** / positional compatibility), **`quick`** with lock flags, and **`enforce`**.
 
 ## Packaging and CLI build profiles
 
 | Artifact              | `WF_BUILD_PROFILE` | Behavior |
 |-----------------------|--------------------|----------|
-| OSS / this repo CI    | `oss` (default)    | No license preflight; contract **`verify`** without API key; **`enforce` unavailable** — **[`docs/commercial-enforce-gate-normative.md`](commercial-enforce-gate-normative.md)** |
+| OSS / this repo CI    | `oss` (default)    | No license preflight; stateless contract checks via **`check`** (and positional compatibility) without API key; **`enforce` unavailable** — **[`docs/commercial-enforce-gate-normative.md`](commercial-enforce-gate-normative.md)** |
 | Published npm tarball | `commercial`       | Requires `AGENTSKEPTIC_API_KEY` (legacy `WORKFLOW_VERIFIER_API_KEY` accepted) + successful preflight for contract batch, quick verify, and **`enforce`** |
 
 Codegen: **`node scripts/write-commercial-build-flags.mjs`** writes **`src/generated/commercialBuildFlags.ts`** (gitignored) before `tsc`. **`npm run build`** passes **`--oss`** so the default artifact stays OSS even if **`WF_BUILD_PROFILE`** is set in the shell; **`npm run build:commercial`** invokes the script with **`--commercial`** and requires **`COMMERCIAL_LICENSE_API_BASE_URL`**.

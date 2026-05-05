@@ -43,4 +43,4 @@ Stray **`process.exit`** in fingerprinted verification paths is forbidden by rep
 
 1. Build / install pinned `agentskeptic` package.
 2. Run `agentskeptic execution-identity verify --expect-json <your pin>` before batch verify/enforce if you vendor a pin file.
-3. Run `agentskeptic verify` or `enforce` as documented; collect `artifacts/agentskeptic-receipts/` for forensic evidence.
+3. Run `agentskeptic check` (or positional compatibility invocation) or `enforce` as documented; collect `artifacts/agentskeptic-receipts/` for forensic evidence.

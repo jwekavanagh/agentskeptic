@@ -11,7 +11,7 @@ Tokens: `agentskeptic quick --input <path> (--postgres-url <url> | --db <sqliteP
 ## A.2 Phase A / B
 
 - **Phase A:** exit 3, stderr single JSON [`schemas/cli-error-envelope.schema.json`](../schemas/cli-error-envelope.schema.json), **no stdout bytes**.
-- **Phase B:** after successful registry atomic write and read-back (see **Registry file and canonical JSON** below), optionally atomic-write **`--emit-events`** (may be **zero bytes** when there are no exported row tools), then emit one stdout line: `stableStringify(report) + "\n"`, schema-valid against **`schemas/quick-verify-report.schema.json`** (**`schemaVersion` 5**, required **`evidenceCompleteness`**); exit 0/1/2.
+- **Phase B:** after successful registry atomic write and read-back (see **Registry file and canonical JSON** below), optionally atomic-write **`--emit-events`** (may be **zero bytes** when there are no exported row tools), then emit one stdout line: `stableStringify(certificate) + "\n"`, schema-valid against **`schemas/outcome-certificate-v3.schema.json`** (`runKind: "quick_preview"` for quick). The same certificate carries `evidenceCompleteness`; exit 0/1/2.
 - **`agentskeptic enforce`:** stateful CI lifecycle command (baseline/check/accept) with **exit 4** on drift. Full stdout/stderr rules and the authoritative exit table live only in [agentskeptic.md — Enforce stream contract (normative)](agentskeptic.md#enforce-stream-contract-normative) (do not duplicate that table here). **Hosted posture names** (`lifecycle_state`, accept/rerun sequencing) come only from **`docs/outcome-certificate-normative.md`** (Hosted enforcement lifecycle), not quick-verify algorithms.
 
 ## A.3 Registry file and canonical JSON
@@ -23,7 +23,7 @@ Tokens: `agentskeptic quick --input <path> (--postgres-url <url> | --db <sqliteP
 - Serialize the array with **`stableStringify`**: recursively, every JSON object has keys sorted by UTF-16 code unit lexicographic order (same comparator as `compareUtf16Id` in `src/resolveExpectation.ts`); arrays keep **implementation order** (see **Tool order**). No ASCII space after `:` or `,`. No trailing newline after the closing `]` of the top-level array.
 - Output string is Unicode code points; encode as **UTF-8 without BOM** for disk.
 
-**Identity with stdout.** Let `F` = filesystem contents of `--export-registry` after successful run. Let `T` = `report.exportableRegistry.tools` (array) from stdout JSON. **Required:** `F === canonicalToolsArrayUtf8(T)` as strings (UTF-8 decode of `F` equals the canonical string).
+**Identity with stdout.** Let `F` = filesystem contents of `--export-registry` after successful run. Let `T` = exported tools from the same run (the array used to write `--export-registry`, represented in the emitted certificate's quick-derived evidence chain). **Required:** `F === canonicalToolsArrayUtf8(T)` as strings (UTF-8 decode of `F` equals the canonical string).
 
 **Tool order in array.** Sort exported tools by `toolId` ascending UTF-16 order.
 
@@ -33,8 +33,8 @@ Tokens: `agentskeptic quick --input <path> (--postgres-url <url> | --db <sqliteP
 2. Compute `registryUtf8 = canonicalToolsArrayUtf8(report.exportableRegistry.tools)`.
 3. **`atomicWriteUtf8File(exportRegistryPath, registryUtf8)`:** `mkdirSync(dirname(exportRegistryPath), { recursive: true })`; write to `exportRegistryPath + ".tmp." + randomSuffix` in same directory; `fsyncSync`; `renameSync` to final path; `readFileSync(exportRegistryPath, "utf8")` must **strict-equal** `registryUtf8`; else phase A.
 4. If **`--emit-events <path>`** is present: `atomicWriteUtf8File(emitEventsPath, eventsUtf8)` where `eventsUtf8` is UTF-8 NDJSON (`schemaVersion: 1` `tool_observed` lines for **each exported tool** in `exportableRegistry.tools`, `seq` in sorted-`toolId` order) or the **empty string** (final file length **0**) when there are no exported tools.
-5. Serialize `reportUtf8 = stableStringify(report) + "\n"`.
-6. `process.stdout.write(reportUtf8)`.
+5. Build an Outcome Certificate from quick results and serialize `certificateUtf8 = stableStringify(certificate) + "\n"`.
+6. `process.stdout.write(certificateUtf8)`.
 
 **Never** emit any stdout byte before step 3 completes successfully.
 
@@ -63,7 +63,7 @@ Additional prose after those lines may change without bumping `quickVerifyVersio
 
 ## Appendix H — Human copy identifiers (normative names only)
 
-English text for ingest lines and unit reason hints is defined in **`src/quickVerify/quickVerifyHumanCopy.ts`** (ingest messages and imports from **`src/verificationUserPhrases.ts`**). Banner lines and per-unit reconciliation stderr lines: **`src/quickVerify/formatQuickVerifyHumanReport.ts`** (stderr values must mirror **`units[].reconciliation`** only). Machine **non-guarantee** and **declared / expected / observed** copy on stdout: **`src/quickVerify/quickVerifyProductTruth.ts`** (field `productTruth` on `QuickVerifyReport`, `schemaVersion` **4**). Identifiers include at least: `MSG_NO_TOOL_CALLS`, `MSG_NO_STRUCTURED_TOOL_ACTIVITY`, `HUMAN_REPORT_BEGIN`, `HUMAN_REPORT_END`, `QUICK_VERIFY_BANNER_LINE_1`, `QUICK_VERIFY_BANNER_LINE_2`, `QUICK_VERIFY_BANNER_LINE_3`, `verdictLine`, `humanLineForIngestReasonCode`, `humanFragmentForReasonCode`. Do not duplicate the strings in this doc outside a fenced block that cites one of those file paths.
+English text for ingest lines and unit reason hints is defined in **`src/quickVerify/quickVerifyHumanCopy.ts`** (ingest messages and imports from **`src/verificationUserPhrases.ts`**). Banner lines and per-unit reconciliation stderr lines: **`src/quickVerify/formatQuickVerifyHumanReport.ts`** (stderr values must mirror **`units[].reconciliation`** only). Machine **non-guarantee** and **declared / expected / observed** copy in quick-processing report construction: **`src/quickVerify/quickVerifyProductTruth.ts`** (field `productTruth` on `QuickVerifyReport`, `schemaVersion` **4**). Identifiers include at least: `MSG_NO_TOOL_CALLS`, `MSG_NO_STRUCTURED_TOOL_ACTIVITY`, `HUMAN_REPORT_BEGIN`, `HUMAN_REPORT_END`, `QUICK_VERIFY_BANNER_LINE_1`, `QUICK_VERIFY_BANNER_LINE_2`, `QUICK_VERIFY_BANNER_LINE_3`, `verdictLine`, `humanLineForIngestReasonCode`, `humanFragmentForReasonCode`. Do not duplicate the strings in this doc outside a fenced block that cites one of those file paths.
 
 ---
 

@@ -143,8 +143,8 @@ Placeholders are copied from the validated input without transformation. **No** 
 |------|------------|
 | `tools.json` | Byte-identical to Quick’s `--export-registry` output for this run (registry array UTF-8). |
 | `events.ndjson` | Output of `buildQuickContractEventsNdjson` using **`workflowId`** from input and Quick `contractExports`. |
-| `quick-report.json` | Full **`QuickVerifyReport`**: same serialization as **`agentskeptic quick`** stdout payload (`stableStringify(report)` + single trailing newline). |
-| `README.bootstrap.md` | Fixed template (see implementation constant): states Quick is provisional and gives one **`agentskeptic verify`** example using **`./events.ndjson`** and **`./tools.json`**. |
+| `quick-report.json` | Full **`QuickVerifyReport`** persisted by bootstrap pack synthesis (`stableStringify(report)` + single trailing newline). This file is provisional quick output and is not the `agentskeptic quick` CLI stdout contract. |
+| `README.bootstrap.md` | Fixed template (see implementation constant): states Quick is provisional and gives one **`agentskeptic check`** example using **`./events.ndjson`** and **`./tools.json`**. |
 
 ### D. `BootstrapStdoutEnvelope` v1 (exit 0 only)
 

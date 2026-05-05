@@ -82,7 +82,7 @@ Examples:
   db.exec(seedSql);
   db.close();
 
-  const pkgScript = `"verify:agentskeptic": "agentskeptic --workflow-id wf_complete --events agentskeptic/events.ndjson --registry agentskeptic/tools.json --db demo.db"`;
+  const pkgScript = `"verify:agentskeptic": "agentskeptic check --workflow-id wf_complete --events agentskeptic/events.ndjson --registry agentskeptic/tools.json --db demo.db"`;
 
   if (framework === "none") {
     const readme = `# AgentSkeptic starter
@@ -149,10 +149,10 @@ export const POST = createNextRouteHandler(
    { "events": [ /* tool_observed run events for wf_complete */ ] }
    \`\`\`
 
-Local batch verify without Next dev server:
+Local contract check without Next dev server:
 
 \`\`\`bash
-npx agentskeptic --workflow-id wf_complete --events agentskeptic/events.ndjson --registry agentskeptic/tools.json --db demo.db
+npx agentskeptic check --workflow-id wf_complete --events agentskeptic/events.ndjson --registry agentskeptic/tools.json --db demo.db
 \`\`\`
 `;
     writeFileSync(join(cwd, "AGENTSKEPTIC-INIT.md"), nextReadme, "utf8");
