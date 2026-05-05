@@ -60,6 +60,12 @@ const certificate = await skeptic.check({
 ```
 
 See **[`docs/integrate.md`](docs/integrate.md)** (v2 integrator SSOT) and [`docs/migrate-2.md`](docs/migrate-2.md) for 1.x → 2.0 renames.
+
+### CI (GitHub Actions)
+
+**Default:** copy **[`examples/github-actions/agentskeptic-check.yml`](examples/github-actions/agentskeptic-check.yml)** — stateless **truth check** (`npx agentskeptic check`), no `AGENTSKEPTIC_API_KEY`. Details: **[`docs/ambient-ci-distribution.md`](docs/ambient-ci-distribution.md)**.
+
+**Opt-in commercial / stateful enforcement** (baseline, drift, acceptance): **[`examples/github-actions/agentskeptic-commercial.yml`](examples/github-actions/agentskeptic-commercial.yml)** requires an API key and license server ([`docs/commercial-enforce-gate-normative.md`](docs/commercial-enforce-gate-normative.md)).
 <!-- adoption-canonical-llms:end -->
 Read-only checks at verify time—not color.
 

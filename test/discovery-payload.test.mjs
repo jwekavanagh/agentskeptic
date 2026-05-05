@@ -9,6 +9,7 @@ import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
 import { createRequire } from "node:module";
 import test from "node:test";
+import { parse as parseYaml } from "yaml";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, "..");
@@ -255,4 +256,16 @@ test("render-discovery-ci.mjs exits 2 on bad argv", () => {
 test("examples/github-actions/agentskeptic-commercial.yml references PR marker", () => {
   const yml = readFileSync(join(root, "examples", "github-actions", "agentskeptic-commercial.yml"), "utf8");
   assert.ok(yml.includes(dp.PR_MARKER_LINE));
+});
+
+test("examples/github-actions/agentskeptic-check.yml parses as OSS truth-check workflow", () => {
+  const yml = readFileSync(join(root, "examples", "github-actions", "agentskeptic-check.yml"), "utf8");
+  const doc = parseYaml(yml);
+  assert.equal(doc.name, "AgentSkeptic Truth Check");
+  assert.ok(yml.includes("npx agentskeptic check"));
+  assert.ok(!/\bsecrets\./m.test(yml));
+  assert.ok(!/\bAGENTSKEPTIC_API_KEY\s*:/m.test(yml));
+  assert.ok(!yml.includes("agentskeptic enforce"));
+  assert.ok(yml.includes("render-discovery-ci.mjs"));
+  assert.ok(yml.includes("${AS_REPO_ROOT}"));
 });
