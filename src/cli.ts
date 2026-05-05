@@ -696,7 +696,7 @@ async function runQuickSubcommand(args: string[]): Promise<void> {
   if (argValue(args, "--expect-lock") !== undefined || argValue(args, "--output-lock") !== undefined) {
     writeCliError(
       CLI_OPERATIONAL_CODES.ENFORCE_USAGE,
-      "Lock flags are removed. Use `agentskeptic verify` for stateless checks or `agentskeptic enforce` for stateful CI enforcement.",
+      "Lock flags are removed. Use `agentskeptic check` for stateless checks or `agentskeptic enforce` for stateful CI enforcement.",
     );
     exitAfterVerifyCliReceipt({
       parsedBatch: null,

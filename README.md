@@ -287,6 +287,8 @@ Use **`--postgres-url`** instead of **`--db`**; **`-`** as **`--input`** reads s
 
 The **`npm start`** driver prints human report + workflow JSON to **stdout** (one stream for the demo). Normal CLI: machine JSON on **stdout**, human report on **stderr**—[Human truth report](docs/agentskeptic.md#human-truth-report). **Full success/failure transcripts** (same strings as below) are in the [acquisition fold](#your-traces-say-success-your-database-disagrees) at the top of this README.
 
+Operational note: `agentskeptic check` / `agentskeptic quick` persist one verification receipt JSON per run under `artifacts/agentskeptic-receipts/` (write/schema failures are fail-closed with exit 3).
+
 ### Success (`wf_complete`)
 
 *Interpretation:* Under the configured rules, **expected** state matched **observed SQL** for this step—**state alignment**, not proof of execution.

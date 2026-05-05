@@ -14,7 +14,7 @@ Hosted trust capture (blocked-decision records + alerts) lives in **[trust-autho
 
 **Goal:** answer “what happened on the wire?” before you invest in registry authoring.
 
-- Run **`agentskeptic quick`** on your capture (SQLite or Postgres) and read **`QuickVerifyReport`** stdout (**`schemaVersion` 5**). The same **`evidenceCompleteness`** shape appears on quick output and on contract certificates — use it for blocker category, missing actionable inputs, **`quickSignal`** (“did SQL verification run meaningfully?” vs ingest/mapping stalls), summary **`nextActions`**, and complete **`remediationItems[]`** when checks fail.
+- Run **`agentskeptic quick`** on your capture (SQLite or Postgres) and read **Outcome Certificate v3** stdout (`runKind: "quick_preview"`). The same **`evidenceCompleteness`** shape appears on quick output and on contract certificates — use it for blocker category, missing actionable inputs, **`quickSignal`** (“did SQL verification run meaningfully?” vs ingest/mapping stalls), summary **`nextActions`**, and complete **`remediationItems[]`** when checks fail.
 - Human stderr includes the quick anchor block plus the shared **`=== evidence_completeness ===`** section (see **`docs/outcome-certificate-integrator.md`**).
 - **Preview boundary:** `quick_preview` stays **`highStakesReliance: prohibited`** and does **not** run non-SQL witnesses; graduate to contract **`check`** below when reviews need decision-grade permission or when expected state spans non-SQL stores.
 
@@ -57,6 +57,10 @@ On verdict exits, stderr begins with:
 | `unknown` | Incomplete / not established |
 
 Then the human-readable certificate report (unless `--no-human-report`; the verdict line is still emitted).
+
+### Receipt side effect
+
+`agentskeptic check` and `agentskeptic quick` write one verification receipt JSON per run under `artifacts/agentskeptic-receipts/` (fail-closed on receipt write/schema errors with exit 3).
 
 ### TypeScript SDK
 

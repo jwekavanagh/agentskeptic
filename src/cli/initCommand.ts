@@ -82,7 +82,7 @@ Examples:
   db.exec(seedSql);
   db.close();
 
-  const pkgScript = `"verify:agentskeptic": "agentskeptic --workflow-id wf_complete --events agentskeptic/events.ndjson --registry agentskeptic/tools.json --db demo.db"`;
+  const pkgScript = `"verify:agentskeptic": "agentskeptic check --workflow-id wf_complete --events agentskeptic/events.ndjson --registry agentskeptic/tools.json --db demo.db"`;
 
   if (framework === "none") {
     const readme = `# AgentSkeptic starter
