@@ -66,10 +66,15 @@ describe("VerifyPageClient a11y", () => {
         ),
     );
     render(<VerifyPageClient />);
-    expect(screen.getByLabelText("Verification events NDJSON")).toHaveValue(EXAMPLE_WF_MISSING_NDJSON);
+    expect(screen.getByRole("textbox", { name: /paste ndjson event log/i })).toHaveValue(EXAMPLE_WF_MISSING_NDJSON);
     fireEvent.click(screen.getByRole("button", { name: "Run verification" }));
     await waitFor(() => {
+      expect(screen.getByTestId("verify-paste-trust-pill")).toHaveTextContent("NOT TRUSTED");
       expect(screen.getByTestId("remediation-verdict-label")).toHaveTextContent("Reality contradicts the claim");
+      expect(screen.getByText(/expected downstream state was not verified/i)).toBeTruthy();
+      expect(screen.getByTestId("verify-paste-demo-next-action")).toHaveTextContent(
+        "Review the expected state, fix the workflow or data, then rerun verification.",
+      );
       expect(screen.getByTestId("remediation-primary-action")).toHaveTextContent(
         certificate.evidenceCompleteness.nextActions[0]?.text ?? "",
       );

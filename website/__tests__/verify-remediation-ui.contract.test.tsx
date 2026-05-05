@@ -23,6 +23,20 @@ describe("CertificateRemediationPanel", () => {
     expect(screen.getByTestId("remediation-verdict-label").textContent).toContain("Reality contradicts the claim");
   });
 
+  it("Fixture A (/verify demo presentation): trust pill + decision grid fields", () => {
+    const env = minimalShare as { certificate: unknown };
+    const certificate = bundledOutcomeCertificateSchema.parse(env.certificate);
+    render(<CertificateRemediationPanel certificate={certificate} presentation="verify-demo" />);
+    expect(screen.getByTestId("verify-paste-trust-pill")).toHaveTextContent("NOT TRUSTED");
+    expect(screen.getByText("crm.upsert_contact")).toBeTruthy();
+    expect(screen.getByText("state_mismatch")).toBeTruthy();
+    expect(screen.getByText("high")).toBeTruthy();
+    expect(screen.getByTestId("verify-paste-demo-next-action")).toHaveTextContent(
+      "Review the expected state, fix the workflow or data, then rerun verification.",
+    );
+    expect(screen.getByTestId("remediation-primary-action").textContent).toBe(EXPECTED_MINIMAL_SHARE_PRIMARY);
+  });
+
   it("Fixture B (CONNECTOR): automation boundary paragraph", () => {
     const certificate = bundledOutcomeCertificateSchema.parse({
       schemaVersion: 3,

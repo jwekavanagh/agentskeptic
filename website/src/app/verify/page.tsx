@@ -5,13 +5,13 @@ import { VerifyPageClient } from "./VerifyPageClient";
 export const metadata: Metadata = {
   title: "Paste verification — AgentSkeptic",
   description:
-    "Paste NDJSON events and verify whether stored state matches the claim, with no setup required.",
+    "Paste an NDJSON agent event log; AgentSkeptic checks downstream state and produces a decision-grade verdict. Try the sample failure for free.",
   alternates: { canonical: indexableGuideCanonical("/verify") },
 };
 
 export default function VerifyPage() {
   return (
-    <main>
+    <main className="claim-page-main">
       <VerifyPageClient />
     </main>
   );
