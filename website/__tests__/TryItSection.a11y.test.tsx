@@ -71,7 +71,7 @@ describe("VerifyPageClient a11y", () => {
     await waitFor(() => {
       expect(screen.getByTestId("verify-paste-trust-pill")).toHaveTextContent("NOT TRUSTED");
       expect(screen.getByTestId("remediation-verdict-label")).toHaveTextContent("Reality contradicts the claim");
-      expect(screen.getByText(/expected downstream state was not verified/i)).toBeTruthy();
+      expect(screen.getByText(/could not verify the expected contact state in the mocked store/i)).toBeTruthy();
       expect(screen.getByTestId("verify-paste-demo-next-action")).toHaveTextContent(
         "Review the expected state, fix the workflow or data, then rerun verification.",
       );

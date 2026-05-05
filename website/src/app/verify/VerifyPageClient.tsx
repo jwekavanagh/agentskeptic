@@ -113,11 +113,12 @@ export function VerifyPageClient() {
   return (
     <section id="verify-runner" className="home-section home-try-it" data-testid="verify-page-runner">
       <h1>Paste verification</h1>
-      <p className="verify-page-lede">
-        Paste an agent <strong>event log</strong> below (one JSON object per line). AgentSkeptic checks whether{" "}
-        <strong>a claimed downstream change is actually reflected in verified state</strong>—then issues a structured,
-        decision-grade verdict. The bundled sample intentionally fails because a claimed CRM upsert{" "}
-        <strong>cannot be proven against the mocked store.</strong>
+      <p className="verify-page-lede verify-page-lede--lead">
+        Paste an agent event log below. AgentSkeptic checks whether a claimed downstream change is actually reflected
+        in verified state.
+      </p>
+      <p className="verify-page-lede verify-page-lede--follow">
+        This bundled sample intentionally fails because a claimed CRM upsert cannot be proven against the mocked store.
       </p>
 
       <div className="verify-page-input-block">
@@ -127,12 +128,15 @@ export function VerifyPageClient() {
         <p className="muted verify-page-events-hint" id={`${eventsFieldId}-hint`}>
           Use one JSON event per line. The default sample intentionally fails.
         </p>
+        <p className="verify-page-sample-kicker" id={`${eventsFieldId}-sample`}>
+          Sample event
+        </p>
         <textarea
           id={eventsFieldId}
-          className="try-it-select"
+          className="try-it-select verify-page-events-textarea"
           aria-label="Paste NDJSON event log"
-          aria-describedby={`${eventsFieldId}-hint`}
-          rows={10}
+          aria-describedby={`${eventsFieldId}-hint ${eventsFieldId}-sample`}
+          rows={7}
           value={eventsNdjson}
           onChange={(e) => setEventsNdjson(e.target.value)}
         />
@@ -167,6 +171,11 @@ export function VerifyPageClient() {
             <p className="muted verify-page-evidence-intro">
               Open these when you need the full verifier narrative or the raw integration payload.
             </p>
+            {parsedSuccess.data.certificate.evidenceCompleteness.nextActions[0]?.text ? (
+              <p className="muted verify-page-verifier-guidance" data-testid="remediation-primary-action">
+                {parsedSuccess.data.certificate.evidenceCompleteness.nextActions[0]?.text}
+              </p>
+            ) : null}
             <details className="try-it-human-details">
               <summary>Full human report</summary>
               <pre className="code-block">{result.humanReport}</pre>

@@ -1274,10 +1274,32 @@ main {
 .verify-page-lede {
   max-width: 44rem;
   line-height: 1.55;
-  margin: 0.25rem 0 1rem;
+}
+.verify-page-lede--lead {
+  margin: 0.25rem 0 0.4rem;
+}
+.verify-page-lede--follow {
+  margin: 0 0 1rem;
+  line-height: 1.5;
 }
 .verify-page-lede strong {
   font-weight: 600;
+}
+.verify-page-sample-kicker {
+  margin: 0.15rem 0 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.verify-page-events-textarea {
+  min-height: 0;
+}
+.verify-page-verifier-guidance {
+  margin: 0 0 0.85rem;
+  font-size: 0.88rem;
+  line-height: 1.45;
 }
 .verify-page-input-block {
   margin: 0.75rem 0 0.35rem;

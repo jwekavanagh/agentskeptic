@@ -34,7 +34,7 @@ describe("CertificateRemediationPanel", () => {
     expect(screen.getByTestId("verify-paste-demo-next-action")).toHaveTextContent(
       "Review the expected state, fix the workflow or data, then rerun verification.",
     );
-    expect(screen.getByTestId("remediation-primary-action").textContent).toBe(EXPECTED_MINIMAL_SHARE_PRIMARY);
+    expect(screen.queryByTestId("remediation-primary-action")).toBeNull();
   });
 
   it("Fixture B (CONNECTOR): automation boundary paragraph", () => {

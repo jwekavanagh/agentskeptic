@@ -50,7 +50,7 @@ function verifyDemoPlainExplanation(certificate: BundledOutcomeCertificate): str
     /\bcrm\b/i.test(tool) || /contact/i.test(tool) || tool.includes("salesforce") || tool.includes("hubspot");
 
   if (looksLikeCrmRelated) {
-    return "The workflow claimed it updated a CRM contact, but the expected downstream state was not verified.";
+    return "The workflow claimed it updated a CRM contact, but AgentSkeptic could not verify the expected contact state in the mocked store.";
   }
   return "The workflow made a downstream claim, but the expected state was not verified.";
 }
@@ -65,7 +65,6 @@ function VerifyDemoCertificateView(props: { certificate: BundledOutcomeCertifica
   const { certificate } = props;
   const af = certificate.failureSpine.actionableFailure;
   const ec = certificate.evidenceCompleteness;
-  const primaryLine = ec.nextActions[0]?.text ?? "";
   const failedStep = failedStepToolId(certificate);
   const evidenceGap = ec.blockerCategory;
   const severity = af.severity;
@@ -119,12 +118,6 @@ function VerifyDemoCertificateView(props: { certificate: BundledOutcomeCertifica
           </div>
         </dl>
 
-        {primaryLine ? (
-          <p className="muted verify-paste-verifier-guidance u-mt-05" data-testid="remediation-primary-action">
-            {primaryLine}
-          </p>
-        ) : null}
-
         {showAutomationBoundary ? (
           <p data-testid="remediation-automation-boundary" className="muted verify-paste-automation-boundary u-mt-05">
             {AUTOMATION_BOUNDARY_CONNECTOR}
@@ -135,7 +128,7 @@ function VerifyDemoCertificateView(props: { certificate: BundledOutcomeCertifica
       <section className="verify-paste-why" aria-labelledby="verify-paste-why-heading">
         <h3 id="verify-paste-why-heading">Why this matters</h3>
         <p>
-          AgentSkeptic does not treat log lines alone as proof. It re-checks whether the claimed action lines up with
+          AgentSkeptic does not treat log lines alone as proof. It checks whether the claimed action lines up with
           downstream reality before marking a run as decision-grade.
         </p>
       </section>
