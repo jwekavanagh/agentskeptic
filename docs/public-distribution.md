@@ -37,7 +37,7 @@ Single place for **public identity**, **anchor sync**, **CI / Vitest public orig
 | `schemas/openapi-commercial-v1.in.yaml` | OpenAPI source: sync tokens only; **`__PRODUCT_VERSION__` once**; includes **`POST /api/public/verification-reports`** (`createPublicVerificationReport`); do **not** hand-edit a numeric `info.version` in the template—`emit-primary-marketing` injects the root `package.json` `version` | Yes |
 | `schemas/openapi-commercial-v1.yaml` | Derived: `info.version` equals product semver from the same `package.json` (via the template token) | No |
 | `schemas/public-verification-report-v1.schema.json` | Public share POST envelope (`workflow` \| `quick`) | Yes |
-| `docs/shareable-verification-reports.md` | SSOT for `/r/{id}`, POST body cap (**393216** bytes), **`PUBLIC_VERIFICATION_REPORTS_ENABLED`**, CLI **`--share-report-origin`** | Yes |
+| `docs/shareable-verification-reports.md` | SSOT for `/r/{id}` (including v3 **decision summary** + canonical human report + machine JSON layout), POST body cap (**393216** bytes), **`PUBLIC_VERIFICATION_REPORTS_ENABLED`**, CLI **`--share-report-origin`** | Yes |
 | `docs/discovery-surfaces.md` | SSOT for indexable discovery URLs, markdown surfaces under `website/content/surfaces/`, sitemap/`llms.txt` policy, metadata merge gate, migration goldens | Yes |
 | `docs/discovery-surfaces.md` | Indexable vs private discovery IA: `/guides/*`, `/examples/*`, `/r/*`, sync commands | Yes |
 | `website/public/openapi-commercial-v1.yaml` | Derived (gitignored); `servers[0].url` and self-URL use effective public origin | No |

@@ -1,7 +1,20 @@
+import type { ReactNode } from "react";
 import { productCopy } from "@/content/productCopy";
 import { maybeLangGraphPanelFromCertificate } from "@/components/verification/LangGraphCertificatePanel";
+import {
+  SharedReportAuthorityNote,
+  SharedReportExecutiveSummary,
+} from "@/components/verification/SharedReportExecutiveSummary";
+import {
+  executiveSummaryFromCertificate,
+  isOutcomeCertificateV3Payload,
+  type CertificateForExecutiveSummary,
+} from "@/lib/shareReportSummary";
+import {
+  SHARED_REPORT_LEGACY_ENVELOPE_NOTICE,
+  SHARED_REPORT_MALFORMED_CERTIFICATE_NOTICE,
+} from "@/lib/shareReportFallbacks";
 import type { PublicReportEnvelope } from "@/lib/publicVerificationReportService";
-
 type Props = {
   humanText: string;
   payload: PublicReportEnvelope;
@@ -27,6 +40,34 @@ function kindLabel(payload: PublicReportEnvelope): string {
   return "unknown";
 }
 
+function decisionLayer(payload: PublicReportEnvelope): ReactNode {
+  if ("schemaVersion" in payload && payload.schemaVersion === 3) {
+    const raw = payload.certificate;
+    if (raw !== null && typeof raw === "object" && isOutcomeCertificateV3Payload(raw)) {
+      const model = executiveSummaryFromCertificate(raw as CertificateForExecutiveSummary);
+      return (
+        <>
+          <SharedReportAuthorityNote />
+          <SharedReportExecutiveSummary model={model} />
+        </>
+      );
+    }
+    return (
+      <p className="muted" data-testid="shared-report-malformed-notice">
+        {SHARED_REPORT_MALFORMED_CERTIFICATE_NOTICE}
+      </p>
+    );
+  }
+  if ("schemaVersion" in payload && payload.schemaVersion === 1) {
+    return (
+      <p className="muted" data-testid="shared-report-legacy-notice">
+        {SHARED_REPORT_LEGACY_ENVELOPE_NOTICE}
+      </p>
+    );
+  }
+  return null;
+}
+
 export function VerificationReportView({ humanText, payload, variant }: Props) {
   const machineJson = machineJsonFromPayload(payload);
   const kind = kindLabel(payload);
@@ -36,6 +77,8 @@ export function VerificationReportView({ humanText, payload, variant }: Props) {
           (payload as { schemaVersion: 3; certificate: unknown }).certificate,
         )
       : null;
+  const decision = decisionLayer(payload);
+
   if (variant === "embed") {
     return (
       <section className="verification-report-embed" data-testid="verification-report-embed">
@@ -44,15 +87,16 @@ export function VerificationReportView({ humanText, payload, variant }: Props) {
         <p className="muted">
           Kind: <strong>{kind}</strong>
         </p>
+        {decision}
         {langPanel}
         <section className="home-section" aria-labelledby="human-heading-embed">
-          <h2 id="human-heading-embed">Human report</h2>
+          <h2 id="human-heading-embed">Canonical human report</h2>
           <pre className="truth-report-pre" data-testid="verification-report-human">
             {humanText}
           </pre>
         </section>
         <section className="home-section" aria-labelledby="machine-heading-embed">
-          <h2 id="machine-heading-embed">Machine JSON</h2>
+          <h2 id="machine-heading-embed">Machine JSON (integration SSOT)</h2>
           <pre className="truth-report-pre" data-testid="verification-report-machine">
             {machineJson}
           </pre>
@@ -67,15 +111,16 @@ export function VerificationReportView({ humanText, payload, variant }: Props) {
       <p className="muted">
         Kind: <strong>{kind}</strong>
       </p>
+      {decision}
       {langPanel}
       <section className="home-section" aria-labelledby="human-heading">
-        <h2 id="human-heading">Human report</h2>
+        <h2 id="human-heading">Canonical human report</h2>
         <pre className="truth-report-pre" data-testid="verification-report-human">
           {humanText}
         </pre>
       </section>
       <section className="home-section" aria-labelledby="machine-heading">
-        <h2 id="machine-heading">Machine JSON</h2>
+        <h2 id="machine-heading">Machine JSON (integration SSOT)</h2>
         <pre className="truth-report-pre" data-testid="verification-report-machine">
           {machineJson}
         </pre>

@@ -27,7 +27,7 @@ This document covers **human and agent discovery** for the AgentSkeptic website.
 
 ## Private routes
 
-- **`GET /r/{id}`** — persisted user reports when enabled; **`noindex, nofollow`**; **must not** appear in `sitemap.xml`. See [`shareable-verification-reports.md`](shareable-verification-reports.md).
+- **`GET /r/{id}`** — persisted user reports when enabled; **`noindex, nofollow`**; **must not** appear in `sitemap.xml`. For **v3** shares, the HTML page renders a structured **decision summary** above the canonical human report and machine JSON (see [`shareable-verification-reports.md`](shareable-verification-reports.md)).
 
 ## Authentication and claim (not discovery index targets)
 

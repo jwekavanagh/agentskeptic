@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 3,
+  "certificate": {
+    "schemaVersion": 3,
+    "workflowId": "wf_fixture_trusted",
+    "runKind": "contract_sql",
+    "stateRelation": "matches_expectations",
+    "highStakesReliance": "permitted",
+    "relianceRationale": "Contract verification completed with matches_expectations; high-stakes reliance permitted per normative table.",
+    "intentSummary": "TRUSTED: Fixture trusted summary.",
+    "explanation": {
+      "headline": "Fixture trusted headline",
+      "details": []
+    },
+    "steps": [
+      {
+        "seq": 0,
+        "toolId": "crm.upsert_contact",
+        "declaredAction": "Upsert contact",
+        "expectedOutcome": "Row present with required fields",
+        "observedOutcome": "Matched registry-backed expected state."
+      }
+    ],
+    "humanReport": "workflow_id: wf_fixture_trusted\nworkflow_status: complete\ntrust: TRUSTED: Fixture trusted summary.\n\n=== evidence_completeness ===\nBlocker: none\nQuick signal: na\nVerified:\n  - crm.upsert_contact:seq=0: verified\nNext:\n  - No further verification action required.\nTrust boundary: runKind=contract_sql highStakesReliance=permitted (see certificate fields for normative meaning).\n=== end evidence_completeness ===\n\nfailure_spine:\n  trust_decision: safe\n  summary: TRUSTED: Fixture trusted summary.\n  actionable_failure: category=unclassified severity=low recommended_action=none automation_safe=false\n  primary_codes: OK\n  rerun_guidance: No further verification action required.\n  source: workflow",
+    "evidenceCompleteness": {
+      "schemaVersion": 1,
+      "blockerCategory": "none",
+      "quickSignal": "na",
+      "verifiedClaims": ["crm.upsert_contact:seq=0: verified"],
+      "unverifiedClaims": [],
+      "missingInputs": [],
+      "nextActions": [
+        {
+          "id": "none",
+          "text": "No further verification action required."
+        }
+      ]
+    },
+    "failureSpine": {
+      "schemaVersion": 1,
+      "trustDecision": "safe",
+      "summary": "TRUSTED: Fixture trusted summary.",
+      "actionableFailure": {
+        "category": "unclassified",
+        "severity": "low",
+        "recommendedAction": "none",
+        "automationSafe": false
+      },
+      "primaryCodes": ["OK"],
+      "rerunGuidance": "No further verification action required.",
+      "source": "workflow"
+    }
+  }
+}

@@ -1,6 +1,7 @@
 "use client";
 
 import { CertificateRemediationPanel } from "@/components/verify/CertificateRemediationPanel";
+import { VerifyDeveloperEvidence } from "@/components/verify/VerifyDeveloperEvidence";
 import { EXAMPLE_WF_MISSING_NDJSON } from "@/lib/verifyDefaultSample";
 import {
   verifyBundledSuccessResponseClientSchema,
@@ -50,6 +51,15 @@ export function VerifyPageClient() {
       certificate: result.certificate,
       humanReport: result.humanReport,
     });
+  }, [result]);
+
+  const outcomeCertificateJson = useMemo(() => {
+    if (!result?.ok) return "";
+    try {
+      return JSON.stringify(result.certificate, null, 2);
+    } catch {
+      return "";
+    }
   }, [result]);
 
   async function run() {
@@ -108,19 +118,39 @@ export function VerifyPageClient() {
     }
   }
 
+  const eventsFieldId = "verify-events-ndjson";
+
   return (
     <section id="verify-runner" className="home-section home-try-it" data-testid="verify-page-runner">
       <h1>Paste verification</h1>
-      <p className="muted">
-        Paste NDJSON events, run the verifier, and see whether reality matches the claim.
+      <p className="verify-page-lede verify-page-lede--lead">
+        Paste an agent event log below. AgentSkeptic checks whether a claimed downstream change is actually reflected
+        in verified state.
       </p>
-      <textarea
-        className="try-it-select"
-        aria-label="Verification events NDJSON"
-        rows={10}
-        value={eventsNdjson}
-        onChange={(e) => setEventsNdjson(e.target.value)}
-      />
+      <p className="verify-page-lede verify-page-lede--follow">
+        This bundled sample intentionally fails because a claimed CRM upsert cannot be proven against the mocked store.
+      </p>
+
+      <div className="verify-page-input-block">
+        <label className="verify-page-events-label" htmlFor={eventsFieldId}>
+          Paste NDJSON event log
+        </label>
+        <p className="muted verify-page-events-hint" id={`${eventsFieldId}-hint`}>
+          Use one JSON event per line. The default sample intentionally fails.
+        </p>
+        <p className="verify-page-sample-kicker" id={`${eventsFieldId}-sample`}>
+          Sample event
+        </p>
+        <textarea
+          id={eventsFieldId}
+          className="try-it-select verify-page-events-textarea"
+          aria-label="Paste NDJSON event log"
+          aria-describedby={`${eventsFieldId}-hint ${eventsFieldId}-sample`}
+          rows={7}
+          value={eventsNdjson}
+          onChange={(e) => setEventsNdjson(e.target.value)}
+        />
+      </div>
       <p className="home-cta-row">
         <button type="button" className="btn" disabled={loading} onClick={run}>
           {loading ? "Running..." : "Run verification"}
@@ -143,15 +173,23 @@ export function VerifyPageClient() {
 
       {result && result.ok && parsedSuccess?.success && (
         <div className="try-it-output" data-testid="verify-page-result">
-          <CertificateRemediationPanel certificate={parsedSuccess.data.certificate} />
-          <details className="try-it-human-details">
-            <summary>Full human report</summary>
-            <pre className="code-block">{result.humanReport}</pre>
-          </details>
-          <details className="try-it-json-details">
-            <summary>Raw outcome JSON</summary>
-            <pre className="code-block">{JSON.stringify(result.certificate, null, 2)}</pre>
-          </details>
+          <CertificateRemediationPanel certificate={parsedSuccess.data.certificate} presentation="verify-demo" />
+          <section className="verify-page-developer-evidence" aria-labelledby="verify-developer-evidence-heading">
+            <h2 id="verify-developer-evidence-heading" className="verify-page-evidence-heading">
+              Developer evidence
+            </h2>
+            <p className="muted verify-page-evidence-intro">
+              Open these when you need the full verifier narrative or raw Outcome Certificate JSON.
+            </p>
+            {parsedSuccess.data.certificate.evidenceCompleteness.nextActions[0]?.text ? (
+              <p className="muted verify-page-verifier-guidance" data-testid="remediation-primary-action">
+                {parsedSuccess.data.certificate.evidenceCompleteness.nextActions[0]?.text}
+              </p>
+            ) : null}
+            {outcomeCertificateJson ? (
+              <VerifyDeveloperEvidence humanReport={result.humanReport} outcomeCertificateJson={outcomeCertificateJson} />
+            ) : null}
+          </section>
         </div>
       )}
     </section>

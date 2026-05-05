@@ -2,7 +2,7 @@
 
 import { CertificateRemediationPanel } from "@/components/verify/CertificateRemediationPanel";
 import { AUTOMATION_BOUNDARY_CONNECTOR } from "@/lib/automationBoundaryConnector";
-import minimalShare from "@/content/embeddedReports/minimal-share-v2.json";
+import minimalShare from "@/content/embeddedReports/minimal-share-v3-envelope.json";
 import { bundledOutcomeCertificateSchema } from "@/lib/verifyBundled.contract";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
@@ -15,12 +15,26 @@ describe("CertificateRemediationPanel", () => {
     cleanup();
   });
 
-  it("Fixture A (minimal-share-v2): primary action + verdict label", () => {
+  it("Fixture A (minimal-share-v3-envelope): primary action + verdict label", () => {
     const env = minimalShare as { certificate: unknown };
     const certificate = bundledOutcomeCertificateSchema.parse(env.certificate);
     render(<CertificateRemediationPanel certificate={certificate} />);
     expect(screen.getByTestId("remediation-primary-action").textContent).toBe(EXPECTED_MINIMAL_SHARE_PRIMARY);
     expect(screen.getByTestId("remediation-verdict-label").textContent).toContain("Reality contradicts the claim");
+  });
+
+  it("Fixture A (/verify demo presentation): trust pill + decision grid fields", () => {
+    const env = minimalShare as { certificate: unknown };
+    const certificate = bundledOutcomeCertificateSchema.parse(env.certificate);
+    render(<CertificateRemediationPanel certificate={certificate} presentation="verify-demo" />);
+    expect(screen.getByTestId("verify-paste-trust-pill")).toHaveTextContent("NOT TRUSTED");
+    expect(screen.getByText("crm.upsert_contact")).toBeTruthy();
+    expect(screen.getByText("state_mismatch")).toBeTruthy();
+    expect(screen.getByText("high")).toBeTruthy();
+    expect(screen.getByTestId("verify-paste-demo-next-action")).toHaveTextContent(
+      "Review the expected state, fix the workflow or data, then rerun verification.",
+    );
+    expect(screen.queryByTestId("remediation-primary-action")).toBeNull();
   });
 
   it("Fixture B (CONNECTOR): automation boundary paragraph", () => {

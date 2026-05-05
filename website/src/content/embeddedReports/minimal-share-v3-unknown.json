@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 3,
+  "certificate": {
+    "schemaVersion": 3,
+    "workflowId": "wf_fixture_unknown",
+    "runKind": "contract_sql",
+    "stateRelation": "not_established",
+    "highStakesReliance": "prohibited",
+    "relianceRationale": "Verification could not be completed or could not establish a determinate match (fixture).",
+    "intentSummary": "NOT TRUSTED: Verification is incomplete; fixture.",
+    "explanation": {
+      "headline": "Fixture unknown headline",
+      "details": [{ "code": "INCOMPLETE_FIXTURE", "message": "Registry or capture incomplete." }]
+    },
+    "steps": [],
+    "humanReport": "workflow_id: wf_fixture_unknown\nworkflow_status: incomplete\ntrust: NOT TRUSTED\n\n=== evidence_completeness ===\nBlocker: verification_incomplete\nQuick signal: na\nNext:\n  - Follow the remediation and rerun guidance in the machine JSON and canonical human report.\nTrust boundary: runKind=contract_sql highStakesReliance=prohibited (see certificate fields for normative meaning).\n=== end evidence_completeness ===\n\nfailure_spine:\n  trust_decision: unknown\n  summary: Fixture unknown headline\n  actionable_failure: category=ambiguous severity=high recommended_action=manual_review automation_safe=false\n  primary_codes: INCOMPLETE_FIXTURE\n  rerun_guidance: Follow the remediation and rerun guidance in the machine JSON and canonical human report.\n  source: workflow",
+    "evidenceCompleteness": {
+      "schemaVersion": 1,
+      "blockerCategory": "verification_incomplete",
+      "quickSignal": "na",
+      "verifiedClaims": [],
+      "unverifiedClaims": [],
+      "missingInputs": [],
+      "nextActions": [
+        {
+          "id": "follow_guidance",
+          "text": "Follow the remediation and rerun guidance in the machine JSON and canonical human report."
+        }
+      ]
+    },
+    "failureSpine": {
+      "schemaVersion": 1,
+      "trustDecision": "unknown",
+      "summary": "Fixture unknown headline",
+      "actionableFailure": {
+        "category": "ambiguous",
+        "severity": "high",
+        "recommendedAction": "manual_review",
+        "automationSafe": false
+      },
+      "primaryCodes": ["INCOMPLETE_FIXTURE"],
+      "rerunGuidance": "Follow the remediation and rerun guidance in the machine JSON and canonical human report.",
+      "source": "workflow"
+    }
+  }
+}
