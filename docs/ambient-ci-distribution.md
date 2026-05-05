@@ -1,6 +1,6 @@
 # Ambient CI distribution (GitHub Actions)
 
-Normative contract for **active discovery**: branded AgentSkeptic output appears inside **another repository’s** GitHub Actions run (job summary on every run; pull-request comment on verification failure only).
+Normative contract for **active discovery**: branded AgentSkeptic output appears inside **another repository’s** GitHub Actions run (job summary on every run; optional pull-request comment on verification failure for the **commercial / stateful enforcement** path).
 
 **Licensing** for the published CLI is unchanged — see [`commercial.md`](commercial.md).
 
@@ -12,15 +12,27 @@ Normative contract for **active discovery**: branded AgentSkeptic output appears
 
 ## Integrator
 
-### Canonical example
+### Default: stateless truth check (OSS)
 
-Copy [`examples/github-actions/agentskeptic-commercial.yml`](../examples/github-actions/agentskeptic-commercial.yml) into `.github/workflows/` and set `AGENTSKEPTIC_API_KEY` (legacy `WORKFLOW_VERIFIER_API_KEY` is still read by the CLI).
+**Canonical low-friction CI** is a **truth check** — **`agentskeptic check`** — with **no** `AGENTSKEPTIC_API_KEY` and **no** license server. Copy [`examples/github-actions/agentskeptic-check.yml`](../examples/github-actions/agentskeptic-check.yml) into `.github/workflows/`.
+
+- **stdout:** one **Outcome Certificate** (machine JSON).
+- **stderr:** includes **`truth_check_verdict: trusted|not_trusted|unknown`** (see [`integrate.md`](integrate.md)).
+- The example captures stdout/stderr to files, mirrors them in the job log, appends a fenced stderr block to the **job summary** (so the verdict is visible there), and runs **`render-discovery-ci.mjs summary`** on **`if: always()`** so the branded discovery block appears even when the truth check fails.
+
+Install the published package (`npm install agentskeptic@latest`) so `${AS_REPO_ROOT}/scripts/render-discovery-ci.mjs` and `dist/discovery-payload-v1.json` exist; set `AS_REPO_ROOT` to `node_modules/agentskeptic` as in the example.
+
+**Optional hosted report sharing:** you may add **`--share-report-origin <https://host>`** to **`agentskeptic check`** when you want a persisted public report on your AgentSkeptic deployment — see [`shareable-verification-reports.md`](shareable-verification-reports.md). That flag is **not** supported with **`agentskeptic enforce`** (same doc).
+
+### Opt-in: commercial / stateful enforcement
+
+For **baseline enforcement**, drift detection, acceptance workflows, and other **stateful** gates that require **`AGENTSKEPTIC_API_KEY`** and a reachable license API, copy [`examples/github-actions/agentskeptic-commercial.yml`](../examples/github-actions/agentskeptic-commercial.yml) instead. This path runs **`agentskeptic enforce`** and uses the **full** ambient contract below (job summary + failure PR comment upsert).
 
 ### Environment
 
 | Variable | Required | Meaning |
 |----------|----------|---------|
-| `AS_REPO_ROOT` | Yes in example workflow | Path to installed `agentskeptic` package root (e.g. `${{ github.workspace }}/node_modules/agentskeptic`). Legacy: `WFV_REPO_ROOT` is accepted by the renderer. |
+| `AS_REPO_ROOT` | Yes when using `render-discovery-ci.mjs` in CI | Path to installed `agentskeptic` package root (e.g. `${{ github.workspace }}/node_modules/agentskeptic`). Legacy: `WFV_REPO_ROOT` is accepted by the renderer. |
 
 ### Job summary (always)
 
@@ -32,7 +44,9 @@ node "${AS_REPO_ROOT}/scripts/render-discovery-ci.mjs" summary >> "$GITHUB_STEP_
 
 **Hard limit:** summary Markdown UTF-8 length **≤ 65,536 bytes**. Exceeding fails the renderer (non-zero exit).
 
-### PR comment (failure only, `pull_request` only)
+### PR comment (failure only, `pull_request` only — enforcement example)
+
+Used by the [**commercial enforcement** workflow](../examples/github-actions/agentskeptic-commercial.yml), not required for the default **truth check** example.
 
 1. Run `agentskeptic` with stdout/stderr redirected to `verify.stdout` / `verify.stderr` (see example).
 2. On failure, render the body:
@@ -58,13 +72,17 @@ node "${AS_REPO_ROOT}/scripts/render-discovery-ci.mjs" pr_body \
 - If found: `issues.updateComment`; else `issues.createComment`.
 - **Budget:** at most **two** REST calls per failing run (list + create **or** list + update).
 
-### Permissions
+### Permissions (PR comment path)
+
+Required for **`agentskeptic-commercial.yml`** PR upserts:
 
 ```yaml
 permissions:
   contents: read
   pull-requests: write
 ```
+
+The default **truth check** example uses **`contents: read`** only.
 
 ### Troubleshooting
 
@@ -75,11 +93,13 @@ permissions:
 
 ### Maintainer acceptance (once per release)
 
-Run the example workflow on a disposable repo:
+Run the **commercial enforcement** example workflow on a disposable repo:
 
 1. Open the Actions run → **Job summary** shows the AgentSkeptic discovery block.
 2. Force a verify failure on a **pull_request** → exactly **one** PR comment appears with the marker.
 3. Push a second failing commit → the **same** comment is **updated** (same comment id in GitHub UI), not a second thread comment.
+
+Validate the **truth check** example separately: confirm the job fails/succeeds with the CLI exit code, logs show stderr/stdout, and the summary includes stderr and the renderer block.
 
 Record completion in your release checklist (binary: done / not done).
 

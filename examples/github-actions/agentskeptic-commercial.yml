@@ -1,5 +1,6 @@
-# Example: run the published commercial AgentSkeptic CLI (npm package `agentskeptic`) against this repo's examples/
-# with a real AGENTSKEPTIC_API_KEY and a reachable license API (COMMERCIAL_LICENSE_API_BASE_URL).
+# Example (opt-in): commercial / stateful CI enforcement — not the default OSS path.
+# Run the published CLI (npm `agentskeptic`) against this repo's examples/ with AGENTSKEPTIC_API_KEY
+# and a reachable license API (COMMERCIAL_LICENSE_API_BASE_URL). For default stateless CI, see agentskeptic-check.yml.
 #
 # Prerequisites:
 # - GitHub secret AGENTSKEPTIC_API_KEY from your product account (legacy WORKFLOW_VERIFIER_API_KEY is still accepted by the CLI)
