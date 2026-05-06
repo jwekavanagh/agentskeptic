@@ -74,8 +74,9 @@ Read-only checks at verify time—not color.
 - Integrator guide (v2 SSOT): https://raw.githubusercontent.com/jwekavanagh/agentskeptic/refs/heads/main/docs/integrate.md
 - Cursor integration (consumer rule): https://raw.githubusercontent.com/jwekavanagh/agentskeptic/refs/heads/main/docs/cursor-integration.md
 - First-run integration: https://agentskeptic.com/integrate
+- Runtime truth-check (agentskeptic check / AgentSkeptic.check): https://agentskeptic.com/integrate#first-truth-check
 - Learn: https://agentskeptic.com/guides
-- OpenAPI (canonical): https://agentskeptic.com/openapi-commercial-v1.yaml
+- OpenAPI (hosted commercial / reporting / enforcement): https://agentskeptic.com/openapi-commercial-v1.yaml
 - OpenAPI (repo raw): https://raw.githubusercontent.com/jwekavanagh/agentskeptic/refs/heads/main/schemas/openapi-commercial-v1.yaml
 - Source repository: https://github.com/jwekavanagh/agentskeptic
 - npm package: https://www.npmjs.com/package/agentskeptic

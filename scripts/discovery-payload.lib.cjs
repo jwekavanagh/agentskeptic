@@ -141,6 +141,7 @@ function buildDiscoveryPayload(root) {
   const anchors = pm;
   const canonicalOrigin = normalizeOrigin(anchors.productionCanonicalOrigin);
   const integrateUrl = `${canonicalOrigin}/integrate`;
+  const runtimeTruthCheckGuideUrl = `${canonicalOrigin}/integrate#first-truth-check`;
   const learnHubUrl = `${canonicalOrigin}/guides`;
   const openapiSelfCanonical = `${canonicalOrigin}/openapi-commercial-v1.yaml`;
   const { owner, repo } = parseGithubRepoFromUrl(anchors.gitRepositoryUrl);
@@ -162,6 +163,7 @@ function buildDiscoveryPayload(root) {
     links: {
       site: `${canonicalOrigin}/`,
       integrate: integrateUrl,
+      runtimeTruthCheckGuide: runtimeTruthCheckGuideUrl,
       learnHub: learnHubUrl,
       openapiCanonical: openapiSelfCanonical,
       openapiRaw,
@@ -259,8 +261,9 @@ function renderLlmsTextFromPayload(payload) {
     `- Integrator guide (v2 SSOT): ${links.integratorGuideSsotRaw}`,
     `- Cursor integration (consumer rule): ${links.cursorIntegrationDocRaw}`,
     `- First-run integration: ${integrateUrl}`,
+    `- Runtime truth-check (agentskeptic check / AgentSkeptic.check): ${links.runtimeTruthCheckGuide}`,
     `- Learn: ${learnHubUrl}`,
-    `- OpenAPI (canonical): ${openapiSelfCanonical}`,
+    `- OpenAPI (hosted commercial / reporting / enforcement): ${openapiSelfCanonical}`,
     `- OpenAPI (repo raw): ${links.openapiRaw}`,
     `- Source repository: ${links.repo}`,
     `- npm package: ${links.npm}`,
@@ -289,8 +292,9 @@ function renderCiSummaryMarkdownFromPayload(payload) {
     "",
     "- Canonical site: " + L.site,
     "- Integrate: " + L.integrate,
+    "- Runtime truth-check (CLI/SDK): " + L.runtimeTruthCheckGuide,
     "- Learn: " + L.learnHub,
-    "- OpenAPI: " + L.openapiCanonical,
+    "- OpenAPI (hosted commercial): " + L.openapiCanonical,
     "- OpenAPI (repo raw): " + L.openapiRaw,
     "- Cursor integration (consumer rule): " + L.cursorIntegrationDocRaw,
     "- Repository: " + L.repo,

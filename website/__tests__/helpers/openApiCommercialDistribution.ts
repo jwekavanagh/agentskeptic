@@ -8,13 +8,19 @@ export function assertDerivedOpenApiCommercialDistribution(
 ): void {
   expect(doc.openapi).toBe("3.0.3");
   const ext = doc.externalDocs as { description?: string; url?: string };
-  expect(ext.description).toBe("First-run integration guide");
+  expect(ext.description).toBe(
+    "Runtime truth-check integration guide for agentskeptic check and AgentSkeptic.check",
+  );
   const info = doc.info as Record<string, unknown>;
   expect("externalDocs" in info).toBe(false);
   const { anchors, normalize } = ctx;
   const canonicalOrigin = normalize(anchors.productionCanonicalOrigin);
-  const integrateUrl = `${canonicalOrigin}/integrate`;
-  expect(normalize(String(ext.url))).toBe(normalize(integrateUrl));
+  const integrateRuntimeTruthGuideUrl = `${canonicalOrigin}/integrate#first-truth-check`;
+  expect(normalize(String(ext.url))).toBe(normalize(integrateRuntimeTruthGuideUrl));
+  const rtc = doc["x-agentskeptic-runtime-truth-check"] as Record<string, string>;
+  expect(rtc?.status).toBe("documented-outside-commercial-api");
+  expect(rtc?.cli).toBe("agentskeptic check");
+  expect(rtc?.sdk).toBe("AgentSkeptic.check");
   expect(normalize(String((info.contact as { url: string }).url))).toBe(canonicalOrigin);
   const dist = info["x-agentskeptic-distribution"] as Record<string, string>;
   const distHostOpenApi = `${canonicalOrigin}/openapi-commercial-v1.yaml`;
@@ -39,11 +45,17 @@ export function assertServedOpenApiCommercialDistribution(
   expect(doc.openapi).toBe("3.0.3");
   expect("externalDocs" in doc).toBe(true);
   const ext = doc.externalDocs as { description?: string; url?: string };
-  expect(ext.description).toBe("First-run integration guide");
+  expect(ext.description).toBe(
+    "Runtime truth-check integration guide for agentskeptic check and AgentSkeptic.check",
+  );
   const info = doc.info as Record<string, unknown>;
   expect("externalDocs" in info).toBe(false);
-  const integrateUrl = `${canonicalOrigin}/integrate`;
-  expect(normalize(String(ext.url))).toBe(normalize(integrateUrl));
+  const integrateRuntimeTruthGuideUrl = `${canonicalOrigin}/integrate#first-truth-check`;
+  expect(normalize(String(ext.url))).toBe(normalize(integrateRuntimeTruthGuideUrl));
+  const rtc = doc["x-agentskeptic-runtime-truth-check"] as Record<string, string>;
+  expect(rtc?.status).toBe("documented-outside-commercial-api");
+  expect(rtc?.cli).toBe("agentskeptic check");
+  expect(rtc?.sdk).toBe("AgentSkeptic.check");
   expect(normalize(String((info.contact as { url: string }).url))).toBe(canonicalOrigin);
   expect(new RegExp("^\\s*url:\\s*" + escapeRegExp(serversOriginForUrlLine) + "\\s*$", "m").test(yamlText)).toBe(
     true,

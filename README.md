@@ -143,7 +143,8 @@ Read-only checks at verify time—not color.
 - **npm package:** https://www.npmjs.com/package/agentskeptic
 - **Canonical site:** https://agentskeptic.com
 - **Integrate:** https://agentskeptic.com/integrate
-- **OpenAPI (canonical):** https://agentskeptic.com/openapi-commercial-v1.yaml
+- **Runtime truth-check (CLI / SDK):** https://agentskeptic.com/integrate#first-truth-check
+- **OpenAPI (hosted commercial API):** https://agentskeptic.com/openapi-commercial-v1.yaml
 - **Verification Contract Manifest:** https://agentskeptic.com/contract/v1.json
 - **llms.txt (agents, site):** https://agentskeptic.com/llms.txt
 - **llms.txt (repo, raw):** https://raw.githubusercontent.com/jwekavanagh/agentskeptic/refs/heads/main/llms.txt
