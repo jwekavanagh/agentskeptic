@@ -69,7 +69,8 @@ The website **`prebuild`** runs **`node scripts/sync-website-ssot.mjs`** from th
 - **Served** copy under `website/public/` uses `NEXT_PUBLIC_APP_URL` when set (non-whitespace) for `servers` and the self OpenAPI URL; otherwise it falls back to `productionCanonicalOrigin`.
 - Discoverability in the spec:
   - `info.contact.url` — canonical site origin
-  - Root **`externalDocs`** (not under `info`) — first-run integration guide at `{canonical}/integrate` with **`description: "First-run integration guide"`**
+  - Root **`externalDocs`** (not under `info`) — runtime truth-check integration guide at **`{repository}/blob/main/docs/first-truth-check.md`** (same URL as discovery **`runtimeTruthCheckGuide`**) with **`description: "Runtime truth-check integration guide for agentskeptic check and AgentSkeptic.check"`**
+  - Root **`x-agentskeptic-runtime-truth-check`** — vendor note: CLI/SDK runtime truth checks versus hosted commercial HTTP APIs (`note` distinguishes demo **`/api/verify`** routes as non-production examples)
   - `info.x-agentskeptic-distribution` with keys **`repository`**, **`npmPackage`**, **`openApi`**
 - **Public share surfaces (literals):** **`POST {canonical}/api/public/verification-reports`**, **`GET {canonical}/r/{uuid}`** (HTML report; **`X-Robots-Tag: noindex, nofollow`**), indexable guide **`GET {canonical}/guides/verify-langgraph-workflows`**. Normative: [`shareable-verification-reports.md`](shareable-verification-reports.md).
 - **Ambient CI (GitHub):** job summary + optional PR upsert for commercial verify — single contract in [`ambient-ci-distribution.md`](ambient-ci-distribution.md); payload + renders live in [`scripts/discovery-payload.lib.cjs`](../scripts/discovery-payload.lib.cjs).

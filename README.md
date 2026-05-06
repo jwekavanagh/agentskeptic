@@ -58,6 +58,8 @@ steps:
 <!-- adoption-canonical:start -->
 ## Default path: one truth check
 
+**Start here:** **[`docs/first-truth-check.md`](docs/first-truth-check.md)** — canonical first-run steps (command, inputs, stdout/stderr, CI, Cursor, troubleshooting).
+
 Compare recorded tool activity to downstream state (SQL and, in contract mode, HTTP witnesses, object storage, vectors, Mongo per your registry) and get an **Outcome Certificate** (stdout) plus a **`truth_check_verdict`** line on stderr:
 
 ```bash
@@ -66,7 +68,25 @@ npx agentskeptic check --workflow-id wf_example \
   --db ./path/to/readable.sqlite
 ```
 
-With the conventional layout, **`--registry`** and **`--events`** default to **`./path/to/your-app/agentskeptic/tools.json`** and **`events.ndjson`**. Pass them explicitly when your paths differ. Full reference: [`docs/integrate.md`](integrate.md).
+With the conventional layout, **`--registry`** and **`--events`** default to **`./path/to/your-app/agentskeptic/tools.json`** and **`events.ndjson`**. Pass them explicitly when your paths differ. Shortest path: [`docs/first-truth-check.md`](docs/first-truth-check.md). Full integrator SSOT: [`docs/integrate.md`](docs/integrate.md).
+
+**No license required.** The default `agentskeptic check` path needs no `AGENTSKEPTIC_API_KEY` and no license server; it runs stateless contract verification locally. (Stateful **`agentskeptic enforce`** for baselines, drift, and acceptance is a later opt-in commercial path — see below.)
+
+**Reading the result.** stdout is the **Outcome Certificate** (machine JSON). On verdict exits, stderr begins with one of:
+
+```text
+truth_check_verdict: trusted
+truth_check_verdict: not_trusted
+truth_check_verdict: unknown
+```
+
+| Verdict | Meaning |
+|---------|---------|
+| `trusted` | Checked outcome matched expected downstream state — only this verdict means the workflow can be relied on. |
+| `not_trusted` | Determinate mismatch or required state missing. Do not claim verified; fix the mismatch. |
+| `unknown` | Evidence incomplete or not established. Do not claim verified; collect missing evidence or narrow checked scope. |
+
+Full verdict and stderr contract: [`docs/first-truth-check.md`](docs/first-truth-check.md) (details in [`docs/integrate.md`](docs/integrate.md#first-truth-check)).
 
 **Exportable activation (advanced):** `BootstrapPackInput` v1 + **`agentskeptic activate`** (writes **`proof/`** under **`--out`** on exits 0–2; **`bootstrap`** is legacy — [`docs/bootstrap-pack-normative.md`](docs/bootstrap-pack-normative.md)).
 
@@ -143,7 +163,8 @@ Read-only checks at verify time—not color.
 - **npm package:** https://www.npmjs.com/package/agentskeptic
 - **Canonical site:** https://agentskeptic.com
 - **Integrate:** https://agentskeptic.com/integrate
-- **OpenAPI (canonical):** https://agentskeptic.com/openapi-commercial-v1.yaml
+- **Runtime truth-check (CLI / SDK):** https://github.com/jwekavanagh/agentskeptic/blob/main/docs/first-truth-check.md
+- **OpenAPI (hosted commercial API):** https://agentskeptic.com/openapi-commercial-v1.yaml
 - **Verification Contract Manifest:** https://agentskeptic.com/contract/v1.json
 - **llms.txt (agents, site):** https://agentskeptic.com/llms.txt
 - **llms.txt (repo, raw):** https://raw.githubusercontent.com/jwekavanagh/agentskeptic/refs/heads/main/llms.txt
@@ -161,15 +182,17 @@ This is the fastest way to see **`ROW_ABSENT`** versus **verified** on the same 
 
 **Prerequisite:** **Node.js ≥ 22.13** (built-in [`node:sqlite`](https://nodejs.org/api/sqlite.html)), or use [Docker](#docker-quickstart-optional) below.
 
-**Fast first run on your own DB (canonical local truth loop):** after `npm install` and `npm run build`, run:
+**Fast first run on your own DB:** run the same `agentskeptic check` from the [Default path](#default-path-one-truth-check) above against your inputs — after `npm install` and `npm run build`:
 
 ```bash
-agentskeptic loop --workflow-id <id> --events <path> --registry <path> --db <sqlitePath>
+agentskeptic check --workflow-id <id> --events <path> --registry <path> --db <sqlitePath>
 ```
 
-This single command verifies state, emits **TRUSTED / NOT TRUSTED / UNKNOWN**, shows a next action when non-trusted, persists local run history, and auto-compares against your latest compatible prior run. Normative operator contract: **[`docs/local-feedback-loop.md`](docs/local-feedback-loop.md)**.
+stdout is the Outcome Certificate; stderr begins with `truth_check_verdict: trusted|not_trusted|unknown` plus the human report.
 
-**Advanced compatibility paths:** `agentskeptic quick`, `agentskeptic crossing`, and `agentskeptic verify-integrator-owned` remain supported for specialized workflows and CI parity; they are no longer the default local operator path.
+**Local feedback loop with run history (advanced):** `agentskeptic loop` wraps the same `check` contract and adds local run history, prior-run comparison, and a single TRUSTED / NOT TRUSTED / UNKNOWN line for tight inner-loop iteration — normative contract: [`docs/local-feedback-loop.md`](docs/local-feedback-loop.md).
+
+**Advanced compatibility paths:** `agentskeptic quick`, `agentskeptic crossing`, and `agentskeptic verify-integrator-owned` remain supported for specialized workflows and CI parity; they are not the first-run path.
 
 ```bash
 npm install
@@ -254,17 +277,17 @@ Retries, partial failures, and race conditions mean a success flag in a trace is
 
 ## Contract path (registry + events)
 
-**CLI:** after **`npm install`** and **`npm run build`**, use **`agentskeptic loop`** as the default local command (or `node dist/cli.js loop`). Postgres: **`--postgres-url`** instead of **`--db`** (exactly one).
+**CLI:** the canonical local replay command is **`agentskeptic check`** (see [Default path](#default-path-one-truth-check) above) — the same command CI and the Cursor rule wrap. After **`npm install`** and **`npm run build`**, run it via `agentskeptic check` (or `node dist/cli.js check`). Postgres: **`--postgres-url`** instead of **`--db`** (exactly one).
 
 Typical integration:
 
 1. Emit **one NDJSON line per tool observation** (see [Event line schema](docs/agentskeptic.md#event-line-schema)).
 2. Add a **registry** entry per `toolId` (start from **`examples/templates/`**).
-3. Run the local truth loop:
+3. Run the truth check:
 
 ```bash
 npm run build
-agentskeptic loop --workflow-id <id> --events <path> --registry <path> --db <sqlitePath>
+agentskeptic check --workflow-id <id> --events <path> --registry <path> --db <sqlitePath>
 ```
 
 Replay the bundled files: **`wf_complete`** / **`examples/events.ndjson`** / **`examples/tools.json`** / **`examples/demo.db`** (same flags as above).

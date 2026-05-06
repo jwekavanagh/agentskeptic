@@ -49,7 +49,7 @@ test("tailLines returns last 20 of 40", () => {
 
 test("renderCiSummaryMarkdownFromPayload matches golden", () => {
   const out = dp.renderCiSummaryMarkdownFromPayload(loadFixture());
-  assert.equal(out, readFileSync(goldenSummary, "utf8"));
+  assert.equal(out, dp.normalizeDiscoveryText(readFileSync(goldenSummary, "utf8")));
 });
 
 test("renderCiPrBodyFromPayload empty capture matches golden", () => {
@@ -204,7 +204,7 @@ test("render-discovery-ci.mjs summary prints golden", () => {
     env: { ...process.env, WFV_REPO_ROOT: root },
   });
   assert.equal(r.status, 0, r.stderr);
-  assert.equal(r.stdout, readFileSync(goldenSummary, "utf8"));
+  assert.equal(r.stdout, dp.normalizeDiscoveryText(readFileSync(goldenSummary, "utf8")));
 });
 
 test("render-discovery-ci.mjs summary prints golden with AS_REPO_ROOT", () => {
@@ -214,7 +214,7 @@ test("render-discovery-ci.mjs summary prints golden with AS_REPO_ROOT", () => {
     env: { ...process.env, AS_REPO_ROOT: root },
   });
   assert.equal(r.status, 0, r.stderr);
-  assert.equal(r.stdout, readFileSync(goldenSummary, "utf8"));
+  assert.equal(r.stdout, dp.normalizeDiscoveryText(readFileSync(goldenSummary, "utf8")));
 });
 
 test("render-discovery-ci.mjs pr_body with empty files", () => {

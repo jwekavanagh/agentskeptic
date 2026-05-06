@@ -1,5 +1,7 @@
 # Cursor integration: local truth check loop
 
+**Canonical first-run:** [`first-truth-check.md`](first-truth-check.md) — same **`agentskeptic check`** command and stdout/stderr contract as everywhere else; this page adds Cursor-specific wiring.
+
 This page is for teams using Cursor or agent-assisted coding in their own repositories.
 It helps agents verify database or state outcomes before they claim a workflow change succeeded.
 
@@ -28,15 +30,15 @@ Replace `workflow-id`, events path, registry path, and database/state-store path
 ## 3) Expected result and claim policy
 
 - stdout contains the Outcome Certificate.
-- stderr begins with or includes `truth_check_verdict: trusted|not_trusted|unknown`.
+- stderr begins with `truth_check_verdict: trusted|not_trusted|unknown`, then the human report.
 - Agents should only claim the checked workflow is verified when verdict is `trusted`.
 - If verdict is `not_trusted` or `unknown`, treat the workflow as not verified until the blocker is resolved.
 
 ## 4) Local Cursor loop vs CI
 
-- Cursor rule: local/agent coding loop guidance.
-- GitHub Action: CI enforcement of the same contract.
-- Both paths use `agentskeptic check` and the same stdout/stderr semantics.
+- Cursor rule: a thin wrapper that prompts coding agents to run the same local `agentskeptic check` command before claiming a workflow is verified.
+- GitHub Action: a thin CI wrapper around the same `agentskeptic check` command (default `mode: check`); see [`examples/github-actions/agentskeptic-check.yml`](../examples/github-actions/agentskeptic-check.yml) and [`.github/actions/agentskeptic-check`](../.github/actions/agentskeptic-check).
+- Both paths use `agentskeptic check` and the same stdout/stderr semantics. Neither requires `AGENTSKEPTIC_API_KEY`.
 
 For CI wiring, see [`docs/ambient-ci-distribution.md`](ambient-ci-distribution.md).
 

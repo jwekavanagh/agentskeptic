@@ -36,7 +36,7 @@ export default function IntegratePage() {
         }
       />
 
-      <h2>First proof: contract truth check</h2>
+      <h2 id="first-truth-check">First proof: contract truth check</h2>
       <p>
         Run <code>agentskeptic check</code> against your registry, events file, and readable verification targets (database for SQL; remote URL for HTTP / object / vector / Mongo witnesses per registry).
       </p>

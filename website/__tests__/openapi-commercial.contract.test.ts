@@ -46,7 +46,13 @@ describe("openapi-commercial contract", () => {
     const docIn = parse(inYaml) as Record<string, unknown>;
     expect(docIn.openapi).toBe("3.0.3");
     const extIn = docIn.externalDocs as { description?: string };
-    expect(extIn.description).toBe("First-run integration guide");
+    expect(extIn.description).toBe(
+      "Runtime truth-check integration guide for agentskeptic check and AgentSkeptic.check",
+    );
+    const rtcIn = docIn["x-agentskeptic-runtime-truth-check"] as Record<string, string>;
+    expect(rtcIn?.status).toBe("documented-outside-commercial-api");
+    expect(rtcIn?.cli).toBe("agentskeptic check");
+    expect(rtcIn?.sdk).toBe("AgentSkeptic.check");
     const infoIn = docIn.info as Record<string, unknown>;
     expect("externalDocs" in infoIn).toBe(false);
   });

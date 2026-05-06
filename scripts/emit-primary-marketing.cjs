@@ -2,7 +2,7 @@
 
 const { readFileSync, writeFileSync, mkdirSync } = require("node:fs");
 const { join, dirname } = require("node:path");
-const { normalize, assertNextPublicOriginParity, MARKETING_PATH } = require("./origin.cjs");
+const { normalize, runtimeTruthCheckGuideBlobUrl, assertNextPublicOriginParity, MARKETING_PATH } = require("./origin.cjs");
 
 const ROOT = join(__dirname, "..");
 
@@ -238,7 +238,8 @@ function syncPrimaryMarketing() {
   const publicOriginNormalized = normalize(effectivePublicOrigin);
   const openapiSelfEffective = `${publicOriginNormalized}/openapi-commercial-v1.yaml`;
 
-  const integrateUrl = `${canonicalOrigin}/integrate`;
+  const integrateLandingUrl = `${canonicalOrigin}/integrate`;
+  const integrateRuntimeTruthGuideUrl = runtimeTruthCheckGuideBlobUrl(anchors.gitRepositoryUrl);
 
   const template = readFileSync(OPENAPI_IN, "utf8");
   const pkgForVersion = JSON.parse(readFileSync(PKG_PATH, "utf8"));
@@ -252,7 +253,7 @@ function syncPrimaryMarketing() {
   mid = mid.replace(PRODUCT_VERSION_TOKEN, JSON.stringify(productSemver));
   mid = mid.replace("__IDENTITY_ONE_LINER__", escaped);
   mid = mid.replace("__DISTRIBUTION_CONTACT_URL__", canonicalOrigin);
-  mid = mid.replace("__DISTRIBUTION_INTEGRATE_URL__", integrateUrl);
+  mid = mid.replace("__DISTRIBUTION_INTEGRATE_URL__", integrateRuntimeTruthGuideUrl);
   mid = mid.replace("__DISTRIBUTION_REPO_URL__", anchors.gitRepositoryUrl);
   mid = mid.replace("__DISTRIBUTION_NPM_URL__", anchors.npmPackageUrl);
   mid = mid.replace("__CONTRACT_URL__", contractPin.url);
@@ -324,8 +325,9 @@ function syncPrimaryMarketing() {
     `- **Repository:** ${anchors.gitRepositoryUrl}`,
     `- **npm package:** ${anchors.npmPackageUrl}`,
     `- **Canonical site:** ${canonicalOrigin}`,
-    `- **Integrate:** ${integrateUrl}`,
-    `- **OpenAPI (canonical):** ${openapiSelfCanonical}`,
+    `- **Integrate:** ${integrateLandingUrl}`,
+    `- **Runtime truth-check (CLI / SDK):** ${integrateRuntimeTruthGuideUrl}`,
+    `- **OpenAPI (hosted commercial API):** ${openapiSelfCanonical}`,
     `- **Verification Contract Manifest:** ${contractPin.url}`,
     `- **llms.txt (agents, site):** ${canonicalOrigin}/llms.txt`,
     `- **llms.txt (repo, raw):** ${pl.llmsRaw}`,
