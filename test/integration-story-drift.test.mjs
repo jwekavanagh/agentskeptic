@@ -121,6 +121,11 @@ const NEEDLE_API_VERIFY = "/api/verify";
 const COMMERCIAL_YML = "agentskeptic-commercial.yml";
 const CHECK_YML = "agentskeptic-check.yml";
 
+/** Escape a literal string for use inside `new RegExp(...)` (incl. `\\`). */
+function escapeRegExpLiteral(s) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 function assertSdkTruthCheck(text, label) {
   assert.match(
     text,
@@ -209,7 +214,7 @@ describe("integration story drift gate", () => {
       if (!body.includes(COMMERCIAL_YML)) continue;
       assert.match(
         body,
-        new RegExp(CHECK_YML.replace(/\./g, "\\.")),
+        new RegExp(escapeRegExpLiteral(CHECK_YML)),
         `${rel}: when ${COMMERCIAL_YML} is referenced, ${CHECK_YML} must appear too`,
       );
     }
