@@ -1,3 +1,9 @@
+## [7.1.3](https://github.com/jwekavanagh/agentskeptic/compare/v7.1.2...v7.1.3) (2026-05-06)
+
+### Bug Fixes
+
+* **ci:** add composite GitHub Action for agentskeptic check ([#65](https://github.com/jwekavanagh/agentskeptic/issues/65)) ([cc93e69](https://github.com/jwekavanagh/agentskeptic/commit/cc93e693683efaba006598680c37b4103f53bea5))
+
 ## [7.1.2](https://github.com/jwekavanagh/agentskeptic/compare/v7.1.1...v7.1.2) (2026-05-05)
 
 ### Bug Fixes
