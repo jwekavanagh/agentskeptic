@@ -14,7 +14,7 @@ const root = join(__dirname, "..");
 export const WEDGE_HEADING_LINE = "## Buy vs build: why not only SQL checks";
 export const WEDGE_FRAGMENT = "buy-vs-build-why-not-only-sql-checks";
 export const README_WEDGE_LINK = `../README.md#${WEDGE_FRAGMENT}`;
-export const README_DEFAULT_PATH_LINK = "../README.md#default-path-decisiongate-before-you-act";
+export const README_DEFAULT_PATH_LINK = "../README.md#default-path-one-truth-check";
 export const INTEGRATE_FIRST_TRUTH_LINK = "integrate.md#first-truth-check";
 
 /** Minimum concepts: drift, ownership, shared contract/registry, CI or audit gates */

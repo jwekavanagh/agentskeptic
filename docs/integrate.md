@@ -1,6 +1,6 @@
 # AgentSkeptic integrator guide (v3 SSOT)
 
-**Start here:** run **`agentskeptic quick`** first for a cheap, **SQL-inference preview** on captured activity when you can, then run **one contract truth check** — compare structured tool activity to **downstream state** (SQL plus registry-defined HTTP / object / vector / Mongo checks when configured) with **`agentskeptic check`** (CLI) or **`AgentSkeptic.check`** (TypeScript). Read the **Outcome Certificate** on stdout (**v3**, includes **`evidenceCompleteness`**) and the **`truth_check_verdict`** line on stderr.
+**Start here:** run **one stateless contract truth check** with **`agentskeptic check`** (CLI) or **`AgentSkeptic.check`** (TypeScript) — compare structured tool activity to **downstream state** (SQL plus registry-defined HTTP / object / vector / Mongo checks when configured). The default `check` path needs **no API key and no license server**. Read the **Outcome Certificate** on stdout (**v3**, includes **`evidenceCompleteness`**) and the **`truth_check_verdict: trusted|not_trusted|unknown`** line on stderr — only `trusted` means the workflow can be relied on. Optional pre-step: **`agentskeptic quick`** for a cheap **SQL-inference preview** on captured activity (provisional, not audit-final).
 
 **Hybrid proof (Postgres):** after `npm run build`, with **`POSTGRES_VERIFICATION_URL`** set, run **`node examples/hybrid-contract-demo.mjs`** — one workflow, one trust line, SQL + local HTTP witness (see [`verification-state-stores.md`](verification-state-stores.md#hybrid-contract-demo)).
 
@@ -139,7 +139,7 @@ Everything beyond **`check`** / **`AgentSkeptic.check`** is optional depth: acti
 
 **Checklist IDs:** **PatternComplete**, **AdoptionComplete_PatternComplete**, **AC-TRUST-01**, **AC-OPS-01**, **IntegrateSpineComplete**.
 
-**Default path (operator):** [README default path](../README.md#default-path-decisiongate-before-you-act)
+**Default path (operator):** [README default path](../README.md#default-path-one-truth-check)
 
 **Migrate:** [`migrate-2.md`](migrate-2.md)
 
