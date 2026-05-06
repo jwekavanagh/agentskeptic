@@ -1,3 +1,9 @@
+## [7.2.0](https://github.com/jwekavanagh/agentskeptic/compare/v7.1.4...v7.2.0) (2026-05-06)
+
+### Features
+
+* distribution integrations, telemetry docs, and CrewAI example ([#67](https://github.com/jwekavanagh/agentskeptic/issues/67)) ([7b950b1](https://github.com/jwekavanagh/agentskeptic/commit/7b950b100ea2ddfe068908a8d219fd0e212e2dc5))
+
 ## [7.1.4](https://github.com/jwekavanagh/agentskeptic/compare/v7.1.3...v7.1.4) (2026-05-06)
 
 ### Bug Fixes
