@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Re-measures footprint vs committed v3.7.0 baseline:
+ * Re-measures footprint vs committed baseline fixture (test/fixtures/npm-footprint):
  * production node_modules entry count must be strictly smaller; packed tarball bytes may be
  * at most ~3% above baseline (small first-party bundle growth is allowed while install lean wins).
  */
@@ -9,7 +9,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
-/** v3.7.0 tarball anchor; slack allows modest publishable growth (schemas / OpenAPI / bundled surfaces on majors); entry-count invariant stays vs same baseline. */
+/** Tarball anchor in test/fixtures/npm-footprint (historical filename); slack allows modest publishable growth; entry-count invariant stays vs same baseline. */
 const TAR_PACK_SLACK_VS_V37 = 0.055;
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, "..");
@@ -49,7 +49,7 @@ let bad = false;
 const tarballCeil = Math.ceil(baseline.packedTarballBytes * (1 + TAR_PACK_SLACK_VS_V37));
 if (current.packedTarballBytes > tarballCeil) {
   console.error(
-    "[assert-npm-footprint-improved] packed tarball exceeds baseline v3.7.0 by more than %s%% (current=%s baseline=%s max=%s)",
+    "[assert-npm-footprint-improved] packed tarball exceeds committed baseline by more than %s%% (current=%s baseline=%s max=%s)",
     String(TAR_PACK_SLACK_VS_V37 * 100),
     current.packedTarballBytes,
     baseline.packedTarballBytes,
