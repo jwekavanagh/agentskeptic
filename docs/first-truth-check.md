@@ -134,6 +134,10 @@ Use **`agentskeptic enforce`** **later** for **commercial / stateful / opt-in** 
 | Works locally, fails in CI | Align paths, workflow id, and **`npx agentskeptic@latest`** inputs; compare Action **`extra-args`** to local CLI. |
 | Accidentally ran **`enforce`** | Use **`agentskeptic check`** for the default stateless path; reserve **`enforce`** for commercial/stateful enforcement (see [`commercial.md`](commercial.md)). |
 
+## Telemetry and privacy
+
+Local **`agentskeptic check`** runs offline. Anonymous product-activation telemetry is **opt-in** and **best effort**: it never affects verification results, stdout, stderr, or exit codes, and it never sends events, registry, certificate body, human report, file paths, or secrets. Set **`AGENTSKEPTIC_TELEMETRY=0`** to force it off. Boundary, fields, and operator queries: [`activation-telemetry-review.md`](activation-telemetry-review.md) and [`funnel-observability.md`](funnel-observability.md).
+
 ## Next steps
 
 - **Full integration guide:** [`integrate.md`](integrate.md)
@@ -141,3 +145,4 @@ Use **`agentskeptic enforce`** **later** for **commercial / stateful / opt-in** 
 - **Cursor integration:** [`cursor-integration.md`](cursor-integration.md)
 - **Shareable reports:** [`shareable-verification-reports.md`](shareable-verification-reports.md)
 - **Commercial enforcement APIs:** [`commercial.md`](commercial.md)
+- **Telemetry and privacy:** [`activation-telemetry-review.md`](activation-telemetry-review.md)

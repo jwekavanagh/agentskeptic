@@ -17,6 +17,7 @@ export const sqliteNodeTestFiles = [
   "test/loop-cli.test.mjs",
   "test/cli-version.test.mjs",
   "test/post-product-activation-install-id.test.mjs",
+  "test/product-activation-telemetry.test.mjs",
   "test/workflow-lineage-classify.test.mjs",
   "test/resolve-telemetry-source.test.mjs",
   "test/github-workflows-agentskeptic-telemetry-env.test.mjs",
