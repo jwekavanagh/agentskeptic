@@ -4,6 +4,16 @@ This document is the **sole product authority** for the **Outcome Certificate**:
 
 **v3 wire (authoritative for current builds):** top-level **`schemaVersion`** is **`3`** only—**there is no v4**. Optional **`correctnessDefinition`** on the certificate mirrors [`workflowTruthReport.correctnessDefinition`](../schemas/workflow-truth-report.schema.json#/$defs/correctnessDefinitionV1) when present (attestation / storage). Additive **`evidenceCompleteness.remediationItems[]`** and **`evidenceCompleteness.rerunPath`** are defined in [`schemas/evidence-completeness-v1.schema.json`](../schemas/evidence-completeness-v1.schema.json). They remain optional in schema for old artifact compatibility, but current producers must emit both on failed or not-established certificates.
 
+## Trust artifact naming glossary
+
+- **Outcome Certificate (contract / quick stdout):** single JSON object; top-level **`schemaVersion` is always `3`** for current **`agentskeptic check`** and **`agentskeptic quick`** certificate output. **`failureSpine`** and **`evidenceCompleteness`** are required on that object (see [Top-level fields (v3)](#top-level-fields-v3)).
+
+- **`TrustDecisionRecordV1` / hosted trust snapshots:** a **different** document family with its **own `schema_version: 1` row shape** inside `trustDecisionRecord`; it **does not redefine** Outcome Certificate’s top-level **`schemaVersion`**. See [`trust-authority-layer.md`](trust-authority-layer.md).
+
+- **Verification receipts (`verification-receipt-v1`):** per-run **`receiptVersion: 1.0.0`** JSON under `artifacts/agentskeptic-receipts/`—metadata about CLI execution—not the Outcome Certificate. See [`verification-execution-ssot.md`](verification-execution-ssot.md).
+
+- **Decision-bundle `exit.json` (`decision-evidence-exit-v1`):** may include **`cliConvention: "outcome_certificate_v2"`**—that string is **only** the frozen exit-metadata label for the **`decision-evidence-exit-v1`** envelope; **`outcome-certificate.json` in the same bundle is still Outcome Certificate v3** (**`schemas/outcome-certificate-v3.schema.json`**). See [`decision-evidence-bundle.md`](decision-evidence-bundle.md).
+
 ## Trust boundary (unchanged intent)
 
 - The certificate proves **observed downstream state vs expectations** derived from structured tool activity and the registry (contract): SQL reads plus configured witnesses (HTTP, object storage, vector, Mongo) when present—or **inferred SQL-only checks** for **quick preview**—**not** that a tool executed, and **not** generic observability.

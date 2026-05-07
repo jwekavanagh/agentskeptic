@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 
 const title = "Guided activation";
 const socialTitle = brandedMarketingTitle(title);
-const description = `Proof-first: run agentskeptic quick on your machine, then optionally Formalize a draft registry for contract check and CI enforcement.`;
+const description = `Quick preview locally (agentskeptic quick); decision-grade gates use agentskeptic check stderr truth_check_verdict—the same CLI contract wired in CI.`;
 
 export const metadata: Metadata = {
   title,

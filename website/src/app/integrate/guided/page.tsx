@@ -177,10 +177,11 @@ export default function IntegrateGuidedPage() {
     >
       <h1>Guided activation</h1>
       <p className="lede">
-        Your <strong>first proof</strong> is <code>agentskeptic quick</code> on captured tool activity against a readable
-        database (stdout <code>QuickVerifyReport</code>). The form below prepares local NDJSON + a suggested command;
-        use <strong>Formalize</strong> only when you want a repeatable registry for <code>agentskeptic check</code> and
-        CI.
+        Use <code>agentskeptic quick</code> as an optional <strong>provisional</strong> read on captured tool activity (
+        stderr rollup + stdout Outcome Certificate with <code>runKind: quick_preview</code>). The{" "}
+        <strong>automation-facing trust line</strong> <code>truth_check_verdict: trusted|not_trusted|unknown</code> is
+        emitted by <code>agentskeptic check</code> on stderr — the default first truth path and CI contract. The form
+        below drafts registry input; Formalize builds toward <code>check</code>-grade replay + enforcement.
       </p>
       <p className="lede muted">
         <Link href="/integrate">Back to Get started</Link> ·{" "}

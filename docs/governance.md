@@ -47,7 +47,11 @@ Server recomputes both hashes from canonical bytes and rejects mismatches.
 ## Shared visibility and export
 
 - Read-only UI: `/account/governance`.
-- Export endpoint: `GET /api/v1/governance/export`.
+- Export endpoint: `GET /api/v1/governance/export` returns **`GovernanceAuditBundleV3`** JSON (**breaking:** **`schemaVersion: 3` only**) with lifecycle, baseline, events, and an **`evidenceSlices`** map (keys = **`governance_evidence.id`**; each value holds the stored **Outcome Certificate v3**, fingerprints, **`hostedExit`**, completeness, **`truthCheckVerdict`**). Wire shape matches OpenAPI **`#/components/schemas/GovernanceAuditBundleV3`**. It is **not** the forensic **technical run bundle** directory from **`--write-run-bundle`**; for full NDJSON/engine artifacts plus an on-disk decision bundle, use the CLI as in **[`decision-evidence-bundle.md`](decision-evidence-bundle.md)**.
+
+### Export integrity failures
+
+Any referenced **`governance_evidence`** row that fails Outcome Certificate v3 validation or whose stored fingerprints disagree with **`canonicalCertificateSha256` / `materialTruthSha256`** yields **HTTP 500** with **`CORRUPTED_EVIDENCE_ROW`** (no degraded export — operators fix storage or rollback).
 
 ## Removed surfaces
 

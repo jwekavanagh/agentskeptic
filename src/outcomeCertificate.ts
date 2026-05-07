@@ -81,9 +81,9 @@ export type OutcomeCertificateV3 = {
   correctnessDefinition?: CorrectnessDefinitionV1 | null;
 };
 
-/** @deprecated Use OutcomeCertificateV3 — alias retained for semver-stable imports */
+/** @deprecated Prefer {@link OutcomeCertificateV3}: **type alias identical to OutcomeCertificateV3** retained for semver-stable historical imports (“V1” is not the wire bundle version — stdout is **`schemaVersion: 3`**). */
 export type OutcomeCertificateV2 = OutcomeCertificateV3;
-/** @deprecated Use OutcomeCertificateV3 — alias retained for semver-stable imports */
+/** @deprecated Prefer {@link OutcomeCertificateV3}: **type alias identical to OutcomeCertificateV3** retained for semver-stable historical imports (“V1” is not the wire bundle version — stdout is **`schemaVersion: 3`**). */
 export type OutcomeCertificateV1 = OutcomeCertificateV3;
 
 export function deriveHighStakesReliance(

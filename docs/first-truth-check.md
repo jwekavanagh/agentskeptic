@@ -12,10 +12,12 @@ For TypeScript, the same contract is **`await skeptic.check({ … })`** / **`Age
 
 ## What you get
 
-- **stdout:** one **Outcome Certificate** (machine JSON).
-- **stderr:** human-readable report; on verdict exits it **begins** with **`truth_check_verdict: trusted`**, **`not_trusted`**, or **`unknown`** (then the rest of the report).
+- **stdout:** one **Outcome Certificate v3** (machine JSON, top-level **`schemaVersion: 3`**, required **`failureSpine`** + **`evidenceCompleteness`**). Artifact naming vs receipts and decision-bundle exits: **[Trust artifact naming glossary](outcome-certificate-normative.md#trust-artifact-naming-glossary)**.
+- **stderr:** **`truth_check_verdict: trusted`**, **`not_trusted`**, or **`unknown`** on its **own line** before the human certificate report (anonymous activation telemetry may print unrelated status lines earlier — CI often sets **`AGENTSKEPTIC_TELEMETRY=0`** to keep stderr minimal).
 
 Logs, traces, CI green, wrapper summaries, or agent claims are **not** the source of truth when they disagree with the Outcome Certificate or the verdict line.
+
+When you need **retained files** for CI artifacts, customer review, or audit handoff (beyond stdout/stderr), follow the **three-step evidence ladder** in **[`decision-evidence-bundle.md`](decision-evidence-bundle.md)** (default check → optional `--proof` / `--write-decision-bundle` → optional `--write-run-bundle` for full local proof). The default first run stays exactly as above; bundle flags are opt-in.
 
 ## Before you start
 
@@ -29,6 +31,40 @@ You supply:
 | **State store / witnesses** | At least one readable verification target — commonly **`--db`** for SQLite; Postgres URLs and registry-defined HTTP/object/vector/Mongo witnesses per your setup (see [`integrate.md`](integrate.md)). |
 
 AgentSkeptic does **not** auto-discover these paths unless you use documented defaults (for example **`--project`** with the conventional layout). Pass paths explicitly when yours differ.
+
+## Validate your registry (before the first meaningful check)
+
+Catch schema and mapping mistakes **before** you interpret a **`unknown`** exit as “the verifier disagrees with reality.” Prefer **`agentskeptic validate-registry`** when you are authoring or updating **`examples/tools.json`** (or your own registry path):
+
+```bash
+agentskeptic validate-registry --registry examples/tools.json
+```
+
+Optional tightening (replay-shaped validation when you already have NDJSON):
+
+```bash
+agentskeptic validate-registry \
+  --registry examples/tools.json \
+  --events examples/events.ndjson \
+  --workflow-id wf_complete
+```
+
+Stdout is **`RegistryValidationResult` JSON**. Exit **`0`** = valid registry; **`3`** = operational failure (stderr JSON envelope only).
+
+## Preview versus contract verification (`agentskeptic quick`)
+
+| Surface | **`agentskeptic quick`** | **`agentskeptic check`** (default first truth path) |
+|---------|---------------------------|------------------------------------------------------|
+| Role | Cheap **SQL inference preview** on captured activity — stdout carries **`runKind: quick_preview`**. | **Decision-grade** contract replay: registry, events, readable stores — stdout **`runKind: contract_sql`** (or registry-defined witnesses). |
+| Human copy | **`Rollup (inferred, provisional): pass`**, **`fail`**, or **`uncertain`** anchors ( **`docs/quick-verify-normative.md`** ). | **`truth_check_verdict: trusted`**, **`not_trusted`**, or **`unknown`** on its own line before certificate human report (optional telemetry banners may precede it). |
+| **`truth_check_verdict`** | **Not emitted on stderr.** Read stdout Outcome Certificate fields (**`runKind`**, **`stateRelation`**, **`highStakesReliance`**). A rollup **`pass`** is **not** decision-grade **`trusted`**. | Emitted first on verdict exits (**`--no-human-report`** keeps this line only; it does not suppress the verdict). |
+
+**Stdout / stderr ordering differs by design:**
+
+- **`quick`:** Writes **one Outcome Certificate line to stdout first**, **then** stderr human report/footer ( **`src/cli.ts` `runQuickSubcommand`** , **`docs/quick-verify-normative.md`** ).
+- **`check`:** Writes **stderr** (verdict prefix + human report) **before** the **stdout** certificate line finishes the bundled verify CLI path.
+
+Use **`check`** wherever automation or docs require the **`truth_check_verdict`** line on stderr; **`quick`** stays a preview aid.
 
 ## Run the default check
 
@@ -58,7 +94,7 @@ Full flag reference: [`agentskeptic.md`](agentskeptic.md). Deeper integration SS
 
 **stdout:** **Outcome Certificate** (machine JSON).
 
-**stderr:** human report; on verdict exits the first line is one of:
+**stderr:** human report preceded by **`truth_check_verdict`** on its **own line** (ignore leading telemetry banners if present). Typical verdict prefixes:
 
 ```text
 truth_check_verdict: trusted
@@ -75,6 +111,9 @@ truth_check_verdict: unknown
 If anything else says “verified” but the Outcome Certificate or **`truth_check_verdict`** disagrees, trust the certificate and verdict.
 
 ## Add it to GitHub Actions
+
+<!-- agentskeptic-ci-summary-legend:v1 -->
+The composite action’s GitHub **job summary** includes a **Verdict meanings** block (trusted / **not_trusted** / unknown) before the streamed stderr excerpts — operators should read **[`ambient-ci-distribution.md`](ambient-ci-distribution.md)** alongside this page.
 
 After the local command works, wire the same CLI contract in CI.
 

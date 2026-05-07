@@ -14,7 +14,7 @@ evaluatorLens: false
 
 **See a verified certificate on-site:** open **[`/examples/langgraph-checkpoint-trust`](/examples/langgraph-checkpoint-trust)** for a captured B-row Outcome Certificate (checkpoint verdicts, `runKind: contract_sql_langgraph_checkpoint_trust`) before reading any GitHub SSOT.
 
-Outcome Certificates use schemaVersion 2 with evidenceCompleteness for the same five-question completeness summary as vanilla contract runs.
+Stdout Outcome Certificates are **v3** (**schemaVersion: 3**) with **failureSpine** and **evidenceCompleteness** — the same convergence story as vanilla contract **`agentskeptic check`** runs, including checkpoint trust `runKind` rows.
 
 **Integrator primacy:** Python-first verification lives in **[`examples/python-verification/README.md`](https://github.com/jwekavanagh/agentskeptic/blob/main/examples/python-verification/README.md)** with the merged SSOT **[`docs/integrator-verification.md`](https://github.com/jwekavanagh/agentskeptic/blob/main/docs/integrator-verification.md)**. **Additional SQL engines and state stores** (MySQL, BigQuery, SQL Server, vectors, S3, HTTP witnesses, MongoDB): [`docs/verification-state-stores.md`](https://github.com/jwekavanagh/agentskeptic/blob/main/docs/verification-state-stores.md). Generated **[`docs/partner-quickstart-commands.md`](https://github.com/jwekavanagh/agentskeptic/blob/main/docs/partner-quickstart-commands.md)** still carries the **Node oracle** shell for CI regression only.
 

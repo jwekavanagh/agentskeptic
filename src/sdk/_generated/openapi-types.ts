@@ -133,7 +133,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Export governance audit bundle for one workflow (session auth) */
+        /**
+         * Export governance timeline JSON for one workflow (session auth)
+         * @description **Breaking:** Returns GovernanceAuditBundleV3 only (schemaVersion 3). Includes governance window, lifecycle, baselines, timeline rows, and slice-keyed evidenceSlices (per governance_evidence row: Outcome Certificate v3, fingerprints, hostedExit, decisionCompleteness, truthCheckVerdict). Not equivalent to CLI --write-run-bundle (NDJSON technical bundle) or full on-disk decision directories; see docs/decision-evidence-bundle.md. If any referenced evidence row fails v3 validation or stored fingerprints disagree with recomputed hashes, responds 500 CORRUPTED_EVIDENCE_ROW with a fixed JSON body (no degraded export).
+         */
         get: operations["exportGovernanceAuditBundle"];
         put?: never;
         post?: never;
@@ -333,27 +336,75 @@ export interface components {
                 [key: string]: unknown;
             }[];
         };
-        /** @description Governance export including authoritative lifecycle FSM rows and verification decisions. */
-        GovernanceAuditBundleV2: {
+        /** @description Hosted governance export — stored evidence invariant failure. */
+        GovernanceExportCorruptedEvidenceRow: {
             /** @constant */
-            schemaVersion: 2;
+            code: "CORRUPTED_EVIDENCE_ROW";
+            /** Format: uuid */
+            evidence_id: string;
+            /** @constant */
+            message: "Stored evidence row failed certificate schema validation or fingerprints do not match stored columns.";
+        };
+        GovernanceEvidenceFingerprints: {
+            certificateSha256: string;
+            materialTruthSha256: string;
+        };
+        HostedEvidenceExitDecisionV1: {
+            /** @constant */
+            schemaVersion: 1;
+            exitCode: number;
+            /** @constant */
+            cliConvention: "outcome_certificate_v2";
+        };
+        HostedDecisionEvidenceCompletenessArtifacts: {
+            a4Present: boolean;
+            a5Present: boolean;
+            a5Required: boolean;
+        };
+        HostedDecisionEvidenceCompleteness: {
+            /** @enum {string} */
+            status: "complete" | "partial" | "invalid";
+            artifacts: components["schemas"]["HostedDecisionEvidenceCompletenessArtifacts"];
+        };
+        HostedEvidenceSliceV1: {
+            runId: string;
+            /** @description Stored Outcome Certificate v3 (schema outcome-certificate-v3). */
+            outcomeCertificate: {
+                [key: string]: unknown;
+            };
+            fingerprints: components["schemas"]["GovernanceEvidenceFingerprints"];
+            hostedExit: components["schemas"]["HostedEvidenceExitDecisionV1"];
+            decisionCompleteness: components["schemas"]["HostedDecisionEvidenceCompleteness"];
+            truthCheckVerdict: string;
+        };
+        GovernanceBaselineAcceptedEvidenceV3: {
+            /** Format: uuid */
+            evidenceSliceKey: string;
+            runId: string;
+            fingerprints: components["schemas"]["GovernanceEvidenceFingerprints"];
+            runKind: string;
+        };
+        /** @description Hosted governance ledger export (breaking; replaces prior schemaVersion 2 governance export payloads). */
+        GovernanceAuditBundleV3: {
+            /** @constant */
+            schemaVersion: 3;
             /** Format: date-time */
             generatedAt: string;
             userId: string;
             workflowId: string;
-            window?: {
+            window: {
                 /** Format: date-time */
                 from: string;
                 /** Format: date-time */
                 to: string;
             };
-            lifecycle?: {
+            lifecycle: {
                 [key: string]: unknown;
             } | null;
-            fsmTransitions?: {
+            fsmTransitions: {
                 [key: string]: unknown;
             }[];
-            verificationDecisions?: {
+            verificationDecisions: {
                 [key: string]: unknown;
             }[];
             baseline: {
@@ -362,11 +413,10 @@ export interface components {
             events: {
                 [key: string]: unknown;
             }[];
-            decisionEvidenceExport?: {
-                [key: string]: unknown;
+            evidenceSlices: {
+                [key: string]: components["schemas"]["HostedEvidenceSliceV1"];
             };
-        } & {
-            [key: string]: unknown;
+            baselineAcceptedEvidence: (components["schemas"]["GovernanceBaselineAcceptedEvidenceV3"] | null) | null;
         };
         ProblemDetails: {
             /** Format: uri */
@@ -855,13 +905,13 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Governance audit bundle */
+            /** @description GovernanceAuditBundleV3 governance timeline + slice-keyed evidence */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["GovernanceAuditBundleV2"];
+                    "application/json": components["schemas"]["GovernanceAuditBundleV3"];
                 };
             };
             /** @description Invalid request */
@@ -880,6 +930,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Referenced governance_evidence row failed validation or fingerprint invariant */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GovernanceExportCorruptedEvidenceRow"];
                 };
             };
         };

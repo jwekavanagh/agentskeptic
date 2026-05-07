@@ -104,6 +104,11 @@ function usageQuick(): string {
 
   CI enforcement over time is provided by "agentskeptic enforce" (stateful, paid). Lock flags are no longer supported on quick.
 
+  Preview vs decision-grade: quick emits a provisional rollup ("pass" | "fail" | "uncertain") in stderr human anchors
+  plus an Outcome Certificate on stdout with runKind "quick_preview" (see docs/quick-verify-normative.md).
+  The automation-facing line "truth_check_verdict: trusted|not_trusted|unknown" is emitted by agentskeptic check
+  on stderr, not quick — use check for the same verdict contract wired in CI and agentskeptic-check Actions.
+
 Exit codes:
   0  verdict pass
   1  verdict fail

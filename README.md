@@ -14,42 +14,16 @@ AgentSkeptic re-checks the stores your agent claims to change, then returns a de
 ### Bundled terminal proof
 
 ```text
-### Success (`wf_complete`)
+### Success (`wf_complete`) — canonical `agentskeptic check`
 
-workflow_id: wf_complete
-workflow_status: complete
-trust: TRUSTED: Every step matched registry-backed expected state under the configured verification rules.
-steps:
-  - seq=0 tool=crm.upsert_contact result=Matched registry-backed expected state.
-
-{
-  "schemaVersion": 15,
-  "workflowId": "wf_complete",
-  "status": "complete",
-  "steps": [{ "seq": 0, "toolId": "crm.upsert_contact", "status": "verified" }]
-}
+stderr (first line): truth_check_verdict: trusted
+stdout (Outcome Certificate excerpt): {"schemaVersion":3,"workflowId":"wf_complete","runKind":"contract_sql","stateRelation":"matches_expectations"}
 
 ### Failure (`wf_missing`)
 
-workflow_id: wf_missing
-workflow_status: inconsistent
-steps:
-  - seq=0 tool=crm.upsert_contact result=Expected state at the verification target was not found (for example a missing row or absent witness result).
-    reference_code: ROW_ABSENT
-
-{
-  "schemaVersion": 15,
-  "workflowId": "wf_missing",
-  "status": "inconsistent",
-  "steps": [
-    {
-      "seq": 0,
-      "toolId": "crm.upsert_contact",
-      "status": "missing",
-      "reasons": [{ "code": "ROW_ABSENT" }]
-    }
-  ]
-}
+stderr (first line): truth_check_verdict: not_trusted
+Human report then explains ROW_ABSENT (missing downstream row vs registry expectation).
+stdout (Outcome Certificate excerpt): {"schemaVersion":3,"workflowId":"wf_missing","runKind":"contract_sql","stateRelation":"does_not_match"}
 ```
 
 [How it works](https://agentskeptic.com/database-truth-vs-traces)
@@ -60,7 +34,7 @@ steps:
 
 **Start here:** **[`docs/first-truth-check.md`](docs/first-truth-check.md)** — canonical first-run steps (command, inputs, stdout/stderr, CI, Cursor, troubleshooting).
 
-Compare recorded tool activity to downstream state (SQL and, in contract mode, HTTP witnesses, object storage, vectors, Mongo per your registry) and get an **Outcome Certificate** (stdout) plus a **`truth_check_verdict`** line on stderr:
+Compare recorded tool activity to downstream state (SQL and, in contract mode, HTTP witnesses, object storage, vectors, Mongo per your registry) and get **Outcome Certificate v3** on stdout (**`schemaVersion: 3`**, **`failureSpine`**, **`evidenceCompleteness`**) plus a **`truth_check_verdict`** line on stderr ([**Trust artifact naming glossary**](docs/outcome-certificate-normative.md#trust-artifact-naming-glossary) explains receipts and decision-bundle `exit.json` naming):
 
 ```bash
 npx agentskeptic check --workflow-id wf_example \
@@ -72,7 +46,7 @@ With the conventional layout, **`--registry`** and **`--events`** default to **`
 
 **No license required.** The default `agentskeptic check` path needs no `AGENTSKEPTIC_API_KEY` and no license server; it runs stateless contract verification locally. (Stateful **`agentskeptic enforce`** for baselines, drift, and acceptance is a later opt-in commercial path — see below.)
 
-**Reading the result.** stdout is the **Outcome Certificate** (machine JSON). On verdict exits, stderr begins with one of:
+**Reading the result.** stdout is one **Outcome Certificate v3** line (machine JSON as above). On verdict exits, stderr begins with one of:
 
 ```text
 truth_check_verdict: trusted
@@ -131,6 +105,10 @@ const certificate = await skeptic.check({
   ],
 });
 ```
+
+### Python / LangGraph / CrewAI (same truth check)
+
+The default verification contract is unchanged: **`agentskeptic check` semantics**, Outcome Certificate on stdout, and **`truth_check_verdict`** on stderr—whether you invoke the published **npm CLI** alongside your stack or use the **Python SDK / extras** documented in **[`docs/integrate.md`](docs/integrate.md)**. Start here: **`pip install`** and framework notes there, plus **[`examples/python-verification/README.md`](examples/python-verification/README.md)**.
 
 See **[`docs/integrate.md`](docs/integrate.md)** (v2 integrator SSOT) and [`docs/migrate-2.md`](docs/migrate-2.md) for 1.x → 2.0 renames.
 

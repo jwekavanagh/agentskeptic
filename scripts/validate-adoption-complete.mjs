@@ -192,7 +192,7 @@ function main() {
   }
 
   const outLine = (verify.stdout || "").trim().split(/\r?\n/).filter(Boolean).pop();
-  /** Batch verify stdout: Outcome Certificate v1/v2 or legacy one-line WorkflowResult. */
+  /** Batch verify stdout: contract Outcome Certificate (current product schemaVersion 3) or legacy one-line WorkflowResult. */
   let verifyStdoutOk = false;
   if (outLine?.includes('"status":"complete"')) {
     verifyStdoutOk = true;

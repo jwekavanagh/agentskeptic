@@ -138,7 +138,7 @@ function parseWorkflowResult(stdout) {
   return obj;
 }
 
-/** stdout is Outcome Certificate v1–v3, not legacy WorkflowResult (schemaVersion 15). */
+/** Treat stdout as certificate-shaped when humanReport + stateRelation exist and numeric schemaVersion is <=3 (current product: 3); otherwise expect legacy WorkflowResult (schemaVersion 15). */
 function isOutcomeCertificateWireStdout(obj) {
   return (
     obj !== null &&

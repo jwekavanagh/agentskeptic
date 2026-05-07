@@ -105,6 +105,9 @@ export const sqliteNodeTestFiles = [
   // Previously unlisted: now classified so the registry is exhaustive
   "test/adoption-docs-boundary.test.mjs",
   "test/adoption-validation.test.mjs",
+  "test/demo-canonical-contract.test.mjs",
+  "test/first-truth-check-onboarding.contract.test.mjs",
+  "test/marketing-transcript-ban-legacy-contract.test.mjs",
   "test/assurance-cli.test.mjs",
   "test/docs-golden-path-pointer-only.test.mjs",
   "test/golden-path-drift.contract.test.mjs",
