@@ -37,10 +37,9 @@ describe("home vs brief exclusive content", { timeout: 300_000 }, () => {
         .map((p) => p.trim())
         .join(""),
     );
-    /** Stripped from `<pre>`; assert acquisition terminal embed + bundled success trust line instead. */
+    /** Stripped from `<pre>`; assert acquisition terminal embed + canonical stderr trust line (OC v3). */
     const acquisitionTerminalMarker = 'data-testid="acquisition-terminal-demo"';
-    const successTrustLine =
-      "TRUSTED: Every step matched registry-backed expected state under the configured verification rules.";
+    const successTrustLine = "truth_check_verdict: trusted";
 
     for (const s of productCopy.productBriefPage.sections) {
       expect(briefText).toContain(s.title);
