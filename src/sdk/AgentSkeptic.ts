@@ -13,7 +13,7 @@ import {
   type LicensePreflightResult,
 } from "../commercial/licensePreflight.js";
 import type { WorkflowResult } from "../types.js";
-import type { OutcomeCertificateV1 } from "../outcomeCertificate.js";
+import type { OutcomeCertificateV3 } from "../outcomeCertificate.js";
 import { CanonicalEventEmitter } from "./events/CanonicalEventEmitter.js";
 import { BufferSink } from "./events/index.js";
 import type { EventSink } from "./events/types.js";
@@ -40,7 +40,7 @@ export class AgentSkeptic {
    * Primary product path: return an Outcome Certificate for this workflow.
    * With `observations`, buffers canonical events then evaluates; otherwise replays `agentskeptic/events.ndjson`.
    */
-  async check(options: AgentSkepticCheckOptions): Promise<OutcomeCertificateV1> {
+  async check(options: AgentSkepticCheckOptions): Promise<OutcomeCertificateV3> {
     if (options.observations !== undefined) {
       const sink = new BufferSink();
       const emitter = this.createEmitter({
@@ -86,7 +86,7 @@ export class AgentSkeptic {
   }
 
   /** Replay `agentskeptic/events.ndjson` from the project layout (same as `verifyAgentskeptic`). */
-  async replayFromFile(options: { workflowId: string; databaseUrl?: string; projectRoot?: string }): Promise<OutcomeCertificateV1> {
+  async replayFromFile(options: { workflowId: string; databaseUrl?: string; projectRoot?: string }): Promise<OutcomeCertificateV3> {
     return verifyAgentskepticImpl({
       workflowId: options.workflowId,
       databaseUrl: options.databaseUrl ?? this.opts.databaseUrl,

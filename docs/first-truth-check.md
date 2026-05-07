@@ -12,7 +12,7 @@ For TypeScript, the same contract is **`await skeptic.check({ … })`** / **`Age
 
 ## What you get
 
-- **stdout:** one **Outcome Certificate** (machine JSON).
+- **stdout:** one **Outcome Certificate v3** (machine JSON, top-level **`schemaVersion: 3`**, required **`failureSpine`** + **`evidenceCompleteness`**). Artifact naming vs receipts and decision-bundle exits: **[Trust artifact naming glossary](outcome-certificate-normative.md#trust-artifact-naming-glossary)**.
 - **stderr:** human-readable report; on verdict exits it **begins** with **`truth_check_verdict: trusted`**, **`not_trusted`**, or **`unknown`** (then the rest of the report).
 
 Logs, traces, CI green, wrapper summaries, or agent claims are **not** the source of truth when they disagree with the Outcome Certificate or the verdict line.

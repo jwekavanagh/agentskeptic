@@ -4,7 +4,7 @@ import { CLI_OPERATIONAL_CODES, runLevelIssue } from "./failureCatalog.js";
 import { assertValidRunEventParentGraph } from "./executionTrace.js";
 import {
   buildOutcomeCertificateFromWorkflowResult,
-  type OutcomeCertificateV1,
+  type OutcomeCertificateV3,
 } from "./outcomeCertificate.js";
 import { verifyRunStateFromBufferedRunEvents } from "./verifyRunStateFromBufferedRunEvents.js";
 import { loadSchemaValidator } from "./schemaLoad.js";
@@ -39,7 +39,7 @@ export type DecisionGate = {
   toNdjsonUtf8(): Buffer;
   assertEmissionQuality(): void;
   evaluate(): Promise<WorkflowResult>;
-  evaluateCertificate(): Promise<OutcomeCertificateV1>;
+  evaluateCertificate(): Promise<OutcomeCertificateV3>;
   assertSafeForIrreversibleAction(): Promise<void>;
 };
 
@@ -120,7 +120,7 @@ export function createDecisionGateImpl(options: CreateDecisionGateOptions): Deci
     });
   };
 
-  api.evaluateCertificate = async (): Promise<OutcomeCertificateV1> => {
+  api.evaluateCertificate = async (): Promise<OutcomeCertificateV3> => {
     const result = await api.evaluate();
     const certificate = buildOutcomeCertificateFromWorkflowResult(result, "contract_sql");
     const validateCert = loadSchemaValidator("outcome-certificate-v3");

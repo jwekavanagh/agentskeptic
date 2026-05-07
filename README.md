@@ -60,7 +60,7 @@ steps:
 
 **Start here:** **[`docs/first-truth-check.md`](docs/first-truth-check.md)** — canonical first-run steps (command, inputs, stdout/stderr, CI, Cursor, troubleshooting).
 
-Compare recorded tool activity to downstream state (SQL and, in contract mode, HTTP witnesses, object storage, vectors, Mongo per your registry) and get an **Outcome Certificate** (stdout) plus a **`truth_check_verdict`** line on stderr:
+Compare recorded tool activity to downstream state (SQL and, in contract mode, HTTP witnesses, object storage, vectors, Mongo per your registry) and get **Outcome Certificate v3** on stdout (**`schemaVersion: 3`**, **`failureSpine`**, **`evidenceCompleteness`**) plus a **`truth_check_verdict`** line on stderr ([**Trust artifact naming glossary**](docs/outcome-certificate-normative.md#trust-artifact-naming-glossary) explains receipts and decision-bundle `exit.json` naming):
 
 ```bash
 npx agentskeptic check --workflow-id wf_example \
@@ -72,7 +72,7 @@ With the conventional layout, **`--registry`** and **`--events`** default to **`
 
 **No license required.** The default `agentskeptic check` path needs no `AGENTSKEPTIC_API_KEY` and no license server; it runs stateless contract verification locally. (Stateful **`agentskeptic enforce`** for baselines, drift, and acceptance is a later opt-in commercial path — see below.)
 
-**Reading the result.** stdout is the **Outcome Certificate** (machine JSON). On verdict exits, stderr begins with one of:
+**Reading the result.** stdout is one **Outcome Certificate v3** line (machine JSON as above). On verdict exits, stderr begins with one of:
 
 ```text
 truth_check_verdict: trusted

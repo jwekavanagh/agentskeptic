@@ -34,6 +34,11 @@ Written only when **`--write-decision-bundle <dir>`** is passed (opt-in).
 | `next-action.json` | Optional A5 — [`decision-evidence-next-action-v1`](../schemas/decision-evidence-next-action-v1.schema.json) via `--decision-next-action` |
 | `manifest.json` | Bundle metadata + **completeness** (explicit `a4Present`, `a5Present`, `a5Required`) |
 
+### Compatibility (non-wire)
+
+- **`outcome-certificate.json`** in this bundle is **always** **[`schemas/outcome-certificate-v3.schema.json`](../schemas/outcome-certificate-v3.schema.json)** — top-level **`schemaVersion: 3`**, **`failureSpine`**, **`evidenceCompleteness`**.
+- **`exit.json`** validates against **`schemas/decision-evidence-exit-v1.schema.json`**, which **frozen** declares **`cliConvention: "outcome_certificate_v2"`**. That **`cliConvention` string labels the **`decision-evidence-exit-v1`** envelope only; it is **not** the Outcome Certificate’s top-level **`schemaVersion`**. The certificate remains v3. Naming map: **[`outcome-certificate-normative.md#trust-artifact-naming-glossary`](outcome-certificate-normative.md#trust-artifact-naming-glossary)**.
+
 ## Completeness rules
 
 - **`stateRelation`** on the outcome certificate is authoritative (see [`outcome-certificate-normative.md`](outcome-certificate-normative.md)).

@@ -29,7 +29,7 @@ function spawnCli(args) {
 }
 
 describe("crossing commercial smoke (harness license mock)", () => {
-  it("bootstrap-led exits 0; single Outcome Certificate v1–v3 or WorkflowResult stdout; pack artifacts exist", () => {
+  it("bootstrap-led exits 0; single stdout matches Outcome Certificate detector (certificate schemaVersion 1–3) or legacy WorkflowResult; pack artifacts exist", () => {
     const tmp = mkdtempSync(join(tmpdir(), "crossing-commercial-"));
     try {
       const dbPath = join(tmp, "db.sqlite");

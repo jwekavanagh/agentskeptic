@@ -12,7 +12,7 @@ This document is the **single source of truth** for cross-run **compare** in Age
 - **`workflowId`:** Redundant copy from **`verification.workflowId`** for filters.
 - **`certificateProfile`:** From the manifest, or the fixed **uniform `contract_sql`** object for `debug_corpus` (LCT / langgraph trust compare via manifest is CLI-only; see plan).
 - **`verification`:** `RunComparisonReport` v4 from **`buildRunComparisonReport`**.
-- **`outcomeCertificates`:** One row per run: dispatched **`OutcomeCertificateV1`**, run kind, **`certificateCanonicalDigest`**.
+- **`outcomeCertificates`:** One row per run: dispatched stdout **Outcome Certificate v3** bytes (see **`schemas/outcome-certificate-v3.schema.json`**). Historically **`OutcomeCertificateV1`** referenced the TS import alias naming, not **`schemaVersion: 1`** on the certificate object; **`certificateCanonicalDigest`** is over that JSON payload.
 - **`tracePairwise`:** Output of **`buildTracePairwisePayload`** (pairwise `ExecutionTraceView` only).
 - **`narrative`:** Classification, headline, `whyItMatters`, structural counts, trace summary.
 - **`humanText`:** Machine-authored summary block (stderr for CLI success).
