@@ -21,6 +21,33 @@ const eventsPath = join(root, "examples", "events.ndjson");
 const registryPath = join(root, "examples", "tools.json");
 const wrongWfFixture = join(root, "test", "fixtures", "adoption-validation", "wrong-workflow-id.events.ndjson");
 
+/** First `truth_check_verdict` line (telemetry status lines may precede it on stderr). */
+function truthVerdictLine(stderr) {
+  const lines = String(stderr ?? "")
+    .replace(/\r\n/g, "\n")
+    .split("\n")
+    .map((x) => x.trim());
+  const hit = lines.find((l) => /^truth_check_verdict: (trusted|not_trusted|unknown)$/.test(l));
+  return hit ?? null;
+}
+
+/** Canonical first-run path matches `agentskeptic check`. */
+function argvCheck(workflowId) {
+  return [
+    "--no-warnings",
+    cliJs,
+    "check",
+    "--workflow-id",
+    workflowId,
+    "--events",
+    eventsPath,
+    "--registry",
+    registryPath,
+    "--db",
+    demoDb,
+  ];
+}
+
 describe("adoption-validation", () => {
   it("demo_script_has_no_success_path_console_io", () => {
     const src = readFileSync(demoPath, "utf8");
@@ -50,13 +77,11 @@ describe("adoption-validation", () => {
     if (existsSync(demoDb)) unlinkSync(demoDb);
   });
 
-  it("cli_wf_complete_batch_contract", () => {
-    const r = spawnSync(
-      process.execPath,
-      ["--no-warnings", cliJs, "--workflow-id", "wf_complete", "--events", eventsPath, "--registry", registryPath, "--db", demoDb],
-      { encoding: "utf8", cwd: root },
-    );
+  it("cli_wf_complete_check_truth_verdict_stderr", () => {
+    const r = spawnSync(process.execPath, argvCheck("wf_complete"), { encoding: "utf8", cwd: root });
     assert.equal(r.status, 0, r.stderr);
+    const verdictLine = truthVerdictLine(r.stderr);
+    assert.equal(verdictLine, "truth_check_verdict: trusted", r.stderr?.slice(0, 400));
     const line = r.stdout.trim().split(/\r?\n/).filter(Boolean).pop();
     const o = JSON.parse(line);
     assert.equal(o.runKind, "contract_sql");
@@ -64,13 +89,10 @@ describe("adoption-validation", () => {
     assert.ok(o.steps?.length >= 1, "outcome certificate includes at least one step");
   });
 
-  it("cli_wf_missing_batch_contract", () => {
-    const r = spawnSync(
-      process.execPath,
-      ["--no-warnings", cliJs, "--workflow-id", "wf_missing", "--events", eventsPath, "--registry", registryPath, "--db", demoDb],
-      { encoding: "utf8", cwd: root },
-    );
+  it("cli_wf_missing_check_truth_verdict_stderr", () => {
+    const r = spawnSync(process.execPath, argvCheck("wf_missing"), { encoding: "utf8", cwd: root });
     assert.equal(r.status, 1, r.stderr);
+    assert.equal(truthVerdictLine(r.stderr), "truth_check_verdict: not_trusted");
     const line = r.stdout.trim().split(/\r?\n/).filter(Boolean).pop();
     const o = JSON.parse(line);
     assert.equal(o.stateRelation, "does_not_match");
@@ -86,6 +108,7 @@ describe("adoption-validation", () => {
       [
         "--no-warnings",
         cliJs,
+        "check",
         "--workflow-id",
         "wf_requested",
         "--events",
@@ -98,6 +121,7 @@ describe("adoption-validation", () => {
       { encoding: "utf8", cwd: root },
     );
     assert.equal(r.status, 2, r.stderr);
+    assert.equal(truthVerdictLine(r.stderr), "truth_check_verdict: unknown");
     const line = r.stdout.trim().split(/\r?\n/).filter(Boolean).pop();
     const o = JSON.parse(line);
     const rl = o.explanation.details.find((x) => x.code === "NO_STEPS_FOR_WORKFLOW");
@@ -113,6 +137,7 @@ describe("adoption-validation", () => {
       [
         "--no-warnings",
         cliJs,
+        "check",
         "--workflow-id",
         "wf_requested",
         "--events",
@@ -127,5 +152,21 @@ describe("adoption-validation", () => {
     assert.equal(r.status, 2);
     const stderr = r.stderr.replace(/\r\n/g, "\n");
     assert.equal(stderr.split(expectedMsg).length, 2);
+    assert.equal(truthVerdictLine(stderr), "truth_check_verdict: unknown");
+  });
+
+  it("check_operational_stderr_has_no_truth_check_verdict", () => {
+    const missingRegistry = join(root, `ghost-registry-${Date.now()}.json`);
+    const r = spawnSync(
+      process.execPath,
+      ["--no-warnings", cliJs, "check", "--workflow-id", "wf_complete", "--events", eventsPath, "--registry", missingRegistry, "--db", demoDb],
+      {
+        encoding: "utf8",
+        cwd: root,
+      },
+    );
+    assert.equal(r.status, 3, r.stderr);
+    assert.match(r.stderr, /"code"\s*:/, "operational JSON envelope");
+    assert.equal(/truth_check_verdict:/.test(r.stderr), false, "no verdict line on operational failure");
   });
 });

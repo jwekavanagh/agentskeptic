@@ -376,7 +376,7 @@ Full integrator SSOT: [`decision-gate.md`](decision-gate.md).
 
 For CI, audits, or logs written as NDJSON:
 
-1. To verify your checkout with bundled `examples/` artifacts, run **`npm start`** from the repository root (see [Examples](#examples)) — that runs **`npm run build`** then **`scripts/demo.mjs`** (DB seed + two sample CLI invocations).
+1. To verify your checkout with bundled `examples/` artifacts, run **`npm start`** from the repository root (see [Examples](#examples)) — that runs **`npm run build`** then **`scripts/demo.mjs`** (DB seed + two **`agentskeptic check`** invocations; stderr includes **`truth_check_verdict`**, stdout the Outcome Certificate line).
 2. After **each** tool call, append one JSON object line to your NDJSON file (see [Event line schema](#event-line-schema)).
 3. Maintain `tools.json` with one entry per `toolId` your workflows emit.
 4. Optionally validate the registry (and optionally resolution vs NDJSON) without a database: `node dist/cli.js validate-registry --registry <path>` or with `--events` and `--workflow-id` (see [Registry validation (`validate-registry`) — normative](#registry-validation-validate-registry--normative)).
@@ -385,9 +385,10 @@ For CI, audits, or logs written as NDJSON:
 
 ```bash
 npm run build
-node dist/cli.js --workflow-id <id> --events <path> --registry <path> --db <sqlitePath>
+node dist/cli.js check --workflow-id <id> --events <path> --registry <path> --db <sqlitePath>
 # or
-node dist/cli.js --workflow-id <id> --events <path> --registry <path> --postgres-url <postgresql-url>
+node dist/cli.js check --workflow-id <id> --events <path> --registry <path> --postgres-url <postgresql-url>
+# legacy bare replay (omit `check`) still invokes the verifier but omits truth_check_verdict telemetry prefixing
 ```
 
 **Why:** Same event contract for CI and external logs without requiring in-process wrapper.
@@ -1529,7 +1530,7 @@ Run **`assurance run --write-report <artifactPath>`** on your cadence, publish *
 
 Bundled files under [`examples/`](../examples/): `seed.sql`, `tools.json`, `events.ndjson`. The assurance manifest uses [`examples/minimal-ci-enforcement/ci-check.sqlite`](../examples/minimal-ci-enforcement/ci-check.sqlite) (database created from that folder’s `seed.sql`, same data as the temp DB in [`examples/minimal-ci-enforcement/run.mjs`](../examples/minimal-ci-enforcement/run.mjs)).
 
-- **Onboarding:** **`npm start`** runs **`npm run build`** then [`scripts/demo.mjs`](../scripts/demo.mjs) (batch CLI demo with bundled `examples/`). For the narrated first-run walkthrough, run **`npm run build && node scripts/first-run.mjs`** (also executed as part of **`npm test`**); that driver is [`scripts/first-run.mjs`](../scripts/first-run.mjs). It seeds `examples/demo.db`, prints plain-language framing plus **human verification reports on stdout** (via a custom **`truthReport`** callback), then verifies workflows `wf_complete` (expect `complete` / `verified`) and `wf_missing` (expect `inconsistent` / `missing` / `ROW_ABSENT`). **`example:workflow-hook`:** run **`npm run example:workflow-hook`** for a minimal **`createDecisionGate`** demo (SQLite temp DB, one event from **`examples/events.ndjson`**).
+- **Onboarding:** **`npm start`** runs **`npm run build`** then [`scripts/demo.mjs`](../scripts/demo.mjs) (bundled `examples/` + two **`agentskeptic check`** runs with **`truth_check_verdict`** on stderr). For the narrated walkthrough, run **`npm run build && node scripts/first-run.mjs`** (also **`npm test`** / **`npm run verification:truth`**); [`scripts/first-run.mjs`](../scripts/first-run.mjs) seeds `examples/demo.db`, prints API-level human reports via **`truthReport`**, then mirrors **`agentskeptic check`** for **`wf_complete`** / **`wf_missing`**. **`example:workflow-hook`:** run **`npm run example:workflow-hook`** for **`createDecisionGate`** (temp SQLite + **`examples/events.ndjson`**).
 - **CLI log streams:** For the CLI, a **human-readable verification report** is written to **stderr** and the machine-readable **workflow result JSON** to **stdout** on verdict exits **0–2** (default **`truthReport`**); full format is **[Human truth report](#human-truth-report)**. Repository README links use **`docs/agentskeptic.md#human-truth-report`** for that section.
 
 (Node may print an experimental warning for `node:sqlite` depending on version.)
