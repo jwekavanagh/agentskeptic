@@ -1,3 +1,9 @@
+## [7.6.1](https://github.com/jwekavanagh/agentskeptic/compare/v7.6.0...v7.6.1) (2026-05-07)
+
+### Bug Fixes
+
+* **docs:** framework verification recipes and LangGraph checkpoint trust SSOT ([7e7ecd9](https://github.com/jwekavanagh/agentskeptic/commit/7e7ecd96ab4720864b770f5423681c7b83832e96))
+
 ## [7.6.0](https://github.com/jwekavanagh/agentskeptic/compare/v7.5.0...v7.6.0) (2026-05-07)
 
 ### Features
