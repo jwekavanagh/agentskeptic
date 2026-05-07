@@ -1,3 +1,9 @@
+## [7.4.0](https://github.com/jwekavanagh/agentskeptic/compare/v7.3.1...v7.4.0) (2026-05-07)
+
+### Features
+
+* **website:** redesign homepage hero with verification receipt ([#71](https://github.com/jwekavanagh/agentskeptic/issues/71)) ([adf2b0e](https://github.com/jwekavanagh/agentskeptic/commit/adf2b0ea473254203d86c416bbf3a7a1a1394eb6))
+
 ## [7.3.1](https://github.com/jwekavanagh/agentskeptic/compare/v7.3.0...v7.3.1) (2026-05-07)
 
 ### Bug Fixes
