@@ -1,3 +1,9 @@
+## [7.9.2](https://github.com/jwekavanagh/agentskeptic/compare/v7.9.1...v7.9.2) (2026-05-08)
+
+### Bug Fixes
+
+* **deps:** bump fast-uri to 3.1.2 and align OSS CI example ([#79](https://github.com/jwekavanagh/agentskeptic/issues/79)) ([d476966](https://github.com/jwekavanagh/agentskeptic/commit/d476966a1eec64d6425888e29f55170a715aedd9))
+
 ## [7.9.1](https://github.com/jwekavanagh/agentskeptic/compare/v7.9.0...v7.9.1) (2026-05-08)
 
 ### Bug Fixes
