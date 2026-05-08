@@ -84,6 +84,7 @@ function tailLines(text, n) {
 
 function escapeTableCell(value) {
   return String(value)
+    .replace(/\\/g, "\\\\")
     .replace(/\r\n|\r|\n/g, " ")
     .replace(/\|/g, "\\|")
     .trim();
