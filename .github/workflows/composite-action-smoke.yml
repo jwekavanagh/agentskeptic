@@ -1,12 +1,25 @@
 # Deterministic E2E smoke for the agentskeptic-check composite action.
 #
-# Job A `produce` runs the composite against the canonical OSS example inputs
-# and uploads a SHA-256 of the certificate alongside the artifact the composite
+# Job A `produce` runs the composite against the canonical example inputs and
+# uploads a SHA-256 of the certificate alongside the artifact the composite
 # itself uploads.
 #
 # Job B `verify-artifact` downloads both, runs `sha256sum -c` (proves byte
 # identical retention) and a `node -e` schemaVersion+failureSpine check (proves
 # the artifact is the canonical Outcome Certificate v3).
+#
+# Why a local OSS build instead of `npm install agentskeptic@<semver>`:
+#   The published `agentskeptic` package on the npm registry is the commercial
+#   variant (`prepublishOnly` runs `scripts/build-commercial.mjs`, which sets
+#   `LICENSE_PREFLIGHT_ENABLED=true`). Calling `npx agentskeptic check` against
+#   that variant fails with `LICENSE_KEY_MISSING` unless `AGENTSKEPTIC_API_KEY`
+#   is provided. The default CI build script (`npm run build`) writes the OSS
+#   profile flags via `scripts/write-commercial-build-flags.mjs --oss`, so the
+#   monorepo's own checked-out source ships with `LICENSE_PREFLIGHT_ENABLED=false`.
+#   We `npm install && npm run build` and then have the composite invoke
+#   `npx agentskeptic` (no `@version`); npx resolves the binary from the
+#   workspace's local `node_modules/agentskeptic`, which is the linked OSS build.
+#   This keeps the smoke deterministic on PRs without secrets.
 #
 # Permissions: contents: read only. actions/upload-artifact@v4 and
 # actions/download-artifact@v4 authenticate via ACTIONS_RUNTIME_TOKEN, not
@@ -40,7 +53,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       AGENTSKEPTIC_TELEMETRY: "0"
-      AGENTSKEPTIC_CI_PACKAGE: agentskeptic@7.6.1
     steps:
       - uses: actions/checkout@v5
 
@@ -49,6 +61,13 @@ jobs:
           NODE_OPTIONS: "--disable-warning=DEP0040"
         with:
           node-version: "22"
+
+      - name: Install + build local OSS agentskeptic
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install
+          npm run build
 
       - name: Prepare conventional agentskeptic/ paths for project mode
         shell: bash
@@ -70,16 +89,14 @@ jobs:
           d.close();
           "
 
-      - name: Install pinned AgentSkeptic
-        shell: bash
-        run: npm install --no-save "${AGENTSKEPTIC_CI_PACKAGE}"
-
       - id: ask
         uses: ./.github/actions/agentskeptic-check
         with:
           workflow-id: wf_complete
           project: .
-          package: ${{ env.AGENTSKEPTIC_CI_PACKAGE }}
+          # No `@version`: composite's `npx --yes agentskeptic` resolves the
+          # workspace-local OSS build installed above (see header comment).
+          package: agentskeptic
           db: examples/demo.db
 
       - name: Echo decision-grade outputs
