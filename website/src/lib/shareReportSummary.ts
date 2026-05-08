@@ -23,24 +23,9 @@ function truthCheckVerdictFromStructured(cert: {
 }
 
 /** Minimal certificate surface for summary derivation (structured fields only). */
-export type CertificateForExecutiveSummary = {
-  stateRelation: "matches_expectations" | "does_not_match" | "not_established";
+export type CertificateForExecutiveSummary = VerdictComprehensionInput & {
   highStakesReliance: "permitted" | "prohibited";
-  intentSummary: string;
   explanation: { headline: string; details: { code: string; message: string }[] };
-  failureSpine: {
-    summary: string;
-    rerunGuidance: string;
-    primaryCodes?: string[];
-  };
-  evidenceCompleteness: {
-    blockerCategory?: string;
-    verifiedClaims?: string[];
-    unverifiedClaims?: string[];
-    missingInputs?: { code: string; hint: string }[];
-    nextActions: { text?: string }[];
-    remediationItems?: { actionText: string }[];
-  };
 };
 
 export type SharedReportExecutiveModel = {
@@ -69,7 +54,7 @@ function verdictLabelFor(v: TruthCheckVerdictLabel): string {
 /** Pure selectors over structured Outcome Certificate fields (no stderr / audit prose parsing). */
 export function executiveSummaryFromCertificate(cert: CertificateForExecutiveSummary): SharedReportExecutiveModel {
   const verdict = truthCheckVerdictFromStructured(cert);
-  const comprehension = deriveVerdictComprehension(cert as VerdictComprehensionInput);
+  const comprehension = deriveVerdictComprehension(cert);
   return {
     verdictLabel: verdictLabelFor(verdict),
     headline: pickHeadline(cert),
