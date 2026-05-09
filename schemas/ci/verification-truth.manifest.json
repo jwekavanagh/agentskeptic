@@ -23,7 +23,6 @@
       "website/src/generated/",
       "src/publicDistribution.generated.ts",
       "src/sdk/_generated/",
-      "src/agentskeptic-error-codes.json",
       "website/content/surfaces/guides/",
       "website/src/content/embeddedReports/",
       "python/tests/parity_vectors/"
