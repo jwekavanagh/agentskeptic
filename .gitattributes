@@ -12,7 +12,6 @@ schemas/** text eol=lf
 AGENTS.md text eol=lf
 llms.txt text eol=lf
 src/sdk/_generated/** text eol=lf
-src/agentskeptic-error-codes.json text eol=lf
 src/publicDistribution.generated.ts text eol=lf
 website/public/contract/** text eol=lf
 website/src/generated/** text eol=lf

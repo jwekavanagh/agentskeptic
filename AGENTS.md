@@ -47,4 +47,5 @@ This is an npm workspace monorepo with two packages:
 - The website migration scripts (`db-migrate.mjs`) load `website/.env` but only for keys not already in `process.env`. If env vars are not exported in the shell, the `.env` file must exist.
 - The commit hook (`.husky/commit-msg`) runs `commitlint` for Conventional Commits. Use `--no-verify` to skip if needed, but CI enforces the same rules on PRs.
 - PostgreSQL must be running before migrations or website dev. Start with: `pg_ctlcluster 16 main start`.
+- Next.js build output under `website/.next/` (and repo-root `.next/` if present) is gitignored disposable state—delete those folders when they clutter `git status`; they must not appear in commits or reviewable diffs.
 - `src/planTransition.test.ts` has a known timeout-sensitive integration test that may flake in resource-constrained environments. This is pre-existing, not a setup issue.
