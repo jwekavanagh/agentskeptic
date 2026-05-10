@@ -1,5 +1,7 @@
 # First truth check
 
+The trace can be green and the tool wrapper can say **success** while the downstream store is still **wrong or missing the row** you care about—the same failure shape as the bundled **`wf_missing`** demo (`ROW_ABSENT`). To see **`truth_check_verdict: not_trusted`** quickly: from the repo root run **`npm install`**, **`npm run build`**, then **`npm start`** (runs **`wf_complete`** and **`wf_missing`** against `examples/demo.db`), or open the missing-write demo at **`https://agentskeptic.com/verify`**.
+
 Run one stateless AgentSkeptic truth check and understand the result.
 
 **Default first run:** `agentskeptic check`.
@@ -31,6 +33,18 @@ You supply:
 | **State store / witnesses** | At least one readable verification target — commonly **`--db`** for SQLite; Postgres URLs and registry-defined HTTP/object/vector/Mongo witnesses per your setup (see [`integrate.md`](integrate.md)). |
 
 AgentSkeptic does **not** auto-discover these paths unless you use documented defaults (for example **`--project`** with the conventional layout). Pass paths explicitly when yours differ.
+
+## One workflow on your own data
+
+Stay with **one** workflow until you have a trusted pass or a clear `not_trusted` you can act on—skip baselines, **`enforce`**, dashboards, and multi-store expansion until later.
+
+1. **Workflow id** — `--workflow-id` naming the run you verify (never inferred).
+2. **Observed tool activity** — NDJSON replay file (`--events`), or the conventional **`agentskeptic/events.ndjson`** when using **`--project`**.
+3. **Registry** — **`agentskeptic/tools.json`** mapping each **`toolId`** you care about to expected store checks (`--registry`, or default under **`--project`**).
+4. **Readable store** — **`--db`** SQLite path or Postgres URL (read-only principal at verify time).
+5. **Run** — `agentskeptic check --workflow-id YOUR_WORKFLOW_ID ...` (same flags as [Run the default check](#run-the-default-check)).
+
+If you get **`unknown`**, add observations, fix registry mapping, or narrow scope before relying on the outcome.
 
 ## Validate your registry (before the first meaningful check)
 
@@ -110,6 +124,12 @@ release_critical_truth_check_verdict: unknown
 | **`trusted`** | The checked outcome matched expected downstream state — only this verdict means you can rely on the verified workflow for this run. |
 | **`not_trusted`** | Determinate mismatch or missing required state — do **not** claim verified; fix the mismatch. |
 | **`unknown`** | Evidence incomplete or not established — do **not** claim verified; collect evidence or narrow scope. |
+
+### Verdict → next action
+
+- **`trusted`** — Proceed with ship, bill, handoff, or automation **only** when your policy allows and nothing else contradicts the Outcome Certificate and verdict line.
+- **`not_trusted`** — **Block** reliance; fix the workflow, data, or registry expectation, then re-run **`check`**.
+- **`unknown`** — **Do not** treat the run as verified; add evidence (observations, witnesses) or narrow scope until the verdict is determinate.
 
 If anything else says “verified” but the Outcome Certificate or **`truth_check_verdict`** disagrees, trust the certificate and verdict. For **release-critical-only** CI gating, use composite **`fail-on: critical_not_trusted_or_unknown`** (see **`ambient-ci-distribution.md`**).
 

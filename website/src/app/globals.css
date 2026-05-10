@@ -936,6 +936,22 @@ main {
 .integrate-prose h3 {
   font-size: 1.1rem;
 }
+.integrate-verdict-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+  font-size: 0.925rem;
+}
+.integrate-verdict-table th,
+.integrate-verdict-table td {
+  border: 1px solid var(--border);
+  padding: 0.65rem 0.85rem;
+  vertical-align: top;
+  text-align: left;
+}
+.integrate-verdict-table th {
+  font-weight: 650;
+}
 .integrate-prose p,
 .integrate-prose ul,
 .integrate-prose ol {
