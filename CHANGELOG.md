@@ -1,3 +1,13 @@
+## [8.0.0](https://github.com/jwekavanagh/agentskeptic/compare/v7.9.3...v8.0.0) (2026-05-10)
+
+### ⚠ BREAKING CHANGES
+
+* **package:** remove ts-morph, orphan material-truth-v1, deprecated surfaces
+
+### Features
+
+* **package:** remove ts-morph, orphan material-truth-v1, deprecated surfaces ([d9f9328](https://github.com/jwekavanagh/agentskeptic/commit/d9f9328071e135d56cbf0792c158918ad4050d18))
+
 ## [7.9.3](https://github.com/jwekavanagh/agentskeptic/compare/v7.9.2...v7.9.3) (2026-05-09)
 
 ### Bug Fixes
