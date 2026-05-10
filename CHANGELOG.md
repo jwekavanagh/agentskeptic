@@ -1,3 +1,9 @@
+## [8.1.0](https://github.com/jwekavanagh/agentskeptic/compare/v8.0.1...v8.1.0) (2026-05-10)
+
+### Features
+
+* **ci:** expose witness modality rollup on contract certificates ([#83](https://github.com/jwekavanagh/agentskeptic/issues/83)) ([d8dd289](https://github.com/jwekavanagh/agentskeptic/commit/d8dd2893bca0e4f78756debd8f9723f912f0ddd8))
+
 ## [8.0.1](https://github.com/jwekavanagh/agentskeptic/compare/v8.0.0...v8.0.1) (2026-05-10)
 
 ### Bug Fixes
