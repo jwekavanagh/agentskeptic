@@ -1,3 +1,9 @@
+## [8.0.1](https://github.com/jwekavanagh/agentskeptic/compare/v8.0.0...v8.0.1) (2026-05-10)
+
+### Bug Fixes
+
+* **web:** align /integrate verdict with first-truth-check ([#82](https://github.com/jwekavanagh/agentskeptic/issues/82)) ([f82a15b](https://github.com/jwekavanagh/agentskeptic/commit/f82a15b2e9a3bd23c0aa778a3d02330d5d81b65d))
+
 ## [8.0.0](https://github.com/jwekavanagh/agentskeptic/compare/v7.9.3...v8.0.0) (2026-05-10)
 
 ### ⚠ BREAKING CHANGES
