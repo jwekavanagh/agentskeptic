@@ -94,25 +94,57 @@ export default function IntegratePage() {
         Learn guides include Next.js and Postgres paths alongside SQLite snapshots.
       </p>
 
-      <h2>What a green run proves</h2>
+      <h2>Reading the verdict</h2>
       <p>
-        A green run means AgentSkeptic re-read the configured store and found the expected state.
+        On verdict exits, <code>stderr</code> starts with exactly one automation line{" "}
+        <code>truth_check_verdict: trusted|not_trusted|unknown</code> (often followed by a release-critical verdict line—see{" "}
+        <a href={`${marketing.gitRepositoryUrl}/blob/main/docs/first-truth-check.md`} rel="noopener noreferrer" target="_blank">
+          <code>docs/first-truth-check.md</code>
+        </a>
+        ). The human-readable report below those lines may include engine phrases for each step; the line above is the
+        decision gate for whether you can rely on the run.
       </p>
-      <p>You should see:</p>
-      <ul>
-        <li>
-          <code>VERDICT: complete</code>
-        </li>
-        <li>
-          <code>trust: TRUSTED</code>
-        </li>
-        <li>
-          every relevant step marked <code>verified</code> or <code>matched</code>
-        </li>
-      </ul>
+      <table className="integrate-verdict-table" aria-label="Truth check verdict and next action">
+        <thead>
+          <tr>
+            <th scope="col">
+              <code>truth_check_verdict</code>
+            </th>
+            <th scope="col">Next action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <code>trusted</code>
+            </td>
+            <td>
+              Proceed with reliance only when your policy allows (the certificate must still show expected state
+              matched). Do not claim verified if anything else disagrees with this line.
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <code>not_trusted</code>
+            </td>
+            <td>
+              Block handoff, ship, bill, or continuation on this run—fix the workflow, data, or registry expectation and
+              re-run <code>check</code>.
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <code>unknown</code>
+            </td>
+            <td>
+              Do not claim verified—add observations, witnesses, or narrow scope until the verdict can be determined.
+            </td>
+          </tr>
+        </tbody>
+      </table>
       <p className="muted">
-        If stored state is wrong, verification fails immediately with an actionable reason such as{" "}
-        <code>ROW_ABSENT</code>.
+        If stored state is wrong, you get <code>not_trusted</code> with an actionable reason such as{" "}
+        <code>ROW_ABSENT</code> in the report.
       </p>
       <p className="muted">No more silent green traces hiding bad data.</p>
 
