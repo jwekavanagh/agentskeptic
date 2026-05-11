@@ -1,3 +1,9 @@
+## [8.3.0](https://github.com/jwekavanagh/agentskeptic/compare/v8.2.0...v8.3.0) (2026-05-11)
+
+### Features
+
+* **ci:** enforce governance summary, goldens, docs, and governance UI ([#85](https://github.com/jwekavanagh/agentskeptic/issues/85)) ([e5648bf](https://github.com/jwekavanagh/agentskeptic/commit/e5648bf155c6ea6abaf202c0c59ed5e39f10a28d))
+
 ## [8.2.0](https://github.com/jwekavanagh/agentskeptic/compare/v8.1.0...v8.2.0) (2026-05-11)
 
 ### Features
