@@ -38,9 +38,28 @@ If your team needs baseline management, drift detection, and explicit change acc
 ## Exit behavior
 
 - `0`: pass (or baseline/accept completed with complete result)
-- `1|2`: underlying verification status inconsistent/incomplete
-- `3`: operational failure
+- `1|2`: underlying verification status inconsistent/incomplete (governance POST may still have succeeded; see [`docs/ambient-ci-distribution.md`](ambient-ci-distribution.md) enforce-mode summary for `VERIFY_INCOMPLETE`)
+- `3`: operational failure (API, reserve, entitlement, transport). The commercial CLI typically **does not print** the `{ "schemaVersion": 2, "enforce": … }` stdout line on non-2xx hosted responses—triage from stderr **CLI error envelope** lines instead.
 - `4`: drift detected in stateful check
+
+## GitHub Actions: governance job summary (`mode: enforce`)
+
+When the composite action runs with **`mode: enforce`**, [`outcome-ci-surface.mjs`](../.github/actions/agentskeptic-check/outcome-ci-surface.mjs) appends a **Governance** block to `$GITHUB_STEP_SUMMARY` and writes eight fixed **`GITHUB_OUTPUT`** keys (sorted in goldens under `test/fixtures/outcome-ci-surface/`):
+
+| Output key | Role |
+|------------|------|
+| `agentskeptic-governance-step` | Deterministic operator step (`STEADY_OK`, `ACCEPT_DRIFT_PINNED`, `DRIFT_NO_PIN`, `RERUN_PASS`, `RERUN_FAIL`, `BASELINE_CREATED`, `ACCEPT_RECORDED_RERUN_CHECK`, `MALFORMED_ENVELOPE`, `OVERSIZED_STDOUT`, `HOSTED_OR_USAGE_ERROR`, `VERIFY_INCOMPLETE`) |
+| `agentskeptic-governance-lifecycle-state` | Hosted `lifecycle_state` or empty |
+| `agentskeptic-governance-lifecycle-state-version` | Stringified `lifecycle_state_version` or empty |
+| `agentskeptic-governance-result-status` | V1 `result_status`; empty for V2 baseline / V3 accept bodies |
+| `agentskeptic-governance-decision-reason-code` | `decision_reason_code` when present |
+| `agentskeptic-governance-expected-projection-hash-for-accept` | Accept pin from the envelope, or empty |
+| `agentskeptic-governance-next-action` | First line of hosted `next_action`, or a fixed literal for malformed/unknown-inner/oversized rows |
+| `agentskeptic-governance-accept-available` | `true` only when a non-empty accept pin is present on the envelope |
+
+Certificate-mode outputs (`state-relation`, `trust-decision`, …) remain **empty** on the enforce governance path. **Rebaseline** (`ENFORCE_BASELINE_REBASE_REQUIRED`, HTTP non-2xx before stdout is written) is explained here and in migration notes in [`docs/governance.md`](governance.md); it does not produce a governance stdout row.
+
+Copy [`examples/github-actions/agentskeptic-commercial.yml`](../examples/github-actions/agentskeptic-commercial.yml) for a three-job layout: baseline dispatch, PR drift check, and optional accept dispatch with `AGENTSKEPTIC_ENFORCE_*` env pins.
 
 ## Notes
 

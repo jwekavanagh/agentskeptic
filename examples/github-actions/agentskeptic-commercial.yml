@@ -1,25 +1,49 @@
-# Example (opt-in): commercial / stateful CI enforcement — not the default OSS path.
-# Alternate minimal shape: `./.github/actions/agentskeptic-check` with `mode: enforce` (same CLI — no parallel verifier).
-# Run the published CLI (npm `agentskeptic`) against this repo's examples/ with AGENTSKEPTIC_API_KEY
-# and a reachable license API (COMMERCIAL_LICENSE_API_BASE_URL). For default stateless CI, see agentskeptic-check.yml.
-#
+# AgentSkeptic commercial governance (opt-in): stateful `agentskeptic enforce` in CI.
 # Prerequisites:
-# - GitHub secret AGENTSKEPTIC_API_KEY from your product account (legacy WORKFLOW_VERIFIER_API_KEY is still accepted by the CLI)
-# - License server must accept POST /api/v1/usage/reserve for intent=enforce
-#
-# Copy to .github/workflows/ in a repo that vendors the same examples/ layout, or run from this monorepo.
-#
-# Optional integrator hardening (not required for this demo):
-# - Vendor a pinned `execution-identity.v1.json` and gate CI with:
-#     npx agentskeptic execution-identity verify --expect-json ./path/to/execution-identity.v1.json
-# - Collect `artifacts/agentskeptic-receipts/*.json` after verify/enforce for audit (one receipt per run).
-# See docs/verification-execution-ssot.md.
-#
-# Ambient discovery (job summary + failure PR comment): docs/ambient-ci-distribution.md (includes composite `package` / `project` XOR contract).
+# - GitHub repository secret `AGENTSKEPTIC_API_KEY` from your AgentSkeptic product account.
+# - Reachable commercial license API (`COMMERCIAL_LICENSE_API_BASE_URL` or default) that accepts
+#   `POST /api/v1/usage/reserve` with `intent=enforce` under an active paid plan.
+# Three jobs (see `jobs:` keys):
+# - `governance_baseline` — manual dispatch to establish a baseline (`--create-baseline` once).
+# - `governance_drift_pr` — pull-request steady check against the hosted baseline (no create/accept flags).
+# - `governance_accept_dispatch` — manual dispatch to record drift acceptance; you must copy
+#   `expected_projection_hash` and `lifecycle_state_version` from the drift job GitHub summary or
+#   from composite outputs (`agentskeptic-governance-*`) into the workflow_dispatch form fields.
+# Ambient discovery (job summary): set `AS_REPO_ROOT` to `node_modules/agentskeptic` after install;
+# see docs/ambient-ci-distribution.md for the composite visibility contract.
+# This file triggers on `examples/**` changes; adjust paths when vendoring into another repo.
+# Default branch baseline runs typically use `workflow_dispatch` → `governance_job=baseline`.
+# PRs use steady enforce only; failing runs still get the discovery renderer on `if: always()`.
+# PR comments (`pull-requests: write`) use `render-discovery-ci.mjs pr_body`, which embeds the
+# discovery marker string in the generated Markdown (see the `github-script` step below).
+# Integrators may pin `agentskeptic@<semver>` instead of `@latest` for reproducible gates.
+# For OSS single-run verification without API keys, use examples/github-actions/agentskeptic-check.yml.
+# Composite `agentskeptic-check` with `mode: enforce` is an alternate wiring; this example uses `npx` directly.
+# Steady PR checks intentionally omit `--create-baseline` and `--accept-drift`; use dispatch jobs for those.
+# After a drift failure, copy pins from the job summary or `agentskeptic-governance-*` outputs into the dispatch form.
+# Rerun steady enforce on the default branch after a successful accept dispatch.
+
 name: AgentSkeptic (commercial CLI)
 
 on:
   workflow_dispatch:
+    inputs:
+      governance_job:
+        type: choice
+        options:
+          - baseline
+          - accept_drift
+        required: true
+        description: >-
+          Run baseline creation once, or accept_drift after copying pin fields from a drift summary.
+      expected_projection_hash:
+        type: string
+        required: false
+        default: ""
+      lifecycle_state_version:
+        type: string
+        required: false
+        default: ""
   pull_request:
     paths:
       - "examples/**"
@@ -32,7 +56,8 @@ permissions:
   pull-requests: write
 
 jobs:
-  verify:
+  governance_baseline:
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.governance_job == 'baseline'
     runs-on: ubuntu-latest
     env:
       AS_REPO_ROOT: ${{ github.workspace }}/node_modules/agentskeptic
@@ -56,8 +81,8 @@ jobs:
       - name: Install published agentskeptic (commercial)
         run: npm install agentskeptic@latest
 
-      - name: Run stateful CI enforcement
-        id: wfv_verify
+      - name: Run stateful CI enforcement (create baseline)
+        id: wfv_baseline
         continue-on-error: true
         env:
           AGENTSKEPTIC_API_KEY: ${{ secrets.AGENTSKEPTIC_API_KEY }}
@@ -67,6 +92,54 @@ jobs:
             --registry examples/tools.json \
             --db examples/demo.db \
             --create-baseline \
+            > verify.stdout 2> verify.stderr
+
+      - name: Append AgentSkeptic discovery summary
+        if: always()
+        run: |
+          node "${AS_REPO_ROOT}/scripts/render-discovery-ci.mjs" summary >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Fail job when enforcement failed
+        if: steps.wfv_baseline.outcome == 'failure'
+        run: |
+          echo "::error::agentskeptic enforce (baseline) failed; see step logs."
+          exit 1
+
+  governance_drift_pr:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    env:
+      AS_REPO_ROOT: ${{ github.workspace }}/node_modules/agentskeptic
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+
+      - name: Create examples/demo.db from seed.sql
+        run: |
+          node --input-type=module -e "
+          import { readFileSync } from 'node:fs';
+          import { DatabaseSync } from 'node:sqlite';
+          const d = new DatabaseSync('examples/demo.db');
+          d.exec(readFileSync('examples/seed.sql', 'utf8'));
+          d.close();
+          "
+
+      - name: Install published agentskeptic (commercial)
+        run: npm install agentskeptic@latest
+
+      - name: Run stateful CI enforcement (PR drift check)
+        id: wfv_verify
+        continue-on-error: true
+        env:
+          AGENTSKEPTIC_API_KEY: ${{ secrets.AGENTSKEPTIC_API_KEY }}
+        run: |
+          npx agentskeptic enforce --workflow-id wf_complete \
+            --events examples/events.ndjson \
+            --registry examples/tools.json \
+            --db examples/demo.db \
             > verify.stdout 2> verify.stderr
 
       - name: Append AgentSkeptic discovery summary
@@ -117,5 +190,56 @@ jobs:
       - name: Fail job when verification failed
         if: steps.wfv_verify.outcome == 'failure'
         run: |
-          echo "::error::agentskeptic verify failed; see step logs and PR comment (if pull_request)."
+          echo "::error::agentskeptic enforce failed; see step logs and PR comment (if pull_request)."
+          exit 1
+
+  governance_accept_dispatch:
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.governance_job == 'accept_drift'
+    runs-on: ubuntu-latest
+    env:
+      AS_REPO_ROOT: ${{ github.workspace }}/node_modules/agentskeptic
+      AGENTSKEPTIC_ENFORCE_EXPECTED_PROJECTION_HASH: ${{ github.event.inputs.expected_projection_hash }}
+      AGENTSKEPTIC_ENFORCE_LIFECYCLE_STATE_VERSION: ${{ github.event.inputs.lifecycle_state_version }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+
+      - name: Create examples/demo.db from seed.sql
+        run: |
+          node --input-type=module -e "
+          import { readFileSync } from 'node:fs';
+          import { DatabaseSync } from 'node:sqlite';
+          const d = new DatabaseSync('examples/demo.db');
+          d.exec(readFileSync('examples/seed.sql', 'utf8'));
+          d.close();
+          "
+
+      - name: Install published agentskeptic (commercial)
+        run: npm install agentskeptic@latest
+
+      - name: Run stateful CI enforcement (accept drift)
+        id: wfv_accept
+        continue-on-error: true
+        env:
+          AGENTSKEPTIC_API_KEY: ${{ secrets.AGENTSKEPTIC_API_KEY }}
+        run: |
+          npx agentskeptic enforce --workflow-id wf_complete \
+            --events examples/events.ndjson \
+            --registry examples/tools.json \
+            --db examples/demo.db \
+            --accept-drift \
+            > verify.stdout 2> verify.stderr
+
+      - name: Append AgentSkeptic discovery summary
+        if: always()
+        run: |
+          node "${AS_REPO_ROOT}/scripts/render-discovery-ci.mjs" summary >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Fail job when enforcement failed
+        if: steps.wfv_accept.outcome == 'failure'
+        run: |
+          echo "::error::agentskeptic enforce (accept) failed; see step logs."
           exit 1

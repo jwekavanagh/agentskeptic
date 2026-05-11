@@ -84,4 +84,48 @@ describe.skipIf(!hasDatabaseUrl)("Governance SSR baseline provenance", () => {
     expect(html).not.toContain("baseline_run_id:</strong> n/a");
     expect(html).toContain(wf);
   });
+
+  it("renders reliance_class from certificate runKind separately from needs_rebaseline", async () => {
+    const wf = `wf_prov_${crypto.randomUUID().slice(0, 8)}`;
+    const cert = structuredClone(hostedFixture.outcome_certificate) as OutcomeCertificateV1;
+    cert.workflowId = wf;
+    cert.runKind = "quick_preview";
+
+    const [u] = await db
+      .insert(users)
+      .values({ email: "gov-ssr-rebal@example.com", emailVerified: new Date(), plan: "team", subscriptionStatus: "active" })
+      .returning();
+    authMock.mockResolvedValue({
+      user: { id: u!.id, email: "gov-ssr-rebal@example.com", name: null },
+    });
+
+    const [ge] = await db
+      .insert(governanceEvidence)
+      .values({
+        userId: u!.id,
+        workflowId: wf,
+        runId: "baseline-run-rebal-1",
+        certificateJson: cert as unknown as Record<string, unknown>,
+        certificateSha256: canonicalCertificateSha256(cert),
+        materialTruthJson: materialTruthProjectionFromCertificate(cert) as unknown as Record<string, unknown>,
+        materialTruthSha256: materialTruthSha256(cert),
+      })
+      .returning();
+
+    await db.insert(enforcementBaselines).values({
+      userId: u!.id,
+      workflowId: wf,
+      projectionHash: materialTruthSha256(cert),
+      projection: {},
+      baselineEvidenceId: ge!.id,
+      needsRebaseline: true,
+    });
+
+    const node = await GovernancePage();
+    const html = renderToStaticMarkup(node as React.ReactElement);
+    expect(html).toContain("<strong>reliance_class:</strong>");
+    expect(html).toContain("<strong>needs_rebaseline:</strong>");
+    expect(html).toContain("<strong>reliance_class:</strong> provisional");
+    expect(html).toContain("<strong>needs_rebaseline:</strong> yes");
+  });
 });

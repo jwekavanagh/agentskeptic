@@ -100,6 +100,10 @@ For **baseline enforcement**, drift detection, acceptance workflows, and other *
 
 **Opt-in PR comments** are layered on top of the same composite contract via `scripts/render-discovery-ci.mjs pr_body` (see the commercial example for the wiring). The OSS truth-check default does **not** post PR comments and does **not** require `pull-requests: write`; only the commercial example adds that scope.
 
+#### Composite `mode: enforce` (governance summary + machine outputs)
+
+With **`with: mode: enforce`**, the composite still captures CLI stdout/stderr, but [`outcome-ci-surface.mjs`](../.github/actions/agentskeptic-check/outcome-ci-surface.mjs) renders a **### Governance (enforce)** section from the hosted **`schemaVersion` 2** enforcement JSON line written on successful governance POSTs (full contract: [`docs/ci-enforcement.md`](ci-enforcement.md)). It appends eight additional **`GITHUB_OUTPUT`** keys prefixed **`agentskeptic-governance-`**: `agentskeptic-governance-step`, `agentskeptic-governance-lifecycle-state`, `agentskeptic-governance-lifecycle-state-version`, `agentskeptic-governance-result-status`, `agentskeptic-governance-decision-reason-code`, `agentskeptic-governance-expected-projection-hash-for-accept`, `agentskeptic-governance-next-action`, `agentskeptic-governance-accept-available`. When stdout is that governance envelope rather than an Outcome Certificate v3 object, the certificate-derived outputs in the table above stay empty and no `outcome-certificate.json` artifact is produced from that stdout parse path.
+
 ### Environment
 
 | Variable | Required | Meaning |

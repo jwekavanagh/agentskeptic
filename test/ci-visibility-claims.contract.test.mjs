@@ -128,6 +128,7 @@ test("docs: SSOT (ambient-ci-distribution.md) covers outputs + artifact + permis
     "release-critical-verdict",
     "release_critical_truth_check_verdict",
     "critical_not_trusted_or_unknown",
+    "agentskeptic-governance-step",
   ]) {
     assert.ok(
       ssotBody.includes(needle),
