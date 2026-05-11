@@ -77,7 +77,7 @@ Then the human-readable certificate report (unless `--no-human-report`; the verd
 
 **Exit codes:** **`--enforce-coverage-budget`** without **`budgetActive`** → exit **3** (stdout empty). With an active policy, a budget **`fail`** raises exit **1** only when the base truth exit would be **0** and **`--enforce-coverage-budget`** is set; base exits **1** or **2** are unchanged. Invalid policy on disk → exit **3**, stdout empty.
 
-**`agentskeptic enforce`:** coverage budgets are **out of scope** in v1 (composite **`enforce-coverage-budget`** applies to **`check`** only).
+**Commercial `agentskeptic enforce`** (stateful, opt-in drift acceptance) is unchanged: coverage budgets are **out of scope** for that path in v1 (the composite action’s **`enforce-coverage-budget`** gate applies to **`check`** only).
 
 <a id="framework-verification-recipes"></a>
 
