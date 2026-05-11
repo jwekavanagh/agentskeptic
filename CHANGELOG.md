@@ -1,3 +1,9 @@
+## [8.4.0](https://github.com/jwekavanagh/agentskeptic/compare/v8.3.0...v8.4.0) (2026-05-11)
+
+### Features
+
+* **cli:** coverage budgets for check and composite ([#87](https://github.com/jwekavanagh/agentskeptic/issues/87)) ([685262c](https://github.com/jwekavanagh/agentskeptic/commit/685262ce26cdace40c1803c206240b11a7904747))
+
 ## [8.3.1](https://github.com/jwekavanagh/agentskeptic/compare/v8.3.0...v8.3.1) (2026-05-11)
 
 ### Features
