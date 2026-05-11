@@ -8,6 +8,9 @@
  * Goldens are stored as `*.expected.md` and `*.expected.kv` next to each
  * fixture. The artifact dir is normalized to `<ARTIFACT_DIR>` before compare.
  *
+ * Enforce mode: twelve bundles under `test/fixtures/outcome-ci-surface/enforce-*`
+ * (eleven operator_step values; `MALFORMED_ENVELOPE` has outer + unknown-inner).
+ *
  * Refresh goldens (only when intentionally changing the contract):
  *   AS_RENDER_GOLDEN_REFRESH=1 node --test test/outcome-ci-surface.test.mjs
  */
@@ -328,6 +331,64 @@ test("verdict ↔ stateRelation disagreement: warning is emitted; outputs derive
   // Certificate-derived outputs win.
   assert.equal(r.outputs["state-relation"], "matches_expectations");
   assert.equal(r.outputs["trust-decision"], "safe");
+});
+
+// ---------- enforce mode (governance CI surface) ----------
+
+const ENFORCE_GOLDEN_CASES = [
+  ["enforce-steady-ok", "0"],
+  ["enforce-drift-pinned", "4"],
+  ["enforce-drift-no-pin", "4"],
+  ["enforce-rerun-pass", "0"],
+  ["enforce-rerun-fail", "4"],
+  ["enforce-baseline-created", "0"],
+  ["enforce-accept-recorded", "0"],
+  ["enforce-malformed-outer", "1"],
+  ["enforce-unknown-inner", "0"],
+  ["enforce-hosted-error", "3"],
+  ["enforce-verify-incomplete", "2"],
+];
+
+for (const [name, cliExit] of ENFORCE_GOLDEN_CASES) {
+  test(`enforce mode: ${name} (cli_exit=${cliExit})`, () => {
+    const stdoutFile = join(fixturesDir, `${name}.stdout.json`);
+    const stderrFile = join(fixturesDir, `${name}.stderr`);
+    const r = runRenderer({
+      stdoutFile,
+      stderrFile,
+      mode: "enforce",
+      verdict: "",
+      cliExit,
+    });
+    assert.equal(r.rc, 0, r.stderr);
+    assert.ok(!existsSync(r.artifactPath), "enforce mode must not write outcome-certificate.json");
+
+    const golden = caseGoldens(name);
+    compareGolden(normalizePaths(r.summary, r.artifactDir), golden.summary);
+    compareGolden(normalizePaths(r.outputsRaw, r.artifactDir), golden.outputs);
+  });
+}
+
+test("enforce mode: oversized stdout (>256 KiB)", () => {
+  const tmp = mkdtempSync(join(tmpdir(), "as-enf-over-"));
+  const stdoutFile = join(tmp, "oversized.json");
+  const stderrFile = join(tmp, "oversized.stderr");
+  writeFileSync(stdoutFile, "{".padEnd(300_000, "x"));
+  writeFileSync(stderrFile, "truth_check_verdict: unknown\n");
+
+  const r = runRenderer({
+    stdoutFile,
+    stderrFile,
+    mode: "enforce",
+    verdict: "",
+    cliExit: "0",
+  });
+  assert.equal(r.rc, 0, r.stderr);
+  assert.ok(!existsSync(r.artifactPath));
+
+  const golden = caseGoldens("enforce-oversized-stdout");
+  compareGolden(normalizePaths(r.summary, r.artifactDir), golden.summary);
+  compareGolden(normalizePaths(r.outputsRaw, r.artifactDir), golden.outputs);
 });
 
 // ---------- output value clamping ----------

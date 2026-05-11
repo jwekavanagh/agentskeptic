@@ -1,0 +1,2 @@
+truth_check_verdict: unknown
+{"schemaVersion":2,"kind":"execution_truth_layer_error","code":"ENFORCEMENT_REQUIRES_PAID_PLAN","message":"Upgrade required.","failureDiagnosis":{"summary":"plan","actionableFailure":{"category":"billing","severity":"high","recommendedAction":"upgrade","automationSafe":false}}}

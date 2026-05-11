@@ -1,0 +1,1 @@
+{"schemaVersion":2,"kind":"execution_truth_layer_error","code":"VERIFICATION_OUTPUT_LOCK_MISMATCH","message":"Hosted enforce reported rerun failure against baseline.","failureDiagnosis":{"summary":"fail","actionableFailure":{"category":"governance","severity":"error","recommendedAction":"reconcile","automationSafe":false}}}

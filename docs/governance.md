@@ -10,7 +10,7 @@ This document is the single source of truth for commercial governance.
 
 ## Material truth
 
-Material truth is the deterministic projection from **Outcome Certificate v3** validated by **`schemas/material-truth-v2.schema.json`**. Drift compares only **`material_truth_sha256`** (hash churn is expected once when upgrading from historical v1 projections—re-baseline operational guidance lives in changelog / operator runbooks).
+Material truth is the deterministic projection from **Outcome Certificate v3** validated by **`schemas/material-truth-v2.schema.json`**. Drift compares only **`material_truth_sha256`** (hash churn is expected once when upgrading from historical v1 projections). **Operational steps for rebaseline, migration, and recurring `enforce` in CI** are documented in [`docs/ci-enforcement.md`](ci-enforcement.md).
 
 ## Quick trust boundary
 

@@ -9,7 +9,7 @@ import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
 import { createRequire } from "node:module";
 import test from "node:test";
-import { parse as parseYaml } from "yaml";
+import { parse as parseYaml, stringify } from "yaml";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, "..");
@@ -253,9 +253,48 @@ test("render-discovery-ci.mjs exits 2 on bad argv", () => {
   assert.ok((r.stderr + r.stdout).toLowerCase().includes("usage") || r.stderr.includes("Usage"));
 });
 
-test("examples/github-actions/agentskeptic-commercial.yml references PR marker", () => {
-  const yml = readFileSync(join(root, "examples", "github-actions", "agentskeptic-commercial.yml"), "utf8");
+test("examples/github-actions/agentskeptic-commercial.yml governance workflow contract", () => {
+  const ymlPath = join(root, "examples", "github-actions", "agentskeptic-commercial.yml");
+  const yml = readFileSync(ymlPath, "utf8");
   assert.ok(yml.includes(dp.PR_MARKER_LINE));
+  const doc = parseYaml(yml);
+  assert.deepEqual(Object.keys(doc.jobs).sort(), [
+    "governance_accept_dispatch",
+    "governance_baseline",
+    "governance_drift_pr",
+  ]);
+  assert.equal(
+    doc.jobs.governance_baseline.if,
+    "github.event_name == 'workflow_dispatch' && github.event.inputs.governance_job == 'baseline'",
+  );
+  assert.equal(doc.jobs.governance_drift_pr.if, "github.event_name == 'pull_request'");
+  assert.equal(
+    doc.jobs.governance_accept_dispatch.if,
+    "github.event_name == 'workflow_dispatch' && github.event.inputs.governance_job == 'accept_drift'",
+  );
+  assert.deepEqual(Object.keys(doc.on.workflow_dispatch.inputs).sort(), [
+    "expected_projection_hash",
+    "governance_job",
+    "lifecycle_state_version",
+  ]);
+
+  const blYaml = stringify(doc.jobs.governance_baseline);
+  const prYaml = stringify(doc.jobs.governance_drift_pr);
+  const adYaml = stringify(doc.jobs.governance_accept_dispatch);
+
+  assert.equal((blYaml.match(/--create-baseline/g) || []).length, 1);
+  assert.equal((blYaml.match(/--accept-drift/g) || []).length, 0);
+  assert.equal((prYaml.match(/--create-baseline/g) || []).length, 0);
+  assert.equal((prYaml.match(/--accept-drift/g) || []).length, 0);
+  assert.equal((adYaml.match(/--create-baseline/g) || []).length, 0);
+  assert.equal((adYaml.match(/--accept-drift/g) || []).length, 1);
+
+  assert.ok(!/\bAGENTSKEPTIC_ENFORCE_EXPECTED_PROJECTION_HASH\b/.test(blYaml));
+  assert.ok(!/\bAGENTSKEPTIC_ENFORCE_LIFECYCLE_STATE_VERSION\b/.test(blYaml));
+  assert.ok(!/\bAGENTSKEPTIC_ENFORCE_EXPECTED_PROJECTION_HASH\b/.test(prYaml));
+  assert.ok(!/\bAGENTSKEPTIC_ENFORCE_LIFECYCLE_STATE_VERSION\b/.test(prYaml));
+  assert.ok(adYaml.includes("AGENTSKEPTIC_ENFORCE_EXPECTED_PROJECTION_HASH"));
+  assert.ok(adYaml.includes("AGENTSKEPTIC_ENFORCE_LIFECYCLE_STATE_VERSION"));
 });
 
 test("examples/github-actions/agentskeptic-check.yml parses as OSS truth-check workflow", () => {

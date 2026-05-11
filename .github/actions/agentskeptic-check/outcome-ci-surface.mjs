@@ -482,6 +482,379 @@ function truncateString(s, max) {
   return v.slice(0, Math.max(0, max - 1)) + "…";
 }
 
+// ---------- enforce / governance (commercial CI) ----------
+
+const LITERAL_NEXT_MALFORMED_OUTER =
+  "Malformed enforce stdout: expected one JSON line object with top-level schemaVersion 2 and enforce object.";
+const LITERAL_NEXT_UNKNOWN_INNER =
+  "Unknown enforcement envelope shape; open docs/ci-enforcement.md and compare stdout to hosted POST /check|baselines|accept 200 bodies.";
+const LITERAL_NEXT_OVERSIZED =
+  "Fix stdout capture; expected one JSON line `{schemaVersion:2,enforce:{…}}`.";
+
+/** Sorted lexicographically — goldens stable. */
+const GOVERNANCE_OUTPUT_KEYS = [
+  "agentskeptic-governance-accept-available",
+  "agentskeptic-governance-decision-reason-code",
+  "agentskeptic-governance-expected-projection-hash-for-accept",
+  "agentskeptic-governance-lifecycle-state",
+  "agentskeptic-governance-lifecycle-state-version",
+  "agentskeptic-governance-next-action",
+  "agentskeptic-governance-result-status",
+  "agentskeptic-governance-step",
+].sort((a, b) => a.localeCompare(b));
+
+const EMPTY_CERT_OUTPUTS = {
+  "state-relation": "",
+  "trust-decision": "",
+  "release-critical-verdict": "",
+  "failing-tool-ids": "",
+  "primary-reason-codes": "",
+  "failing-witness-kinds": "",
+  "recommended-action": "",
+  "automation-safe": "",
+  "certificate-path": "",
+};
+
+function emptyGovernanceOutputMap() {
+  /** @type {Record<string, string>} */
+  const m = {};
+  for (const k of GOVERNANCE_OUTPUT_KEYS) m[k] = "";
+  return m;
+}
+
+function mergeOutputs(certOutputs, govMap) {
+  const out = { ...certOutputs };
+  for (const k of GOVERNANCE_OUTPUT_KEYS) {
+    out[k] = govMap[k] ?? "";
+  }
+  return out;
+}
+
+function tryParseEnforceOuter(stdoutText) {
+  const t = String(stdoutText ?? "").trim();
+  if (t.length === 0) return { ok: false, reason: "malformed_outer" };
+  let obj;
+  try {
+    obj = JSON.parse(t);
+  } catch {
+    return { ok: false, reason: "malformed_outer" };
+  }
+  if (!obj || typeof obj !== "object") return { ok: false, reason: "malformed_outer" };
+  if (obj.schemaVersion !== 2) return { ok: false, reason: "malformed_outer" };
+  if (!obj.enforce || typeof obj.enforce !== "object") return { ok: false, reason: "malformed_outer" };
+  return { ok: true, inner: obj.enforce };
+}
+
+function classifyEnforceInner(inner) {
+  if (!inner || inner.schema_version !== 2 || typeof inner.code !== "string") return { kind: "unknown" };
+  if (typeof inner.accepted_projection_hash === "string" && inner.accepted_projection_hash.length > 0) {
+    return { kind: "v3", inner };
+  }
+  const code = inner.code;
+  const rs = inner.result_status;
+  if (code === "COMPLETED" && typeof rs === "string" && rs.length > 0) return { kind: "v1", inner };
+  if (
+    code === "COMPLETED"
+    && inner.decision_reason_code === "BASELINE_ESTABLISHED"
+    && (rs === undefined || rs === null || rs === "")
+  ) {
+    return { kind: "v2", inner };
+  }
+  return { kind: "unknown" };
+}
+
+function pinAcceptString(inner) {
+  const v = inner?.expected_projection_hash_for_accept;
+  return typeof v === "string" && v.length > 0 ? v : "";
+}
+
+function smallestNextActionForStep(step) {
+  switch (step) {
+    case "STEADY_OK":
+      return "Continue recurring `enforce` checks on PRs/default branch.";
+    case "ACCEPT_DRIFT_PINNED":
+      return "Set `AGENTSKEPTIC_ENFORCE_EXPECTED_PROJECTION_HASH` and `AGENTSKEPTIC_ENFORCE_LIFECYCLE_STATE_VERSION` from table pins; run `agentskeptic enforce … --accept-drift`; then rerun steady `enforce` check.";
+    case "DRIFT_NO_PIN":
+      return "Drift without accept pin—follow `next_action` from API and docs/ci-enforcement.md.";
+    case "RERUN_PASS":
+      return "Governance posture restored; resume steady checks.";
+    case "RERUN_FAIL":
+      return "Rerun still mismatched; reconcile evidence or follow accept path if pins present.";
+    case "BASELINE_CREATED":
+      return "Baseline established; switch CI to steady `enforce` without `--create-baseline`.";
+    case "ACCEPT_RECORDED_RERUN_CHECK":
+      return "Accept recorded; run steady `enforce` check to return to trusted posture.";
+    case "MALFORMED_ENVELOPE":
+    case "OVERSIZED_STDOUT":
+      return "Fix stdout capture; expected one JSON line `{schemaVersion:2,enforce:{…}}`.";
+    case "HOSTED_OR_USAGE_ERROR":
+      return "Fix API key, reserve, or server error; see stderr `cliErrorEnvelope`.";
+    case "VERIFY_INCOMPLETE":
+      return "Governance POST returned 2xx; local verify outcome incomplete—fix events/registry/db inputs and rerun `agentskeptic enforce`.";
+    default:
+      return "";
+  }
+}
+
+function firstLineOfNextAction(inner) {
+  const na = inner?.next_action;
+  if (typeof na !== "string" || !na.trim()) return "";
+  return na.split(/\r?\n/)[0].trim();
+}
+
+function clampUtf16Json(inner, maxUnits) {
+  const raw = JSON.stringify(inner);
+  let out = "";
+  let u = 0;
+  for (const ch of raw) {
+    if (u >= maxUnits) return `${out}…`;
+    out += ch;
+    u++;
+  }
+  return out;
+}
+
+function hostedErrorNextAction(stderrText) {
+  const envs = tryParseCliErrorEnvelopeLines(stderrText || "");
+  if (envs.length === 0) return "Operational failure (see stderr).";
+  return oneLine(envs[0].message || envs[0].failureDiagnosis?.summary || "Operational failure (see stderr).");
+}
+
+function resolveV1Step(inner, cli) {
+  const rs = String(inner.result_status || "");
+  const pin = pinAcceptString(inner);
+  if (rs === "drift" && pin && cli === 4) return "ACCEPT_DRIFT_PINNED";
+  if (rs === "drift" && !pin) return "DRIFT_NO_PIN";
+  if (rs === "match" && cli === 0) return "STEADY_OK";
+  if (rs === "rerun_pass" && cli === 0) return "RERUN_PASS";
+  if (rs === "rerun_fail" && cli === 4) return "RERUN_FAIL";
+  if (rs === "match") return "STEADY_OK";
+  return "DRIFT_NO_PIN";
+}
+
+function resolveEnforceOperatorStep(stdoutText, stderrText, cliExitNum) {
+  if (stdoutText === null) {
+    return {
+      step: "OVERSIZED_STDOUT",
+      malformedKind: null,
+      inner: null,
+      classification: null,
+      outerOk: false,
+    };
+  }
+  const trimmed = String(stdoutText ?? "").trim();
+  if (trimmed === "" && cliExitNum === 3) {
+    return {
+      step: "HOSTED_OR_USAGE_ERROR",
+      malformedKind: null,
+      inner: null,
+      classification: null,
+      outerOk: false,
+    };
+  }
+
+  const outer = tryParseEnforceOuter(stdoutText);
+  if (!outer.ok) {
+    return {
+      step: "MALFORMED_ENVELOPE",
+      malformedKind: "outer",
+      inner: null,
+      classification: null,
+      outerOk: false,
+    };
+  }
+
+  const classification = classifyEnforceInner(outer.inner);
+  if (classification.kind === "unknown") {
+    return {
+      step: "MALFORMED_ENVELOPE",
+      malformedKind: "unknown_inner",
+      inner: outer.inner,
+      classification,
+      outerOk: true,
+    };
+  }
+
+  if (cliExitNum === 3) {
+    return {
+      step: "HOSTED_OR_USAGE_ERROR",
+      malformedKind: null,
+      inner: outer.inner,
+      classification,
+      outerOk: true,
+    };
+  }
+
+  if ((cliExitNum === 1 || cliExitNum === 2) && (classification.kind === "v1" || classification.kind === "v2" || classification.kind === "v3")) {
+    return {
+      step: "VERIFY_INCOMPLETE",
+      malformedKind: null,
+      inner: outer.inner,
+      classification,
+      outerOk: true,
+    };
+  }
+
+  if (classification.kind === "v1") {
+    return {
+      step: resolveV1Step(outer.inner, cliExitNum),
+      malformedKind: null,
+      inner: outer.inner,
+      classification,
+      outerOk: true,
+    };
+  }
+  if (classification.kind === "v2") {
+    return { step: "BASELINE_CREATED", malformedKind: null, inner: outer.inner, classification, outerOk: true };
+  }
+  return { step: "ACCEPT_RECORDED_RERUN_CHECK", malformedKind: null, inner: outer.inner, classification, outerOk: true };
+}
+
+function buildGovernanceOutputMap(resolved, stderrText) {
+  const m = emptyGovernanceOutputMap();
+  const step = resolved.step;
+  m["agentskeptic-governance-step"] = step;
+
+  if (step === "OVERSIZED_STDOUT") {
+    m["agentskeptic-governance-next-action"] = LITERAL_NEXT_OVERSIZED;
+    m["agentskeptic-governance-accept-available"] = "false";
+    return m;
+  }
+  if (step === "MALFORMED_ENVELOPE" && resolved.malformedKind === "outer") {
+    m["agentskeptic-governance-next-action"] = LITERAL_NEXT_MALFORMED_OUTER;
+    m["agentskeptic-governance-accept-available"] = "false";
+    return m;
+  }
+  if (step === "MALFORMED_ENVELOPE" && resolved.malformedKind === "unknown_inner") {
+    m["agentskeptic-governance-next-action"] = LITERAL_NEXT_UNKNOWN_INNER;
+    m["agentskeptic-governance-accept-available"] = "false";
+    const c = resolved.inner?.code;
+    m["agentskeptic-governance-decision-reason-code"] = typeof c === "string" ? c : "";
+    return m;
+  }
+  if (step === "HOSTED_OR_USAGE_ERROR") {
+    m["agentskeptic-governance-next-action"] = hostedErrorNextAction(stderrText);
+    m["agentskeptic-governance-accept-available"] = "false";
+    return m;
+  }
+
+  const inner = resolved.inner;
+  if (!inner) {
+    m["agentskeptic-governance-next-action"] = smallestNextActionForStep(step);
+    m["agentskeptic-governance-accept-available"] = "false";
+    return m;
+  }
+
+  const pin = pinAcceptString(inner);
+  m["agentskeptic-governance-accept-available"] = pin.length > 0 ? "true" : "false";
+  m["agentskeptic-governance-expected-projection-hash-for-accept"] = pin;
+  m["agentskeptic-governance-lifecycle-state"] = typeof inner.lifecycle_state === "string" ? inner.lifecycle_state : "";
+  m["agentskeptic-governance-lifecycle-state-version"] =
+    inner.lifecycle_state_version !== undefined && inner.lifecycle_state_version !== null
+      ? String(inner.lifecycle_state_version)
+      : "";
+
+  if (resolved.classification?.kind === "v2" || resolved.classification?.kind === "v3") {
+    m["agentskeptic-governance-result-status"] = "";
+    m["agentskeptic-governance-decision-reason-code"] =
+      typeof inner.decision_reason_code === "string" ? inner.decision_reason_code : "";
+  } else {
+    m["agentskeptic-governance-result-status"] = typeof inner.result_status === "string" ? inner.result_status : "";
+    m["agentskeptic-governance-decision-reason-code"] =
+      typeof inner.decision_reason_code === "string" ? inner.decision_reason_code : "";
+  }
+
+  const fl = firstLineOfNextAction(inner);
+  m["agentskeptic-governance-next-action"] = fl || smallestNextActionForStep(step);
+
+  return m;
+}
+
+function fmtGovernanceTable(resolved, govMap, cliExitStr) {
+  const step = resolved.step;
+  const inner = resolved.inner;
+  const rs =
+    inner && typeof inner.result_status === "string" && inner.result_status.length > 0
+      ? inner.result_status
+      : "n/a";
+  const drift =
+    rs === "match" || rs === "rerun_pass" ? "no"
+    : rs === "drift" || rs === "rerun_fail" ? "yes"
+    : "n/a";
+  const accept = govMap["agentskeptic-governance-accept-available"] || "false";
+  const pin = govMap["agentskeptic-governance-expected-projection-hash-for-accept"] || "";
+  const accepted =
+    inner && typeof inner.accepted_projection_hash === "string" && inner.accepted_projection_hash.length > 0
+      ? inner.accepted_projection_hash
+      : "";
+  const pinsCol =
+    accepted
+      ? `accepted:\`${escapeTableCell(accepted)}\` / v${escapeTableCell(govMap["agentskeptic-governance-lifecycle-state-version"] || "")}`
+      : pin
+        ? `\`${escapeTableCell(pin)}\` / v${escapeTableCell(govMap["agentskeptic-governance-lifecycle-state-version"] || "")}`
+        : `— / v${escapeTableCell(govMap["agentskeptic-governance-lifecycle-state-version"] || "")}`;
+  const lc = govMap["agentskeptic-governance-lifecycle-state"] || "";
+  const next = govMap["agentskeptic-governance-next-action"] || smallestNextActionForStep(step);
+
+  const lines = [
+    "### Governance (enforce)",
+    "",
+    "| Governance outcome | Drift | Accept available | Pins / lifecycle_version | Lifecycle state | Smallest next action |",
+    "| --- | --- | --- | --- | --- | --- |",
+    `| \`${escapeTableCell(step)}\` | \`${drift}\` | \`${accept}\` | ${pinsCol} | \`${escapeTableCell(lc)}\` | ${escapeTableCell(next)} |`,
+    "",
+  ];
+
+  if (step === "VERIFY_INCOMPLETE") {
+    lines.push("**Verification incomplete (governance POST ok, verify exit non-zero)**", "");
+    lines.push(`CLI exit ${escapeTableCell(String(cliExitStr || "0"))} — fix verification inputs, then rerun enforce.`, "");
+  }
+
+  if (step === "MALFORMED_ENVELOPE" && resolved.malformedKind === "outer") {
+    lines.push("- `operator_step`: `MALFORMED_ENVELOPE`", "- `reason`: `malformed_stdout`", "");
+  }
+
+  if (step === "MALFORMED_ENVELOPE" && resolved.malformedKind === "unknown_inner" && inner) {
+    lines.push("- `operator_step`: `MALFORMED_ENVELOPE`", `- inner.code: \`${escapeTableCell(String(inner.code ?? ""))}\``, "", "```json", clampUtf16Json(inner, 4000), "```", "");
+  }
+
+  lines.push("**Smallest next action (operator copy)**", "", smallestNextActionForStep(step), "");
+
+  return lines.join("\n");
+}
+
+function runEnforcePresentation(args, stdoutText, stderrText) {
+  const cliExitNum = Number.parseInt(String(args.cliExit || "0"), 10);
+  const cliSafe = Number.isFinite(cliExitNum) ? cliExitNum : 0;
+  const resolved = resolveEnforceOperatorStep(stdoutText, stderrText, cliSafe);
+  const govMap = buildGovernanceOutputMap(resolved, stderrText);
+
+  const summaryHeader = [
+    "## AgentSkeptic truth check",
+    "",
+    `- mode: \`${args.mode || "check"}\``,
+    `- cli_exit: \`${args.cliExit || "0"}\``,
+    "",
+  ].join("\n");
+
+  const govBlock = fmtGovernanceTable(resolved, govMap, args.cliExit || "0");
+  const sections = [summaryHeader, govBlock];
+
+  if (resolved.step === "OVERSIZED_STDOUT") {
+    sections.push(fmtOperationalBlock("oversized", []));
+  } else if (resolved.step === "MALFORMED_ENVELOPE" && resolved.malformedKind === "outer") {
+    sections.push(fmtOperationalBlock("malformed", tryParseCliErrorEnvelopeLines(stderrText || "")));
+  }
+
+  sections.push(fmtArtifactBlock(false, ""));
+  sections.push(fmtStderrDetails(stderrText || ""));
+  sections.push("");
+
+  const summary = sections.join("\n");
+  const outputs = mergeOutputs({ ...EMPTY_CERT_OUTPUTS }, govMap);
+  return { summary, outputs, artifactWritten: false };
+}
+
 // ---------- main ----------
 
 function main() {
@@ -493,6 +866,14 @@ function main() {
 
   const stdoutText = readFileSafe(args.stdoutPath, MAX_STDOUT_PARSE_BYTES);
   const stderrText = readFileSafe(args.stderrPath);
+
+  const mode = String(args.mode || "check").trim();
+  if (mode === "enforce") {
+    const { summary, outputs } = runEnforcePresentation(args, stdoutText, stderrText);
+    appendSummary(summary, args.githubStepSummary);
+    writeOutputs(outputs, args.githubOutput);
+    return;
+  }
 
   const oversized = stdoutText === null;
   const parseRes = oversized

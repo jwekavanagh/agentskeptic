@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { desc, eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { enforcementBaselines, enforcementEvents, enforcementLifecycle, governanceEvidence } from "@/db/schema";
+import { relianceClassFromRunKind } from "@/lib/governanceDisplay";
 
 export const dynamic = "force-dynamic";
 
@@ -72,6 +73,7 @@ export default async function GovernancePage() {
           const lc = lifecycleByWorkflow.get(b.workflowId);
           const certJson = b.evidenceCertificateJson as Record<string, unknown> | null | undefined;
           const runKind = typeof certJson?.runKind === "string" ? certJson.runKind : "—";
+          const runKindForReliance = runKind === "—" ? undefined : runKind;
           return (
           <div key={b.id} className="u-mb-1">
             <div><strong>workflow_id:</strong> {b.workflowId}</div>
@@ -95,7 +97,8 @@ export default async function GovernancePage() {
             <div><strong>baseline_evidence_material_truth_sha256:</strong> {b.evidenceMaterialTruthSha256 ?? "—"}</div>
             <div><strong>baseline_material_truth_sha256:</strong> {b.projectionHash}</div>
             <div><strong>baseline_run_kind:</strong> {runKind}</div>
-            <div><strong>reliance_class:</strong> {b.needsRebaseline ? "provisional" : "eligible"}</div>
+            <div><strong>reliance_class:</strong> {relianceClassFromRunKind(runKindForReliance)}</div>
+            <div><strong>needs_rebaseline:</strong> {b.needsRebaseline ? "yes" : "no"}</div>
             <div className="u-mt-half">
               <Link href={`/api/v1/governance/export?workflow_id=${encodeURIComponent(b.workflowId)}`}>
                 Export governance JSON
