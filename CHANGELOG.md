@@ -1,3 +1,9 @@
+## [8.5.0](https://github.com/jwekavanagh/agentskeptic/compare/v8.4.0...v8.5.0) (2026-05-12)
+
+### Features
+
+* **governance:** governed enforcement acceptance + integrate CTA ([#90](https://github.com/jwekavanagh/agentskeptic/issues/90)) ([b3817f3](https://github.com/jwekavanagh/agentskeptic/commit/b3817f3418c89358e0a6939f5535ab53736a2d91))
+
 ## [8.4.0](https://github.com/jwekavanagh/agentskeptic/compare/v8.3.0...v8.4.0) (2026-05-11)
 
 ### Features
