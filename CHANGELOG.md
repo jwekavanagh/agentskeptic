@@ -1,3 +1,15 @@
+## [8.6.0](https://github.com/jwekavanagh/agentskeptic/compare/v8.5.1...v8.6.0) (2026-05-12)
+
+### Features
+
+* **web:** integrate adoption ladder and MySQL in buyer-truth works-with ([fe83bf6](https://github.com/jwekavanagh/agentskeptic/commit/fe83bf6e7e90fba94ec767630e2858480533837b))
+
+## [8.5.1](https://github.com/jwekavanagh/agentskeptic/compare/v8.5.0...v8.5.1) (2026-05-12)
+
+### Bug Fixes
+
+* **ci:** align OSS example pin and unblock dependabot CI ([#91](https://github.com/jwekavanagh/agentskeptic/issues/91)) ([ddebbce](https://github.com/jwekavanagh/agentskeptic/commit/ddebbce6281c0ac251abfaa5f97f77b453a67b23)), closes [#86](https://github.com/jwekavanagh/agentskeptic/issues/86) [#88](https://github.com/jwekavanagh/agentskeptic/issues/88)
+
 ## [8.5.0](https://github.com/jwekavanagh/agentskeptic/compare/v8.4.0...v8.5.0) (2026-05-12)
 
 ### Features
