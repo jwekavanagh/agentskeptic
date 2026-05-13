@@ -185,8 +185,9 @@ export default function IntegrateGuidedPage() {
         <strong>automation-facing trust lines</strong> <code>truth_check_verdict: trusted|not_trusted|unknown</code> and{" "}
         <code>release_critical_truth_check_verdict: trusted|not_trusted|unknown</code> are emitted by{" "}
         <code>agentskeptic check</code> on stderr — the default first truth path and CI contract. Optional coverage budgets
-        add <code>coverage_budget_verdict</code> / <code>coverage_budget_detail</code> only when a policy is active. The form
-        below drafts registry input; Formalize builds toward <code>check</code>-grade replay + enforcement.
+        add <code>coverage_budget_verdict</code> / <code>coverage_budget_detail</code> only when a policy is active. Hosted
+        baselines and drift acceptance use <code>agentskeptic enforce</code> in CI once you adopt stateful governance. The
+        form below drafts registry input; Formalize builds toward <code>check</code>-grade replay + enforcement.
       </p>
       <p className="lede muted">
         <Link href="/integrate">Back to Get started</Link> ·{" "}
