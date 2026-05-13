@@ -1,3 +1,9 @@
+## [8.7.0](https://github.com/jwekavanagh/agentskeptic/compare/v8.6.1...v8.7.0) (2026-05-13)
+
+### Features
+
+* **web:** commercial governance onboarding ladder ([c95ec6c](https://github.com/jwekavanagh/agentskeptic/commit/c95ec6c541fa741fdbfc8510eed346dfaca24dc9))
+
 ## [8.6.1](https://github.com/jwekavanagh/agentskeptic/compare/v8.6.0...v8.6.1) (2026-05-13)
 
 ### Bug Fixes
