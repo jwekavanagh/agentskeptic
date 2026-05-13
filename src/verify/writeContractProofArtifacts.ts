@@ -15,6 +15,8 @@ export function writeContractProofArtifacts(args: {
   workflowResult: WorkflowResult;
   certificate: OutcomeCertificateV1;
   runBundleSignKeyPath?: string | undefined;
+  /** When set, signs the decision-bundle manifest with the same PKCS#8 PEM key bytes. */
+  decisionBundleSignKeyPemUtf8?: string | undefined;
 }): void {
   const eventsNdjson = readFileSync(args.eventsPath);
   writeRunBundleCli(args.proofRunDir, eventsNdjson, args.workflowResult, args.runBundleSignKeyPath);
@@ -23,5 +25,8 @@ export function writeContractProofArtifacts(args: {
     certificate: args.certificate,
     noHumanReport: false,
     runId: randomUUID(),
+    ...(args.decisionBundleSignKeyPemUtf8 !== undefined
+      ? { signingPrivateKeyPemUtf8: args.decisionBundleSignKeyPemUtf8 }
+      : {}),
   });
 }

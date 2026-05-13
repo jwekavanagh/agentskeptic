@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { mkdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -7,10 +8,12 @@ import { loadSchemaValidator } from "../schemaLoad.js";
 import { TruthLayerError } from "../truthLayerError.js";
 import { CLI_OPERATIONAL_CODES, formatOperationalMessage } from "../failureCatalog.js";
 import { buildHumanLayerFileJson } from "../decisionEvidenceHumanLayer.js";
+import { materialTruthProjectionFromCertificate } from "../governanceEvidence.js";
+import { signCanonicalBytesEd25519 } from "../signCanonicalBytesEd25519.js";
+import { fingerprintUtf8JsonFileBytes, lineUtf8JsonFileBytes } from "./canonicalBytes.js";
 import { DECISION_EVIDENCE_FILES } from "./constants.js";
 import { exitCodeFromOutcomeCertificate } from "./exitCode.js";
 import {
-  a5RequiredFromCertificate,
   computeCompletenessFromParts,
   type DecisionEvidenceCompleteness,
 } from "./completeness.js";
@@ -34,6 +37,13 @@ export type WriteDecisionEvidenceBundleOptions = {
   attestation?: unknown;
   /** Validated against decision-evidence-next-action-v1 when present. */
   nextAction?: unknown;
+  /** Override createdAt timestamp (fixtures / tests); otherwise `new Date().toISOString()`. */
+  createdAt?: string;
+  /**
+   * When set, emit `manifest.sig.json` next to `manifest.json` produced by
+   * {@link signCanonicalBytesEd25519} over the canonicalised manifest bytes.
+   */
+  signingPrivateKeyPemUtf8?: string;
 };
 
 function validateOptional(schemaName: Parameters<typeof loadSchemaValidator>[0], label: string, value: unknown): void {
@@ -46,8 +56,19 @@ function validateOptional(schemaName: Parameters<typeof loadSchemaValidator>[0],
   }
 }
 
+function sha256HexBuf(buf: Buffer): string {
+  return createHash("sha256").update(buf).digest("hex");
+}
+
 /**
- * Writes Decision Evidence Bundle: outcome-certificate, exit, human-layer, optional attestation/next-action, manifest last.
+ * Writes a v2 Decision Evidence Bundle:
+ *   outcome-certificate.json (canonical sorted JSON, no trailing newline)
+ *   material-truth.json      (canonical sorted JSON, no trailing newline)
+ *   exit.json                (existing format: JSON.stringify + newline)
+ *   human-layer.json         (existing format: JSON.stringify + newline)
+ *   optional attestation.json, next-action.json
+ *   manifest.json            (sorted JSON + newline, v2 with fingerprints)
+ *   optional manifest.sig.json (Ed25519 sidecar over the manifest bytes)
  */
 export function writeDecisionEvidenceBundle(options: WriteDecisionEvidenceBundleOptions): DecisionEvidenceCompleteness {
   const resolved = path.resolve(options.outDir);
@@ -68,7 +89,22 @@ export function writeDecisionEvidenceBundle(options: WriteDecisionEvidenceBundle
     validateOptional("decision-evidence-next-action-v1", "decision next-action", options.nextAction);
   }
 
-  const outcomeUtf8 = `${JSON.stringify(options.certificate)}\n`;
+  const certBytes = fingerprintUtf8JsonFileBytes(options.certificate);
+  const certSha256 = sha256HexBuf(certBytes);
+
+  const materialTruth = materialTruthProjectionFromCertificate(options.certificate);
+  const validateMt = loadSchemaValidator("material-truth-v2");
+  if (!validateMt(materialTruth)) {
+    throw new TruthLayerError(
+      CLI_OPERATIONAL_CODES.INTERNAL_ERROR,
+      formatOperationalMessage(
+        `writeDecisionEvidenceBundle: material-truth invalid ${JSON.stringify(validateMt.errors ?? [])}`,
+      ),
+    );
+  }
+  const mtBytes = fingerprintUtf8JsonFileBytes(materialTruth);
+  const mtSha256 = sha256HexBuf(mtBytes);
+
   const exitPayload = {
     schemaVersion: 1 as const,
     exitCode: exitCodeFromOutcomeCertificate(options.certificate),
@@ -85,7 +121,8 @@ export function writeDecisionEvidenceBundle(options: WriteDecisionEvidenceBundle
   const a4Present = options.attestation !== undefined;
   const a5Present = options.nextAction !== undefined;
 
-  atomicWriteUtf8File(path.join(resolved, DECISION_EVIDENCE_FILES.outcomeCertificate), outcomeUtf8);
+  atomicWriteUtf8File(path.join(resolved, DECISION_EVIDENCE_FILES.outcomeCertificate), certBytes.toString("utf8"));
+  atomicWriteUtf8File(path.join(resolved, DECISION_EVIDENCE_FILES.materialTruth), mtBytes.toString("utf8"));
   atomicWriteUtf8File(path.join(resolved, DECISION_EVIDENCE_FILES.exit), exitUtf8);
   atomicWriteUtf8File(path.join(resolved, DECISION_EVIDENCE_FILES.humanLayer), humanUtf8);
 
@@ -111,20 +148,39 @@ export function writeDecisionEvidenceBundle(options: WriteDecisionEvidenceBundle
   });
 
   const manifestPayload = {
-    schemaVersion: 1 as const,
+    schemaVersion: 2 as const,
     bundleKind: "decision_evidence" as const,
     producer,
-    createdAt: new Date().toISOString(),
+    createdAt: options.createdAt ?? new Date().toISOString(),
     workflowId: options.certificate.workflowId,
     ...(options.runId !== undefined ? { runId: options.runId } : {}),
+    certificate: { relativePath: DECISION_EVIDENCE_FILES.outcomeCertificate, sha256: certSha256 },
+    materialTruth: {
+      relativePath: DECISION_EVIDENCE_FILES.materialTruth,
+      schemaVersion: 2 as const,
+      sha256: mtSha256,
+    },
     completeness: {
       status: computed.status,
       artifacts: computed.artifacts,
     },
   };
 
-  validateOptional("decision-evidence-bundle-manifest-v1", "manifest", manifestPayload);
-  atomicWriteUtf8File(path.join(resolved, DECISION_EVIDENCE_FILES.manifest), `${JSON.stringify(manifestPayload)}\n`);
+  validateOptional("decision-evidence-bundle-manifest-v2", "manifest", manifestPayload);
+  const manifestBytes = lineUtf8JsonFileBytes(manifestPayload);
+  const manifestPath = path.join(resolved, DECISION_EVIDENCE_FILES.manifest);
+  atomicWriteUtf8File(manifestPath, manifestBytes.toString("utf8"));
+
+  if (options.signingPrivateKeyPemUtf8 !== undefined) {
+    const sidecarBytes = signCanonicalBytesEd25519(
+      readFileSync(manifestPath),
+      options.signingPrivateKeyPemUtf8,
+    );
+    atomicWriteUtf8File(
+      path.join(resolved, DECISION_EVIDENCE_FILES.manifestSignature),
+      sidecarBytes.toString("utf8"),
+    );
+  }
 
   return computed;
 }

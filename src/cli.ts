@@ -276,13 +276,13 @@ Exit codes:
 
 Advanced / optional (persisted runs, signing, local UI, plan/git checks):
   --write-run-bundle <dir>   Technical run bundle: events.ndjson (byte copy of --events), workflow-result.json, agent-run.json (SHA-256 manifest). Directory is created if missing. Requires exit 0–2 (operational failure skips the write).
-  --sign-ed25519-private-key <path>   With --write-run-bundle only: PKCS#8 PEM Ed25519 private key; also writes workflow-result.sig.json and manifest schemaVersion 2.
-  --write-decision-bundle <dir>   Decision evidence bundle (outcome certificate, exit, human-layer, manifest; see docs/decision-evidence-bundle.md). Opt-in.
+  --sign-ed25519-private-key <path>   PKCS#8 PEM Ed25519 private key. Pair with --write-run-bundle (signs run-bundle manifest) and/or --write-decision-bundle (signs the decision-evidence bundle manifest into manifest.sig.json).
+  --write-decision-bundle <dir>   Decision evidence bundle v2 (outcome-certificate.json, material-truth.json, exit.json, human-layer.json, manifest.json with sha256 fingerprints; see docs/decision-evidence-bundle.md). Opt-in.
   --decision-attestation <path>   Optional JSON merged into attestation.json when --write-decision-bundle is set.
   --decision-next-action <path>   Optional JSON merged into next-action.json when --write-decision-bundle is set.
 
-  agentskeptic decision-bundle validate <dir>
-  Validates decision evidence bundle layout and completeness. Stdout: one JSON line. Exit 0 complete, 1 partial, 2 invalid, 3 operational.
+  agentskeptic decision-bundle validate <dir> [--public-key <path>]
+  Validates decision-evidence bundle layout, recomputes certificate / material-truth.json fingerprints, and verifies the optional Ed25519 manifest signature when --public-key is supplied. Stdout: one sorted-keys JSON line with an integrity object (selfVerifying). Exit 0 valid+complete, 1 valid+partial, 2 invalid, 3 operational.
 
   agentskeptic verify-bundle-signature --run-dir <dir> --public-key <path>
   Verify signed bundle (Ed25519 + manifest v2). Exit 0 if valid; exit 3 with JSON envelope on failure.
@@ -756,6 +756,7 @@ async function runQuickSubcommand(args: string[]): Promise<void> {
     writeDecisionBundleDir,
     decisionAttestationPath,
     decisionNextActionPath,
+    signPrivateKeyPath: quickSignPrivateKeyPath,
   } = pq;
   const activationRunId =
     process.env.AGENTSKEPTIC_RUN_ID?.trim() ||
@@ -913,6 +914,10 @@ async function runQuickSubcommand(args: string[]): Promise<void> {
       if (decisionNextActionPath !== undefined) {
         nextAction = JSON.parse(readFileSync(path.resolve(decisionNextActionPath), "utf8")) as unknown;
       }
+      const quickSigningPemUtf8 =
+        quickSignPrivateKeyPath !== undefined
+          ? readFileSync(path.resolve(quickSignPrivateKeyPath), "utf8")
+          : undefined;
       writeDecisionEvidenceBundle({
         outDir: writeDecisionBundleDir,
         certificate,
@@ -920,6 +925,9 @@ async function runQuickSubcommand(args: string[]): Promise<void> {
         runId: activationRunId,
         ...(attestation !== undefined ? { attestation } : {}),
         ...(nextAction !== undefined ? { nextAction } : {}),
+        ...(quickSigningPemUtf8 !== undefined
+          ? { signingPrivateKeyPemUtf8: quickSigningPemUtf8 }
+          : {}),
       });
     } catch (e) {
       if (e instanceof TruthLayerError) {
@@ -1553,39 +1561,62 @@ function runPlanTransitionSubcommand(args: string[]): void {
 function runDecisionBundleValidateSubcommand(rest: string[]): void {
   if (rest.includes("--help") || rest.includes("-h")) {
     console.log(`Usage:
-  agentskeptic decision-bundle validate <dir>
+  agentskeptic decision-bundle validate <dir> [--public-key <path>]
+
+Optional:
+  --public-key <path>   SPKI PEM of the signer; required only when the bundle has manifest.sig.json.
 
 Exit codes:
-  0  complete
-  1  partial
-  2  invalid
-  3  operational failure
+  0  status=valid AND completeness.status=complete
+  1  status=valid AND completeness.status=partial
+  2  status=invalid OR completeness.status=invalid (manifest envelope / fingerprint / signature / material-truth)
+  3  operational failure (bundle directory cannot be opened; see stderr)
 
-Stdout: one JSON line (decision_bundle_validation v1).
+Stdout: one sorted-keys JSON line (decision_bundle_validation v1) including the integrity object.
 
   --help, -h  print this message and exit 0`);
     process.exit(0);
   }
-  const dir = rest[0];
+  const publicKeyPath = argValue(rest, "--public-key");
+  const positional = rest.filter((token, idx) => {
+    if (token === "--public-key") return false;
+    if (idx > 0 && rest[idx - 1] === "--public-key") return false;
+    return true;
+  });
+  const dir = positional[0];
   if (!dir) {
     writeCliError(CLI_OPERATIONAL_CODES.CLI_USAGE, "decision-bundle validate requires <dir>.");
     process.exit(3);
   }
-  if (rest.length > 1) {
+  if (positional.length > 1) {
     writeCliError(CLI_OPERATIONAL_CODES.CLI_USAGE, "Too many arguments.");
     process.exit(3);
   }
+  let publicKeyPemUtf8: string | undefined;
+  if (publicKeyPath !== undefined) {
+    try {
+      publicKeyPemUtf8 = readFileSync(path.resolve(publicKeyPath), "utf8");
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      writeCliError(CLI_OPERATIONAL_CODES.CLI_USAGE, `Cannot read --public-key: ${msg}`);
+      process.exit(3);
+    }
+  }
+  let line;
   try {
-    const line = validateDecisionEvidenceBundle(dir);
-    console.log(formatValidationStdout(line));
-    if (line.status === "complete") process.exit(0);
-    if (line.status === "partial") process.exit(1);
-    process.exit(2);
+    line = validateDecisionEvidenceBundle(
+      dir,
+      publicKeyPemUtf8 !== undefined ? { publicKeyPemUtf8 } : {},
+    );
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     writeCliError(CLI_OPERATIONAL_CODES.INTERNAL_ERROR, formatOperationalMessage(msg));
     process.exit(3);
   }
+  console.log(formatValidationStdout(line));
+  if (line.status === "valid" && line.completeness.status === "complete") process.exit(0);
+  if (line.status === "valid" && line.completeness.status === "partial") process.exit(1);
+  process.exit(2);
 }
 
 async function main(): Promise<void> {

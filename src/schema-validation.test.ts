@@ -676,4 +676,88 @@ describe("JSON Schemas (SSOT)", () => {
     };
     expect(v(bad)).toBe(false);
   });
+
+  it("compiles decision-evidence-bundle-manifest-v2 and validates a minimal v2 manifest", () => {
+    const v = loadSchemaValidator("decision-evidence-bundle-manifest-v2");
+    const sha = "a".repeat(64);
+    const doc = {
+      schemaVersion: 2,
+      bundleKind: "decision_evidence",
+      producer: { name: "agentskeptic", version: "0.1.0" },
+      createdAt: "2026-05-13T00:00:00.000Z",
+      workflowId: "wf_x",
+      certificate: { relativePath: "outcome-certificate.json", sha256: sha },
+      materialTruth: {
+        relativePath: "material-truth.json",
+        schemaVersion: 2,
+        sha256: sha,
+      },
+      completeness: {
+        status: "complete",
+        artifacts: { a4Present: false, a5Present: false, a5Required: false },
+      },
+    };
+    expect(v(doc)).toBe(true);
+    const bad = { ...doc, unexpectedKey: "x" };
+    expect(v(bad)).toBe(false);
+  });
+
+  it("example-sidecar: AJV validates manifest.sig.json and crypto.verify returns true on the manifest bytes", async () => {
+    const { createPublicKey, verify } = await import("node:crypto");
+    const dir = path.join(
+      root,
+      "test",
+      "fixtures",
+      "decision-bundle-integrity",
+      "example-sidecar",
+    );
+    const manifestBytes = readFileSync(path.join(dir, "manifest.json"));
+    const sidecarRaw = readFileSync(path.join(dir, "manifest.sig.json"), "utf8");
+    const sidecar = JSON.parse(sidecarRaw) as {
+      signatureBase64: string;
+      signedContentSha256Hex: string;
+      signingPublicKeySpkiPem: string;
+    };
+    const v = loadSchemaValidator("workflow-result-signature");
+    expect(v(sidecar)).toBe(true);
+
+    const { createHash } = await import("node:crypto");
+    const manifestSha = createHash("sha256").update(manifestBytes).digest("hex");
+    expect(sidecar.signedContentSha256Hex).toBe(manifestSha);
+
+    const pub = createPublicKey({ key: sidecar.signingPublicKeySpkiPem, format: "pem" });
+    expect(
+      verify(null, manifestBytes, pub, Buffer.from(sidecar.signatureBase64, "base64")),
+    ).toBe(true);
+  });
+
+  it("compiles decision-bundle-validation-v1 with required integrity object", () => {
+    const v = loadSchemaValidator("decision-bundle-validation-v1");
+    const doc = {
+      schemaVersion: 1,
+      kind: "decision_bundle_validation",
+      status: "valid",
+      bundleDir: "/tmp/x",
+      completeness: {
+        status: "complete",
+        artifacts: { a4Present: false, a5Present: false, a5Required: false },
+      },
+      errors: [],
+      integrity: {
+        manifestVersion: 2,
+        certificateFingerprintOk: true,
+        materialTruthFingerprintOk: true,
+        materialTruthPresent: true,
+        selfVerifying: true,
+        signature: "absent",
+        signaturePublicKeySpkiPem: null,
+      },
+    };
+    expect(v(doc)).toBe(true);
+    const noIntegrity = { ...doc } as Record<string, unknown>;
+    delete noIntegrity.integrity;
+    expect(v(noIntegrity)).toBe(false);
+    const badStatus = { ...doc, status: "complete" };
+    expect(v(badStatus)).toBe(false);
+  });
 });

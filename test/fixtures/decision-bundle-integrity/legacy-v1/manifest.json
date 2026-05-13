@@ -1,0 +1,1 @@
+{"schemaVersion":1,"bundleKind":"decision_evidence","producer":{"name":"agentskeptic","version":"TEST"},"createdAt":"2025-12-01T00:00:00.000Z","workflowId":"wf_legacy_v1","completeness":{"status":"complete","artifacts":{"a4Present":false,"a5Present":false,"a5Required":false}}}

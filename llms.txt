@@ -125,8 +125,8 @@ Read-only checks at verify time—not color.
 ## Evidence retention (progressive)
 
 - Default truth check: `agentskeptic check` — Outcome Certificate on stdout; no bundle files written unless you opt in.
-- Decision evidence on disk: add `--proof <dir>` or `--write-decision-bundle <dir>`.
-- Full local proof (technical + decision bundles): add `--write-run-bundle <dir>` alongside `--write-decision-bundle` (two output directories).
+- Decision evidence on disk: add `--proof <dir>` or `--write-decision-bundle <dir>`. The on-disk bundle is self-verifying — recipients run `agentskeptic decision-bundle validate <dir> [--public-key <path>]` and check that `integrity.selfVerifying === true`.
+- Full local proof (technical + decision bundles): add `--write-run-bundle <dir>` alongside `--write-decision-bundle` (two output directories). Pair `--sign-ed25519-private-key <path>` with either flag to write `manifest.sig.json`.
 - Hosted commercial `GET /api/v1/governance/export` returns `GovernanceAuditBundleV3` (`schemaVersion: 3`) with slice-keyed `evidenceSlices` — not a CLI `decision bundle` / `write-run-bundle` directory.
 
 - Operational SSOT (artifact names, completeness, handoff zip recipe): https://raw.githubusercontent.com/jwekavanagh/agentskeptic/refs/heads/main/docs/decision-evidence-bundle.md

@@ -1,0 +1,1 @@
+{"checkpointVerdicts":[],"evidenceGapPrimary":"none","reasonCodes":["FIXTURE"],"runKind":"contract_sql","schemaVersion":2,"stateRelation":"matches_expectations","steps":[],"workflowId":"wf_fixture_diff"

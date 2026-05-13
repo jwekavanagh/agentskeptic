@@ -3,6 +3,7 @@ examples/debug-corpus/** text eol=lf
 examples/events.ndjson text eol=lf
 test/fixtures/corpus-negative/** text eol=lf
 test/fixtures/debug-ui-compare/** text eol=lf
+test/fixtures/decision-bundle-integrity/** text eol=lf
 test/fixtures/outcome-ci-surface/** text eol=lf
 test/fixtures/signed-bundle-v2/** text eol=lf
 

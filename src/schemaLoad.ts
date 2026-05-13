@@ -103,6 +103,7 @@ export type SchemaValidatorName =
   | "trust-certificate-snapshot-v1"
   | "material-truth-v2"
   | "decision-evidence-bundle-manifest-v1"
+  | "decision-evidence-bundle-manifest-v2"
   | "decision-evidence-human-layer-v1"
   | "decision-evidence-exit-v1"
   | "decision-evidence-attestation-v1"
@@ -266,6 +267,8 @@ export function loadSchemaValidator(name: SchemaValidatorName): ValidateFunction
       return compileSchemaFile(name, "material-truth-v2.schema.json");
     case "decision-evidence-bundle-manifest-v1":
       return compileSchemaFile(name, "decision-evidence-bundle-manifest-v1.schema.json");
+    case "decision-evidence-bundle-manifest-v2":
+      return compileSchemaFile(name, "decision-evidence-bundle-manifest-v2.schema.json");
     case "decision-evidence-human-layer-v1":
       return compileSchemaFile(name, "decision-evidence-human-layer-v1.schema.json");
     case "decision-evidence-exit-v1":

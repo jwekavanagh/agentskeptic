@@ -11,7 +11,9 @@ Consumers who compile or pin **exact bytes** of [`https://agentskeptic.com/schem
 
 ## Retaining decision evidence
 
-Use **`--write-decision-bundle`** for a portable directory (outcome certificate, exit, human-layer, manifest; optional attestation / next-action). See **[`decision-evidence-bundle.md`](decision-evidence-bundle.md)**. **`--write-run-bundle`** is the separate **technical run bundle** (events + workflow result + manifest).
+Use **`--write-decision-bundle`** for a portable directory (outcome certificate, **`material-truth.json`**, exit, human-layer, manifest v2 with embedded sha256 fingerprints; optional attestation / next-action). Pair with **`--sign-ed25519-private-key <path>`** to emit `manifest.sig.json`. See **[`decision-evidence-bundle.md`](decision-evidence-bundle.md)**. **`--write-run-bundle`** is the separate **technical run bundle** (events + workflow result + manifest).
+
+After writing, the recipient validates the bundle with **`agentskeptic decision-bundle validate <dir> [--public-key <path>]`** — the JSON output's **`integrity.selfVerifying`** is the buyer / audit handoff gate (see [`decision-evidence-bundle.md` § Validation](decision-evidence-bundle.md#validation)).
 
 ## CLI (batch contract verify)
 
