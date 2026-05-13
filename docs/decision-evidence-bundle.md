@@ -27,12 +27,14 @@ Written only when **`--write-decision-bundle <dir>`** is passed (opt-in).
 
 | File | Role |
 |------|------|
-| `outcome-certificate.json` | A1 — [`OutcomeCertificateV3`](../schemas/outcome-certificate-v3.schema.json) |
+| `outcome-certificate.json` | A1 — [`OutcomeCertificateV3`](../schemas/outcome-certificate-v3.schema.json). Canonical sorted JSON, **no** trailing newline (so `sha256(file_bytes)` matches `certificateCanonicalDigestHex`). |
+| `material-truth.json` | **Required (v2 manifest).** Canonical material-truth projection of the certificate; same byte rule as the certificate (sorted JSON, no trailing newline) so `sha256(file_bytes)` matches `materialTruthSha256`. |
 | `exit.json` | A2 — exit code mapped from the certificate; `cliConvention` **`outcome_certificate_v2`** ([`decision-evidence-exit-v1`](../schemas/decision-evidence-exit-v1.schema.json)) |
 | `human-layer.json` | A3 — human report text or `suppressed` when `--no-human-report` |
 | `attestation.json` | Optional A4 — [`decision-evidence-attestation-v1`](../schemas/decision-evidence-attestation-v1.schema.json) via `--decision-attestation` |
 | `next-action.json` | Optional A5 — [`decision-evidence-next-action-v1`](../schemas/decision-evidence-next-action-v1.schema.json) via `--decision-next-action` |
-| `manifest.json` | Bundle metadata + **completeness** (explicit `a4Present`, `a5Present`, `a5Required`) |
+| `manifest.json` | Bundle metadata ([`decision-evidence-bundle-manifest-v2`](../schemas/decision-evidence-bundle-manifest-v2.schema.json)) — embeds `certificate.sha256` and `materialTruth.sha256`. Canonical sorted JSON **plus** a trailing newline. |
+| `manifest.sig.json` | **Optional.** Ed25519 signature over `manifest.json` bytes ([`workflow-result-signature`](../schemas/workflow-result-signature.schema.json) shape). Emitted only when `--sign-ed25519-private-key <path>` is paired with `--write-decision-bundle`. |
 
 ### Compatibility (non-wire)
 
@@ -57,11 +59,45 @@ Batch verify, **verify-integrator-owned**, and **quick** share the same optional
 ### Validation
 
 ```bash
-agentskeptic decision-bundle validate <dir>
+agentskeptic decision-bundle validate <dir> [--public-key <path>]
 ```
 
-- **Stdout:** exactly **one** JSON line (`kind: decision_bundle_validation`, `schemaVersion: 1`), sorted keys.
-- **Exit:** `0` complete, `1` partial, `2` invalid, `3` operational failure.
+- **Stdout (Tier 2):** exactly **one** sorted-keys JSON line (`kind: decision_bundle_validation`, `schemaVersion: 1`). Includes an `integrity` object — see below.
+- **Stderr (Tier 1 only):** CLI error envelope when the bundle directory cannot be opened.
+- **Exit code law (deterministic):**
+  - `0` &nbsp; `status: "valid"` **and** `completeness.status: "complete"`
+  - `1` &nbsp; `status: "valid"` **and** `completeness.status: "partial"`
+  - `2` &nbsp; `status: "invalid"` (fingerprint mismatch, signature invalid, missing public key when `manifest.sig.json` exists, `material-truth.json` missing/tampered, manifest envelope failure → single `MANIFEST_SCHEMA` error, …)
+  - `3` &nbsp; operational failure: the directory cannot be opened (Tier 1). No stdout JSON line.
+
+#### `integrity` object (always present)
+
+| Field | Meaning |
+|-------|---------|
+| `manifestVersion` | `1` (legacy reader-only) or `2`. |
+| `certificateFingerprintOk` | `true` / `false` for v2; `null` for v1 manifests. |
+| `materialTruthFingerprintOk` | `true` / `false` / `null` (null when `material-truth.json` is absent). |
+| `materialTruthPresent` | Whether `material-truth.json` exists on disk. |
+| `signature` | `absent` \| `valid` \| `invalid`. |
+| `signaturePublicKeySpkiPem` | The verified PEM when `signature === "valid"`; otherwise `null`. The PEM embedded in a sidecar that fails verification is **not** echoed. |
+| `selfVerifying` | `true` **iff** `manifestVersion === 2`, `status === "valid"`, no integrity errors, and `signature` is `absent` or `valid`. Legacy v1 manifests are never self-verifying by definition. |
+
+**Recipient rule:** buyer / audit handoff requires `integrity.selfVerifying === true`.
+
+#### Verifying a received bundle
+
+```bash
+# 1) Untrusted bundle on disk:
+agentskeptic decision-bundle validate ./received-bundle \
+    --public-key ./signer-spki.pem \
+    | jq '.integrity.selfVerifying, .status, .completeness.status'
+
+# 2) Strict-handoff guard:
+agentskeptic decision-bundle validate ./received-bundle --public-key ./signer-spki.pem \
+  | jq -e '.integrity.selfVerifying == true and .completeness.status == "complete"' > /dev/null
+```
+
+Exit 0 from the second command means the bundle is signed, the certificate and material-truth fingerprints recompute, completeness is `complete`, and the signature verifies under the supplied SPKI PEM.
 
 ## Hosted governance export (**GovernanceAuditBundleV3**)
 

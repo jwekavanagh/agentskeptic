@@ -78,7 +78,7 @@ function minimalCertificate(stateRelation: OutcomeCertificateV1["stateRelation"]
 }
 
 describe("decisionEvidenceBundle", () => {
-  it("validate fails partial when A5 required and missing", () => {
+  it("v2 bundle: completeness=partial when A5 required and missing; status stays valid (integrity ok)", () => {
     const dir = path.join(process.cwd(), `tmp-de-bundle-${Date.now()}`);
     mkdirSync(dir, { recursive: true });
     try {
@@ -89,15 +89,22 @@ describe("decisionEvidenceBundle", () => {
         runId: "run-1",
       });
       const line = validateDecisionEvidenceBundle(dir);
-      expect(line.status).toBe("partial");
-      expect(line.errors.some((e) => e.code === "A5_REQUIRED_MISSING")).toBe(true);
+      expect(line.status).toBe("valid");
+      expect(line.completeness.status).toBe("partial");
+      expect(line.integrity.manifestVersion).toBe(2);
+      expect(line.integrity.certificateFingerprintOk).toBe(true);
+      expect(line.integrity.materialTruthFingerprintOk).toBe(true);
+      expect(line.integrity.selfVerifying).toBe(true);
+      expect(line.errors).toHaveLength(0);
+      expect(line.completeness.artifacts.a5Required).toBe(true);
+      expect(line.completeness.artifacts.a5Present).toBe(false);
       expect(JSON.parse(formatValidationStdout(line)).schemaVersion).toBe(1);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
   });
 
-  it("validate complete for matches_expectations without next-action", () => {
+  it("v2 bundle: status=valid + completeness=complete for matches_expectations without next-action", () => {
     const dir = path.join(process.cwd(), `tmp-de-bundle-${Date.now()}`);
     mkdirSync(dir, { recursive: true });
     try {
@@ -108,8 +115,12 @@ describe("decisionEvidenceBundle", () => {
         runId: "run-2",
       });
       const line = validateDecisionEvidenceBundle(dir);
-      expect(line.status).toBe("complete");
+      expect(line.status).toBe("valid");
+      expect(line.completeness.status).toBe("complete");
       expect(line.errors).toHaveLength(0);
+      expect(line.integrity.selfVerifying).toBe(true);
+      expect(line.integrity.signature).toBe("absent");
+      expect(line.integrity.signaturePublicKeySpkiPem).toBeNull();
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

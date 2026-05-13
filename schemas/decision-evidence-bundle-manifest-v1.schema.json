@@ -2,6 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://agentskeptic.com/schemas/decision-evidence-bundle-manifest-v1.schema.json",
   "title": "DecisionEvidenceBundleManifestV1",
+  "description": "Legacy reader-only manifest; new bundles use decision-evidence-bundle-manifest-v2.",
   "type": "object",
   "additionalProperties": false,
   "required": [

@@ -153,15 +153,18 @@ export function parseBatchVerifyCliArgs(args: string[]): ParsedBatchVerifyCli {
   const langgraphCheckpointTrust = args.includes("--langgraph-checkpoint-trust");
   const writeRunBundleDir = argValue(args, "--write-run-bundle");
   const signPrivateKeyPath = argValue(args, "--sign-ed25519-private-key");
-  if (signPrivateKeyPath !== undefined && writeRunBundleDir === undefined) {
-    throw new TruthLayerError(
-      CLI_OPERATIONAL_CODES.CLI_USAGE,
-      "--sign-ed25519-private-key requires --write-run-bundle.",
-    );
-  }
-
   const proofDir = argValue(args, "--proof");
   const writeDecisionBundleDir = argValue(args, "--write-decision-bundle") ?? proofDir;
+  if (
+    signPrivateKeyPath !== undefined &&
+    writeRunBundleDir === undefined &&
+    writeDecisionBundleDir === undefined
+  ) {
+    throw new TruthLayerError(
+      CLI_OPERATIONAL_CODES.CLI_USAGE,
+      "--sign-ed25519-private-key requires --write-run-bundle or --write-decision-bundle.",
+    );
+  }
   const decisionAttestationPath = argValue(args, "--decision-attestation");
   const decisionNextActionPath = argValue(args, "--decision-next-action");
 
@@ -262,6 +265,7 @@ export type ParsedQuickCli = {
   writeDecisionBundleDir: string | undefined;
   decisionAttestationPath: string | undefined;
   decisionNextActionPath: string | undefined;
+  signPrivateKeyPath: string | undefined;
 };
 
 /**
@@ -285,6 +289,14 @@ export function parseQuickCliArgs(args: string[]): ParsedQuickCli {
       "Provide exactly one of --db or --postgres-url.",
     );
   }
+  const writeDecisionBundleDir = argValue(args, "--write-decision-bundle");
+  const signPrivateKeyPath = argValue(args, "--sign-ed25519-private-key");
+  if (signPrivateKeyPath !== undefined && writeDecisionBundleDir === undefined) {
+    throw new TruthLayerError(
+      CLI_OPERATIONAL_CODES.CLI_USAGE,
+      "--sign-ed25519-private-key requires --write-decision-bundle for quick verify.",
+    );
+  }
   return {
     inputPath,
     exportPath,
@@ -294,8 +306,9 @@ export function parseQuickCliArgs(args: string[]): ParsedQuickCli {
     postgresUrl,
     shareReportOrigin: parseOptionalShareReportOrigin(args),
     noHumanReport: args.includes("--no-human-report"),
-    writeDecisionBundleDir: argValue(args, "--write-decision-bundle"),
+    writeDecisionBundleDir,
     decisionAttestationPath: argValue(args, "--decision-attestation"),
     decisionNextActionPath: argValue(args, "--decision-next-action"),
+    signPrivateKeyPath,
   };
 }

@@ -81,6 +81,10 @@ function maybeWriteDecisionEvidenceBundle(
     if (parsedBatch.decisionNextActionPath !== undefined) {
       nextAction = JSON.parse(readFileSync(path.resolve(parsedBatch.decisionNextActionPath), "utf8")) as unknown;
     }
+    const decisionSigningPemUtf8 =
+      parsedBatch.signPrivateKeyPath !== undefined
+        ? readFileSync(path.resolve(parsedBatch.signPrivateKeyPath), "utf8")
+        : undefined;
     writeDecisionEvidenceBundle({
       outDir: parsedBatch.writeDecisionBundleDir,
       certificate,
@@ -88,6 +92,9 @@ function maybeWriteDecisionEvidenceBundle(
       runId,
       ...(attestation !== undefined ? { attestation } : {}),
       ...(nextAction !== undefined ? { nextAction } : {}),
+      ...(decisionSigningPemUtf8 !== undefined
+        ? { signingPrivateKeyPemUtf8: decisionSigningPemUtf8 }
+        : {}),
     });
   } catch (e) {
     if (e instanceof TruthLayerError) {
@@ -493,6 +500,10 @@ export async function runBatchVerifyWithTelemetrySubcommand(
                 parsedBatch.writeRunBundleDir !== undefined &&
                 parsedBatch.writeDecisionBundleDir !== undefined
               ) {
+                const sharedSigningPemUtf8 =
+                  parsedBatch.signPrivateKeyPath !== undefined
+                    ? readFileSync(path.resolve(parsedBatch.signPrivateKeyPath), "utf8")
+                    : undefined;
                 writeContractProofArtifacts({
                   proofRunDir: parsedBatch.writeRunBundleDir,
                   proofDecisionDir: parsedBatch.writeDecisionBundleDir,
@@ -500,6 +511,9 @@ export async function runBatchVerifyWithTelemetrySubcommand(
                   workflowResult: wfResult,
                   certificate,
                   runBundleSignKeyPath: parsedBatch.signPrivateKeyPath,
+                  ...(sharedSigningPemUtf8 !== undefined
+                    ? { decisionBundleSignKeyPemUtf8: sharedSigningPemUtf8 }
+                    : {}),
                 });
                 return;
               }

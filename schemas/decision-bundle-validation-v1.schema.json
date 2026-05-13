@@ -4,24 +4,18 @@
   "title": "DecisionBundleValidationV1",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "kind", "status", "bundleDir", "completeness", "errors"],
+  "required": ["schemaVersion", "kind", "status", "bundleDir", "completeness", "errors", "integrity"],
   "properties": {
     "schemaVersion": { "const": 1 },
     "kind": { "const": "decision_bundle_validation" },
-    "status": {
-      "type": "string",
-      "enum": ["complete", "partial", "invalid"]
-    },
+    "status": { "type": "string", "enum": ["valid", "invalid"] },
     "bundleDir": { "type": "string", "minLength": 1 },
     "completeness": {
       "type": "object",
       "additionalProperties": false,
       "required": ["status", "artifacts"],
       "properties": {
-        "status": {
-          "type": "string",
-          "enum": ["complete", "partial", "invalid"]
-        },
+        "status": { "type": "string", "enum": ["complete", "partial", "invalid"] },
         "artifacts": {
           "type": "object",
           "additionalProperties": false,
@@ -44,6 +38,28 @@
           "code": { "type": "string" },
           "message": { "type": "string" }
         }
+      }
+    },
+    "integrity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "manifestVersion",
+        "certificateFingerprintOk",
+        "materialTruthFingerprintOk",
+        "materialTruthPresent",
+        "selfVerifying",
+        "signature",
+        "signaturePublicKeySpkiPem"
+      ],
+      "properties": {
+        "manifestVersion": { "type": "integer", "enum": [1, 2] },
+        "certificateFingerprintOk": { "type": ["boolean", "null"] },
+        "materialTruthFingerprintOk": { "type": ["boolean", "null"] },
+        "materialTruthPresent": { "type": "boolean" },
+        "selfVerifying": { "type": "boolean" },
+        "signature": { "type": "string", "enum": ["absent", "valid", "invalid"] },
+        "signaturePublicKeySpkiPem": { "type": ["string", "null"] }
       }
     }
   }

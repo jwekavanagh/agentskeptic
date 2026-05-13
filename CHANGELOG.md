@@ -1,3 +1,14 @@
+## Unreleased
+
+### Features
+
+* **decision-bundle:** self-verifying v2 manifest (`decision-evidence-bundle-manifest-v2`) embeds `certificate.sha256` and `materialTruth.sha256`. The writer now emits `material-truth.json` alongside `outcome-certificate.json`, and signs `manifest.sig.json` over the manifest bytes when `--sign-ed25519-private-key` is paired with `--write-decision-bundle`.
+* **decision-bundle validate:** `--public-key <path>` flag verifies the optional Ed25519 sidecar. Output now always includes an `integrity` object (`manifestVersion`, fingerprint flags, `signature`, `selfVerifying`). Top-level `status` is binary (`valid` / `invalid`); CLI exit codes 0 (valid+complete), 1 (valid+partial), 2 (invalid), 3 (Tier-1 operational; no stdout JSON line).
+
+### Compatibility
+
+* The validator still reads `decision-evidence-bundle-manifest-v1` directories; `integrity.selfVerifying` is `false` for legacy v1 bundles by definition. The writer no longer emits v1 manifests.
+
 ## [8.7.0](https://github.com/jwekavanagh/agentskeptic/compare/v8.6.1...v8.7.0) (2026-05-13)
 
 ### Features
