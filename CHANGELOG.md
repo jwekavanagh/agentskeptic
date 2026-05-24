@@ -1,3 +1,9 @@
+## [8.8.2](https://github.com/jwekavanagh/agentskeptic/compare/v8.8.1...v8.8.2) (2026-05-24)
+
+### Bug Fixes
+
+* **deps:** resolve qs and brace-expansion Dependabot alerts ([1dbed79](https://github.com/jwekavanagh/agentskeptic/commit/1dbed79bacc981ac0c6e46f4131c48d145aa9567))
+
 ## [8.8.1](https://github.com/jwekavanagh/agentskeptic/compare/v8.8.0...v8.8.1) (2026-05-17)
 
 ### Bug Fixes
