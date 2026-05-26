@@ -146,6 +146,9 @@
     "tmp": "0.2.4",
     "cookie": "0.7.2",
     "qs": "6.15.2",
+    "puppeteer-core": {
+      "ws": "8.20.1"
+    },
     "agentskeptic-web": {
       "agentskeptic": "file:."
     }
