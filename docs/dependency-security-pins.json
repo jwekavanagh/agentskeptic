@@ -16,6 +16,7 @@
     { "file": "package.json", "path": ["overrides", "tmp"], "value": "0.2.4" },
     { "file": "package.json", "path": ["overrides", "cookie"], "value": "0.7.2" },
     { "file": "package.json", "path": ["overrides", "qs"], "value": "6.15.2" },
+    { "file": "package.json", "path": ["overrides", "puppeteer-core", "ws"], "value": "8.20.1" },
     { "file": "package.json", "path": ["overrides", "postcss"], "value": "8.5.10" },
     { "file": "website/package.json", "path": ["devDependencies", "postcss"], "value": "8.5.10" },
     { "file": "package.json", "path": ["overrides", "encoding-sniffer"], "value": "1.0.2" },
